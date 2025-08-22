@@ -230,15 +230,18 @@ button {
 .container {
   width: 100%;
   max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 40px;
+  justify-content: center;
+  align-items: center;
+  /* margin: 0 auto; */
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
-@media (max-width: 1440px) {
+/* @media (max-width: 1440px) {
   .container {
     padding: 0 20px;
   }
-}
+} */
 
 @media (max-width: 768px) {
   .container {
@@ -268,7 +271,9 @@ button {
 .products-grid {
   display: flex;
   width: 100%;
-  align-items: flex-start;
+  max-width: 1392px;
+  justify-content: center;
+  align-items: center;
   gap: 24px;
   overflow-x: auto;
   padding-bottom: 8px;
@@ -277,7 +282,9 @@ button {
 .categories-grid {
   display: flex;
   width: 100%;
-  align-items: flex-start;
+  max-width: 1392px;
+  align-items: center;
+  justify-content: center;
   gap: 24px;
   overflow-x: auto;
   padding-bottom: 8px;
@@ -285,11 +292,15 @@ button {
 
 .influencers-grid {
   display: flex;
-  align-items: flex-start;
+  width: 100%;
+  max-width: 1440px;
+  align-items: center;
+  justify-content: center;
   gap: 24px;
-  align-self: stretch;
   overflow-x: auto;
   padding-bottom: 8px;
+  padding-left: 24px;
+  padding-right: 24px;
 }
 
 .blogs-header {
@@ -304,10 +315,13 @@ button {
 
 .blogs-grid {
   display: flex;
+  width: 100%;
+  max-width: 1392px;
   align-items: center;
+  justify-content: center;
   gap: 24px;
-  align-self: stretch;
-  margin-bottom: 40px;
+  overflow-x: auto;
+  padding-bottom: 24px;
 }
 
 .blog-item {

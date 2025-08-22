@@ -119,6 +119,7 @@ export default function Footer() {
           display: flex;
           width: 100%;
           padding: 40px;
+          padding-top: 40px;
           flex-direction: column;
           align-items: center;
           gap: 60px;
@@ -389,6 +390,7 @@ export default function Footer() {
         @media (max-width: 768px) {
           .footer {
             padding: 20px;
+            padding-top: 40px;
           }
 
           .footer-links {

@@ -8,16 +8,16 @@ interface BannerProps {
   onButtonClick?: () => void
 }
 
-export default function Banner({ 
-  title, 
-  description, 
-  buttonText, 
-  backgroundImage, 
-  onButtonClick 
+export default function Banner({
+  title,
+  description,
+  buttonText,
+  backgroundImage,
+  onButtonClick
 }: BannerProps) {
   return (
-    <div className="banner-section">
-      <div className="container">
+    <div className="banner-container">
+      <div className="banner-section">
         <div className="banner-content">
           <div className="banner-info">
             <h2 className="banner-title">{title}</h2>
@@ -30,11 +30,19 @@ export default function Banner({
       </div>
 
       <style jsx>{`
-        .banner-section {
-          display: flex;
+        .banner-container {
           width: 100%;
+          display: flex;
+          justify-content: center;
+          padding: 0 24px;
+          box-sizing: border-box;
+          padding-bottom: 60px;
+        }
+        
+        .banner-section {
+          width: 100%;
+          max-width: 1360px;
           height: 324px;
-          padding: 0;
           justify-content: center;
           align-items: center;
         }
@@ -106,12 +114,18 @@ export default function Banner({
         }
 
         @media (max-width: 768px) {
-          .banner-section {
-            padding: 0 20px;
+          .banner-container {
+            padding: 0 16px;
           }
-
+          
           .banner-content {
             padding: 24px;
+            align-items: center;
+            text-align: center;
+          }
+
+          .banner-info {
+            align-items: center;
           }
 
           .banner-title {

@@ -7,7 +7,7 @@ export default function Navigation() {
         <div className="navbar-content">
           <div className="logo">
             <Image 
-              src="https://api.builder.io/api/v1/image/assets/TEMP/5244351049c06b12260bbdd7872d1b40c2696152?width=196" 
+              src="/logo.png" 
               alt="QLIQ Logo" 
               width={100} 
               height={44}
@@ -53,29 +53,29 @@ export default function Navigation() {
           </div>
 
           <div className="nav-actions">
-            <div className="location-btn">
+            <div className="action-btn">
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                 <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF"/>
                 <path d="M20 12.6213C18.3498 12.6213 16.7671 13.2189 15.6002 14.2826C14.4333 15.3463 13.7778 16.7889 13.7778 18.2932C13.7778 20.6122 15.3618 22.8493 17.1004 24.5824C17.9895 25.4653 18.9595 26.2775 20 27.01C20.1553 26.9014 20.3375 26.7691 20.5467 26.613C21.382 25.9877 22.1683 25.3097 22.8996 24.5841C24.6382 22.8493 26.2222 20.613 26.2222 18.2932C26.2222 16.7889 25.5667 15.3463 24.3998 14.2826C23.2329 13.2189 21.6502 12.6213 20 12.6213ZM20 29L19.496 28.684L19.4933 28.6824L19.488 28.6783L19.4702 28.667L19.4036 28.624L19.1636 28.4644C17.9474 27.6313 16.8177 26.6983 15.7884 25.6771C13.9716 23.8637 12 21.2393 12 18.2924C12 16.3583 12.8429 14.5035 14.3431 13.1359C15.8434 11.7683 17.8783 11 20 11C22.1217 11 24.1566 11.7683 25.6569 13.1359C27.1571 14.5035 28 16.3583 28 18.2924C28 21.2393 26.0284 23.8646 24.2116 25.6755C23.1826 26.6966 22.0531 27.6296 20.8373 28.4628C20.736 28.5318 20.6338 28.5996 20.5307 28.6662L20.512 28.6775L20.5067 28.6816L20.5049 28.6824L20 29ZM20 16.6727C19.5285 16.6727 19.0763 16.8434 18.7429 17.1473C18.4095 17.4512 18.2222 17.8634 18.2222 18.2932C18.2222 18.723 18.4095 19.1352 18.7429 19.4391C19.0763 19.743 19.5285 19.9137 20 19.9137C20.4715 19.9137 20.9237 19.743 21.2571 19.4391C21.5905 19.1352 21.7778 18.723 21.7778 18.2932C21.7778 17.8634 21.5905 17.4512 21.2571 17.1473C20.9237 16.8434 20.4715 16.6727 20 16.6727ZM16.4444 18.2932C16.4444 17.4336 16.819 16.6092 17.4858 16.0014C18.1526 15.3936 19.057 15.0521 20 15.0521C20.943 15.0521 21.8474 15.3936 22.5142 16.0014C23.181 16.6092 23.5556 17.4336 23.5556 18.2932C23.5556 19.1528 23.181 19.9771 22.5142 20.585C21.8474 21.1928 20.943 21.5342 20 21.5342C19.057 21.5342 18.1526 21.1928 17.4858 20.585C16.819 19.9771 16.4444 19.1528 16.4444 18.2932Z" fill="black"/>
               </svg>
             </div>
 
-            <div className="search-btn">
+            <div className="action-btn">
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                 <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF"/>
-                <path d="M17.4995 17.5L13.8828 13.8833" stroke="black" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M9.16667 15.8333C12.8486 15.8333 15.8333 12.8486 15.8333 9.16667C15.8333 5.48477 12.8486 2.5 9.16667 2.5C5.48477 2.5 2.5 5.48477 2.5 9.16667C2.5 12.8486 5.48477 15.8333 9.16667 15.8333Z" stroke="black" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="20" cy="20" r="7.5" stroke="black" strokeWidth="1.66667"/>
+                <path d="M25 25L30 30" stroke="black" strokeWidth="1.66667" strokeLinecap="round"/>
               </svg>
             </div>
 
-            <div className="wishlist-btn">
+            <div className="action-btn">
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                 <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF"/>
                 <path d="M20.09 25.5586L20 25.6458L19.901 25.5586C15.626 21.8005 12.8 19.3155 12.8 16.7956C12.8 15.0518 14.15 13.7439 15.95 13.7439C17.336 13.7439 18.686 14.6158 19.163 15.8016H20.837C21.314 14.6158 22.664 13.7439 24.05 13.7439C25.85 13.7439 27.2 15.0518 27.2 16.7956C27.2 19.3155 24.374 21.8005 20.09 25.5586ZM24.05 12C22.484 12 20.981 12.7063 20 13.8136C19.019 12.7063 17.516 12 15.95 12C13.178 12 11 14.1014 11 16.7956C11 20.0828 14.06 22.7771 18.695 26.849L20 28L21.305 26.849C25.94 22.7771 29 20.0828 29 16.7956C29 14.1014 26.822 12 24.05 12Z" fill="black"/>
               </svg>
             </div>
 
-            <div className="cart-btn">
+            <div className="action-btn">
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                 <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF"/>
                 <path d="M16.1818 15.1538C16.1818 15.1538 16.1818 11 20 11C23.8182 11 23.8182 15.1538 23.8182 15.1538M13 15.1538V29H27V15.1538H13Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -177,18 +177,17 @@ export default function Navigation() {
           gap: 16px;
         }
 
-        .location-btn,
-        .search-btn,
-        .wishlist-btn,
-        .cart-btn {
+        .action-btn {
+          display: flex;
+          justify-content: center;
+          align-items: center;
           cursor: pointer;
           transition: all 0.2s ease;
+          width: 40px;
+          height: 40px;
         }
 
-        .location-btn:hover,
-        .search-btn:hover,
-        .wishlist-btn:hover,
-        .cart-btn:hover {
+        .action-btn:hover {
           transform: scale(1.05);
         }
 

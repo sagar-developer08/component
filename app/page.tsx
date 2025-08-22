@@ -133,6 +133,18 @@ const influencerData = [
     memberType: "Bronze Member",
     followerCount: "50K",
     yearJoined: "2025"
+  },
+  {
+    name: "Ama Cruize",
+    backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/7f8ab7b79b01d0251928e6b4cffc6477e9d6a199?width=696",
+    earned: "$1M",
+    potential: "$2.9M",
+    saved: "$2M",
+    description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
+    tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
+    memberType: "Bronze Member",
+    followerCount: "50K",
+    yearJoined: "2025"
   }
 ]
 
@@ -173,7 +185,7 @@ export default function Home() {
       </section>
 
       {/* Banner 1 */}
-      <Banner 
+      <Banner
         title="How To Refer & Earn on QLIQ"
         description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
         buttonText="Learn More"
@@ -195,9 +207,9 @@ export default function Home() {
       {/* Special Deals Section */}
       <section className="section">
         <div className="container">
-          <SectionHeader 
-            title="Special Deals For QLIQ+" 
-            showNavigation={true} 
+          <SectionHeader
+            title="Special Deals For QLIQ+"
+            showNavigation={true}
             showButton={true}
             buttonText="Upgrade"
           />
@@ -210,7 +222,7 @@ export default function Home() {
       </section>
 
       {/* Banner 2 */}
-      <Banner 
+      <Banner
         title="How To Pay Using Qoyns"
         description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
         buttonText="Learn More"
@@ -254,7 +266,7 @@ export default function Home() {
       </section>
 
       {/* Banner 3 */}
-      <Banner 
+      <Banner
         title="How To Save on QLIQ"
         description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
         buttonText="Learn More"
@@ -286,7 +298,7 @@ export default function Home() {
       </section>
 
       {/* Banner 4 */}
-      <Banner 
+      <Banner
         title="How To Earn Doing a GIG"
         description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
         buttonText="Learn More"
@@ -297,7 +309,7 @@ export default function Home() {
       <FAQ />
 
       {/* Blogs Section */}
-      <section className="section">
+      {/* <section className="section">
         <div className="container">
           <div className="blogs-header">
             <h2 className="section-title">Blogs</h2>
@@ -341,10 +353,10 @@ export default function Home() {
             <div className="blog-dot"></div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Final Banner */}
-      <Banner 
+      <Banner
         title="Become a Vendor"
         description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
         buttonText="Learn More"

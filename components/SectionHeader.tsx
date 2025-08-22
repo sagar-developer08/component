@@ -52,8 +52,12 @@ export default function SectionHeader({
         .section-header {
           display: flex;
           width: 100%;
+          max-width: 1392px;
           justify-content: space-between;
-          align-items: flex-start;
+          align-items: center;
+          margin-bottom: 24px;
+          padding-right: 24px;
+          padding-left: 24px;
         }
 
         .section-title {

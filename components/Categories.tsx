@@ -2,40 +2,41 @@ import Image from 'next/image'
 
 const categories = [
   {
+    name: 'Hypermarket',
+    icon: '/hypermarket.svg',
+    bgColor: 'rgba(31, 199, 10, 0.16)'
+  },
+  {
+    name: 'Supermarket',
+    icon: '/supermarket.svg',
+    bgColor: 'rgba(203, 89, 101, 0.16)'
+  },
+  {
+    name: 'Brands Stores',
+    icon: '/brandStore.svg',
+    bgColor: 'rgba(198, 128, 0, 0.16)'
+  },
+  {
     name: 'Bakeries',
-    icon: 'https://api.builder.io/api/v1/image/assets/TEMP/f135c2608686bede16f4abec2b403a01ab7eadbb?width=160',
+    icon: '/Bakeries.svg',
     bgColor: 'rgba(0, 157, 224, 0.16)'
   },
   {
     name: 'Groceries',
-    icon: 'https://api.builder.io/api/v1/image/assets/TEMP/fc1c7e0e80a7c38e3ff9c097466b278b1e658d94?width=160',
+    icon: '/Grocires.svg',
     bgColor: 'rgba(31, 199, 10, 0.16)'
   },
   {
     name: 'Pharmacy',
-    icon: 'https://api.builder.io/api/v1/image/assets/TEMP/6c8400c771ae4cb7fe6f74d708d2c0f629db951b?width=160',
+    icon: 'pharmacy.svg',
     bgColor: 'rgba(198, 128, 0, 0.16)'
   },
   {
     name: 'Florists',
-    icon: 'https://api.builder.io/api/v1/image/assets/TEMP/bf6e7f121518b57c4d990d28cf218dc7630121a2?width=160',
+    icon: '/florist.svg',
     bgColor: 'rgba(0, 157, 224, 0.16)'
-  },
-  {
-    name: 'Supermarket',
-    icon: 'https://api.builder.io/api/v1/image/assets/TEMP/6ff5b7f57c77eb65e479b49fe6e61de35bfcf1f1?width=160',
-    bgColor: 'rgba(203, 89, 101, 0.16)'
-  },
-  {
-    name: 'Hypermarket',
-    icon: 'https://api.builder.io/api/v1/image/assets/TEMP/ad72e444d9b21352f7e61f696c51995f1bb1b2ac?width=160',
-    bgColor: 'rgba(31, 199, 10, 0.16)'
-  },
-  {
-    name: 'Brands Stores',
-    icon: 'https://api.builder.io/api/v1/image/assets/TEMP/d99f33c16f906ea5e1d2cfd35a57afe07035c217?width=160',
-    bgColor: 'rgba(198, 128, 0, 0.16)'
   }
+  
 ]
 
 export default function Categories() {
@@ -45,7 +46,7 @@ export default function Categories() {
         <div className="categories-content">
           {categories.map((category, index) => (
             <div key={index} className="category-item">
-              <div 
+              <div
                 className="category-icon"
                 style={{ background: category.bgColor }}
               >
