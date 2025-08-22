@@ -47,61 +47,63 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
       {/* Product Information Section */}
       <section className="section">
         <h2 className="section-title">Product Information</h2>
-        <div className="accordion">
-          <div className={`accordion-item ${expandedItem === 0 ? 'expanded' : ''}`}>
-            <div className="accordion-header" onClick={() => toggleAccordion(0)}>
-              <span className="accordion-title">Question text goes here</span>
-              <button className="accordion-toggle">
-                {expandedItem === 0 ? '−' : '+'}
-              </button>
-            </div>
-            {expandedItem === 0 && (
-              <div className="accordion-content">
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+        <div className="accordion-container">
+          <div className="accordion">
+            <div className={`accordion-item ${expandedItem === 0 ? 'expanded' : ''}`}>
+              <div className="accordion-header" onClick={() => toggleAccordion(0)}>
+                <span className="accordion-title">Question text goes here</span>
+                <button className="accordion-toggle">
+                  {expandedItem === 0 ? '−' : '+'}
+                </button>
               </div>
-            )}
-          </div>
-          
-          <div className={`accordion-item ${expandedItem === 1 ? 'expanded' : ''}`}>
-            <div className="accordion-header" onClick={() => toggleAccordion(1)}>
-              <span className="accordion-title">Question text goes here</span>
-              <button className="accordion-toggle">
-                {expandedItem === 1 ? '−' : '+'}
-              </button>
+              {expandedItem === 0 && (
+                <div className="accordion-content">
+                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                </div>
+              )}
             </div>
-            {expandedItem === 1 && (
-              <div className="accordion-content">
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+            
+            <div className={`accordion-item ${expandedItem === 1 ? 'expanded' : ''}`}>
+              <div className="accordion-header" onClick={() => toggleAccordion(1)}>
+                <span className="accordion-title">Question text goes here</span>
+                <button className="accordion-toggle">
+                  {expandedItem === 1 ? '−' : '+'}
+                </button>
               </div>
-            )}
-          </div>
-          
-          <div className={`accordion-item ${expandedItem === 2 ? 'expanded' : ''}`}>
-            <div className="accordion-header" onClick={() => toggleAccordion(2)}>
-              <span className="accordion-title">Question text goes here</span>
-              <button className="accordion-toggle">
-                {expandedItem === 2 ? '−' : '+'}
-              </button>
+              {expandedItem === 1 && (
+                <div className="accordion-content">
+                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                </div>
+              )}
             </div>
-            {expandedItem === 2 && (
-              <div className="accordion-content">
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+            
+            <div className={`accordion-item ${expandedItem === 2 ? 'expanded' : ''}`}>
+              <div className="accordion-header" onClick={() => toggleAccordion(2)}>
+                <span className="accordion-title">Question text goes here</span>
+                <button className="accordion-toggle">
+                  {expandedItem === 2 ? '−' : '+'}
+                </button>
               </div>
-            )}
-          </div>
-          
-          <div className={`accordion-item ${expandedItem === 3 ? 'expanded' : ''}`}>
-            <div className="accordion-header" onClick={() => toggleAccordion(3)}>
-              <span className="accordion-title">Question text goes here</span>
-              <button className="accordion-toggle">
-                {expandedItem === 3 ? '−' : '+'}
-              </button>
+              {expandedItem === 2 && (
+                <div className="accordion-content">
+                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                </div>
+              )}
             </div>
-            {expandedItem === 3 && (
-              <div className="accordion-content">
-                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+            
+            <div className={`accordion-item ${expandedItem === 3 ? 'expanded' : ''}`}>
+              <div className="accordion-header" onClick={() => toggleAccordion(3)}>
+                <span className="accordion-title">Question text goes here</span>
+                <button className="accordion-toggle">
+                  {expandedItem === 3 ? '−' : '+'}
+                </button>
               </div>
-            )}
+              {expandedItem === 3 && (
+                <div className="accordion-content">
+                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
@@ -109,9 +111,11 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
       {/* Product Description Section */}
       <section className="section">
         <h2 className="section-title">Product Description</h2>
-        <div className="description-content">
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-          <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
+        <div className="description-container">
+          <div className="description-content">
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+            <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
+          </div>
         </div>
       </section>
 
@@ -161,16 +165,17 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
         }
 
         .section {
-          margin-bottom: 60px;
+          margin-bottom: 80px;
         }
 
         .section-title {
-          font-size: 28px;
+          font-size: 32px;
           font-weight: 700;
-          color: #1f2937;
-          margin: 0 0 40px 0;
+          color: #000000;
+          margin: 0 0 48px 0;
           text-align: center;
           line-height: 1.2;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
         }
 
         .products-carousel {
@@ -215,87 +220,89 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
           display: none;
         }
 
+        .accordion-container {
+          max-width: 900px;
+          margin: 0 auto;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          background: white;
+          overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
         .accordion {
           display: flex;
           flex-direction: column;
-          gap: 0;
-          max-width: 800px;
-          margin: 0 auto;
         }
 
         .accordion-item {
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
+          border: none;
+          border-bottom: 1px solid #e5e7eb;
+          border-radius: 0;
           overflow: hidden;
-          margin-bottom: 16px;
+          margin-bottom: 0;
           background: white;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          box-shadow: none;
+          transition: all 0.2s ease;
         }
 
         .accordion-item:last-child {
-          margin-bottom: 0;
+          border-bottom: none;
         }
 
         .accordion-item.expanded {
-          border-color: #0082FF;
-          box-shadow: 0 4px 12px rgba(0, 130, 255, 0.15);
+          border-color: #e5e7eb;
+          box-shadow: none;
         }
 
         .accordion-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 24px;
-          background: #f9fafb;
+          padding: 24px 32px;
+          background: #ffffff;
           cursor: pointer;
-          transition: all 0.2s ease;
+          transition: background 0.2s ease;
           border: none;
           width: 100%;
           text-align: left;
         }
 
         .accordion-item.expanded .accordion-header {
-          background: #f0f8ff;
+          background: #ffffff;
           border-bottom: 1px solid #e5e7eb;
         }
 
         .accordion-header:hover {
-          background: #f3f4f6;
-        }
-
-        .accordion-item.expanded .accordion-header:hover {
-          background: #e6f3ff;
+          background: #f9f9f9;
         }
 
         .accordion-title {
           font-size: 16px;
-          font-weight: 600;
-          color: #1f2937;
+          font-weight: 500;
+          color: #000000;
           margin: 0;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
         }
 
         .accordion-toggle {
           background: none;
           border: none;
           font-size: 24px;
-          color: #6b7280;
+          color: #666666;
           cursor: pointer;
-          width: 32px;
-          height: 32px;
+          width: 24px;
+          height: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
-          border-radius: 6px;
+          padding: 0;
+          margin: 0;
           transition: all 0.2s ease;
         }
 
-        .accordion-toggle:hover {
-          background: rgba(0, 0, 0, 0.05);
-          color: #374151;
-        }
-
         .accordion-content {
-          padding: 24px;
+          padding: 24px 32px;
           background: white;
           line-height: 1.6;
         }
@@ -303,25 +310,34 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
         .accordion-content p {
           margin: 0;
           line-height: 1.6;
-          color: #4b5563;
+          color: #666666;
           font-size: 15px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+
+        .description-container {
+          max-width: 900px;
+          margin: 0 auto;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
         .description-content {
           background: white;
           padding: 32px;
-          border-radius: 12px;
-          border: 1px solid #e5e7eb;
-          max-width: 800px;
-          margin: 0 auto;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          border: none;
+          border-radius: 0;
+          box-shadow: none;
         }
 
         .description-content p {
           margin: 0 0 20px 0;
-          line-height: 1.7;
-          color: #4b5563;
+          line-height: 1.6;
+          color: #666666;
           font-size: 15px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
         }
 
         .description-content p:last-child {
@@ -354,8 +370,53 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
 
         @media (max-width: 768px) {
           .section-title {
-            font-size: 24px;
-            margin-bottom: 24px;
+            font-size: 28px;
+            margin-bottom: 32px;
+          }
+
+          .section {
+            margin-bottom: 60px;
+          }
+
+          .accordion-container {
+            max-width: 100%;
+            border-radius: 12px;
+          }
+
+          .accordion-header {
+            padding: 20px 24px;
+          }
+
+          .accordion-title {
+            font-size: 15px;
+          }
+
+          .accordion-toggle {
+            font-size: 22px;
+            width: 24px;
+            height: 24px;
+          }
+
+          .accordion-content {
+            padding: 20px 24px;
+          }
+
+          .accordion-content p {
+            font-size: 14px;
+          }
+
+          .description-container {
+            max-width: 100%;
+            border-radius: 12px;
+          }
+
+          .description-content {
+            padding: 24px;
+          }
+
+          .description-content p {
+            font-size: 14px;
+            margin-bottom: 16px;
           }
 
           .products-grid {
@@ -369,12 +430,27 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
             font-size: 20px;
           }
 
-          .description-content {
-            padding: 24px;
-          }
-
           .manufacturer-image {
             height: 200px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .section-title {
+            font-size: 24px;
+            margin-bottom: 24px;
+          }
+
+          .accordion-header {
+            padding: 16px 20px;
+          }
+
+          .accordion-content {
+            padding: 16px 20px;
+          }
+
+          .description-content {
+            padding: 20px;
           }
         }
       `}</style>
