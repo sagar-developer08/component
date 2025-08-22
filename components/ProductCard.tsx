@@ -1,5 +1,3 @@
-'use client'
-
 import Image from 'next/image'
 
 interface ProductCardProps {
@@ -95,6 +93,10 @@ export default function ProductCard({
         .product-image {
           width: 322px;
           height: 222px;
+          border-radius: 16px;
+          border: 1px solid rgba(0, 0, 0, 0.16);
+          background-size: cover;
+          background-position: center;
           position: relative;
         }
 

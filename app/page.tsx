@@ -1,4 +1,5 @@
 'use client'
+
 import Navigation from '@/components/Navigation'
 import Categories from '@/components/Categories'
 import ImageSlider from '@/components/ImageSlider'
@@ -139,10 +140,13 @@ export default function Home() {
   return (
     <main className="home-page">
       <Navigation />
-      
+
       <Categories />
-      
-      <ImageSlider />
+      <section className="section">
+        <div className="container">
+          <ImageSlider />
+        </div>
+      </section>
 
       {/* Bestsellers Section */}
       <section className="section">

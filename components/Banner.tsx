@@ -34,7 +34,7 @@ export default function Banner({
           display: flex;
           width: 100%;
           height: 324px;
-          padding: 0 40px;
+          padding: 0;
           justify-content: center;
           align-items: center;
         }
@@ -42,7 +42,6 @@ export default function Banner({
         .banner-content {
           display: flex;
           width: 100%;
-          max-width: 1360px;
           height: 324px;
           padding: 40px;
           flex-direction: column;
@@ -66,7 +65,7 @@ export default function Banner({
           width: 600px;
           color: #FFF;
           font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 32px;
+          font-size: 40px;
           font-weight: 700;
           line-height: 130%;
           margin: 0;
@@ -77,7 +76,7 @@ export default function Banner({
           color: rgba(255, 255, 255, 0.80);
           font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
           font-size: 16px;
-          font-weight: 700;
+          font-weight: 400;
           line-height: 150%;
           margin: 0;
         }

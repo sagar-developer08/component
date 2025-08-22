@@ -31,78 +31,76 @@ export default function ImageSlider() {
 
   return (
     <div className="slider-section">
-      <div className="slider-container">
-        <div className="slide-wrapper">
-          <Image
-            src={slides[currentSlide].image}
-            alt={`Slide ${currentSlide + 1}`}
-            width={668}
-            height={380}
-            style={{ borderRadius: '16px' }}
-          />
-        </div>
+      <Image
+        src="https://api.builder.io/api/v1/image/assets/TEMP/dc622b97235b892ac997a36da4ca4fc5bbe221a9?width=1376"
+        alt="Slide 1"
+        width={688}
+        height={380}
+        style={{ borderRadius: '16px', position: 'absolute', left: '-672px', top: '0px' }}
+      />
+      <Image
+        src="https://api.builder.io/api/v1/image/assets/TEMP/8327e3bf1cc4b0879c5c6e445dc27305afbd0795?width=1336"
+        alt="Slide 2"
+        width={668}
+        height={380}
+        style={{ borderRadius: '16px', position: 'absolute', left: '40px', top: '0px' }}
+      />
+      <Image
+        src="https://api.builder.io/api/v1/image/assets/TEMP/dd3b697ca0d3ef83a64c4b812706fae22e6774f2?width=1336"
+        alt="Slide 3"
+        width={668}
+        height={380}
+        style={{ borderRadius: '16px', position: 'absolute', left: '732px', top: '0px' }}
+      />
+      <Image
+        src="https://api.builder.io/api/v1/image/assets/TEMP/a868e3c3ae04f8cde35d9705cad41f2bccbeb7da?width=1376"
+        alt="Slide 4"
+        width={688}
+        height={380}
+        style={{ borderRadius: '16px', position: 'absolute', left: '1424px', top: '0px' }}
+      />
 
-        <div className="slider-controls">
-          <button 
-            className="nav-button prev" 
-            onClick={prevSlide}
-            aria-label="Previous slide"
-          >
-            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-              <rect y="44" width="44" height="44" rx="22" transform="rotate(-90 0 44)" fill="white"/>
-              <path d="M32 22L11 22M11 22L18.875 14.125M11 22L18.875 29.875" stroke="#0082FF" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+      <div className="slider-controls">
+        <button
+          className="nav-button prev"
+          onClick={prevSlide}
+          aria-label="Previous slide"
+        >
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+            <rect y="44" width="44" height="44" rx="22" transform="rotate(-90 0 44)" fill="white"/>
+            <path d="M32 22L11 22M11 22L18.875 14.125M11 22L18.875 29.875" stroke="#0082FF" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
 
-          <button 
-            className="nav-button next" 
-            onClick={nextSlide}
-            aria-label="Next slide"
-          >
-            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-              <rect x="44" width="44" height="44" rx="22" transform="rotate(90 44 0)" fill="white"/>
-              <path d="M11 22L32 22M32 22L24.125 29.875M32 22L24.125 14.125" stroke="#0082FF" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
+        <button
+          className="nav-button next"
+          onClick={nextSlide}
+          aria-label="Next slide"
+        >
+          <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+            <rect x="44" width="44" height="44" rx="22" transform="rotate(90 44 0)" fill="white"/>
+            <path d="M11 22L32 22M32 22L24.125 29.875M32 22L24.125 14.125" stroke="#0082FF" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
       </div>
 
       <style jsx>{`
         .slider-section {
-          width: 100%;
+          width: 1440px;
           height: 380px;
           position: relative;
           overflow: hidden;
         }
 
-        .slider-container {
-          width: 100%;
-          height: 100%;
-          position: relative;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        .slide-wrapper {
-          position: relative;
-          transition: all 0.5s ease-in-out;
-        }
-
         .slider-controls {
-          position: absolute;
-          top: 50%;
-          left: 0;
-          right: 0;
-          transform: translateY(-50%);
           display: flex;
+          width: 1392px;
           justify-content: space-between;
-          align-items: center;
-          padding: 0 24px;
-          width: 100%;
-          max-width: 1392px;
-          margin: 0 auto;
-          pointer-events: none;
+          align-items: flex-start;
+          position: absolute;
+          left: 24px;
+          top: 168px;
+          height: 44px;
         }
 
         .nav-button {
