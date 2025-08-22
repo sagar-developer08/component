@@ -10,10 +10,12 @@ import CategoryCard from '@/components/CategoryCard'
 import InfluencerCard from '@/components/InfluencerCard'
 import FAQ from '@/components/FAQ'
 import Footer from '@/components/Footer'
+import QuickNav from '@/components/QuickNav'
 import Image from 'next/image'
 
 const productData = [
   {
+    id: "nike-airforce-01",
     title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
     price: "AED 1,600",
     rating: "4.0",
@@ -21,6 +23,7 @@ const productData = [
     image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
   },
   {
+    id: "nike-dunk-low",
     title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
     price: "AED 1,600",
     rating: "4.0",
@@ -28,6 +31,7 @@ const productData = [
     image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
   },
   {
+    id: "nike-air-max",
     title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
     price: "AED 1,600",
     rating: "4.0",
@@ -35,6 +39,7 @@ const productData = [
     image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
   },
   {
+    id: "nike-airforce-01-black",
     title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
     price: "AED 1,600",
     rating: "4.0",
@@ -140,6 +145,7 @@ export default function Home() {
   return (
     <main className="home-page">
       <Navigation />
+      <QuickNav />
 
       <Categories />
       <section className="section">
