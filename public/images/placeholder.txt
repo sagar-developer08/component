@@ -1,0 +1,14 @@
+This directory contains product images for the e-commerce site.
+
+For the Nike Airforce 01 product page, you'll need to add:
+- nike-airforce-01-white.jpg (main product image)
+- nike-airforce-01-white-2.jpg
+- nike-airforce-01-white-3.jpg
+- nike-airforce-01-white-4.jpg
+- nike-airforce-01-white-5.jpg
+- nike-dunk-low.jpg
+- nike-airforce-01-black.jpg
+- nike-air-max.jpg
+- manufacturer-sneakers.jpg
+
+You can use any sneaker images or placeholder images for now.

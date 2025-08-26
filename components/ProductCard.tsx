@@ -1,6 +1,8 @@
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 
 interface ProductCardProps {
+  id?: string
   title: string
   price: string
   rating: string
@@ -11,6 +13,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ 
+  id = "nike-airforce-01",
   title, 
   price, 
   rating, 
@@ -19,8 +22,14 @@ export default function ProductCard({
   badge = "-$500 on your first order",
   showIcons = true 
 }: ProductCardProps) {
+  const router = useRouter()
+
+  const handleCardClick = () => {
+    router.push(`/product/${id}`)
+  }
+
   return (
-    <div className="product-card">
+    <div className="product-card" onClick={handleCardClick}>
       <div className="product-image">
         <Image
           src={image}
@@ -45,14 +54,14 @@ export default function ProductCard({
 
         {showIcons && (
           <>
-            <button className="wishlist-icon" aria-label="Add to wishlist">
+            <button className="wishlist-icon" aria-label="Add to wishlist" onClick={(e) => e.stopPropagation()}>
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                 <rect width="40" height="40" rx="20" fill="#0082FF"/>
                 <path d="M20.09 25.5586L20 25.6458L19.901 25.5586C15.626 21.8005 12.8 19.3155 12.8 16.7956C12.8 15.0518 14.15 13.7439 15.95 13.7439C17.336 13.7439 18.686 14.6158 19.163 15.8016H20.837C21.314 14.6158 22.664 13.7439 24.05 13.7439C25.85 13.7439 27.2 15.0518 27.2 16.7956C27.2 19.3155 24.374 21.8005 20.09 25.5586ZM24.05 12C22.484 12 20.981 12.7063 20 13.8136C19.019 12.7063 17.516 12 15.95 12C13.178 12 11 14.1014 11 16.7956C11 20.0828 14.06 22.7771 18.695 26.849L20 28L21.305 26.849C25.94 22.7771 29 20.0828 29 16.7956C29 14.1014 26.822 12 24.05 12Z" fill="white"/>
               </svg>
             </button>
 
-            <button className="cart-icon" aria-label="Add to cart">
+            <button className="cart-icon" aria-label="Add to cart" onClick={(e) => e.stopPropagation()}>
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                 <rect width="40" height="40" rx="20" fill="#0082FF"/>
                 <path d="M16.1818 15.1538C16.1818 15.1538 16.1818 11 20 11C23.8182 11 23.8182 15.1538 23.8182 15.1538M13 15.1538V29H27V15.1538H13Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -88,6 +97,13 @@ export default function ProductCard({
           align-items: center;
           gap: 16px;
           position: relative;
+          cursor: pointer;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .product-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
         }
 
         .product-image {

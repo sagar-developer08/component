@@ -119,7 +119,7 @@ export default function ImageSlider() {
         
         .slider-section {
           width: 100%;
-          max-width: 1392px;
+          max-width: 1360px;
           position: relative;
           overflow: hidden;
         }

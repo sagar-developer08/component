@@ -34,7 +34,7 @@ export default function FAQ() {
       <div className="faq-container">
         <div className="faq-content">
           <div className="faq-text">
-            <h2 className="faq-title">Frequently Asked Questions</h2>
+            <h2 className="faq-title">Product Information</h2>
             <div className="faq-accordion">
               {faqData.map((item, index) => (
                 <div key={index} className={`accordion-item ${openIndex === index ? 'open' : ''}`}>

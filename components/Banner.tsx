@@ -36,7 +36,6 @@ export default function Banner({
           justify-content: center;
           padding: 0 24px;
           box-sizing: border-box;
-          padding-bottom: 60px;
         }
         
         .banner-section {
