@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import Image from 'next/image';
 
-
 export default function ProductDetails({ product }) {
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
@@ -85,8 +84,6 @@ export default function ProductDetails({ product }) {
             <span className="discount">{product.discount}% Off</span>
           </div>
 
-          {/* <p className="description">{product.description}</p> */}
-
           {/* Color Selection */}
           <div className="selection-group">
             <label>Color:</label>
@@ -119,10 +116,10 @@ export default function ProductDetails({ product }) {
             </div>
           </div>
 
-          {/* Quantity Selector */}
-          <div className="stats">
+          {/* Quantity Selector and Share Section */}
+          <div className="quantity-share-container">
             <div className="selection-group">
-              {/* <label>Quantity:</label> */}
+              <label>Quantity:</label>
               <div className="quantity-selector">
                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
                 <span>{quantity}</span>
@@ -146,24 +143,59 @@ export default function ProductDetails({ product }) {
             <button className="add-to-favourite">Add To Favourite</button>
           </div>
 
-          {/* Share Options */}
-
-
           {/* Other Sellers */}
           <div className="other-sellers">
             <span>Other Sellers</span>
             <button className="arrow-right">→</button>
           </div>
 
+          {/* Promo Cards - Two in one row */}
+          <div className="promo-cards-row">
+            <div className="promo-card promo-card-outline">
+              <div className="promo-card-icon">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <rect width="32" height="32" rx="8" fill="#111" />
+                  <path d="M10.5 16.5L21.5 16.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M16 10.5L16 21.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M12.5 12.5L19.5 19.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M19.5 12.5L12.5 19.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </div>
+              <div className="promo-card-content">
+                <div className="promo-card-title">Pay in 3 interest-free payments</div>
+                <div className="promo-card-link">Learn More</div>
+              </div>
+            </div>
+            <div className="promo-card promo-card-outline">
+              <div className="promo-card-icon">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                  <rect width="32" height="32" rx="8" fill="#111" />
+                  <path d="M10.5 16.5L21.5 16.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M16 10.5L16 21.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M12.5 12.5L19.5 19.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M19.5 12.5L12.5 19.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </div>
+              <div className="promo-card-content">
+                <div className="promo-card-title">Pay in 3 interest-free payments</div>
+                <div className="promo-card-link">Learn More</div>
+              </div>
+            </div>
+          </div>
+
           {/* Additional Info */}
           <div className="additional-info">
             <div className="info-item">
               <span className="icon">🚚</span>
-              <span>Delivery Return</span>
+              <span>Return Policy</span>
             </div>
             <div className="info-item">
               <span className="icon">⭐</span>
               <span>1 Year Warranty</span>
+            </div>
+            <div className="info-item">
+              <span className="icon">🚚</span>
+              <span>Secure Payments</span>
             </div>
           </div>
         </div>
@@ -358,12 +390,13 @@ export default function ProductDetails({ product }) {
         .selection-group label {
           font-weight: 600;
           color: #333;
+          min-width: 70px;
         }
 
         .color-options, .size-options {
           display: flex;
           gap: 10px;
-
+          flex-wrap: wrap;
         }
 
         .color-btn {
@@ -374,8 +407,10 @@ export default function ProductDetails({ product }) {
           cursor: pointer;
           transition: all 0.2s ease;
           font-weight: 600;
+          white-space: nowrap;
         }
-          .size-btn {
+        
+        .size-btn {
           padding: 8px 24px;
           border: 2px solid #0082FF;
           border-radius: 25px;
@@ -383,12 +418,21 @@ export default function ProductDetails({ product }) {
           cursor: pointer;
           transition: all 0.2s ease;
           font-weight: 600;
+          white-space: nowrap;
         }
 
         .color-btn.selected, .size-btn.selected {
           border-color: #0082FF;
           background: #0082FF;
           color: white;
+        }
+
+        /* Quantity and Share Container */
+        .quantity-share-container {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 20px;
         }
 
         .quantity-selector {
@@ -423,18 +467,18 @@ export default function ProductDetails({ product }) {
           gap: 16px;
         }
 
-      .add-to-cart {
-        width: 100%;
-        max-width: 342px;
-        padding: 12px 40px;
-        background: rgba(0, 130, 255, 0.24); 
-        border: none;
-        border-radius: 50px;
-        color: #0082FF;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s ease;
+        .add-to-cart {
+          width: 100%;
+          max-width: 342px;
+          padding: 12px 40px;
+          background: rgba(0, 130, 255, 0.24); 
+          border: none;
+          border-radius: 50px;
+          color: #0082FF;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s ease;
         }
 
         .add-to-favourite {
@@ -454,7 +498,7 @@ export default function ProductDetails({ product }) {
         .share-section {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 12px;
         }
 
         .share-icons {
@@ -496,9 +540,66 @@ export default function ProductDetails({ product }) {
           color: #000;
         }
 
-        .additional-info {
+        /* Promo Cards - Two in one row */
+        .promo-cards-row {
+          display: flex;
+          gap: 16px;
+          width: 100%;
+        }
+        
+        .promo-card {
+          display: flex;
+          align-items: center;
+          border-radius: 16px;
+          padding: 18px;
+          flex: 1;
+          box-sizing: border-box;
+          gap: 12px;
+          min-width: 0; /* Allows text truncation */
+        }
+        
+        .promo-card-outline {
+          border: 2px solid #2196F3;
+          background: #fff;
+        }
+        
+        .promo-card-icon {
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .promo-card-content {
           display: flex;
           flex-direction: column;
+          gap: 4px;
+          min-width: 0; /* Allows text truncation */
+          flex: 1;
+        }
+        
+        .promo-card-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #000;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        .promo-card-link {
+          font-size: 14px;
+          font-weight: 600;
+          color: #000;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          white-space: nowrap;
+        }
+
+        .additional-info {
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
           gap: 12px;
         }
 
@@ -506,8 +607,10 @@ export default function ProductDetails({ product }) {
           display: flex;
           align-items: center;
           gap: 12px;
-          color: #666;
+          color: #000;
           cursor: pointer;
+          font-weight: 600;
+          font-size: 16px;
         }
 
         .info-item:hover {
@@ -544,9 +647,17 @@ export default function ProductDetails({ product }) {
           .action-buttons {
             flex-direction: column;
           }
+          
+          .quantity-share-container {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          
+          .promo-cards-row {
+            flex-direction: column;
+          }
         }
       `}</style>
     </div>
   );
 }
-

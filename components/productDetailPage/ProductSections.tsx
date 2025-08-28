@@ -26,18 +26,18 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
   // Sample manufacturer images
   const manufacturerImages = [
     "/images/manufacturer-sneakers.jpg",
-    "/images/manufacturer-2.jpg", 
+    "/images/manufacturer-2.jpg",
     "/images/manufacturer-3.jpg"
   ]
 
   const nextImage = () => {
-    setManufacturerImageIndex((prevIndex) => 
+    setManufacturerImageIndex((prevIndex) =>
       prevIndex === manufacturerImages.length - 1 ? 0 : prevIndex + 1
     )
   }
 
   const prevImage = () => {
-    setManufacturerImageIndex((prevIndex) => 
+    setManufacturerImageIndex((prevIndex) =>
       prevIndex === 0 ? manufacturerImages.length - 1 : prevIndex - 1
     )
   }
@@ -62,19 +62,95 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
       </section>
 
       {/* Product Information Section */}
-      <ProductInformation />
+      {/* <ProductInformation /> */}
 
       {/* Product Description Section */}
       <section className="section">
         <div className="container">
           <SectionHeader
-            title="Product Description"
+            title="Product Overview"
             showNavigation={false}
             showButton={false}
             buttonText="Upgrade"
           />
           <div className="description-content">
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</p>
+            <p>Qorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu turpis molestie, dictum est a, mattis tellus. Sed dignissim, metus nec fringilla accumsan, risus sem sollicitudin lacus, ut interdum tellus elit sed risus. Maecenas eget condimentum velit, sit amet feugiat lectus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent auctor purus luctus enim egestas, ac scelerisque ante pulvinar. Donec ut rhoncus ex. Suspendisse ac rhoncus nisl, eu tempor urna. Curabitur vel bibendum lorem. Morbi convallis convallis diam sit amet lacinia. Aliquam in elementum tellus.</p>
+            <br />
+            <p>Qorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu turpis molestie, dictum est a, mattis tellus. Sed dignissim, metus nec fringilla accumsan, risus sem sollicitudin lacus, ut interdum tellus elit sed risus. Maecenas eget condimentum velit, sit amet feugiat lectus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent auctor purus luctus enim egestas, ac scelerisque ante pulvinar. Donec ut rhoncus ex. Suspendisse ac rhoncus nisl, eu tempor urna. Curabitur vel bibendum lorem. Morbi convallis convallis diam sit amet lacinia. Aliquam in elementum tellus.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Product Specifications Section */}
+      <section className="section">
+        <div className="container specifications-container">
+          <SectionHeader
+            title="Product Specifications"
+            showNavigation={false}
+            showButton={false}
+            buttonText="Upgrade"
+          />
+          <div className="specifications-wrapper">
+            <div className="spec-table spec-table-left">
+              <table>
+                <tbody>
+                  <tr>
+                    <th>Heading</th>
+                    <td>Lorem Ipsum</td>
+                  </tr>
+                  <tr>
+                    <th>Heading</th>
+                    <td>Lorem Ipsum</td>
+                  </tr>
+                  <tr>
+                    <th>Heading</th>
+                    <td>Lorem Ipsum</td>
+                  </tr>
+                  <tr>
+                    <th>Heading</th>
+                    <td>Lorem Ipsum</td>
+                  </tr>
+                  <tr>
+                    <th>Heading</th>
+                    <td>Lorem Ipsum</td>
+                  </tr>
+                  <tr>
+                    <th>Heading</th>
+                    <td>Lorem Ipsum</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div className="spec-table spec-table-right">
+              <table>
+                <tbody>
+                  <tr>
+                    <th>Heading</th>
+                    <td>Lorem Ipsum</td>
+                  </tr>
+                  <tr>
+                    <th>Heading</th>
+                    <td>Lorem Ipsum</td>
+                  </tr>
+                  <tr>
+                    <th>Heading</th>
+                    <td>Lorem Ipsum</td>
+                  </tr>
+                  <tr>
+                    <th>Heading</th>
+                    <td>Lorem Ipsum</td>
+                  </tr>
+                  <tr>
+                    <th>Heading</th>
+                    <td>Lorem Ipsum</td>
+                  </tr>
+                  <tr>
+                    <th>Heading</th>
+                    <td>Lorem Ipsum</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
@@ -88,7 +164,7 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
             showButton={false}
           />
         </div>
-        
+
         {/* Full-width image container */}
         <div className="manufacturer-full-width">
           <div className="manufacturer-carousel">
@@ -105,13 +181,83 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
         </div>
       </section>
 
-      {/* Customer Also Liked Section */}
+      {/* Reviews & Ratings Section */}
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="Reviews & Ratings"
+            showNavigation={false}
+            showButton={false}
+          />
+        </div>
+        <div className="reviews-ratings-container">
+          <div className="reviews-left">
+            <h3 className="reviews-title-2">Write a Review</h3>
+            <form className="review-form">
+              <input className="form-input" type="text" placeholder="Name" />
+              <div className="form-upload-container">
+                <label className="form-upload-label">
+                  Upload Photo
+                  <input type="file" id="photo-upload" className="upload-input" />
+                </label>
+              </div>
+              <textarea className="form-textarea" placeholder="Review" rows={3} />
+              <div className="form-actions">
+                <button type="button" className="form-cancel">Cancel</button>
+                <button type="submit" className="form-submit">Submit</button>
+              </div>
+            </form>
+          </div>
+          <div className="reviews-right">
+            <div className="reviews-summary">
+              <div className="summary-title">3334 Reviews, summarised</div>
+              <ul className="summary-list">
+                <li>Stunning display and powerful performance make it a top-tier phone.</li>
+                <li>The pro-grade camera system captures incredible photos and videos.</li>
+                <li>Innovative AI features enhance productivity and user experience.</li>
+                <li>Some users have reported battery drain and heating issues.</li>
+              </ul>
+              <div className="customer-photos-row">
+                <span className="customer-photos-title">Customers Photos (1332)</span>
+                <a className="customer-photos-viewall" href="#">View All</a>
+              </div>
+              <div className="customer-photos-list">
+                {[...Array(7)].map((_, i) => (
+                  <div className="customer-photo" key={i}></div>
+                ))}
+              </div>
+            </div>
+            <div className="reviews-list">
+              {[...Array(4)].map((_, i) => (
+                <div className="review-item" key={i}>
+                  <div className="review-photo"></div>
+                  <div className="review-content">
+                    <div className="review-text">
+                      Lorem ipsum dolor sit amet, consectetur adipiscing elit Suspendisse varius enim in eros elementum tristique | orem ipsum dolor sit amet, consectetur adipiscing.
+                    </div>
+                    <div className="review-meta">
+                      <span className="review-author">Ama Cruize</span>
+                      <span className="review-verified">
+                        <svg width="18" height="18" viewBox="0 0 18 18" style={{ verticalAlign: 'middle', marginRight: 4 }}><circle cx="9" cy="9" r="9" fill="#111" /><path d="M13 7l-4 4-2-2" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        Verified Purchase
+                      </span>
+                    </div>
+                    <span className="review-date">Nov 12, 2024</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="section">
         <div className="container">
           <SectionHeader
             title="Customer Also Liked These Products"
             showNavigation={true}
             showButton={false}
+            buttonText="Upgrade"
           />
           <div className="products-grid">
             {relatedProducts.map((product, index) => (
@@ -325,6 +471,75 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
           object-fit: cover;
         }
 
+        .specifications-container {
+          max-width: 1392px;
+          padding-left: 0;
+          padding-right: 0;
+        }
+        .specifications-wrapper {
+          display: flex;
+          gap: 0;
+          justify-content: center;
+          align-items: flex-start;
+          margin-top: 24px;
+          width: 100%;
+          max-width: 1392px;
+          padding: 0 12px;
+        }
+        .spec-table {
+          flex: 1;
+          min-width: 0;
+          max-width: 50%;
+        }
+        .spec-table table {
+          width: 100%;
+          max-width: 1392px;
+          border-collapse: collapse;
+        }
+        .spec-table th,
+        .spec-table td {
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 16px;
+          font-weight: 600;
+          text-align: left;
+          padding: 12px 16px;
+        }
+        .spec-table th {
+          color: #111;
+          background: transparent;
+          width: 160px;
+        }
+        .spec-table td {
+          color: #222;
+        }
+        /* Right table: normal coloring */
+        .spec-table-right tr:nth-child(even) td,
+        .spec-table-right tr:nth-child(even) th {
+          background: #f7f7f7;
+        }
+        .spec-table-right tr:nth-child(odd) td,
+        .spec-table-right tr:nth-child(odd) th {
+          background: #fff;
+        }
+        /* Left table: inverted coloring */
+        .spec-table-left tr:nth-child(odd) td,
+        .spec-table-left tr:nth-child(odd) th {
+          background: #f7f7f7;
+        }
+        .spec-table-left tr:nth-child(even) td,
+        .spec-table-left tr:nth-child(even) th {
+          background: #fff;
+        }
+        @media (max-width: 900px) {
+          .specifications-wrapper {
+            flex-direction: column;
+            gap: 0;
+          }
+          .spec-table {
+            max-width: 100%;
+          }
+        }
+
         @media (max-width: 768px) {
           .section-title {
             font-size: 28px;
@@ -421,6 +636,235 @@ export default function ProductSections({ relatedProducts }: ProductSectionsProp
             width: 36px;
             height: 36px;
             font-size: 18px;
+          }
+        }
+
+        .reviews-ratings-container {
+          display: flex;
+          gap: 48px;
+          max-width: 1392px;
+          margin: 0 auto;
+          padding: 0 24px;
+        }
+        .reviews-left {
+          flex: 1;
+          max-width: 340px;
+        }
+        .reviews-title {
+          font-size: 2rem;
+          font-weight: 700;
+          margin-bottom: 32px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+          .reviews-title-2 {
+          font-size: 24px;
+          font-weight: 600;
+          margin-bottom: 16px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+        .review-form {
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+        }
+        .form-input, .form-textarea {
+          width: 100%;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          padding: 10px 14px;
+          font-size: 16px;
+          font-family: inherit;
+          background: #fff;
+          margin-bottom: 0;
+        }
+        .form-input::placeholder,
+        .form-textarea::placeholder {
+          color: #000; /* Black placeholder text */
+        }
+        .form-upload-container {
+          width: 100%;
+        }
+        .form-upload-label {
+          display: block;
+          width: 100%;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          padding: 10px 14px;
+          font-size: 16px;
+          font-family: inherit;
+          background: #fff;
+          color: #000; /* Black text for upload label */
+          cursor: pointer;
+          text-align: left;
+        }
+        .upload-input {
+          display: none;
+        }
+        .form-actions {
+          display: flex;
+          gap: 16px;
+          margin-top: 8px;
+        }
+        .form-cancel {
+          flex: 1;
+          background: #fff;
+          border: 1px solid #111;
+          color: #111;
+          border-radius: 24px;
+          font-size: 16px;
+          font-weight: 500;
+          padding: 8px 0;
+          cursor: pointer;
+        }
+        .form-submit {
+          flex: 1;
+          background: #cbe6ff;
+          border: none;
+          color: #111;
+          border-radius: 24px;
+          font-size: 16px;
+          font-weight: 500;
+          padding: 8px 0;
+          cursor: pointer;
+        }
+        .reviews-right {
+          flex: 2.2;
+          min-width: 0;
+        }
+        .reviews-summary {
+          margin-bottom: 24px;
+        }
+        .summary-title {
+          font-size: 24px;
+          font-weight: 600;
+          margin-bottom: 12px;
+        }
+        .summary-list {
+          margin: 0 0 18px 0;
+          padding-left: 18px;
+          font-size: 16px;
+          color: #222;
+          font-weight: 600;
+        }
+        .customer-photos-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 8px;
+        }
+        .customer-photos-title {
+          font-size: 15px;
+          font-weight: 600;
+          color: #222;
+        }
+        .customer-photos-viewall {
+          font-size: 15px;
+          color: #007aff;
+          font-weight: 500;
+          text-decoration: none;
+        }
+        .customer-photos-list {
+          display: flex;
+          gap: 16px;
+          margin-bottom: 18px;
+        }
+        .customer-photo {
+          width: 108px;
+          height: 108px;
+          border-radius: 12px;
+          background: #111;
+          display: inline-block;
+        }
+        .reviews-list {
+          display: flex;
+          flex-direction: column;
+          gap: 32px;
+        }
+        .review-item {
+          display: flex;
+          gap: 18px;
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .review-photo {
+          width: 60px;
+          height: 60px;
+          border-radius: 8px;
+          background: #111;
+          flex-shrink: 0;
+        }
+        .review-content {
+          flex: 1;
+        }
+        .review-text {
+          font-size: 16px;
+          color: #222;
+          font-weight: 500;
+          margin-bottom: 8px;
+        }
+        .review-meta {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          color: #222;
+          margin-bottom: 4px;
+        }
+        .review-author {
+          font-weight: 600;
+          font-size: 16px;
+          color: #000;
+        }
+        .review-verified {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          font-weight: 600;
+          font-size: 16px;
+          color: #000;
+        }
+        .review-date {
+          color: #000;
+          font-size: 14px;
+          font-weight: 600;
+        }
+        @media (max-width: 1100px) {
+          .reviews-ratings-container {
+            flex-direction: column;
+            gap: 32px;
+            padding: 0 12px;
+          }
+          .reviews-left, .reviews-right {
+            max-width: 100%;
+          }
+        }
+        @media (max-width: 768px) {
+          .reviews-title {
+            font-size: 1.3rem;
+            margin-bottom: 18px;
+          }
+          .reviews-ratings-container {
+            padding: 0 4px;
+          }
+          .customer-photo {
+            width: 54px;
+            height: 54px;
+          }
+          .review-photo {
+            width: 36px;
+            height: 36px;
+          }
+        }
+        @media (max-width: 480px) {
+          .reviews-title {
+            font-size: 1.1rem;
+          }
+          .customer-photo {
+            width: 38px;
+            height: 38px;
+          }
+          .review-photo {
+            width: 28px;
+            height: 28px;
           }
         }
       `}</style>
