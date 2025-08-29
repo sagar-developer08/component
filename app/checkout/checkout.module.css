@@ -1,0 +1,314 @@
+.checkoutPage {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.checkoutContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.backButton {
+  margin-bottom: 24px;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #000;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.checkoutTitle {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #000;
+}
+
+.checkoutSubtitle {
+  color: #666;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.checkoutContent {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 48px;
+}
+
+.walletSection {
+  margin-bottom: 32px;
+}
+
+.walletCard {
+  background: linear-gradient(135deg, #0082FF 0%, #0066CC 100%);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: white;
+}
+
+.walletIcon {
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.walletTitle {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 4px;
+}
+
+.walletBalance {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.walletExpiry {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.section {
+  margin-bottom: 32px;
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #000;
+}
+
+.locationSelector {
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.locationItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid #E5E5E5;
+  cursor: pointer;
+}
+
+.locationItem .arrow {
+  margin-left: auto;
+}
+
+.addNote {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  color: #666;
+  cursor: pointer;
+}
+
+.deliveryTime {
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.timeOption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  cursor: pointer;
+}
+
+.timeOption.selected {
+  background: #F8F9FA;
+  border-left: 4px solid #0082FF;
+}
+
+.timeRange {
+  color: #666;
+  font-size: 14px;
+}
+
+.paymentMethods {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.paymentOption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.paymentOption.selected {
+  background: #0082FF;
+  color: white;
+  border-color: #0082FF;
+}
+
+.paymentOption:hover {
+  border-color: #0082FF;
+}
+
+.paymentBadge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.paymentBadge.green {
+  background: #10B981;
+  color: white;
+}
+
+.paymentBadge.orange {
+  background: #F59E0B;
+  color: white;
+}
+
+.orderSummary {
+  background: #F8F9FA;
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.productItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.productImage {
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.productDetails {
+  flex: 1;
+}
+
+.productBrand {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.productName {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.productQuantity {
+  font-size: 14px;
+  color: #666;
+}
+
+.productPrice {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.promoCode {
+  margin-bottom: 24px;
+}
+
+.promoInput {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+}
+
+.promoInput .dropdown {
+  margin-left: auto;
+}
+
+.orderTotals {
+  margin-bottom: 24px;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 16px;
+}
+
+.totalRow.discount {
+  color: #0082FF;
+}
+
+.totalRow.final {
+  font-weight: 700;
+  font-size: 18px;
+  border-top: 1px solid #E5E5E5;
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.placeOrderBtn {
+  width: 100%;
+  background: #0082FF;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.placeOrderBtn:hover {
+  background: #0066CC;
+}
+
+@media (max-width: 768px) {
+  .checkoutContent {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .checkoutContainer {
+    padding: 16px;
+  }
+
+  .checkoutTitle {
+    font-size: 24px;
+  }
+}

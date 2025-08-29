@@ -82,7 +82,8 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         }
 
         .main-content {
-          padding-top: 40px; /* Account for fixed navigation */
+          margin-top: 200px;
+    
         }
       `}</style>
     </div>
