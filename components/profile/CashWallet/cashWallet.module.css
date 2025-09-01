@@ -1,0 +1,60 @@
+.walletHeader {
+  /* ...existing code... */
+}
+
+.balanceCard {
+  background: #F8F9FA;
+  border-radius: 16px;
+  border: 1px solid #666;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 24px;
+  max-width: 364px;
+}
+
+.balanceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+  flex-direction: row;
+}
+
+.balanceTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #000;
+}
+
+.AccountName {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+
+.CardDetails {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+  flex-direction: row;
+}
+
+.DateExpiry {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+}
+
+.CardNumber {
+  font-size: 24px;
+  font-weight: 600;
+  color: #000;
+}

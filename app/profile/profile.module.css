@@ -4,82 +4,98 @@
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1392px;
   margin: 0 auto;
-  padding: 80px 24px 24px;
+  padding: 0 24px 0 24px;
 }
 
 .header {
-  text-align: center;
-  margin-bottom: 32px;
+  margin-top: 48px;
+  margin-bottom: 0;
+  text-align: left;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px;
+}
+
+.textContent {
+  flex: 1;
 }
 
 .title {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 12px;
+  font-size: 40px;
+  font-weight: 600;
   color: #000;
+  margin-bottom: 8px;
 }
 
 .subtitle {
-  color: #666;
-  line-height: 1.5;
-  max-width: 500px;
-  margin: 0 auto 20px;
-  font-size: 14px;
+  color: #222;
+  font-size: 16px;
+  line-height: 150%;
+  margin-bottom: 24px;
+  font-weight: 600;
+  max-width: 600px;
+}
+
+.actionTop {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  margin-top: 8px;
 }
 
 .upgradeBtn {
-  background: linear-gradient(135deg, #0082FF 0%, #0066CC 100%);
-  color: #fff;
-  padding: 10px 28px;
-  border-radius: 25px;
+  background: #E5F0FF;
+  color: #0082FF;
+  border-radius: 100px;
   border: none;
+  padding: 12px 24px;
   font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s;
   font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
-.upgradeBtn:hover {
-  transform: translateY(-2px);
+.goLiveBtn {
+  background: #fff;
+  color: #0082FF;
+  border-radius: 100px;
+  border: 1px solid #0082FF;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
 .profileContent {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 24px;
-  align-items: start;
-}
-
-.sidebar {
+  margin-top: 32px;
   background: #fff;
-  border-radius: 12px;
-  border: 1px solid #E5E5E5;
-  overflow: hidden;
+  border-radius: 24px;
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
 
-.tabsList {
+.tabsRow {
   display: flex;
-  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
 }
 
 .tabBtn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
-  border: none;
   background: #fff;
-  text-align: left;
+  color: #000;
+  border: 1px solid #0082FF;
+  border-radius: 100px;
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
-  border-bottom: 1px solid #F5F5F5;
-  font-size: 14px;
-}
-
-.tabBtn:hover {
-  background: #F8F9FA;
+  transition: background 0.2s, color 0.2s;
 }
 
 .tabBtn.active {
@@ -87,590 +103,396 @@
   color: #fff;
 }
 
-.tabIcon {
-  font-size: 18px;
-}
-
-.tabLabel {
-  font-weight: 500;
+.tabBtn:not(.active):hover {
+  background: #E5F0FF;
+  color: #0082FF;
 }
 
 .mainContent {
   background: #fff;
-  border-radius: 12px;
-  border: 1px solid #E5E5E5;
-  min-height: 500px;
+  border-radius: 24px;
+  border: none;
+  padding: 0;
 }
 
 .sectionContent {
-  padding: 24px;
+  padding: 0;
 }
 
-/* Personal Info Styles */
-.profileHeader {
+.profileForm {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 24px;
+}
+
+.avatarEditRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #E5E5E5;
-}
-
-.avatarSection {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+  gap: 8px;
+  margin-bottom: 0px;
+  width: 100%;
 }
 
 .avatar {
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  border: 3px solid #0082FF;
+  object-fit: cover;
+  border: 2px solid #E5E5E5;
+  margin-bottom: 0;
 }
 
-.userName {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 4px;
+.editLabel {
+  font-size: 14px;
+  color: #222;
+  font-weight: 600;
+  margin-left: 56px;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.inputsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  width: 100%;
+  max-width: 1392px;
+  margin-bottom: 0px;
+}
+
+.inputField {
+  background: #fff;
+  border: 1px solid #666;
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.inputField:disabled {
+  background: #F8F9FA;
   color: #000;
 }
 
-.userType {
-  color: #666;
-  font-size: 13px;
+.loginSection {
+  width: 100%;
+  max-width: 1392px;
+  margin-bottom: 0;
 }
 
-.actionButtons {
-  display: flex;
-  gap: 10px;
-}
-
-.editBtn {
-  background: #0082FF;
-  color: #fff;
-  padding: 8px 18px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.cancelBtn {
-  background: #fff;
-  color: #666;
-  padding: 8px 18px;
-  border-radius: 6px;
-  border: 1px solid #E5E5E5;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.infoGrid {
-  display: grid;
-  gap: 20px;
-}
-
-.infoItem {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.infoLabel {
+.loginTitle {
+  font-size: 24px;
   font-weight: 600;
-  color: #333;
-  font-size: 14px;
+  color: #000;
+  margin-bottom: 8px;
 }
 
-.infoValue {
-  color: #666;
-  font-size: 15px;
+.loginGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 0;
 }
 
-.infoInput {
-  padding: 10px 12px;
-  border: 1px solid #E5E5E5;
-  border-radius: 6px;
-  font-size: 15px;
+.actionRow {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  justify-content: flex-start;
+  align-items: center;
+  margin-right: auto;
 }
 
-/* Wallet Styles */
-.walletHeader {
+.changePasswordBtn {
+  background: #E5F0FF;
+  color: #0082FF;
+  border-radius: 100px;
+  border: none;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.deleteAccountBtn {
+  background: #FFE5E5;
+  color: #EF4444;
+  border-radius: 100px;
+  border: none;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.profileActions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
   margin-bottom: 24px;
 }
 
-.balanceCard {
-  background: linear-gradient(135deg, #0082FF 0%, #0066CC 100%);
-  color: #fff;
-  padding: 24px;
-  border-radius: 12px;
-  text-align: center;
-}
-
-.balanceTitle {
-  font-size: 15px;
-  margin-bottom: 10px;
-  opacity: 0.9;
-}
-
-.balanceAmount {
-  font-size: 32px;
-  font-weight: 700;
-  margin-bottom: 12px;
-}
-
-.balanceSubtext {
-  opacity: 0.8;
-  margin-bottom: 14px;
-  font-size: 14px;
-}
-
-.topUpBtn {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.sectionTitle {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: #000;
-}
-
-.transactionList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.transactionItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px;
-  border: 1px solid #E5E5E5;
-  border-radius: 8px;
-}
-
-.transactionInfo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.transactionIcon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: bold;
-}
-
-.transactionIcon.credit {
-  background: #E8F5E8;
-  color: #22C55E;
-}
-
-.transactionIcon.debit {
-  background: #FEE2E2;
-  color: #EF4444;
-}
-
-.transactionDetails {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.transactionDesc {
-  font-weight: 500;
-  color: #000;
-  font-size: 14px;
-}
-
-.transactionDate {
-  font-size: 13px;
-  color: #666;
-}
-
-.transactionAmount {
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.transactionAmount.credit {
-  color: #22C55E;
-}
-
-.transactionAmount.debit {
-  color: #EF4444;
-}
-
-/* Rewards Styles */
-.rewardsList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.rewardItem {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
-  border: 1px solid #E5E5E5;
-  border-radius: 10px;
-  transition: all 0.2s;
-}
-
-.rewardItem:hover {
-  border-color: #0082FF;
-  background: rgba(0, 130, 255, 0.02);
-}
-
-.rewardIcon {
-  font-size: 22px;
-  width: 44px;
-  height: 44px;
-  background: #F8F9FA;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.rewardInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.rewardTitle {
-  font-weight: 600;
-  color: #000;
-  font-size: 14px;
-}
-
-.rewardDesc {
-  color: #666;
-  font-size: 13px;
-}
-
-/* Orders Styles */
-.ordersHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.orderFilters {
-  display: flex;
-  gap: 6px;
-}
-
-.filterBtn {
-  padding: 6px 14px;
-  border: 1px solid #E5E5E5;
-  border-radius: 18px;
+.updateProfileBtn {
   background: #fff;
+  border: 1px solid #0082FF;
+  color: #000;
+  border-radius: 100px;
+  padding: 12px 32px;
+  font-weight: 600;
+  font-size: 16px;
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 13px;
 }
 
-.filterBtn:hover {
-  border-color: #0082FF;
+.logoutBtn {
+  background: rgba(0, 130, 255, 0.24);
   color: #0082FF;
+  border-radius: 100px;
+  border: none;
+  padding: 12px 32px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
 }
+.balanceCard {
+  background: #F8F9FA;
+  border-radius: 16px;
+  border: 1px solid #666;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 24px;
+  max-width: 364px;
+}
+.balanceRow{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+  flex-direction: row;
+}
+.AccountName{
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  padding-top: 24px;
+  padding-bottom: 8px;
+}
+.CardDetails{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+  flex-direction: row;
+}
+.DateExpiry{
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+}
+.CardNumber {
+  font-size: 24px;
+  font-weight: 600;
+  color: #000;
 
+}
+.QoynsCard{
+  background: #F8F9FA;
+  border-radius: 16px;
+  border: 1px solid #0082FF;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 24px;
+  max-width: 364px;
+}
+.QoynsBalance{
+  font-size: 32px;
+  font-weight: 600;
+}
+.QoynsExiry {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+}
+.QoynsTitle{
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  align-items: center;
+  justify-content: space-between;
+}
 .ordersList {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 24px;
+  padding : 24px 0px;
 }
 
 .orderItem {
-  border: 1px solid #E5E5E5;
-  border-radius: 10px;
-  padding: 16px;
-  transition: all 0.2s;
-}
-
-.orderItem:hover {
-  border-color: #0082FF;
-  box-shadow: 0 4px 12px rgba(0, 130, 255, 0.1);
-}
-
-.orderHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+  align-items: stretch;
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+  padding: 0;
+  min-height: 120px;
+  padding-bottom: 24px;
 }
 
-.orderInfo {
+.orderImageSection {
+  width: 150px;
+  min-width: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fafafa;
+  border: 1px solid #eee;
+}
+
+.orderImage {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.orderInfoSection {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 3px;
-}
-
-.orderId {
-  font-weight: 600;
-  color: #000;
-  font-size: 14px;
-}
-
-.orderDate {
-  font-size: 13px;
-  color: #666;
-}
-
-.orderStatus {
-  padding: 4px 10px;
-  border-radius: 14px;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.orderStatus.delivered {
-  background: #E8F5E8;
-  color: #22C55E;
-}
-
-.orderStatus.intransit {
-  background: #FEF3C7;
-  color: #F59E0B;
-}
-
-.orderStatus.processing {
-  background: #DBEAFE;
-  color: #3B82F6;
-}
-
-.orderDetails {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 12px;
-}
-
-.orderItems {
-  color: #666;
-  font-size: 13px;
-}
-
-.orderTotal {
-  font-weight: 600;
-  color: #000;
-  font-size: 14px;
-}
-
-.orderActions {
-  display: flex;
+  justify-content: center;
+  padding: 24px 0 24px 32px;
   gap: 8px;
 }
 
-.viewOrderBtn {
-  padding: 6px 14px;
-  border: 1px solid #0082FF;
-  border-radius: 5px;
-  background: #fff;
-  color: #0082FF;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 13px;
-}
-
-.reorderBtn {
-  padding: 6px 14px;
-  border: none;
-  border-radius: 5px;
-  background: #0082FF;
-  color: #fff;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 13px;
-}
-
-/* Addresses Styles */
-.addressesHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.addAddressBtn {
-  background: #0082FF;
-  color: #fff;
-  padding: 10px 18px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  font-weight: 500;
+.orderBrand {
   font-size: 14px;
+  color: #000;
+  font-weight: 600;
+  margin-bottom: 2px;
 }
 
-.addressesList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.addressCard {
-  border: 1px solid #E5E5E5;
-  border-radius: 10px;
-  padding: 16px;
-  transition: all 0.2s;
-}
-
-.addressCard:hover {
-  border-color: #0082FF;
-  box-shadow: 0 4px 12px rgba(0, 130, 255, 0.1);
-}
-
-.addressCard.defaultCard {
-  border-color: #0082FF;
-  background: linear-gradient(135deg, rgba(0, 130, 255, 0.05) 0%, rgba(0, 130, 255, 0.02) 100%);
-}
-
-.addressHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.addressType {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.typeIcon {
+.orderName {
   font-size: 18px;
-}
-
-.addressLabel {
   font-weight: 600;
   color: #000;
+  margin-bottom: 2px;
+}
+
+.orderPrice {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 8px;
+}
+
+.orderStatus {
   font-size: 14px;
+  color: #aaa;
+  font-weight: 600;
+  margin-bottom: 8px;
 }
 
-.defaultBadge {
-  background: #0082FF;
-  color: #fff;
-  padding: 3px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.addressActions {
+.orderRightSection {
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  flex: 1;
+  padding: 24px 0 32px 24px;
 }
 
-.editAddressBtn {
-  padding: 5px 10px;
-  border: 1px solid #0082FF;
-  border-radius: 4px;
-  background: #fff;
-  color: #0082FF;
-  cursor: pointer;
-  font-size: 11px;
+.orderDate {
+  font-size: 14px;
+  color: #aaa;
+  font-weight: 600;
+}
+.AddressTitle{
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  align-items: center;
+  justify-content: space-between;
+}
+.AddressContent{
+  font-size: 16px;
+  font-weight: 600;
+}
+.addressNumber {
+  font-size: 14px;
+  font-weight: 600;
+  color: #c5c5c5;
+}
+.addressEmail {
+  font-size: 14px;
+  font-weight: 600;
+  color: #c5c5c5;
 }
 
-.deleteAddressBtn {
-  padding: 5px 10px;
-  border: 1px solid #EF4444;
-  border-radius: 4px;
-  background: #fff;
-  color: #EF4444;
-  cursor: pointer;
-  font-size: 11px;
-}
-
-.addressDetails {
-  margin-left: 28px;
-}
-
-.addressText {
-  color: #333;
-  line-height: 1.4;
-  margin-bottom: 3px;
-  font-size: 13px;
-}
-
-.pincode {
-  color: #666;
-  font-size: 12px;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .container {
-    padding: 80px 16px 16px;
+    padding: 0 8px;
   }
-  
-  .profileContent {
+
+  .inputsGrid,
+  .loginGrid {
     grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  .sidebar {
-    order: 2;
-  }
-  
-  .tabsList {
-    flex-direction: row;
-    overflow-x: auto;
-  }
-  
-  .tabBtn {
-    white-space: nowrap;
-    border-bottom: none;
-    border-right: 1px solid #F5F5F5;
-    padding: 12px 16px;
-  }
-  
-  .sectionContent {
-    padding: 16px;
-  }
-  
-  .profileHeader {
-    flex-direction: column;
     gap: 12px;
-    text-align: center;
   }
-  
-  .ordersHeader {
+
+  .profileForm,
+  .mainContent {
+    padding: 0;
+  }
+  .orderItem {
     flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
+    min-height: 0;
   }
-  
-  .addressesHeader {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
+  .orderImageSection {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+    justify-content: flex-start;
+    padding: 16px 0;
   }
-  
-  .header {
-    margin-bottom: 24px;
+  .orderInfoSection {
+    padding: 16px 0 16px 16px;
   }
-  
+  .orderRightSection {
+    padding: 16px 16px 0 0;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
   .title {
-    font-size: 24px;
+    font-size: 22px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+  }
+
+  .inputsGrid,
+  .loginGrid {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 }

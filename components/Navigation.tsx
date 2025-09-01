@@ -137,21 +137,13 @@ export default function Navigation() {
           width: 100%;
           z-index: 1000;
           display: flex;
+          width: 100%;
           padding: 24px 0;
           flex-direction: column;
           align-items: center;
           gap: 10px;
           border-bottom: 1px solid rgba(0, 130, 255, 0.24);
           background: #FFF;
-          height: 92px; /* keep the same visual size */
-        }
-
-        .container {
-          display: flex;
-          width: 100%;
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 20px;
         }
 
         .navbar-content {
@@ -251,7 +243,6 @@ export default function Navigation() {
 
         {/* Spacer to prevent content from jumping under the fixed navbar */}
         <div style={{ height: navHeight }} aria-hidden />
-        )
       </div>
     </>
   )

@@ -155,221 +155,223 @@ const influencerData = [
 
 export default function Home() {
   return (
-    <main className="home-page">
+    <>
       <Navigation />
-      {/* <QuickNav /> */}
+      <main className="home-page">
+        {/* <QuickNav /> */}
 
-      <Categories />
-      <section className="section">
-        <div className="container">
-          <ImageSlider />
-        </div>
-      </section>
-
-      {/* Bestsellers Section */}
-      <section className="section">
-        <div className="container">
-          <SectionHeader title="Our Bestsellers" showNavigation={true} />
-          <div className="products-grid">
-            {productData.map((product, index) => (
-              <ProductCard key={index} {...product} />
-            ))}
+        <Categories />
+        <section className="section">
+          <div className="container">
+            <ImageSlider />
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Other Categories Section */}
-      <section className="section">
-        <div className="container">
-          <SectionHeader title="Other Categories" showNavigation={true} />
-          <div className="categories-grid">
-            {categoryData.map((category, index) => (
-              <CategoryCard key={index} {...category} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Banner 1 */}
-      <Banner
-        title="How To Refer & Earn on QLIQ"
-        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
-        buttonText="Learn More"
-        backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/df43c644b630e11e75c5cfa0820db4ef46176c34?width=2720"
-      />
-
-      {/* Offers Section */}
-      <section className="section">
-        <div className="container">
-          <SectionHeader title="Offers For You" showNavigation={true} />
-          <div className="products-grid">
-            {productData.map((product, index) => (
-              <ProductCard key={index} {...product} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Special Deals Section */}
-      <section className="section">
-        <div className="container">
-          <SectionHeader
-            title="Special Deals For QLIQ+"
-            showNavigation={true}
-            showButton={true}
-            buttonText="Upgrade"
-          />
-          <div className="products-grid">
-            {productData.map((product, index) => (
-              <ProductCard key={index} {...product} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Banner 2 */}
-      <Banner
-        title="How To Pay Using Qoyns"
-        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
-        buttonText="Learn More"
-        backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/30138089958b1dd1eb8be111e17374ed71a2b6c7?width=2720"
-      />
-
-      {/* Top Brands Section */}
-      <section className="section">
-        <div className="container">
-          <SectionHeader title="Top Brands" showNavigation={true} />
-          <div className="categories-grid">
-            {brandData.map((brand, index) => (
-              <CategoryCard key={index} {...brand} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Offers Section */}
-      <section className="section">
-        <div className="container">
-          <SectionHeader title="Featured Offers" showButton={true} buttonText="See All" />
-          <div className="products-grid">
-            {productData.map((product, index) => (
-              <ProductCard key={index} {...product} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Top Stores Section */}
-      <section className="section">
-        <div className="container">
-          <SectionHeader title="Top Stores" showNavigation={true} />
-          <div className="categories-grid">
-            {brandData.map((store, index) => (
-              <CategoryCard key={index} {...store} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Banner 3 */}
-      <Banner
-        title="How To Save on QLIQ"
-        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
-        buttonText="Learn More"
-        backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/5f1b6b2bdfa8e9703d7d31aedb5e297922c9a082?width=2720"
-      />
-
-      {/* New Stores Section */}
-      <section className="section">
-        <div className="container">
-          <SectionHeader title="New Stores on QLIQ" showNavigation={true} />
-          <div className="categories-grid">
-            {brandData.map((store, index) => (
-              <CategoryCard key={index} {...store} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* New Influencers Section */}
-      <section className="section">
-        <div className="container">
-          <SectionHeader title="New Influencers on QLIQ" showNavigation={true} />
-          <div className="influencers-grid">
-            {influencerData.map((influencer, index) => (
-              <InfluencerCard key={index} {...influencer} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Banner 4 */}
-      <Banner
-        title="How To Earn Doing a GIG"
-        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
-        buttonText="Learn More"
-        backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/f70eb37fe9b38478a141ee9536f057811ff47ace?width=2720"
-      />
-
-      {/* FAQ Section */}
-      <FAQ />
-
-      {/* Blogs Section */}
-      {/* <section className="section">
-        <div className="container">
-          <div className="blogs-header">
-            <h2 className="section-title">Blogs</h2>
-          </div>
-          <div className="blogs-grid">
-            <div className="blog-item">
-              <Image
-                src="https://api.builder.io/api/v1/image/assets/TEMP/9f041f37f3b61ba2ea7c404265252ed02d08a49f?width=875"
-                alt="Blog 1"
-                width={437}
-                height={290}
-                style={{ borderRadius: '24px' }}
-              />
-              <h3 className="blog-title">Buy at Deep Discounts</h3>
-            </div>
-            <div className="blog-item">
-              <Image
-                src="https://api.builder.io/api/v1/image/assets/TEMP/e0c5fa55f80175c5c29eafd633d4188740be25b2?width=875"
-                alt="Blog 2"
-                width={437}
-                height={290}
-                style={{ borderRadius: '24px' }}
-              />
-              <h3 className="blog-title">Buy at Deep Discounts</h3>
-            </div>
-            <div className="blog-item">
-              <Image
-                src="https://api.builder.io/api/v1/image/assets/TEMP/629f1b88654ed049faf12b75c768886f2e2f26e4?width=875"
-                alt="Blog 3"
-                width={437}
-                height={290}
-                style={{ borderRadius: '24px' }}
-              />
-              <h3 className="blog-title">Buy at Deep Discounts</h3>
+        {/* Bestsellers Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader title="Our Bestsellers" showNavigation={true} />
+            <div className="products-grid">
+              {productData.map((product, index) => (
+                <ProductCard key={index} {...product} />
+              ))}
             </div>
           </div>
-          <div className="blog-dots">
-            <div className="blog-dot active"></div>
-            <div className="blog-dot"></div>
-            <div className="blog-dot"></div>
-            <div className="blog-dot"></div>
+        </section>
+
+        {/* Other Categories Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader title="Other Categories" showNavigation={true} />
+            <div className="categories-grid">
+              {categoryData.map((category, index) => (
+                <CategoryCard key={index} {...category} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section> */}
+        </section>
 
-      {/* Final Banner */}
-      <Banner
-        title="Become a Vendor"
-        description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
-        buttonText="Learn More"
-        backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/c1726d63175ccf7d26ef79e2d2a0ffde926ef9d0?width=2720"
-      />
+        {/* Banner 1 */}
+        <Banner
+          title="How To Refer & Earn on QLIQ"
+          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
+          buttonText="Learn More"
+          backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/df43c644b630e11e75c5cfa0820db4ef46176c34?width=2720"
+        />
 
-      <Footer />
-    </main>
+        {/* Offers Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader title="Offers For You" showNavigation={true} />
+            <div className="products-grid">
+              {productData.map((product, index) => (
+                <ProductCard key={index} {...product} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Special Deals Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader
+              title="Special Deals For QLIQ+"
+              showNavigation={true}
+              showButton={true}
+              buttonText="Upgrade"
+            />
+            <div className="products-grid">
+              {productData.map((product, index) => (
+                <ProductCard key={index} {...product} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Banner 2 */}
+        <Banner
+          title="How To Pay Using Qoyns"
+          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
+          buttonText="Learn More"
+          backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/30138089958b1dd1eb8be111e17374ed71a2b6c7?width=2720"
+        />
+
+        {/* Top Brands Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader title="Top Brands" showNavigation={true} />
+            <div className="categories-grid">
+              {brandData.map((brand, index) => (
+                <CategoryCard key={index} {...brand} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Featured Offers Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader title="Featured Offers" showButton={true} buttonText="See All" />
+            <div className="products-grid">
+              {productData.map((product, index) => (
+                <ProductCard key={index} {...product} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Top Stores Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader title="Top Stores" showNavigation={true} />
+            <div className="categories-grid">
+              {brandData.map((store, index) => (
+                <CategoryCard key={index} {...store} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Banner 3 */}
+        <Banner
+          title="How To Save on QLIQ"
+          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
+          buttonText="Learn More"
+          backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/5f1b6b2bdfa8e9703d7d31aedb5e297922c9a082?width=2720"
+        />
+
+        {/* New Stores Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader title="New Stores on QLIQ" showNavigation={true} />
+            <div className="categories-grid">
+              {brandData.map((store, index) => (
+                <CategoryCard key={index} {...store} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* New Influencers Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader title="New Influencers on QLIQ" showNavigation={true} />
+            <div className="influencers-grid">
+              {influencerData.map((influencer, index) => (
+                <InfluencerCard key={index} {...influencer} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Banner 4 */}
+        <Banner
+          title="How To Earn Doing a GIG"
+          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
+          buttonText="Learn More"
+          backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/f70eb37fe9b38478a141ee9536f057811ff47ace?width=2720"
+        />
+
+        {/* FAQ Section */}
+        <FAQ />
+
+        {/* Blogs Section */}
+        {/* <section className="section">
+          <div className="container">
+            <div className="blogs-header">
+              <h2 className="section-title">Blogs</h2>
+            </div>
+            <div className="blogs-grid">
+              <div className="blog-item">
+                <Image
+                  src="https://api.builder.io/api/v1/image/assets/TEMP/9f041f37f3b61ba2ea7c404265252ed02d08a49f?width=875"
+                  alt="Blog 1"
+                  width={437}
+                  height={290}
+                  style={{ borderRadius: '24px' }}
+                />
+                <h3 className="blog-title">Buy at Deep Discounts</h3>
+              </div>
+              <div className="blog-item">
+                <Image
+                  src="https://api.builder.io/api/v1/image/assets/TEMP/e0c5fa55f80175c5c29eafd633d4188740be25b2?width=875"
+                  alt="Blog 2"
+                  width={437}
+                  height={290}
+                  style={{ borderRadius: '24px' }}
+                />
+                <h3 className="blog-title">Buy at Deep Discounts</h3>
+              </div>
+              <div className="blog-item">
+                <Image
+                  src="https://api.builder.io/api/v1/image/assets/TEMP/629f1b88654ed049faf12b75c768886f2e2f26e4?width=875"
+                  alt="Blog 3"
+                  width={437}
+                  height={290}
+                  style={{ borderRadius: '24px' }}
+                />
+                <h3 className="blog-title">Buy at Deep Discounts</h3>
+              </div>
+            </div>
+            <div className="blog-dots">
+              <div className="blog-dot active"></div>
+              <div className="blog-dot"></div>
+              <div className="blog-dot"></div>
+              <div className="blog-dot"></div>
+            </div>
+          </div>
+        </section> */}
+
+        {/* Final Banner */}
+        <Banner
+          title="Become a Vendor"
+          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
+          buttonText="Learn More"
+          backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/c1726d63175ccf7d26ef79e2d2a0ffde926ef9d0?width=2720"
+        />
+
+        <Footer />
+      </main>
+    </>
   )
 }

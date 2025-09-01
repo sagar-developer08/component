@@ -82,7 +82,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         }
 
         .main-content {
-          margin-top: 200px;
+          margin-top: 20px;
     
         }
       `}</style>

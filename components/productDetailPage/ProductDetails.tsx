@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import Image from 'next/image';
+import OtherSellersDrawer from './OtherSellersDrawer';
 
 export default function ProductDetails({ product }) {
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
   const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
@@ -16,6 +18,30 @@ export default function ProductDetails({ product }) {
       prev === 0 ? product.images.length - 1 : prev - 1
     );
   };
+
+  // Example sellers data
+  const sellers = [
+    {
+      price: "1,200",
+      discount: 25,
+      orderTime: "21h 20m",
+      deliveryDate: "23 Aug",
+      rating: "4.8",
+      positive: "97%",
+      sellerName: "TeleGX",
+      warranty: "1 Year Warranty"
+    },
+    {
+      price: "1,000",
+      discount: 25,
+      orderTime: "21h 20m",
+      deliveryDate: "23 Aug",
+      rating: "4.8",
+      positive: "97%",
+      sellerName: "TeleGX",
+      warranty: "1 Year Warranty"
+    }
+  ];
 
   return (
     <div className="product-details">
@@ -144,7 +170,7 @@ export default function ProductDetails({ product }) {
           </div>
 
           {/* Other Sellers */}
-          <div className="other-sellers">
+          <div className="other-sellers" onClick={() => setDrawerOpen(true)}>
             <span>Other Sellers</span>
             <button className="arrow-right">→</button>
           </div>
@@ -200,6 +226,8 @@ export default function ProductDetails({ product }) {
           </div>
         </div>
       </div>
+
+      <OtherSellersDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} sellers={sellers} />
 
       <style jsx>{`
         .product-details {

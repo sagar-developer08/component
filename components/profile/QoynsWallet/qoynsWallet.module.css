@@ -1,0 +1,58 @@
+/* qlq-wallet.module.css */
+
+.walletHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 604px;
+}
+
+.QoynsCard {
+  background: #F8F9FA;
+  border-radius: 16px;
+  border: 1px solid #0082FF;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 24px;
+  max-width: 364px;
+}
+
+.balanceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+  flex-direction: row;
+}
+
+.QoynsTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.QoynsBalance {
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.CardDetails {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 8px;
+  flex-direction: row;
+}
+
+.QoynsExiry {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+}
