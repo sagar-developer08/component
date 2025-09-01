@@ -82,8 +82,32 @@
 
 .tabsRow {
   display: flex;
-  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 32px;
+}
+
+.tabsContainer {
+  display: flex;
+  gap: 16px;
+}
+
+.addCardBtn {
+  background: #fff;
+  color: #0082FF;
+  border: 1px solid #0082FF;
+  border-radius: 100px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.addCardBtn:hover {
+  background: #E5F0FF;
+  color: #0082FF;
 }
 
 .tabBtn {

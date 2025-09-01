@@ -1,6 +1,12 @@
+import { useEffect } from 'react'
 import styles from './cashWallet.module.css'
 
 export default function CashWallet() {
+  useEffect(() => {
+    console.log('CashWallet component mounted')
+    console.log('Styles object:', styles)
+  }, [])
+
   return (
     <div className={styles.walletHeader}>
       <div className={styles.balanceCard}>

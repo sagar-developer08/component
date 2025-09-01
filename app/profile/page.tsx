@@ -116,15 +116,22 @@ export default function ProfilePage() {
         </div>
         <div className={styles.profileContent}>
           <div className={styles.tabsRow}>
-            {tabs.map(tab => (
-              <button
-                key={tab.id}
-                className={`${styles.tabBtn} ${activeTab === tab.id ? styles.active : ''}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                {tab.label}
+            <div className={styles.tabsContainer}>
+              {tabs.map(tab => (
+                <button
+                  key={tab.id}
+                  className={`${styles.tabBtn} ${activeTab === tab.id ? styles.active : ''}`}
+                  onClick={() => setActiveTab(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            {activeTab === 'cash-wallet' && (
+              <button className={styles.addCardBtn}>
+                Add New Card
               </button>
-            ))}
+            )}
           </div>
           <div className={styles.mainContent}>
             {activeTab === 'personal-info' && (
