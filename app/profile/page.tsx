@@ -1,5 +1,4 @@
 'use client'
-
 import { useState } from 'react'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
@@ -10,6 +9,10 @@ import CashWallet from '../../components/profile/CashWallet/CashWallet'
 import QoynsWallet from '../../components/profile/QoynsWallet/QoynsWallet'
 import Orders from '../../components/profile/Orders/Orders'
 import Addresses from '../../components/profile/Addresses/Addresses'
+import AddCard from '../../components/profile/AddCard/AddCard'
+import QoynsHistory from '../../components/profile/QoynsHistory/QoynsHistory'
+import SendQoyn from '../../components/profile/SendQoyn/SendQoyn'
+import NewAddress from '../../components/profile/NewAddress/newAddress'
 
 // Sample user data - in a real app, this would come from an API
 const userData = {
@@ -95,7 +98,7 @@ export default function ProfilePage() {
     { id: 'cash-wallet', label: 'Cash Wallet' },
     { id: 'qoyns-wallet', label: 'Qoyns Wallet' },
     { id: 'orders', label: 'Orders' },
-    { id: 'addresses', label: 'Addresses' }
+    { id: 'addresses', label: 'Addresses' },
   ]
 
   return (
@@ -128,9 +131,64 @@ export default function ProfilePage() {
               ))}
             </div>
             {activeTab === 'cash-wallet' && (
-              <button className={styles.addCardBtn}>
+              <button
+                className={styles.addCardBtn}
+                onClick={() => setActiveTab('add-card')}
+              >
                 Add New Card
               </button>
+            )}
+            {activeTab === 'qoyns-wallet' || activeTab === 'qoyns-history' || activeTab === 'send-qoyn' ? (
+              <div className={styles.qoynsActionsRow}>
+                <button
+                  className={`${styles.addCardBtn} ${activeTab === 'qoyns-history' ? styles.active : ''}`}
+                  onClick={() => setActiveTab('qoyns-history')}
+                >
+                  History
+                </button>
+                <button
+                  className={`${styles.addCardBtn} ${activeTab === 'send-qoyn' ? styles.active : ''}`}
+                  onClick={() => setActiveTab('send-qoyn')}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ verticalAlign: 'middle' }}>
+                      <circle cx="9" cy="9" r="9" fill="#111" />
+                      <path d="M9 6v6M6 9h6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Send Qoyn
+                  </span>
+                </button>
+              </div>
+            ) : null}
+            {activeTab === 'orders' && (
+              <div className={styles.qoynsActionsRow}>
+                <div className={styles.statusDropdownWrapper}>
+                  <select className={styles.statusDropdown}>
+                    <option value="all">Status</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="in-transit">In Transit</option>
+                    <option value="processing">Processing</option>
+                  </select>
+                  <span className={styles.dropdownArrow}>
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                      <path d="M4 7L9 12L14 7" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
+            )}
+            {activeTab === 'addresses' && (
+              <div className={styles.qoynsActionsRow}>
+                <button className={styles.addCardBtn}>
+                  Use my Current Location 
+                </button>
+                <button
+                  className={`${styles.addCardBtn} ${activeTab === 'new-address' ? styles.active : ''}`}
+                  onClick={() => setActiveTab('new-address')}
+                >
+                  Add New Address 
+                </button>
+              </div>
             )}
           </div>
           <div className={styles.mainContent}>
@@ -144,9 +202,24 @@ export default function ProfilePage() {
                 <CashWallet />
               </div>
             )}
+            {activeTab === 'add-card' && (
+              <div className={styles.sectionContent}>
+                <AddCard />
+              </div>
+            )}
             {activeTab === 'qoyns-wallet' && (
               <div className={styles.sectionContent}>
                 <QoynsWallet />
+              </div>
+            )}
+            {activeTab === 'qoyns-history' && (
+              <div className={styles.sectionContent}>
+                <QoynsHistory />
+              </div>
+            )}
+            {activeTab === 'send-qoyn' && (
+              <div className={styles.sectionContent}>
+                <SendQoyn />
               </div>
             )}
             {activeTab === 'orders' && (
@@ -157,6 +230,11 @@ export default function ProfilePage() {
             {activeTab === 'addresses' && (
               <div className={styles.sectionContent}>
                 <Addresses />
+              </div>
+            )}
+            {activeTab === 'new-address' && (
+              <div className={styles.sectionContent}>
+                <NewAddress />
               </div>
             )}
           </div>

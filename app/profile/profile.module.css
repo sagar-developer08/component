@@ -359,6 +359,11 @@
   align-items: center;
   justify-content: space-between;
 }
+.qoynsActionsRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
 .ordersList {
   display: flex;
   flex-direction: column;
@@ -467,6 +472,37 @@
   font-size: 14px;
   font-weight: 600;
   color: #c5c5c5;
+}
+.statusDropdownWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 48px;
+}
+
+.statusDropdown {
+  background: #fff;
+  color: #000;
+  border: 1px solid #0082FF;
+  border-radius: 100px;
+  padding: 12px 0px 12px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+  margin-left: 0;
+  height: 48px;
+}
+
+.dropdownArrow {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
 }
 
 @media (max-width: 900px) {

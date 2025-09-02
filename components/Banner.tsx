@@ -34,7 +34,7 @@ export default function Banner({
           width: 100%;
           display: flex;
           justify-content: center;
-          padding: 0 24px;
+          padding: 40px 24px;
           box-sizing: border-box;
         }
         

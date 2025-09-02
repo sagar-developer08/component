@@ -1,0 +1,87 @@
+.sendQoynForm {
+  margin: 40px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.row {
+  display: flex;
+  gap: 24px;
+}
+
+.inputWrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 4px;
+}
+
+.inputSelect {
+  width: 100%;
+  padding: 18px 48px 18px 24px;
+  border: 1px solid #e5e5e5;
+  border-radius: 20px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+  appearance: none;
+  outline: none;
+  background: #fff;
+}
+
+.arrow {
+  position: absolute;
+  right: 24px;
+  top: 60%;
+  pointer-events: none;
+}
+
+.inputText {
+  width: 100%;
+  padding: 18px 24px;
+  border: 1px solid #e5e5e5;
+  border-radius: 20px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+  background: #fff;
+  outline: none;
+}
+
+.actions {
+  display: flex;
+  gap: 24px;
+}
+
+.cancelBtn {
+  background: #fff;
+  color: #0082FF;
+  border: 1px solid #0082FF;
+  border-radius: 100px;
+  padding: 14px 40px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.sendBtn {
+  background: #E5F0FF;
+  color: #0082FF;
+  border: none;
+  border-radius: 100px;
+  padding: 14px 40px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}

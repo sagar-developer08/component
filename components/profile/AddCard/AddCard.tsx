@@ -1,0 +1,50 @@
+import styles from './addCard.module.css'
+
+export default function AddCard() {
+  return (
+    <div className={styles.addCardContainer}>
+      <h3 className={styles.addCardTitle}>ADD NEW CARD</h3>
+      {/* <p className={styles.addCardSubtitle}>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero
+        et velit interdum, ac aliquet odio mattis.
+      </p> */}
+      <form className={styles.cardForm}>
+        <div className={styles.cardFormRow}>
+          <input
+            className={styles.cardInput}
+            type="text"
+            placeholder="Card holder name"
+            autoComplete="cc-name"
+          />
+          <input
+            className={styles.cardInput}
+            type="text"
+            placeholder="Card number"
+            autoComplete="cc-number"
+            maxLength={19}
+          />
+        </div>
+        <div className={styles.cardFormRow}>
+          <input
+            className={styles.cardInput}
+            type="text"
+            placeholder="MM/YY"
+            autoComplete="cc-exp"
+            maxLength={5}
+          />
+          <input
+            className={styles.cardInput}
+            type="text"
+            placeholder="CVC"
+            autoComplete="cc-csc"
+            maxLength={4}
+          />
+        </div>
+        <div className={styles.cardFormActions}>
+          <button type="button" className={styles.cancelBtn}>Cancel</button>
+          <button type="submit" className={styles.saveBtn}>Save</button>
+        </div>
+      </form>
+    </div>
+  )
+}

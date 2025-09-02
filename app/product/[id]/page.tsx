@@ -18,11 +18,11 @@ const mockProduct = {
   boughtCount: "1000+ Bought in past month",
   description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
   images: [
-    "/images/nike-airforce-01-white.jpg",
-    "/images/nike-airforce-01-white-2.jpg",
-    "/images/nike-airforce-01-white-3.jpg",
-    "/images/nike-airforce-01-white-4.jpg",
-    "/images/nike-airforce-01-white-5.jpg"
+    "/shoes.jpg",
+    "/shoes.jpg",
+    "/shoes.jpg",
+    "/shoes.jpg"
+
   ],
   colors: ["White", "Black"],
   sizes: ["04", "05", "06", "07", "08"]
@@ -35,7 +35,7 @@ const productData = [
     price: "AED 1,600",
     rating: "4.0",
     deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
+    image: "/shoes.jpg"
   },
   {
     id: "nike-dunk-low",
@@ -43,7 +43,7 @@ const productData = [
     price: "AED 1,600",
     rating: "4.0",
     deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
+    image: "/shoes.jpg"
   },
   {
     id: "nike-air-max",
@@ -51,7 +51,7 @@ const productData = [
     price: "AED 1,600",
     rating: "4.0",
     deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
+    image: "/shoes.jpg"
   },
   {
     id: "nike-airforce-01-black",
@@ -59,7 +59,7 @@ const productData = [
     price: "AED 1,600",
     rating: "4.0",
     deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
+    image: "/shoes.jpg"
   }
 ]
 
