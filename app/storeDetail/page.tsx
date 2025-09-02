@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Categories from '@/components/Categories'
 import ImageSlider from '@/components/ImageSlider'
@@ -49,13 +50,15 @@ const productData = [
 ]
 
 export default function Home() {
+  const router = useRouter()
+  
   return (
     <main className="home-page">
       <Navigation />
       <div className="banner-container">
         <div className="banner-section">
           <div className="banner-content">
-            <button className="banner-back-btn" onClick={() => window.history.back()}>
+            <button className="banner-back-btn" onClick={() => router.push('/store')}>
               Back
             </button>
             <div className="banner-info">

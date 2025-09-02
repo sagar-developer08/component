@@ -3,6 +3,7 @@
 
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import CartDrawer from './CartDrawer'
 import WishlistDrawer from './WishlistDrawer'
 import LoginModal from './LoginModal'
@@ -11,10 +12,26 @@ export default function Navigation() {
   // Measure navbar height so we can add a spacer that preserves layout
   const navRef = useRef<HTMLDivElement | null>(null)
   const [navHeight, setNavHeight] = useState(0)
-  const [activeNav, setActiveNav] = useState('Discovery')
   const [cartOpen, setCartOpen] = useState(false)
   const [wishlistOpen, setWishlistOpen] = useState(false)
   const [loginOpen, setLoginOpen] = useState(false)
+  
+  const router = useRouter()
+  const pathname = usePathname()
+  
+  // Determine active nav based on current path
+  const getActiveNav = () => {
+    if (pathname === '/') return 'Discovery'
+    if (pathname === '/hypermarket') return 'Hypermarket'
+    if (pathname === '/store') return 'Stores'
+    if (pathname === '/ecommerce') return 'E-Commerce'
+    if (pathname === '/supermarket') return 'Supermarket'
+    if (pathname === '/profile') return 'Profile'
+    if (pathname === '/checkout') return 'Checkout'
+    return 'Discovery'
+  }
+  
+  const activeNav = getActiveNav()
 
   useEffect(() => {
     const updateHeight = () => {
@@ -29,7 +46,9 @@ export default function Navigation() {
 
   const navItems = [
     {
-      key: 'Discovery', icon: (
+      key: 'Discovery', 
+      path: '/',
+      icon: (
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path
             d="M10.3333 1C14.9358 1 18.6667 4.73083 18.6667 9.33333C18.6667 13.9358 14.9358 17.6667 10.3333 17.6667C5.73083 17.6667 2 13.9358 2 9.33333C2 4.73083 5.73083 1 10.3333 1ZM13.8692 5.7975C13.5742 5.50333 9.74417 6.38667 8.56583 7.56583C7.3875 8.74417 6.50333 12.5742 6.7975 12.8692C7.0925 13.1633 10.9225 12.28 12.1008 11.1008C13.28 9.9225 14.1633 6.0925 13.8692 5.7975ZM10.3333 8.5C10.5543 8.5 10.7663 8.5878 10.9226 8.74408C11.0789 8.90036 11.1667 9.11232 11.1667 9.33333C11.1667 9.55435 11.0789 9.76631 10.9226 9.92259C10.7663 10.0789 10.5543 10.1667 10.3333 10.1667C10.1123 10.1667 9.90036 10.0789 9.74408 9.92259C9.5878 9.76631 9.5 9.55435 9.5 9.33333C9.5 9.11232 9.5878 8.90036 9.74408 8.74408C9.90036 8.5878 10.1123 8.5 10.3333 8.5Z"
@@ -39,7 +58,9 @@ export default function Navigation() {
       ), label: 'Discovery'
     },
     {
-      key: 'Hypermarket', icon: (
+      key: 'Hypermarket', 
+      path: '/hypermarket',
+      icon: (
         <svg className="nav-icon" width="20" height="20" viewBox="0 0 20 20">
           <path
             d="M1.3335 15L1.75016 13.3333H6.3335L5.91683 15H1.3335ZM3.00016 11.6667L3.41683 10H8.8335L8.41683 11.6667H3.00016ZM15.9793 16.6667L16.396 13.3333L17.0002 8.33333L17.2085 6.6875L15.9793 16.6667ZM5.50016 18.3333C5.04183 18.3333 4.64961 18.1703 4.3235 17.8442C3.99738 17.5181 3.83405 17.1256 3.8335 16.6667H15.9793L17.2085 6.6875H14.9168L14.6877 8.45833C14.6599 8.69444 14.5557 8.87861 14.3752 9.01083C14.1946 9.14306 13.9863 9.195 13.7502 9.16667C13.5141 9.13833 13.3302 9.0375 13.1985 8.86417C13.0668 8.69083 13.0146 8.48611 13.0418 8.25L13.2293 6.6875H9.91683L9.68766 8.4375C9.65988 8.67361 9.55572 8.86111 9.37516 9C9.19461 9.13889 8.98627 9.19444 8.75016 9.16667C8.51405 9.13889 8.32655 9.03472 8.18766 8.85417C8.04877 8.67361 7.99322 8.46528 8.021 8.22917L8.2085 6.6875H5.0835C5.13905 6.21528 5.31961 5.81611 5.62516 5.49C5.93072 5.16389 6.30572 5.00056 6.75016 5H8.41683C8.52794 3.95833 8.88572 3.1425 9.49016 2.5525C10.0946 1.9625 10.9174 1.66722 11.9585 1.66667C12.8474 1.66667 13.5871 1.99667 14.1777 2.65667C14.7682 3.31667 15.0563 4.09778 15.0418 5H17.1668C17.6668 5.01389 18.0835 5.20833 18.4168 5.58333C18.7502 5.95833 18.8821 6.39583 18.8127 6.89583L17.5627 16.8958C17.5071 17.3125 17.3229 17.6564 17.0102 17.9275C16.6974 18.1986 16.3329 18.3339 15.9168 18.3333H5.50016ZM10.0835 5H13.396C13.4099 4.54167 13.2538 4.14944 12.9277 3.82333C12.6016 3.49722 12.2091 3.33389 11.7502 3.33333C11.2641 3.33333 10.8785 3.48278 10.5935 3.78167C10.3085 4.08056 10.1385 4.48667 10.0835 5Z"
@@ -49,7 +70,9 @@ export default function Navigation() {
       ), label: 'Hypermarket'
     },
     {
-      key: 'Stores', icon: (
+      key: 'Stores', 
+      path: '/store',
+      icon: (
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path
             d="M16.6636 8.85083V15.8333C16.6636 16.2754 16.488 16.6993 16.1755 17.0118C15.8629 17.3244 15.439 17.5 14.9969 17.5H5.00361C4.56173 17.4998 4.13802 17.3241 3.82564 17.0115C3.51326 16.699 3.33778 16.2752 3.33778 15.8333V8.85083M6.25194 7.29167L6.66861 2.5M6.25194 7.29167C6.25194 9.71 10.0003 9.71 10.0003 7.29167M6.25194 7.29167C6.25194 9.93833 1.95611 9.39167 2.55778 7.085L3.42861 3.74583C3.52168 3.38919 3.73034 3.07346 4.02196 2.84804C4.31358 2.62262 4.67169 2.50022 5.04028 2.5H14.9603C15.3289 2.50022 15.687 2.62262 15.9786 2.84804C16.2702 3.07346 16.4789 3.38919 16.5719 3.74583L17.4428 7.085C18.0444 9.3925 13.7486 9.93833 13.7486 7.29167M10.0003 7.29167V2.5M10.0003 7.29167C10.0003 9.71 13.7486 9.71 13.7486 7.29167M13.7486 7.29167L13.3319 2.5"
@@ -62,7 +85,9 @@ export default function Navigation() {
       ), label: 'Stores'
     },
     {
-      key: 'E-Commerce', icon: (
+      key: 'E-Commerce', 
+      path: '/ecommerce',
+      icon: (
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path
             d="M3 3H8.25V8.25H3V3ZM11.75 3H17V8.25H11.75V3ZM3 11.75H8.25V17H3V11.75ZM11.75 14.375C11.75 15.0712 12.0266 15.7389 12.5188 16.2312C13.0111 16.7234 13.6788 17 14.375 17C15.0712 17 15.7389 16.7234 16.2312 16.2312C16.7234 15.7389 17 15.0712 17 14.375C17 13.6788 16.7234 13.0111 16.2312 12.5188C15.7389 12.0266 15.0712 11.75 14.375 11.75C13.6788 11.75 13.0111 12.0266 12.5188 12.5188C12.0266 13.0111 11.75 13.6788 11.75 14.375Z"
@@ -75,7 +100,9 @@ export default function Navigation() {
       ), label: 'E-Commerce'
     },
     {
-      key: 'Supermarket', icon: (
+      key: 'Supermarket', 
+      path: '/supermarket',
+      icon: (
         <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
           <path
             d="M2.64293 12.1429V18.5714C2.64293 18.7609 2.71818 18.9426 2.85214 19.0765C2.98609 19.2105 3.16777 19.2857 3.35721 19.2857H17.6429C17.8324 19.2857 18.014 19.2105 18.148 19.0765C18.282 18.9426 18.3572 18.7609 18.3572 18.5714V12.1429M1.21436 5V7.85714C1.21436 8.04658 1.28961 8.22826 1.42356 8.36222C1.55752 8.49617 1.7392 8.57143 1.92864 8.57143H19.0715C19.2609 8.57143 19.4426 8.49617 19.5766 8.36222C19.7105 8.22826 19.7858 8.04658 19.7858 7.85714V5M1.21436 5L2.95721 1.5C3.07702 1.26223 3.26088 1.06268 3.48806 0.923848C3.71524 0.785016 3.97669 0.712433 4.24293 0.714285H16.7572C17.0234 0.712433 17.2849 0.785016 17.5121 0.923848C17.7393 1.06268 17.9231 1.26223 18.0429 1.5L19.7858 5M1.21436 5H19.7858M11.9286 12.1429V19.2857M2.64293 14.2857H11.9286"
@@ -111,7 +138,7 @@ export default function Navigation() {
                   <div
                     key={item.key}
                     className={`nav-item${activeNav === item.key ? ' active' : ''}`}
-                    onClick={() => setActiveNav(item.key)}
+                    onClick={() => router.push(item.path)}
                   >
                     {item.icon}
                     <span>{item.label}</span>
@@ -147,7 +174,7 @@ export default function Navigation() {
                   </svg>
                 </div>
 
-                <div className="profile-btn" onClick={() => setLoginOpen(true)}>
+                <div className="profile-btn" onClick={() => router.push('/profile')}>
                   <Image
                     src="https://api.builder.io/api/v1/image/assets/TEMP/e6affc0737515f664c7d8288ba0b3068f64a0ade?width=80"
                     alt="Profile"

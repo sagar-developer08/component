@@ -25,7 +25,7 @@ export default function ProductCard({
   const router = useRouter()
 
   const handleCardClick = () => {
-    router.push(`/product/${id}`)
+    router.push(`/storeDetail`)
   }
 
   return (
