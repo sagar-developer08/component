@@ -11,7 +11,14 @@ import InfluencerCard from '@/components/InfluencerCard'
 import FAQ from '@/components/FAQ'
 import Footer from '@/components/Footer'
 import QuickNav from '@/components/QuickNav'
+import StoreCard from '@/components/StoreCard'
 import Image from 'next/image'
+import { useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Navigation as SwiperNavigation } from 'swiper/modules'
+import 'swiper/css'
+import 'swiper/css/navigation'
 
 const productData = [
   {
@@ -24,6 +31,22 @@ const productData = [
   },
   {
     id: "nike-dunk-low",
+    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    price: "AED 1,600",
+    rating: "4.0",
+    deliveryTime: "30 Min",
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
+  },
+  {
+    id: "nike-air-max",
+    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
+    price: "AED 1,600",
+    rating: "4.0",
+    deliveryTime: "30 Min",
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
+  },
+  {
+    id: "nike-airforce-01",
     title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
     price: "AED 1,600",
     rating: "4.0",
@@ -97,63 +120,279 @@ const brandData = [
     image: "https://api.builder.io/api/v1/image/assets/TEMP/0c4ed4c2cd24b5e148c3022cb0106476b3b63754?width=412"
   },
   {
+    name: "Samsung",
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412"
+  },
+  {
+    name: "Nothing",
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/0c4ed4c2cd24b5e148c3022cb0106476b3b63754?width=412"
+  },
+  {
     name: "OnePlus",
     image: "https://api.builder.io/api/v1/image/assets/TEMP/b6331ae52c82eb8a247a99158e1d71d242182070?width=412"
   }
 ]
 
-const influencerData = [
+const storeData = [
   {
-    name: "Ama Cruize",
-    backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/7f8ab7b79b01d0251928e6b4cffc6477e9d6a199?width=696",
-    earned: "$1M",
-    potential: "$2.9M",
-    saved: "$2M",
-    description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
-    tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
-    memberType: "Bronze Member",
-    followerCount: "50K",
-    yearJoined: "2025"
+    id: "store-1",
+    name: "TechHub Electronics",
+    category: "Electronics",
+    rating: "4.8",
+    deliveryTime: "45 Min",
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412",
+    location: "Dubai Mall",
+    isTopStore: true,
+    isNewStore: false
   },
   {
-    name: "Ama Cruize",
-    backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/8169ee624ec53e032e826b932e875eb9b273e280?width=696",
-    earned: "$1M",
-    potential: "$2.9M",
-    saved: "$2M",
-    description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
-    tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
-    memberType: "Bronze Member",
-    followerCount: "50K",
-    yearJoined: "2025"
+    id: "store-2", 
+    name: "Fashion Forward",
+    category: "Fashion",
+    rating: "4.6",
+    deliveryTime: "30 Min",
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/5944fb96605e58c0b0a225611b6e462119c6f6bd?width=412",
+    location: "Marina Walk",
+    isTopStore: true,
+    isNewStore: false
   },
   {
-    name: "Ama Cruize",
-    backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/d0bf09fbeeb59ddd30e520331d8ff0d09fc9f388?width=696",
-    earned: "$1M",
-    potential: "$2.9M",
-    saved: "$2M",
-    description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
-    tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
-    memberType: "Bronze Member",
-    followerCount: "50K",
-    yearJoined: "2025"
+    id: "store-3",
+    name: "Home & Garden Plus",
+    category: "Home & Garden",
+    rating: "4.7",
+    deliveryTime: "60 Min",
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/66b97f6957f6e465c502e41a9cda2d8b72cc8817?width=412",
+    location: "JBR",
+    isTopStore: true,
+    isNewStore: false
   },
   {
-    name: "Ama Cruize",
-    backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/7f8ab7b79b01d0251928e6b4cffc6477e9d6a199?width=696",
-    earned: "$1M",
-    potential: "$2.9M",
-    saved: "$2M",
-    description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
-    tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
-    memberType: "Bronze Member",
-    followerCount: "50K",
-    yearJoined: "2025"
+    id: "store-4",
+    name: "Sports Central",
+    category: "Sports",
+    rating: "4.5",
+    deliveryTime: "40 Min",
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/31e4e4b864102352c5e9e341e72064d8251f7320?width=412",
+    location: "Downtown",
+    isTopStore: true,
+    isNewStore: false
+  },
+  {
+    id: "store-5",
+    name: "Beauty Essentials",
+    category: "Beauty",
+    rating: "4.9",
+    deliveryTime: "25 Min",
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/0c4ed4c2cd24b5e148c3022cb0106476b3b63754?width=412",
+    location: "City Centre",
+    isTopStore: true,
+    isNewStore: false
+  },
+  {
+    id: "store-6",
+    name: "Gourmet Delights",
+    category: "Food",
+    rating: "4.4",
+    deliveryTime: "35 Min",
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/b6331ae52c82eb8a247a99158e1d71d242182070?width=412",
+    location: "DIFC",
+    isTopStore: true,
+    isNewStore: false
+  },
+  {
+    id: "store-7",
+    name: "Bookworm Paradise",
+    category: "Books",
+    rating: "4.3",
+    deliveryTime: "50 Min",
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412",
+    location: "Knowledge Village",
+    isTopStore: false,
+    isNewStore: true
+  },
+  {
+    id: "store-8",
+    name: "Pet Care Plus",
+    category: "Pet Supplies",
+    rating: "4.6",
+    deliveryTime: "45 Min",
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/5944fb96605e58c0b0a225611b6e462119c6f6bd?width=412",
+    location: "Jumeirah",
+    isTopStore: false,
+    isNewStore: true
   }
 ]
 
+// const influencerData = [
+//   {
+//     name: "Ama Cruize",
+//     backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/7f8ab7b79b01d0251928e6b4cffc6477e9d6a199?width=696",
+//     earned: "$1M",
+//     potential: "$2.9M",
+//     saved: "$2M",
+//     description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
+//     tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
+//     memberType: "Bronze Member",
+//     followerCount: "50K",
+//     yearJoined: "2025"
+//   },
+//   {
+//     name: "Ama Cruize",
+//     backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/8169ee624ec53e032e826b932e875eb9b273e280?width=696",
+//     earned: "$1M",
+//     potential: "$2.9M",
+//     saved: "$2M",
+//     description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
+//     tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
+//     memberType: "Bronze Member",
+//     followerCount: "50K",
+//     yearJoined: "2025"
+//   },
+//   {
+//     name: "Ama Cruize",
+//     backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/d0bf09fbeeb59ddd30e520331d8ff0d09fc9f388?width=696",
+//     earned: "$1M",
+//     potential: "$2.9M",
+//     saved: "$2M",
+//     description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
+//     tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
+//     memberType: "Bronze Member",
+//     followerCount: "50K",
+//     yearJoined: "2025"
+//   },
+//   {
+//     name: "Ama Cruize",
+//     backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/7f8ab7b79b01d0251928e6b4cffc6477e9d6a199?width=696",
+//     earned: "$1M",
+//     potential: "$2.9M",
+//     saved: "$2M",
+//     description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
+//     tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
+//     memberType: "Bronze Member",
+//     followerCount: "50K",
+//     yearJoined: "2025"
+//   }
+// ]
+
 export default function Home() {
+  const router = useRouter();
+  const swiperRef = useRef<any>(null);
+  const topStoresSwiperRef = useRef<any>(null);
+  const topBrandsSwiperRef = useRef<any>(null);
+  const bestsellersSwiperRef = useRef<any>(null);
+  const offersSwiperRef = useRef<any>(null);
+  const specialDealsSwiperRef = useRef<any>(null);
+  const featuredOffersSwiperRef = useRef<any>(null);
+  const [activeStoreFilter, setActiveStoreFilter] = useState('all');
+
+  const handlePrev = () => {
+    if (swiperRef.current && swiperRef.current.swiper) {
+      swiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleNext = () => {
+    if (swiperRef.current && swiperRef.current.swiper) {
+      swiperRef.current.swiper.slideNext();
+    }
+  };
+
+  const handleTopStoresPrev = () => {
+    if (topStoresSwiperRef.current && topStoresSwiperRef.current.swiper) {
+      topStoresSwiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleTopStoresNext = () => {
+    if (topStoresSwiperRef.current && topStoresSwiperRef.current.swiper) {
+      topStoresSwiperRef.current.swiper.slideNext();
+    }
+  };
+
+  const handleTopBrandsPrev = () => {
+    if (topBrandsSwiperRef.current && topBrandsSwiperRef.current.swiper) {
+      topBrandsSwiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleTopBrandsNext = () => {
+    if (topBrandsSwiperRef.current && topBrandsSwiperRef.current.swiper) {
+      topBrandsSwiperRef.current.swiper.slideNext();
+    }
+  };
+
+  const handleBestsellersPrev = () => {
+    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper) {
+      bestsellersSwiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleBestsellersNext = () => {
+    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper) {
+      bestsellersSwiperRef.current.swiper.slideNext();
+    }
+  };
+
+  const handleOffersPrev = () => {
+    if (offersSwiperRef.current && offersSwiperRef.current.swiper) {
+      offersSwiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleOffersNext = () => {
+    if (offersSwiperRef.current && offersSwiperRef.current.swiper) {
+      offersSwiperRef.current.swiper.slideNext();
+    }
+  };
+
+  const handleSpecialDealsPrev = () => {
+    if (specialDealsSwiperRef.current && specialDealsSwiperRef.current.swiper) {
+      specialDealsSwiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleSpecialDealsNext = () => {
+    if (specialDealsSwiperRef.current && specialDealsSwiperRef.current.swiper) {
+      specialDealsSwiperRef.current.swiper.slideNext();
+    }
+  };
+
+  const handleFeaturedOffersPrev = () => {
+    if (featuredOffersSwiperRef.current && featuredOffersSwiperRef.current.swiper) {
+      featuredOffersSwiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleFeaturedOffersNext = () => {
+    if (featuredOffersSwiperRef.current && featuredOffersSwiperRef.current.swiper) {
+      featuredOffersSwiperRef.current.swiper.slideNext();
+    }
+  };
+
+  const handleStoreFilter = (filter: string) => {
+    setActiveStoreFilter(filter);
+  };
+
+  const handleSeeAllStores = () => {
+    router.push('/store');
+  };
+
+  const handleSeeAllFeaturedOffers = () => {
+    router.push('/ecommerce');
+  };
+
+  const getFilteredStores = () => {
+    switch (activeStoreFilter) {
+      case 'top':
+        return storeData.filter(store => store.isTopStore);
+      case 'new':
+        return storeData.filter(store => store.isNewStore);
+      default:
+        return storeData;
+    }
+  };
+
   return (
     <>
       <Navigation />
@@ -170,12 +409,29 @@ export default function Home() {
         {/* Bestsellers Section */}
         <section className="section">
           <div className="container">
-            <SectionHeader title="Our Bestsellers" showNavigation={true} />
-            <div className="products-grid">
+            <SectionHeader 
+              title="Our Bestsellers" 
+              showNavigation={true}
+              onPrev={handleBestsellersPrev}
+              onNext={handleBestsellersNext}
+            />
+            {/* @ts-ignore */}
+            <Swiper
+              ref={bestsellersSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView="auto"
+              spaceBetween={24}
+              grabCursor={true}
+              freeMode={true}
+              style={{ width: '1360px' }}
+            >
               {productData.map((product, index) => (
-                <ProductCard key={index} {...product} />
+                // @ts-ignore
+                <SwiperSlide key={index} style={{ width: 'auto' }}>
+                  <ProductCard {...product} />
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           </div>
         </section>
 
@@ -202,12 +458,29 @@ export default function Home() {
         {/* Offers Section */}
         <section className="section">
           <div className="container">
-            <SectionHeader title="Offers For You" showNavigation={true} />
-            <div className="products-grid">
+            <SectionHeader 
+              title="Offers For You" 
+              showNavigation={true}
+              onPrev={handleOffersPrev}
+              onNext={handleOffersNext}
+            />
+            {/* @ts-ignore */}
+            <Swiper
+              ref={offersSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView="auto"
+              spaceBetween={24}
+              grabCursor={true}
+              freeMode={true}
+              style={{ width: '1360px' }}
+            >
               {productData.map((product, index) => (
-                <ProductCard key={index} {...product} />
+                // @ts-ignore
+                <SwiperSlide key={index} style={{ width: 'auto' }}>
+                  <ProductCard {...product} />
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           </div>
         </section>
 
@@ -219,12 +492,26 @@ export default function Home() {
               showNavigation={true}
               showButton={true}
               buttonText="Upgrade"
+              onPrev={handleSpecialDealsPrev}
+              onNext={handleSpecialDealsNext}
             />
-            <div className="products-grid">
+            {/* @ts-ignore */}
+            <Swiper
+              ref={specialDealsSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView="auto"
+              spaceBetween={24}
+              grabCursor={true}
+              freeMode={true}
+              style={{ width: '1360px' }}
+            >
               {productData.map((product, index) => (
-                <ProductCard key={index} {...product} />
+                // @ts-ignore
+                <SwiperSlide key={index} style={{ width: 'auto' }}>
+                  <ProductCard {...product} />
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           </div>
         </section>
 
@@ -239,36 +526,93 @@ export default function Home() {
         {/* Top Brands Section */}
         <section className="section">
           <div className="container">
-            <SectionHeader title="Top Brands" showNavigation={true} />
-            <div className="categories-grid">
+            <SectionHeader 
+              title="Top Brands" 
+              showNavigation={true}
+              onPrev={handleTopBrandsPrev}
+              onNext={handleTopBrandsNext}
+            />
+            {/* @ts-ignore */}
+            <Swiper
+              ref={topBrandsSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView="auto"
+              spaceBetween={24}
+              grabCursor={true}
+              freeMode={true}
+              style={{ width: '1360px' }}
+            >
               {brandData.map((brand, index) => (
-                <CategoryCard key={index} {...brand} />
+                // @ts-ignore
+                <SwiperSlide key={index} style={{ width: 'auto' }}>
+                  <CategoryCard {...brand} />
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           </div>
         </section>
 
         {/* Featured Offers Section */}
         <section className="section">
           <div className="container">
-            <SectionHeader title="Featured Offers" showButton={true} buttonText="See All" />
-            <div className="products-grid">
+            <SectionHeader 
+              title="Featured Offers" 
+              showNavigation={true}
+              showButton={true} 
+              buttonText="See All"
+              onButtonClick={handleSeeAllFeaturedOffers}
+              onPrev={handleFeaturedOffersPrev}
+              onNext={handleFeaturedOffersNext}
+            />
+            {/* @ts-ignore */}
+            <Swiper
+              ref={featuredOffersSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView="auto"
+              spaceBetween={24}
+              grabCursor={true}
+              freeMode={true}
+              style={{ width: '1360px' }}
+            >
               {productData.map((product, index) => (
-                <ProductCard key={index} {...product} />
+                // @ts-ignore
+                <SwiperSlide key={index} style={{ width: 'auto' }}>
+                  <ProductCard {...product} />
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           </div>
         </section>
 
         {/* Top Stores Section */}
         <section className="section">
           <div className="container">
-            <SectionHeader title="Top Stores" showNavigation={true} />
-            <div className="categories-grid">
-              {brandData.map((store, index) => (
-                <CategoryCard key={index} {...store} />
+            <SectionHeader 
+              title="Top Stores" 
+              showNavigation={true}
+              showButton={true}
+              buttonText={"See All"}
+              onButtonClick={handleSeeAllStores}
+              onPrev={handleTopStoresPrev}
+              onNext={handleTopStoresNext}
+            />
+            {/* @ts-ignore */}
+            <Swiper
+              ref={topStoresSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView="auto"
+              spaceBetween={24}
+              grabCursor={true}
+              freeMode={true}
+              style={{ width: '1360px' }}
+            >
+              {getFilteredStores().map((store, index) => (
+                // @ts-ignore
+                <SwiperSlide key={store.id} style={{ width: 'auto' }}>
+                  <CategoryCard name={store.name} image={store.image} />
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           </div>
         </section>
 
@@ -283,17 +627,34 @@ export default function Home() {
         {/* New Stores Section */}
         <section className="section">
           <div className="container">
-            <SectionHeader title="New Stores on QLIQ" showNavigation={true} />
-            <div className="categories-grid">
+            <SectionHeader
+              title="New Stores on QLIQ"
+              showNavigation={true}
+              onPrev={handlePrev}
+              onNext={handleNext}
+            />
+            {/* @ts-ignore */}
+            <Swiper
+              ref={swiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView="auto"
+              spaceBetween={24}
+              grabCursor={true}
+              freeMode={true}
+              style={{ width: '1360px' }}
+            >
               {brandData.map((store, index) => (
-                <CategoryCard key={index} {...store} />
+                // @ts-ignore
+                <SwiperSlide key={index} style={{ width: 'auto' }}>
+                  <CategoryCard {...store} />
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           </div>
         </section>
 
         {/* New Influencers Section */}
-        <section className="section">
+        {/* <section className="section">
           <div className="container">
             <SectionHeader title="New Influencers on QLIQ" showNavigation={true} />
             <div className="influencers-grid">
@@ -302,7 +663,7 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Banner 4 */}
         <Banner

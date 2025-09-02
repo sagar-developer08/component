@@ -8,7 +8,6 @@ import StoreCard from '@/components/StoreCard'
 import SectionHeader from '@/components/SectionHeader'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
-import FilterDrawer from '@/components/FilterDrawer'
 import { useState } from 'react'
 
 const productData = [
@@ -76,8 +75,7 @@ export default function Home() {
             title="Stores"
             showNavigation={false}
             showButton={true}
-            buttonText="Filter"
-            onButtonClick={() => setFilterOpen(true)}
+            buttonText="See All"
           />
           <div className="products-grid">
             {productData.map((product, index) => (
@@ -91,8 +89,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      <FilterDrawer open={filterOpen} onClose={() => setFilterOpen(false)} />
 
       <Footer />
     </main>

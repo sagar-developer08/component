@@ -33,10 +33,6 @@ export default function CategoryCard({ name, image, onClick }: CategoryCardProps
           transition: all 0.2s ease;
         }
 
-        .category-card:hover {
-          transform: translateY(-5px);
-        }
-
         .category-name {
           display: flex;
           padding: 0 8px;

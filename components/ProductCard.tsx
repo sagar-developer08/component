@@ -101,11 +101,6 @@ export default function ProductCard({
           transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .product-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-
         .product-image {
           width: 322px;
           height: 222px;

@@ -23,14 +23,15 @@ export default function Navigation() {
   const getActiveNav = () => {
     if (pathname === '/') return 'Discovery'
     if (pathname === '/hypermarket') return 'Hypermarket'
-    if (pathname === '/store') return 'Stores'
     if (pathname === '/ecommerce') return 'E-Commerce'
     if (pathname === '/supermarket') return 'Supermarket'
+    // Remove highlight for store detail page
+    if (pathname === '/storeDetail') return ''
+    if (pathname === '/store') return 'Stores'
     if (pathname === '/profile') return 'Profile'
     if (pathname === '/checkout') return 'Checkout'
     return 'Discovery'
   }
-  
   const activeNav = getActiveNav()
 
   useEffect(() => {

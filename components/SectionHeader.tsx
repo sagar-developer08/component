@@ -6,11 +6,15 @@ interface SectionHeaderProps {
   showButton?: boolean
   buttonText?: string
   onButtonClick?: () => void
+  onPrev?: () => void
+  onNext?: () => void
 }
 
 export default function SectionHeader({ 
   title, 
-  showNavigation = false, 
+  showNavigation = false,
+  onPrev,
+  onNext, 
   showButton = false, 
   buttonText = "See All",
   onButtonClick 
@@ -29,15 +33,13 @@ export default function SectionHeader({
           
           {showNavigation && (
             <div className="navigation-buttons">
-              <button className="nav-btn prev" aria-label="Previous">
+              <button className="nav-btn prev" aria-label="Previous" onClick={onPrev}>
                 <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-                  <g opacity="0.4">
                     <rect y="44" width="44" height="44" rx="22" transform="rotate(-90 0 44)" fill="#0082FF" fillOpacity="0.24"/>
                     <path d="M32 22L11 22M11 22L18.875 14.125M11 22L18.875 29.875" stroke="#0082FF" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round"/>
-                  </g>
                 </svg>
               </button>
-              <button className="nav-btn next" aria-label="Next">
+              <button className="nav-btn next" aria-label="Next" onClick={onNext}>
                 <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
                   <rect x="44" width="44" height="44" rx="22" transform="rotate(90 44 0)" fill="#0082FF" fillOpacity="0.24"/>
                   <path d="M11 22L32 22M32 22L24.125 29.875M32 22L24.125 14.125" stroke="#0082FF" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round"/>

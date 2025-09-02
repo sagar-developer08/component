@@ -5,6 +5,7 @@ import Navigation from '@/components/Navigation'
 import Categories from '@/components/Categories'
 import ImageSlider from '@/components/ImageSlider'
 import ProductCard from '@/components/ProductCard'
+import StoreCard from '@/components/StoreCard'
 import SectionHeader from '@/components/SectionHeader'
 import Banner from '@/components/Banner'
 import CategoryCard from '@/components/CategoryCard'
@@ -51,7 +52,7 @@ const productData = [
 
 export default function Home() {
   const router = useRouter()
-  
+
   return (
     <main className="home-page">
       <Navigation />
@@ -153,6 +154,27 @@ export default function Home() {
           <div className="products-grid">
             {productData.map((product, index) => (
               <ProductCard key={index} {...product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="Stores"
+            showNavigation={false}
+            showButton={true}
+            buttonText="See All"
+          />
+          <div className="products-grid">
+            {productData.map((product, index) => (
+              <StoreCard key={index} {...product} />
+            ))}
+          </div>
+          <div className="products-grid">
+            {productData.map((product, index) => (
+              <StoreCard key={index} {...product} />
             ))}
           </div>
         </div>

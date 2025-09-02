@@ -59,15 +59,15 @@ export default function FAQ() {
               ))}
             </div>
           </div>
-          {/* <div className="faq-image">
+          <div className="faq-image">
             <Image
               src="https://api.builder.io/api/v1/image/assets/TEMP/578a387ce7b8070169768b7de1c8fcbb3dedc99d?width=1040"
               alt="FAQ Image"
               width={520}
-              height={576}
+              height={496}
               style={{ borderRadius: '24px' }}
             />
-          </div> */}
+          </div>
         </div>
       </div>
 
