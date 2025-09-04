@@ -1,18 +1,5 @@
 'use client'
 
-interface InfluencerCardProps {
-  name: string
-  backgroundImage: string
-  earned: string
-  potential: string
-  saved: string
-  description: string
-  tags: string[]
-  memberType: string
-  followerCount: string
-  yearJoined: string
-}
-
 export default function InfluencerCard({
   name,
   backgroundImage,
@@ -24,7 +11,7 @@ export default function InfluencerCard({
   memberType,
   followerCount,
   yearJoined
-}: InfluencerCardProps) {
+}) {
   return (
     <div className="influencer-card">
       <div className="card-header">

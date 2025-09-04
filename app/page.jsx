@@ -224,66 +224,15 @@ const storeData = [
   }
 ]
 
-// const influencerData = [
-//   {
-//     name: "Ama Cruize",
-//     backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/7f8ab7b79b01d0251928e6b4cffc6477e9d6a199?width=696",
-//     earned: "$1M",
-//     potential: "$2.9M",
-//     saved: "$2M",
-//     description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
-//     tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
-//     memberType: "Bronze Member",
-//     followerCount: "50K",
-//     yearJoined: "2025"
-//   },
-//   {
-//     name: "Ama Cruize",
-//     backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/8169ee624ec53e032e826b932e875eb9b273e280?width=696",
-//     earned: "$1M",
-//     potential: "$2.9M",
-//     saved: "$2M",
-//     description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
-//     tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
-//     memberType: "Bronze Member",
-//     followerCount: "50K",
-//     yearJoined: "2025"
-//   },
-//   {
-//     name: "Ama Cruize",
-//     backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/d0bf09fbeeb59ddd30e520331d8ff0d09fc9f388?width=696",
-//     earned: "$1M",
-//     potential: "$2.9M",
-//     saved: "$2M",
-//     description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
-//     tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
-//     memberType: "Bronze Member",
-//     followerCount: "50K",
-//     yearJoined: "2025"
-//   },
-//   {
-//     name: "Ama Cruize",
-//     backgroundImage: "https://api.builder.io/api/v1/image/assets/TEMP/7f8ab7b79b01d0251928e6b4cffc6477e9d6a199?width=696",
-//     earned: "$1M",
-//     potential: "$2.9M",
-//     saved: "$2M",
-//     description: "I am a Social Media Influencer based in Austria, I am passionate about beauty products!",
-//     tags: ["Bronze Member", "QLIQR Since 2025", "50K Followers"],
-//     memberType: "Bronze Member",
-//     followerCount: "50K",
-//     yearJoined: "2025"
-//   }
-// ]
-
 export default function Home() {
   const router = useRouter();
-  const swiperRef = useRef<any>(null);
-  const topStoresSwiperRef = useRef<any>(null);
-  const topBrandsSwiperRef = useRef<any>(null);
-  const bestsellersSwiperRef = useRef<any>(null);
-  const offersSwiperRef = useRef<any>(null);
-  const specialDealsSwiperRef = useRef<any>(null);
-  const featuredOffersSwiperRef = useRef<any>(null);
+  const swiperRef = useRef(null);
+  const topStoresSwiperRef = useRef(null);
+  const topBrandsSwiperRef = useRef(null);
+  const bestsellersSwiperRef = useRef(null);
+  const offersSwiperRef = useRef(null);
+  const specialDealsSwiperRef = useRef(null);
+  const featuredOffersSwiperRef = useRef(null);
   const [activeStoreFilter, setActiveStoreFilter] = useState('all');
 
   const handlePrev = () => {
@@ -370,7 +319,7 @@ export default function Home() {
     }
   };
 
-  const handleStoreFilter = (filter: string) => {
+  const handleStoreFilter = (filter) => {
     setActiveStoreFilter(filter);
   };
 
@@ -415,7 +364,6 @@ export default function Home() {
               onPrev={handleBestsellersPrev}
               onNext={handleBestsellersNext}
             />
-            {/* @ts-ignore */}
             <Swiper
               ref={bestsellersSwiperRef}
               modules={[SwiperNavigation]}
@@ -426,7 +374,6 @@ export default function Home() {
               style={{ width: '1360px' }}
             >
               {productData.map((product, index) => (
-                // @ts-ignore
                 <SwiperSlide key={index} style={{ width: 'auto' }}>
                   <ProductCard {...product} />
                 </SwiperSlide>
@@ -464,7 +411,6 @@ export default function Home() {
               onPrev={handleOffersPrev}
               onNext={handleOffersNext}
             />
-            {/* @ts-ignore */}
             <Swiper
               ref={offersSwiperRef}
               modules={[SwiperNavigation]}
@@ -475,7 +421,6 @@ export default function Home() {
               style={{ width: '1360px' }}
             >
               {productData.map((product, index) => (
-                // @ts-ignore
                 <SwiperSlide key={index} style={{ width: 'auto' }}>
                   <ProductCard {...product} />
                 </SwiperSlide>
@@ -495,7 +440,6 @@ export default function Home() {
               onPrev={handleSpecialDealsPrev}
               onNext={handleSpecialDealsNext}
             />
-            {/* @ts-ignore */}
             <Swiper
               ref={specialDealsSwiperRef}
               modules={[SwiperNavigation]}
@@ -506,7 +450,6 @@ export default function Home() {
               style={{ width: '1360px' }}
             >
               {productData.map((product, index) => (
-                // @ts-ignore
                 <SwiperSlide key={index} style={{ width: 'auto' }}>
                   <ProductCard {...product} />
                 </SwiperSlide>
@@ -532,7 +475,6 @@ export default function Home() {
               onPrev={handleTopBrandsPrev}
               onNext={handleTopBrandsNext}
             />
-            {/* @ts-ignore */}
             <Swiper
               ref={topBrandsSwiperRef}
               modules={[SwiperNavigation]}
@@ -543,7 +485,6 @@ export default function Home() {
               style={{ width: '1360px' }}
             >
               {brandData.map((brand, index) => (
-                // @ts-ignore
                 <SwiperSlide key={index} style={{ width: 'auto' }}>
                   <CategoryCard {...brand} />
                 </SwiperSlide>
@@ -564,7 +505,6 @@ export default function Home() {
               onPrev={handleFeaturedOffersPrev}
               onNext={handleFeaturedOffersNext}
             />
-            {/* @ts-ignore */}
             <Swiper
               ref={featuredOffersSwiperRef}
               modules={[SwiperNavigation]}
@@ -575,7 +515,6 @@ export default function Home() {
               style={{ width: '1360px' }}
             >
               {productData.map((product, index) => (
-                // @ts-ignore
                 <SwiperSlide key={index} style={{ width: 'auto' }}>
                   <ProductCard {...product} />
                 </SwiperSlide>
@@ -596,7 +535,6 @@ export default function Home() {
               onPrev={handleTopStoresPrev}
               onNext={handleTopStoresNext}
             />
-            {/* @ts-ignore */}
             <Swiper
               ref={topStoresSwiperRef}
               modules={[SwiperNavigation]}
@@ -607,7 +545,6 @@ export default function Home() {
               style={{ width: '1360px' }}
             >
               {getFilteredStores().map((store, index) => (
-                // @ts-ignore
                 <SwiperSlide key={store.id} style={{ width: 'auto' }}>
                   <CategoryCard name={store.name} image={store.image} />
                 </SwiperSlide>
@@ -633,7 +570,6 @@ export default function Home() {
               onPrev={handlePrev}
               onNext={handleNext}
             />
-            {/* @ts-ignore */}
             <Swiper
               ref={swiperRef}
               modules={[SwiperNavigation]}
@@ -644,7 +580,6 @@ export default function Home() {
               style={{ width: '1360px' }}
             >
               {brandData.map((store, index) => (
-                // @ts-ignore
                 <SwiperSlide key={index} style={{ width: 'auto' }}>
                   <CategoryCard {...store} />
                 </SwiperSlide>
@@ -652,18 +587,6 @@ export default function Home() {
             </Swiper>
           </div>
         </section>
-
-        {/* New Influencers Section */}
-        {/* <section className="section">
-          <div className="container">
-            <SectionHeader title="New Influencers on QLIQ" showNavigation={true} />
-            <div className="influencers-grid">
-              {influencerData.map((influencer, index) => (
-                <InfluencerCard key={index} {...influencer} />
-              ))}
-            </div>
-          </div>
-        </section> */}
 
         {/* Banner 4 */}
         <Banner
@@ -675,53 +598,6 @@ export default function Home() {
 
         {/* FAQ Section */}
         <FAQ />
-
-        {/* Blogs Section */}
-        {/* <section className="section">
-          <div className="container">
-            <div className="blogs-header">
-              <h2 className="section-title">Blogs</h2>
-            </div>
-            <div className="blogs-grid">
-              <div className="blog-item">
-                <Image
-                  src="https://api.builder.io/api/v1/image/assets/TEMP/9f041f37f3b61ba2ea7c404265252ed02d08a49f?width=875"
-                  alt="Blog 1"
-                  width={437}
-                  height={290}
-                  style={{ borderRadius: '24px' }}
-                />
-                <h3 className="blog-title">Buy at Deep Discounts</h3>
-              </div>
-              <div className="blog-item">
-                <Image
-                  src="https://api.builder.io/api/v1/image/assets/TEMP/e0c5fa55f80175c5c29eafd633d4188740be25b2?width=875"
-                  alt="Blog 2"
-                  width={437}
-                  height={290}
-                  style={{ borderRadius: '24px' }}
-                />
-                <h3 className="blog-title">Buy at Deep Discounts</h3>
-              </div>
-              <div className="blog-item">
-                <Image
-                  src="https://api.builder.io/api/v1/image/assets/TEMP/629f1b88654ed049faf12b75c768886f2e2f26e4?width=875"
-                  alt="Blog 3"
-                  width={437}
-                  height={290}
-                  style={{ borderRadius: '24px' }}
-                />
-                <h3 className="blog-title">Buy at Deep Discounts</h3>
-              </div>
-            </div>
-            <div className="blog-dots">
-              <div className="blog-dot active"></div>
-              <div className="blog-dot"></div>
-              <div className="blog-dot"></div>
-              <div className="blog-dot"></div>
-            </div>
-          </div>
-        </section> */}
 
         {/* Final Banner */}
         <Banner

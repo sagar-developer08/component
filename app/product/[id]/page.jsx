@@ -63,7 +63,7 @@ const productData = [
   }
 ]
 
-export default function ProductPage({ params }: { params: { id: string } }) {
+export default function ProductPage({ params }) {
   return (
     <div className="product-page">
       <Navigation />

@@ -1,15 +1,5 @@
 'use client'
 
-interface SectionHeaderProps {
-  title: string
-  showNavigation?: boolean
-  showButton?: boolean
-  buttonText?: string
-  onButtonClick?: () => void
-  onPrev?: () => void
-  onNext?: () => void
-}
-
 export default function SectionHeader({ 
   title, 
   showNavigation = false,
@@ -18,7 +8,7 @@ export default function SectionHeader({
   showButton = false, 
   buttonText = "See All",
   onButtonClick 
-}: SectionHeaderProps) {
+}) {
   return (
     <div className="section-header">
       <h2 className="section-title">{title}</h2>

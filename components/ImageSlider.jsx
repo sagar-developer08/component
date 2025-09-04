@@ -38,14 +38,14 @@ export default function ImageSlider() {
   const swiperRef = useRef(null)
 
   const nextSlide = () => {
-    if (swiperRef.current && (swiperRef.current as any).swiper) {
-((swiperRef.current as any).swiper as any).slideNext()
+    if (swiperRef.current && swiperRef.current.swiper) {
+      swiperRef.current.swiper.slideNext()
     }
   }
 
   const prevSlide = () => {
-    if (swiperRef.current && (swiperRef.current as any).swiper) {
-((swiperRef.current as any).swiper as any).slidePrev()
+    if (swiperRef.current && swiperRef.current.swiper) {
+      swiperRef.current.swiper.slidePrev()
     }
   }
 

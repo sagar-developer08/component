@@ -10,7 +10,7 @@ import LoginModal from './LoginModal'
 
 export default function Navigation() {
   // Measure navbar height so we can add a spacer that preserves layout
-  const navRef = useRef<HTMLDivElement | null>(null)
+  const navRef = useRef(null)
   const [navHeight, setNavHeight] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
   const [wishlistOpen, setWishlistOpen] = useState(false)

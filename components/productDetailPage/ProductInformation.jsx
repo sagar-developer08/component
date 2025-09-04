@@ -25,7 +25,7 @@ const faqData = [
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(0)
 
-  const toggleFAQ = (index: number) => {
+  const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? -1 : index)
   }
 
@@ -34,7 +34,7 @@ export default function FAQ() {
       <div className="faq-container">
         <div className="faq-content">
           <div className="faq-text">
-            <h2 className="faq-title">Frequently Asked Questions</h2>
+            <h2 className="faq-title">Product Information</h2>
             <div className="faq-accordion">
               {faqData.map((item, index) => (
                 <div key={index} className={`accordion-item ${openIndex === index ? 'open' : ''}`}>
@@ -59,15 +59,15 @@ export default function FAQ() {
               ))}
             </div>
           </div>
-          <div className="faq-image">
+          {/* <div className="faq-image">
             <Image
               src="https://api.builder.io/api/v1/image/assets/TEMP/578a387ce7b8070169768b7de1c8fcbb3dedc99d?width=1040"
               alt="FAQ Image"
               width={520}
-              height={496}
+              height={576}
               style={{ borderRadius: '24px' }}
             />
-          </div>
+          </div> */}
         </div>
       </div>
 

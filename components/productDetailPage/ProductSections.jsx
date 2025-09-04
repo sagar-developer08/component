@@ -3,23 +3,11 @@ import SectionHeader from '@/components/SectionHeader'
 import ProductInformation from '@/components/productDetailPage/ProductInformation'
 import { useState } from 'react'
 
-interface ProductSectionsProps {
-  relatedProducts: Array<{
-    id: string
-    title: string
-    price: string
-    rating: string
-    deliveryTime: string
-    image: string
-    badge?: string
-  }>
-}
-
-export default function ProductSections({ relatedProducts }: ProductSectionsProps) {
+export default function ProductSections({ relatedProducts }) {
   const [expandedItem, setExpandedItem] = useState(0)
   const [manufacturerImageIndex, setManufacturerImageIndex] = useState(0)
 
-  const toggleAccordion = (index: number) => {
+  const toggleAccordion = (index) => {
     setExpandedItem(expandedItem === index ? -1 : index)
   }
 

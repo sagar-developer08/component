@@ -2,13 +2,7 @@
 
 import Image from 'next/image'
 
-interface CategoryCardProps {
-  name: string
-  image: string
-  onClick?: () => void
-}
-
-export default function CategoryCard({ name, image, onClick }: CategoryCardProps) {
+export default function CategoryCard({ name, image, onClick }) {
   return (
     <div className="category-card" onClick={onClick}>
       <Image

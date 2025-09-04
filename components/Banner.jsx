@@ -1,20 +1,12 @@
 'use client'
 
-interface BannerProps {
-  title: string
-  description: string
-  buttonText: string
-  backgroundImage: string
-  onButtonClick?: () => void
-}
-
 export default function Banner({
   title,
   description,
   buttonText,
   backgroundImage,
   onButtonClick
-}: BannerProps) {
+}) {
   return (
     <div className="banner-container">
       <div className="banner-section">
