@@ -12,11 +12,14 @@ export function AuthProvider({ children }) {
 
   // Check for existing token on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem('authToken')
-    if (storedToken) {
-      setToken(storedToken)
-      setIsAuthenticated(true)
-      // You can add token validation here if needed
+    // Do not use localStorage for tokens. Optionally, restore session from cognitoId cookie.
+    if (typeof document !== 'undefined') {
+      const cookies = document.cookie.split(';').map(c => c.trim())
+      const cognitoCookie = cookies.find(c => c.startsWith('cognitoId='))
+      const tokenCookie = cookies.find(c => c.startsWith('accessToken='))
+      if (cognitoCookie || tokenCookie) {
+        setIsAuthenticated(true)
+      }
     }
   }, [])
 
@@ -24,7 +27,6 @@ export function AuthProvider({ children }) {
     setToken(authToken)
     setUser(userData)
     setIsAuthenticated(true)
-    localStorage.setItem('authToken', authToken)
     setLoginModalOpen(false)
   }
 
@@ -32,7 +34,10 @@ export function AuthProvider({ children }) {
     setToken(null)
     setUser(null)
     setIsAuthenticated(false)
-    localStorage.removeItem('authToken')
+    if (typeof document !== 'undefined') {
+      document.cookie = 'cognitoId=; Max-Age=0; Path=/; SameSite=Lax'
+      document.cookie = 'accessToken=; Max-Age=0; Path=/; SameSite=Lax'
+    }
   }
 
   const openLoginModal = () => {

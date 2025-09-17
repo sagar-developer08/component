@@ -1,11 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { catalog } from '../api/endpoints'
 
 // Async thunk for fetching brands
 export const fetchBrands = createAsyncThunk(
   'brands/fetchBrands',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch('https://backendcatalog.qliq.ae/api/brands')
+      const response = await fetch(catalog.brands)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)

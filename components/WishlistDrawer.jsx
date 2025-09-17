@@ -1,8 +1,13 @@
 import Image from 'next/image'
 import { useAuth } from '../contexts/AuthContext'
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchWishlist } from '@/store/slices/wishlistSlice'
 
 export default function WishlistDrawer({ open, onClose }) {
   const { requireAuth } = useAuth()
+  const dispatch = useDispatch()
+  const { items } = useSelector(state => state.wishlist)
 
   const handleAddToCart = () => {
     requireAuth(() => {
@@ -10,6 +15,14 @@ export default function WishlistDrawer({ open, onClose }) {
       console.log('Adding to cart from wishlist')
     })
   }
+
+  useEffect(() => {
+    if (open) {
+      requireAuth(() => {
+        dispatch(fetchWishlist())
+      })
+    }
+  }, [open, dispatch, requireAuth])
 
   if (!open) return null
   return (
@@ -26,23 +39,28 @@ export default function WishlistDrawer({ open, onClose }) {
         </div>
         <div className="drawer-divider" />
         <div className="drawer-content">
-          <div className="wishlist-item">
-            <Image src="/iphone.jpg" alt="Nike Airforce 01" width={130} height={100} className="wishlist-image" />
-            <div className="wishlist-info">
-              <div className="wishlist-brand">Nike</div>
-              <div className="wishlist-name">Airforce 01</div>
-              <div className="wishlist-price">AED 1,200</div>
-              <div className="wishlist-actions">
-                <button className="wishlist-cart-btn" onClick={handleAddToCart}>
-                  <svg width="28" height="28" viewBox="6 8 28 28" fill="none">
-                    {/* <circle cx="14" cy="14" r="14" stroke="#0082FF" /> */}
-                    <path d="M16.1818 15.1538C16.1818 15.1538 16.1818 11 20 11C23.8182 11 23.8182 15.1538 23.8182 15.1538M13 15.1538V29H27V15.1538H13Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </button>
+          {items && items.length > 0 ? (
+            items.map((it, idx) => (
+              <div className="wishlist-item" key={idx}>
+                <Image src='/iphone.jpg' alt={it.name || 'Wishlist item'} width={130} height={100} className="wishlist-image" />
+                <div className="wishlist-info">
+                  <div className="wishlist-brand">{it.brand || ''}</div>
+                  <div className="wishlist-name">{it.name}</div>
+                  <div className="wishlist-price">{typeof it.price !== 'undefined' ? `AED ${it.price}` : ''}</div>
+                  <div className="wishlist-actions">
+                    <button className="wishlist-cart-btn" onClick={handleAddToCart}>
+                      <svg width="28" height="28" viewBox="6 8 28 28" fill="none">
+                        <path d="M16.1818 15.1538C16.1818 15.1538 16.1818 11 20 11C23.8182 11 23.8182 15.1538 23.8182 15.1538M13 15.1538V29H27V15.1538H13Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <button className="wishlist-remove-btn">Remove</button>
               </div>
-            </div>
-            <button className="wishlist-remove-btn">Remove</button>
-          </div>
+            ))
+          ) : (
+            <div style={{ color: '#666' }}>No items in wishlist</div>
+          )}
         </div>
       </div>
       <style jsx>{`

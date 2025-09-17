@@ -1,15 +1,26 @@
 import Image from 'next/image'
 import { useAuth } from '../contexts/AuthContext'
+import { useDispatch, useSelector } from 'react-redux'
+import { loginUser } from '@/store/slices/authSlice'
 
 export default function LoginModal({ open, onClose }) {
   const { login } = useAuth()
+  const dispatch = useDispatch()
+  const authState = useSelector(state => state.auth)
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
-    // Mock login - replace with actual authentication logic
-    const mockUser = { name: 'User', email: 'user@example.com' }
-    const mockToken = 'mock-jwt-token-' + Date.now()
-    login(mockUser, mockToken)
+    const email = e.currentTarget.form?.elements[0]?.value || ''
+    const password = e.currentTarget.form?.elements[1]?.value || ''
+    const resultAction = await dispatch(loginUser({ email, password }))
+    if (loginUser.fulfilled.match(resultAction)) {
+      const payload = resultAction.payload
+      const token = payload?.tokens?.accessToken
+      const user = payload?.user
+      if (token && user) {
+        login(user, token)
+      }
+    }
   }
 
   const handleCreateAccount = (e) => {
@@ -46,7 +57,9 @@ export default function LoginModal({ open, onClose }) {
               <input className="login-input" type="password" placeholder="Password" />
               <div className="login-btn-row">
                 <button type="button" className="login-create-btn" onClick={handleCreateAccount}>Create Account</button>
-                <button type="submit" className="login-btn" onClick={handleLogin}>Login</button>
+                <button type="submit" className="login-btn" onClick={handleLogin} disabled={authState.loading}>
+                  {authState.loading ? 'Logging in...' : 'Login'}
+                </button>
               </div>
             </form>
             <div className="login-divider-row">

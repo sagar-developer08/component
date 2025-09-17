@@ -45,7 +45,7 @@ const productData = [
   }
 ]
 
-export default function Home() {
+export default function EshopDetails() {
   const [filterOpen, setFilterOpen] = useState(false)
   return (
     <main className="home-page">
@@ -56,24 +56,23 @@ export default function Home() {
           <div className="listing-layout">
             {/* Sticky Filter Sidebar */}
             <aside className="filters-sidebar">
-              <FilterDrawer open={true} inline sticky stickyTop={112} onClose={() => {}} />
+              <FilterDrawer open={true} inline sticky stickyTop={112} onClose={() => { }} />
             </aside>
 
             {/* Main Content Area with Scrollable Products */}
             <div className="content-area">
               <SectionHeader
-                title="Stores"
+                title="Products"
                 showNavigation={false}
-                showButton={false}
-                buttonText="Filter"
-                onButtonClick={() => setFilterOpen(true)}
+                showButton={true}
+                buttonText="Sort By"
+                onButtonClick={() => { }}
               />
-
               <div className="products-scroll-container">
                 <div className="grid-3">
                   {productData.concat(productData).map((product, index) => (
                     <div key={index} className="grid-item">
-                      <StoreCard {...product} />
+                      <ProductCard {...product} />
                     </div>
                   ))}
                 </div>
@@ -105,7 +104,11 @@ export default function Home() {
           height: fit-content;
           max-height: calc(100vh - 112px);
           overflow-y: auto;
+           /* Hide scrollbar, keep scroll functionality */
+           -ms-overflow-style: none; /* IE and Edge */
+           scrollbar-width: none; /* Firefox */
         }
+         .filters-sidebar::-webkit-scrollbar { display: none; }
 
         .content-area { 
           flex: 1;
@@ -117,25 +120,11 @@ export default function Home() {
           max-height: calc(100vh - 200px);
           overflow-y: auto;
           padding-right: 8px; /* space for scrollbar */
+           /* Hide scrollbar, keep scroll functionality */
+           -ms-overflow-style: none; /* IE and Edge */
+           scrollbar-width: none; /* Firefox */
         }
-        
-        .products-scroll-container::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .products-scroll-container::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 3px;
-        }
-        
-        .products-scroll-container::-webkit-scrollbar-thumb {
-          background: #c1c1c1;
-          border-radius: 3px;
-        }
-        
-        .products-scroll-container::-webkit-scrollbar-thumb:hover {
-          background: #a8a8a8;
-        }
+         .products-scroll-container::-webkit-scrollbar { display: none; }
         
         .grid-3 {
           display: grid;
