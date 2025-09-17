@@ -54,6 +54,7 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
         .filter-drawer-inline-wrapper {
           display: block;
           background: transparent;
+          width: 100%;
           ${sticky ? `position: sticky; top: ${stickyTop}px;` : ''}
         }
         .filter-drawer {
@@ -61,9 +62,10 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
           width: 320px;
           max-width: 100vw;
           height: ${inline ? 'auto' : '100vh'};
-          box-shadow: ${inline ? 'none' : '2px 0 16px rgba(0,0,0,0.08)'};
+          box-shadow: ${inline ? '0 2px 8px rgba(0,0,0,0.1)' : '2px 0 16px rgba(0,0,0,0.08)'};
           display: flex;
           flex-direction: column;
+          border-radius: ${inline ? '12px' : '0'};
           ${inline ? '' : 'animation: slideInLeft 0.25s cubic-bezier(.4,0,.2,1);'}
         }
         @keyframes slideInLeft {

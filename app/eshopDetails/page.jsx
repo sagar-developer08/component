@@ -54,10 +54,12 @@ export default function Home() {
       <section className="section">
         <div className="container">
           <div className="listing-layout">
+            {/* Sticky Filter Sidebar */}
             <aside className="filters-sidebar">
               <FilterDrawer open={true} inline sticky stickyTop={112} onClose={() => {}} />
             </aside>
 
+            {/* Main Content Area with Scrollable Products */}
             <div className="content-area">
               <SectionHeader
                 title="Stores"
@@ -67,12 +69,14 @@ export default function Home() {
                 onButtonClick={() => setFilterOpen(true)}
               />
 
-              <div className="grid-3">
-                {productData.concat(productData).map((product, index) => (
-                  <div key={index} className="grid-item">
-                    <StoreCard {...product} />
-                  </div>
-                ))}
+              <div className="products-scroll-container">
+                <div className="grid-3">
+                  {productData.concat(productData).map((product, index) => (
+                    <div key={index} className="grid-item">
+                      <StoreCard {...product} />
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -86,35 +90,97 @@ export default function Home() {
 
       <style jsx>{`
         .listing-layout {
-          display: grid;
-          grid-template-columns: 320px 1fr;
+          display: flex;
           gap: 24px;
-          align-items: start;
-          margin-left: -24px; /* keep filter flush with viewport edge */
+          align-items: flex-start;
+          min-height: calc(100vh - 200px);
         }
+        
         .filters-sidebar {
           position: sticky;
           top: 112px; /* below fixed navbar */
           width: 320px;
-          z-index: 1;
+          flex-shrink: 0;
+          z-index: 10;
+          height: fit-content;
+          max-height: calc(100vh - 112px);
+          overflow-y: auto;
         }
 
-        .content-area { width: 100%; }
+        .content-area { 
+          flex: 1;
+          min-width: 0; /* allows flex item to shrink below content size */
+        }
+        
+        .products-scroll-container {
+          width: 100%;
+          max-height: calc(100vh - 200px);
+          overflow-y: auto;
+          padding-right: 8px; /* space for scrollbar */
+        }
+        
+        .products-scroll-container::-webkit-scrollbar {
+          width: 6px;
+        }
+        
+        .products-scroll-container::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+        
+        .products-scroll-container::-webkit-scrollbar-thumb {
+          background: #c1c1c1;
+          border-radius: 3px;
+        }
+        
+        .products-scroll-container::-webkit-scrollbar-thumb:hover {
+          background: #a8a8a8;
+        }
+        
         .grid-3 {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 24px;
+          padding-bottom: 40px; /* extra space at bottom */
         }
-        .grid-item { display: flex; justify-content: center; }
+        
+        .grid-item { 
+          display: flex; 
+          justify-content: center; 
+        }
 
         @media (max-width: 1024px) {
-          .listing-layout { display: block; margin-left: 0; }
-          .filters-sidebar { position: relative; top: 0; width: auto; z-index: 0; }
-          .content-area { }
-          .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .listing-layout { 
+            flex-direction: column; 
+            gap: 16px;
+          }
+          
+          .filters-sidebar { 
+            position: relative; 
+            top: 0; 
+            width: 100%; 
+            z-index: 1;
+            max-height: none;
+            overflow-y: visible;
+          }
+          
+          .products-scroll-container {
+            max-height: none;
+            overflow-y: visible;
+            padding-right: 0;
+          }
+          
+          .grid-3 { 
+            grid-template-columns: repeat(2, minmax(0, 1fr)); 
+            gap: 16px;
+          }
         }
+        
         @media (max-width: 640px) {
-          .grid-3 { grid-template-columns: 1fr; }
+          .grid-3 { 
+            grid-template-columns: 1fr; 
+            gap: 16px;
+          }
         }
       `}</style>
     </main>
