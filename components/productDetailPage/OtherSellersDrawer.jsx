@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function OtherSellersDrawer({ open, onClose, sellers }) {
+    const { requireAuth } = useAuth();
+
     useEffect(() => {
         if (open) {
             document.body.style.overflow = 'hidden';
@@ -11,6 +14,13 @@ export default function OtherSellersDrawer({ open, onClose, sellers }) {
             document.body.style.overflow = '';
         };
     }, [open]);
+
+    const handleAddToCart = (seller) => {
+        requireAuth(() => {
+            // Add to cart logic here
+            console.log('Adding to cart from seller:', seller);
+        });
+    };
 
     if (!open) return null;
 
@@ -54,7 +64,7 @@ export default function OtherSellersDrawer({ open, onClose, sellers }) {
                                 <span className="seller-value">{seller.sellerName}</span>
                                 <span className="seller-value">{seller.warranty}</span>
                             </div>
-                            <button className="seller-add-cart">Add To Cart</button>
+                            <button className="seller-add-cart" onClick={() => handleAddToCart(seller)}>Add To Cart</button>
                         </div>
                     ))}
                 </div>

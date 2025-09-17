@@ -13,63 +13,56 @@ import Footer from '@/components/Footer'
 import QuickNav from '@/components/QuickNav'
 import StoreCard from '@/components/StoreCard'
 import Image from 'next/image'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation as SwiperNavigation } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchProducts } from '@/store/slices/productsSlice'
+import { fetchBrands } from '@/store/slices/brandsSlice'
+import { fetchStores } from '@/store/slices/storesSlice'
 
-const productData = [
-  {
-    id: "nike-airforce-01",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
-  },
-  {
-    id: "nike-dunk-low",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
-  },
-  {
-    id: "nike-air-max",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
-  },
-  {
-    id: "nike-airforce-01",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
-  },
-  {
-    id: "nike-air-max",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
-  },
-  {
-    id: "nike-airforce-01-black",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
+// Helper function to transform API product data to match ProductCard component format
+const transformProductData = (apiProduct) => {
+  // Get the primary image or first available image
+  const primaryImage = apiProduct.images?.find(img => img.is_primary) || apiProduct.images?.[0];
+
+  // Use placeholder image if no valid image URL
+  const imageUrl = primaryImage?.url || 'https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644';
+
+  // Calculate savings for offer badge
+  const savings = apiProduct.is_offer && apiProduct.price && apiProduct.discount_price
+    ? apiProduct.price - apiProduct.discount_price
+    : 0;
+
+  return {
+    id: apiProduct._id || apiProduct.slug,
+    title: apiProduct.title || 'Product Title',
+    price: `AED ${apiProduct.discount_price || apiProduct.price || '0'}`,
+    rating: apiProduct.average_rating?.toString() || '0',
+    deliveryTime: '30 Min', // Default delivery time since it's not in API
+    image: imageUrl,
+    badge: apiProduct.is_offer && savings > 0 ? `Save AED ${savings}` : null
   }
-]
+}
+
+// Helper function to transform API brand data to match CategoryCard component format
+const transformBrandData = (apiBrand) => {
+  return {
+    name: apiBrand.name || 'Brand Name',
+    image: apiBrand.logo || 'https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412'
+  }
+}
+
+// Helper function to transform API store data to match CategoryCard component format
+const transformStoreData = (apiStore) => {
+  return {
+    name: apiStore.name || 'Store Name',
+    image: apiStore.logo || 'https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412'
+  }
+}
 
 const categoryData = [
   {
@@ -146,7 +139,7 @@ const storeData = [
     isNewStore: false
   },
   {
-    id: "store-2", 
+    id: "store-2",
     name: "Fashion Forward",
     category: "Fashion",
     rating: "4.6",
@@ -226,6 +219,11 @@ const storeData = [
 
 export default function Home() {
   const router = useRouter();
+  const dispatch = useDispatch();
+  const { products, bestsellers, offers, qliqPlusDeals, featured, loading, error } = useSelector(state => state.products);
+  const { brands, loading: brandsLoading, error: brandsError } = useSelector(state => state.brands);
+  const { stores, loading: storesLoading, error: storesError } = useSelector(state => state.stores);
+
   const swiperRef = useRef(null);
   const topStoresSwiperRef = useRef(null);
   const topBrandsSwiperRef = useRef(null);
@@ -234,6 +232,23 @@ export default function Home() {
   const specialDealsSwiperRef = useRef(null);
   const featuredOffersSwiperRef = useRef(null);
   const [activeStoreFilter, setActiveStoreFilter] = useState('all');
+
+  // Fetch products, brands, and stores on component mount
+  useEffect(() => {
+    dispatch(fetchProducts());
+    dispatch(fetchBrands());
+    dispatch(fetchStores());
+  }, [dispatch]);
+
+  // Transform API data for different sections
+  const transformedProducts = products.map(transformProductData);
+  const transformedBestsellers = bestsellers.map(transformProductData);
+  const transformedOffers = offers.map(transformProductData);
+  const transformedSpecialDeals = qliqPlusDeals.map(transformProductData);
+  const transformedFeaturedOffers = featured.map(transformProductData);
+  const transformedBrands = brands.map(transformBrandData);
+  const transformedTopStores = stores.map(transformStoreData);
+  const transformedNewStores = stores.map(transformStoreData);
 
   const handlePrev = () => {
     if (swiperRef.current && swiperRef.current.swiper) {
@@ -358,27 +373,37 @@ export default function Home() {
         {/* Bestsellers Section */}
         <section className="section">
           <div className="container">
-            <SectionHeader 
-              title="Our Bestsellers" 
+            <SectionHeader
+              title="Our Bestsellers"
               showNavigation={true}
               onPrev={handleBestsellersPrev}
               onNext={handleBestsellersNext}
             />
-            <Swiper
-              ref={bestsellersSwiperRef}
-              modules={[SwiperNavigation]}
-              slidesPerView="auto"
-              spaceBetween={24}
-              grabCursor={true}
-              freeMode={true}
-              style={{ width: '1360px' }}
-            >
-              {productData.map((product, index) => (
-                <SwiperSlide key={index} style={{ width: 'auto' }}>
-                  <ProductCard {...product} />
-                </SwiperSlide>
-              ))}
-            </Swiper>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                Loading products...
+              </div>
+            ) : error ? (
+              <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+                Error loading products: {error}
+              </div>
+            ) : (
+              <Swiper
+                ref={bestsellersSwiperRef}
+                modules={[SwiperNavigation]}
+                slidesPerView="auto"
+                spaceBetween={24}
+                grabCursor={true}
+                freeMode={true}
+                style={{ width: '1360px' }}
+              >
+                {transformedBestsellers.map((product, index) => (
+                  <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
+                    <ProductCard {...product} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            )}
           </div>
         </section>
 
@@ -405,8 +430,8 @@ export default function Home() {
         {/* Offers Section */}
         <section className="section">
           <div className="container">
-            <SectionHeader 
-              title="Offers For You" 
+            <SectionHeader
+              title="Offers For You"
               showNavigation={true}
               onPrev={handleOffersPrev}
               onNext={handleOffersNext}
@@ -420,8 +445,8 @@ export default function Home() {
               freeMode={true}
               style={{ width: '1360px' }}
             >
-              {productData.map((product, index) => (
-                <SwiperSlide key={index} style={{ width: 'auto' }}>
+              {transformedOffers.map((product, index) => (
+                <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
                   <ProductCard {...product} />
                 </SwiperSlide>
               ))}
@@ -449,8 +474,8 @@ export default function Home() {
               freeMode={true}
               style={{ width: '1360px' }}
             >
-              {productData.map((product, index) => (
-                <SwiperSlide key={index} style={{ width: 'auto' }}>
+              {transformedSpecialDeals.map((product, index) => (
+                <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
                   <ProductCard {...product} />
                 </SwiperSlide>
               ))}
@@ -469,37 +494,47 @@ export default function Home() {
         {/* Top Brands Section */}
         <section className="section">
           <div className="container">
-            <SectionHeader 
-              title="Top Brands" 
+            <SectionHeader
+              title="Top Brands"
               showNavigation={true}
               onPrev={handleTopBrandsPrev}
               onNext={handleTopBrandsNext}
             />
-            <Swiper
-              ref={topBrandsSwiperRef}
-              modules={[SwiperNavigation]}
-              slidesPerView="auto"
-              spaceBetween={24}
-              grabCursor={true}
-              freeMode={true}
-              style={{ width: '1360px' }}
-            >
-              {brandData.map((brand, index) => (
-                <SwiperSlide key={index} style={{ width: 'auto' }}>
-                  <CategoryCard {...brand} />
-                </SwiperSlide>
-              ))}
-            </Swiper>
+            {brandsLoading ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                Loading brands...
+              </div>
+            ) : brandsError ? (
+              <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+                Error loading brands: {brandsError}
+              </div>
+            ) : (
+              <Swiper
+                ref={topBrandsSwiperRef}
+                modules={[SwiperNavigation]}
+                slidesPerView="auto"
+                spaceBetween={24}
+                grabCursor={true}
+                freeMode={true}
+                style={{ width: '1360px' }}
+              >
+                {transformedBrands.map((brand, index) => (
+                  <SwiperSlide key={brand.name || index} style={{ width: 'auto' }}>
+                    <CategoryCard {...brand} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            )}
           </div>
         </section>
 
         {/* Featured Offers Section */}
         <section className="section">
           <div className="container">
-            <SectionHeader 
-              title="Featured Offers" 
+            <SectionHeader
+              title="Featured Offers"
               showNavigation={true}
-              showButton={true} 
+              showButton={true}
               buttonText="See All"
               onButtonClick={handleSeeAllFeaturedOffers}
               onPrev={handleFeaturedOffersPrev}
@@ -514,8 +549,8 @@ export default function Home() {
               freeMode={true}
               style={{ width: '1360px' }}
             >
-              {productData.map((product, index) => (
-                <SwiperSlide key={index} style={{ width: 'auto' }}>
+              {transformedFeaturedOffers.map((product, index) => (
+                <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
                   <ProductCard {...product} />
                 </SwiperSlide>
               ))}
@@ -526,8 +561,8 @@ export default function Home() {
         {/* Top Stores Section */}
         <section className="section">
           <div className="container">
-            <SectionHeader 
-              title="Top Stores" 
+            <SectionHeader
+              title="Top Stores"
               showNavigation={true}
               showButton={true}
               buttonText={"See All"}
@@ -535,21 +570,31 @@ export default function Home() {
               onPrev={handleTopStoresPrev}
               onNext={handleTopStoresNext}
             />
-            <Swiper
-              ref={topStoresSwiperRef}
-              modules={[SwiperNavigation]}
-              slidesPerView="auto"
-              spaceBetween={24}
-              grabCursor={true}
-              freeMode={true}
-              style={{ width: '1360px' }}
-            >
-              {getFilteredStores().map((store, index) => (
-                <SwiperSlide key={store.id} style={{ width: 'auto' }}>
-                  <CategoryCard name={store.name} image={store.image} />
-                </SwiperSlide>
-              ))}
-            </Swiper>
+            {storesLoading ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                Loading stores...
+              </div>
+            ) : storesError ? (
+              <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+                Error loading stores: {storesError}
+              </div>
+            ) : (
+              <Swiper
+                ref={topStoresSwiperRef}
+                modules={[SwiperNavigation]}
+                slidesPerView="auto"
+                spaceBetween={24}
+                grabCursor={true}
+                freeMode={true}
+                style={{ width: '1360px' }}
+              >
+                {transformedTopStores.map((store, index) => (
+                  <SwiperSlide key={store.name || index} style={{ width: 'auto' }}>
+                    <CategoryCard name={store.name} image={store.image} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            )}
           </div>
         </section>
 
@@ -570,21 +615,31 @@ export default function Home() {
               onPrev={handlePrev}
               onNext={handleNext}
             />
-            <Swiper
-              ref={swiperRef}
-              modules={[SwiperNavigation]}
-              slidesPerView="auto"
-              spaceBetween={24}
-              grabCursor={true}
-              freeMode={true}
-              style={{ width: '1360px' }}
-            >
-              {brandData.map((store, index) => (
-                <SwiperSlide key={index} style={{ width: 'auto' }}>
-                  <CategoryCard {...store} />
-                </SwiperSlide>
-              ))}
-            </Swiper>
+            {storesLoading ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                Loading stores...
+              </div>
+            ) : storesError ? (
+              <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+                Error loading stores: {storesError}
+              </div>
+            ) : (
+              <Swiper
+                ref={swiperRef}
+                modules={[SwiperNavigation]}
+                slidesPerView="auto"
+                spaceBetween={24}
+                grabCursor={true}
+                freeMode={true}
+                style={{ width: '1360px' }}
+              >
+                {transformedNewStores.reverse().map((store, index) => (
+                  <SwiperSlide key={store.name || index} style={{ width: 'auto' }}>
+                    <CategoryCard name={store.name} image={store.image} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            )}
           </div>
         </section>
 
@@ -606,8 +661,8 @@ export default function Home() {
           buttonText="Learn More"
           backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/c1726d63175ccf7d26ef79e2d2a0ffde926ef9d0?width=2720"
         />
-
         <Footer />
+        {/* Test Authentication Link */}
       </main>
     </>
   )

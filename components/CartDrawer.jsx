@@ -1,6 +1,23 @@
 import Image from 'next/image'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function CartDrawer({ open, onClose }) {
+    const { requireAuth } = useAuth()
+
+    const handleAddToWishlist = () => {
+        requireAuth(() => {
+            // Add to wishlist logic here
+            console.log('Adding to wishlist from cart')
+        })
+    }
+
+    const handleCheckout = () => {
+        requireAuth(() => {
+            // Checkout logic here
+            console.log('Proceeding to checkout')
+        })
+    }
+
     if (!open) return null
     return (
         <div className="drawer-overlay">
@@ -31,7 +48,7 @@ export default function CartDrawer({ open, onClose }) {
                                     <button className="cart-qty-btn">+</button>
                                 </div>
 
-                                <button className="cart-wishlist-btn">
+                                <button className="cart-wishlist-btn" onClick={handleAddToWishlist}>
                                     <svg width="28" height="28" viewBox="6 0 28 26" fill="none">
                                         {/* <circle cx="14" cy="14" r="13" stroke="#0082FF" strokeWidth="2"/> */}
                                         <path d="M20.09 18.5586L20 18.6458L19.901 18.5586C15.626 14.8005 12.8 12.3155 12.8 9.7956C12.8 8.0518 14.15 6.7439 15.95 6.7439C17.336 6.7439 18.686 7.6158 19.163 8.8016H20.837C21.314 7.6158 22.664 6.7439 24.05 6.7439C25.85 6.7439 27.2 8.0518 27.2 9.7956C27.2 12.3155 24.374 14.8005 20.09 18.5586Z" stroke="#0082FF" strokeWidth="2" />
@@ -43,7 +60,7 @@ export default function CartDrawer({ open, onClose }) {
                     </div>
                 </div>
                 <div className="drawer-footer">
-                    <button className="drawer-checkout-btn">Checkout</button>
+                    <button className="drawer-checkout-btn" onClick={handleCheckout}>Checkout</button>
                     <span className="drawer-total">AED 1,200</span>
                 </div>
             </div>

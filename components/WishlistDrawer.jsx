@@ -1,6 +1,16 @@
 import Image from 'next/image'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function WishlistDrawer({ open, onClose }) {
+  const { requireAuth } = useAuth()
+
+  const handleAddToCart = () => {
+    requireAuth(() => {
+      // Add to cart logic here
+      console.log('Adding to cart from wishlist')
+    })
+  }
+
   if (!open) return null
   return (
     <div className="drawer-overlay">
@@ -23,7 +33,7 @@ export default function WishlistDrawer({ open, onClose }) {
               <div className="wishlist-name">Airforce 01</div>
               <div className="wishlist-price">AED 1,200</div>
               <div className="wishlist-actions">
-                <button className="wishlist-cart-btn">
+                <button className="wishlist-cart-btn" onClick={handleAddToCart}>
                   <svg width="28" height="28" viewBox="6 8 28 28" fill="none">
                     {/* <circle cx="14" cy="14" r="14" stroke="#0082FF" /> */}
                     <path d="M16.1818 15.1538C16.1818 15.1538 16.1818 11 20 11C23.8182 11 23.8182 15.1538 23.8182 15.1538M13 15.1538V29H27V15.1538H13Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

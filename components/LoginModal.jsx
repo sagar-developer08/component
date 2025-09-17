@@ -1,6 +1,25 @@
 import Image from 'next/image'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function LoginModal({ open, onClose }) {
+  const { login } = useAuth()
+
+  const handleLogin = (e) => {
+    e.preventDefault()
+    // Mock login - replace with actual authentication logic
+    const mockUser = { name: 'User', email: 'user@example.com' }
+    const mockToken = 'mock-jwt-token-' + Date.now()
+    login(mockUser, mockToken)
+  }
+
+  const handleCreateAccount = (e) => {
+    e.preventDefault()
+    // Mock account creation - replace with actual logic
+    const mockUser = { name: 'New User', email: 'newuser@example.com' }
+    const mockToken = 'mock-jwt-token-' + Date.now()
+    login(mockUser, mockToken)
+  }
+
   if (!open) return null
   return (
     <div className="login-modal-overlay">
@@ -26,8 +45,8 @@ export default function LoginModal({ open, onClose }) {
               </div>
               <input className="login-input" type="password" placeholder="Password" />
               <div className="login-btn-row">
-                <button type="button" className="login-create-btn">Create Account</button>
-                <button type="submit" className="login-btn">Login</button>
+                <button type="button" className="login-create-btn" onClick={handleCreateAccount}>Create Account</button>
+                <button type="submit" className="login-btn" onClick={handleLogin}>Login</button>
               </div>
             </form>
             <div className="login-divider-row">

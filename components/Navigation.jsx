@@ -7,6 +7,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import CartDrawer from './CartDrawer'
 import WishlistDrawer from './WishlistDrawer'
 import LoginModal from './LoginModal'
+import { useAuth } from '../contexts/AuthContext'
 
 export default function Navigation() {
   // Measure navbar height so we can add a spacer that preserves layout
@@ -14,16 +15,16 @@ export default function Navigation() {
   const [navHeight, setNavHeight] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
   const [wishlistOpen, setWishlistOpen] = useState(false)
-  const [loginOpen, setLoginOpen] = useState(false)
   
   const router = useRouter()
   const pathname = usePathname()
+  const { requireAuth, loginModalOpen, closeLoginModal } = useAuth()
   
   // Determine active nav based on current path
   const getActiveNav = () => {
     if (pathname === '/') return 'Discovery'
     if (pathname === '/hypermarket') return 'Hypermarket'
-    if (pathname === '/ecommerce') return 'E-Commerce'
+    if (pathname === '/ecommerce') return 'E-Shop'
     if (pathname === '/supermarket') return 'Supermarket'
     // Remove highlight for store detail page
     if (pathname === '/storeDetail') return ''
@@ -86,19 +87,19 @@ export default function Navigation() {
       ), label: 'Stores'
     },
     {
-      key: 'E-Commerce', 
+      key: 'E-Shop', 
       path: '/ecommerce',
       icon: (
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path
             d="M3 3H8.25V8.25H3V3ZM11.75 3H17V8.25H11.75V3ZM3 11.75H8.25V17H3V11.75ZM11.75 14.375C11.75 15.0712 12.0266 15.7389 12.5188 16.2312C13.0111 16.7234 13.6788 17 14.375 17C15.0712 17 15.7389 16.7234 16.2312 16.2312C16.7234 15.7389 17 15.0712 17 14.375C17 13.6788 16.7234 13.0111 16.2312 12.5188C15.7389 12.0266 15.0712 11.75 14.375 11.75C13.6788 11.75 13.0111 12.0266 12.5188 12.5188C12.0266 13.0111 11.75 13.6788 11.75 14.375Z"
-            stroke={activeNav === 'E-Commerce' ? 'white' : '#000'}
+            stroke={activeNav === 'E-Shop' ? 'white' : '#000'}
             strokeWidth="1.66667"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
         </svg>
-      ), label: 'E-Commerce'
+      ), label: 'E-Shop'
     },
     {
       key: 'Supermarket', 
@@ -162,13 +163,13 @@ export default function Navigation() {
                     <path d="M25 25L30 30" stroke="black" strokeWidth="1.66667" strokeLinecap="round" />
                   </svg>
                 </div>
-                <div className="action-btn" onClick={() => setCartOpen(true)}>
+                <div className="action-btn" onClick={() => requireAuth(() => setCartOpen(true))}>
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                     <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
                     <path d="M16.1818 15.1538C16.1818 15.1538 16.1818 11 20 11C23.8182 11 23.8182 15.1538 23.8182 15.1538M13 15.1538V29H27V15.1538H13Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <div className="action-btn" onClick={() => setWishlistOpen(true)}>
+                <div className="action-btn" onClick={() => requireAuth(() => setWishlistOpen(true))}>
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                     <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
                     <path d="M20.09 25.5586L20 25.6458L19.901 25.5586C15.626 21.8005 12.8 19.3155 12.8 16.7956C12.8 15.0518 14.15 13.7439 15.95 13.7439C17.336 13.7439 18.686 14.6158 19.163 15.8016H20.837C21.314 14.6158 22.664 13.7439 24.05 13.7439C25.85 13.7439 27.2 15.0518 27.2 16.7956C27.2 19.3155 24.374 21.8005 20.09 25.5586ZM24.05 12C22.484 12 20.981 12.7063 20 13.8136C19.019 12.7063 17.516 12 15.95 12C13.178 12 11 14.1014 11 16.7956C11 20.0828 14.06 22.7771 18.695 26.849L20 28L21.305 26.849C25.94 22.7771 29 20.0828 29 16.7956C29 14.1014 26.822 12 24.05 12Z" fill="black" />
@@ -301,7 +302,7 @@ export default function Navigation() {
       </div>
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       <WishlistDrawer open={wishlistOpen} onClose={() => setWishlistOpen(false)} />
-      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+      <LoginModal open={loginModalOpen} onClose={closeLoginModal} />
     </>
   )
 }

@@ -162,19 +162,19 @@ export default function Home() {
       <section className="section">
         <div className="container">
           <SectionHeader
-            title="Stores"
+            title="Products"
             showNavigation={false}
             showButton={true}
             buttonText="See All"
           />
           <div className="products-grid">
             {productData.map((product, index) => (
-              <StoreCard key={index} {...product} />
+              <ProductCard key={index} {...product} />
             ))}
           </div>
           <div className="products-grid">
             {productData.map((product, index) => (
-              <StoreCard key={index} {...product} />
+              <ProductCard key={index} {...product} />
             ))}
           </div>
         </div>

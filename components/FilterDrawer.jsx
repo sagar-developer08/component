@@ -1,25 +1,28 @@
 import { useEffect } from 'react';
 
-export default function FilterDrawer({ open, onClose }) {
+export default function FilterDrawer({ open, onClose, inline = false, sticky = false, stickyTop = 112 }) {
   useEffect(() => {
+    if (inline) return; // Do not alter body scroll in inline mode
     if (open) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = '';
     return () => { document.body.style.overflow = ''; };
-  }, [open]);
+  }, [open, inline]);
 
   if (!open) return null;
 
   return (
-    <div className="filter-drawer-overlay">
+    <div className={inline ? "filter-drawer-inline-wrapper" : "filter-drawer-overlay"}>
       <div className="filter-drawer">
         <div className="filter-header">
           <span className="filter-title">Filters</span>
-          <button className="filter-close" onClick={onClose}>
+          {!inline && (
+            <button className="filter-close" onClick={onClose}>
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
               <circle cx="16" cy="16" r="16" fill="#F5F5F5"/>
               <path d="M11 11L21 21M21 11L11 21" stroke="#222" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </button>
+          )}
         </div>
         <div className="filter-divider"></div>
         <div className="filter-list">
@@ -32,10 +35,12 @@ export default function FilterDrawer({ open, onClose }) {
             </div>
           ))}
         </div>
-        <div className="filter-actions">
-          <button className="filter-clear">Clear All</button>
-          <button className="filter-results">See Results</button>
-        </div>
+        {!inline && (
+          <div className="filter-actions">
+            <button className="filter-clear">Clear All</button>
+            <button className="filter-results">See Results</button>
+          </div>
+        )}
       </div>
       <style jsx>{`
         .filter-drawer-overlay {
@@ -46,15 +51,20 @@ export default function FilterDrawer({ open, onClose }) {
           display: flex;
           justify-content: flex-start;
         }
+        .filter-drawer-inline-wrapper {
+          display: block;
+          background: transparent;
+          ${sticky ? `position: sticky; top: ${stickyTop}px;` : ''}
+        }
         .filter-drawer {
           background: #fff;
-          width: 400px;
+          width: 320px;
           max-width: 100vw;
-          height: 100vh;
-          box-shadow: 2px 0 16px rgba(0,0,0,0.08);
+          height: ${inline ? 'auto' : '100vh'};
+          box-shadow: ${inline ? 'none' : '2px 0 16px rgba(0,0,0,0.08)'};
           display: flex;
           flex-direction: column;
-          animation: slideInLeft 0.25s cubic-bezier(.4,0,.2,1);
+          ${inline ? '' : 'animation: slideInLeft 0.25s cubic-bezier(.4,0,.2,1);'}
         }
         @keyframes slideInLeft {
           from { transform: translateX(-100%); }

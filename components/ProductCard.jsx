@@ -1,5 +1,7 @@
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '../contexts/AuthContext'
+import { useState } from 'react'
 
 export default function ProductCard({ 
   id = "nike-airforce-01",
@@ -12,20 +14,48 @@ export default function ProductCard({
   showIcons = true 
 }) {
   const router = useRouter()
+  const { requireAuth } = useAuth()
+  const [imageError, setImageError] = useState(false)
+  
+  // Fallback image URL
+  const fallbackImage = 'https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644'
+  const imageSrc = imageError ? fallbackImage : image
 
   const handleCardClick = () => {
     router.push(`/product/${id}`)
+  }
+
+  const handleWishlistClick = (e) => {
+    e.stopPropagation()
+    requireAuth(() => {
+      // Add to wishlist logic here
+      console.log('Adding to wishlist:', id)
+    })
+  }
+
+  const handleCartClick = (e) => {
+    e.stopPropagation()
+    requireAuth(() => {
+      // Add to cart logic here
+      console.log('Adding to cart:', id)
+    })
+  }
+
+  const handleImageError = () => {
+    setImageError(true)
   }
 
   return (
     <div className="product-card" onClick={handleCardClick}>
       <div className="product-image">
         <Image
-          src={image}
+          src={imageSrc}
           alt={title}
           width={322}
           height={222}
           style={{ borderRadius: '16px', border: '1px solid rgba(0, 0, 0, 0.16)' }}
+          onError={handleImageError}
+          unoptimized={true}
         />
         
         {badge && (
@@ -43,14 +73,14 @@ export default function ProductCard({
 
         {showIcons && (
           <>
-            <button className="wishlist-icon" aria-label="Add to wishlist" onClick={(e) => e.stopPropagation()}>
+            <button className="wishlist-icon" aria-label="Add to wishlist" onClick={handleWishlistClick}>
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                 <rect width="40" height="40" rx="20" fill="#0082FF"/>
                 <path d="M20.09 25.5586L20 25.6458L19.901 25.5586C15.626 21.8005 12.8 19.3155 12.8 16.7956C12.8 15.0518 14.15 13.7439 15.95 13.7439C17.336 13.7439 18.686 14.6158 19.163 15.8016H20.837C21.314 14.6158 22.664 13.7439 24.05 13.7439C25.85 13.7439 27.2 15.0518 27.2 16.7956C27.2 19.3155 24.374 21.8005 20.09 25.5586ZM24.05 12C22.484 12 20.981 12.7063 20 13.8136C19.019 12.7063 17.516 12 15.95 12C13.178 12 11 14.1014 11 16.7956C11 20.0828 14.06 22.7771 18.695 26.849L20 28L21.305 26.849C25.94 22.7771 29 20.0828 29 16.7956C29 14.1014 26.822 12 24.05 12Z" fill="white"/>
               </svg>
             </button>
 
-            <button className="cart-icon" aria-label="Add to cart" onClick={(e) => e.stopPropagation()}>
+            <button className="cart-icon" aria-label="Add to cart" onClick={handleCartClick}>
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                 <rect width="40" height="40" rx="20" fill="#0082FF"/>
                 <path d="M16.1818 15.1538C16.1818 15.1538 16.1818 11 20 11C23.8182 11 23.8182 15.1538 23.8182 15.1538M13 15.1538V29H27V15.1538H13Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

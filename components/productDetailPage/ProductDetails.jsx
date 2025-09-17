@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import OtherSellersDrawer from './OtherSellersDrawer';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function ProductDetails({ product }) {
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
@@ -8,6 +9,7 @@ export default function ProductDetails({ product }) {
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { requireAuth } = useAuth();
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
@@ -17,6 +19,20 @@ export default function ProductDetails({ product }) {
     setCurrentImageIndex((prev) =>
       prev === 0 ? product.images.length - 1 : prev - 1
     );
+  };
+
+  const handleAddToCart = () => {
+    requireAuth(() => {
+      // Add to cart logic here
+      console.log('Adding to cart:', product.id, { selectedColor, selectedSize, quantity });
+    });
+  };
+
+  const handleAddToFavourite = () => {
+    requireAuth(() => {
+      // Add to wishlist logic here
+      console.log('Adding to wishlist:', product.id);
+    });
   };
 
   // Example sellers data
@@ -173,8 +189,8 @@ export default function ProductDetails({ product }) {
 
           {/* Action Buttons */}
           <div className="action-buttons">
-            <button className="add-to-cart">Add To Cart</button>
-            <button className="add-to-favourite">Add To Favourite</button>
+            <button className="add-to-cart" onClick={handleAddToCart}>Add To Cart</button>
+            <button className="add-to-favourite" onClick={handleAddToFavourite}>Add To Favourite</button>
           </div>
 
           {/* Other Sellers */}
