@@ -16,6 +16,10 @@ export default function CheckoutPage() {
   const dispatch = useDispatch()
   const { items: cartItems, total: cartTotal, loading: cartLoading } = useSelector(state => state.cart)
   
+  // Calculate total if not provided by API
+  const calculatedTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  const finalTotal = cartTotal || calculatedTotal
+  
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('credit-card')
   const [userAddresses, setUserAddresses] = useState([])
   const [selectedAddress, setSelectedAddress] = useState(null)
@@ -86,6 +90,12 @@ export default function CheckoutPage() {
       cartLoading, 
       itemsCount: cartItems.length 
     })
+    
+    // Log individual cart item structure
+    if (cartItems.length > 0) {
+      console.log('First cart item structure:', cartItems[0])
+      console.log('Cart item keys:', Object.keys(cartItems[0]))
+    }
   }, [cartItems, cartTotal, cartLoading])
 
   // Check if cart is empty and show appropriate message
@@ -252,9 +262,9 @@ export default function CheckoutPage() {
         deliveryAddress: selectedAddress,
         shippingAddress: shippingSameAsDelivery ? selectedAddress : null, // You might want to add shipping address form data here
         paymentMethod: selectedPaymentMethod,
-        total: cartTotal,
-        subtotal: cartTotal,
-        vat: cartTotal * 0.05,
+        total: finalTotal,
+        subtotal: finalTotal,
+        vat: finalTotal * 0.05,
         shipping: 0, // Free shipping
         discount: 0
       }
@@ -861,18 +871,18 @@ export default function CheckoutPage() {
                   {cartItems.map((item, index) => (
                     <div key={index} className={styles.productItem}>
                 <Image
-                        src={item.product?.images?.[0] || "/images/placeholder.jpg"}
-                        alt={item.product?.name || "Product"}
+                        src={item.image || "/images/placeholder.jpg"}
+                        alt={item.name || "Product"}
                   width={60}
                   height={60}
                   className={styles.productImage}
                 />
                 <div className={styles.productDetails}>
-                        <div className={styles.productBrand}>{item.product?.brand || "Brand"}</div>
-                        <div className={styles.productName}>{item.product?.name || "Product Name"}</div>
+                        <div className={styles.productBrand}>{item.brand || "Brand"}</div>
+                        <div className={styles.productName}>{item.name || "Product Name"}</div>
                         <div className={styles.productQuantity}>Qty: {item.quantity}</div>
                       </div>
-                      <div className={styles.productPrice}>AED {item.product?.price || 0}</div>
+                      <div className={styles.productPrice}>AED {item.price || 0}</div>
                     </div>
                   ))}
                 </>
@@ -906,7 +916,7 @@ export default function CheckoutPage() {
               <div className={styles.orderTotals}>
                 <div className={styles.totalRow}>
                   <span>Subtotal</span>
-                    <span>AED {cartTotal.toFixed(2)}</span>
+                    <span>AED {finalTotal.toFixed(2)}</span>
                 </div>
                 <div className={styles.totalRow}>
                   <span>Shipping</span>
@@ -914,7 +924,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className={styles.totalRow}>
                   <span>VAT</span>
-                    <span>AED {(cartTotal * 0.05).toFixed(2)}</span>
+                    <span>AED {(finalTotal * 0.05).toFixed(2)}</span>
                 </div>
                 <div className={styles.totalRowDiscount}>
                   <span>Discount</span>
@@ -922,7 +932,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className={styles.totalRowFinal}>
                   <span>Order Total</span>
-                    <span>AED {(cartTotal * 1.05).toFixed(2)}</span>
+                    <span>AED {(finalTotal * 1.05).toFixed(2)}</span>
                   </div>
                 </div>
               )}
