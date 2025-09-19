@@ -2,6 +2,10 @@ import { useState } from 'react';
 import Image from 'next/image';
 import OtherSellersDrawer from './OtherSellersDrawer';
 import { useAuth } from '../../contexts/AuthContext';
+import { useDispatch } from 'react-redux';
+import { addToCart } from '../../store/slices/cartSlice';
+import { getUserFromCookies } from '../../utils/userUtils';
+import { useToast } from '../../contexts/ToastContext';
 
 export default function ProductDetails({ product }) {
   const [selectedColor, setSelectedColor] = useState(product.colors[0]);
@@ -10,6 +14,8 @@ export default function ProductDetails({ product }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { requireAuth } = useAuth();
+  const dispatch = useDispatch();
+  const { show } = useToast();
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
@@ -23,8 +29,27 @@ export default function ProductDetails({ product }) {
 
   const handleAddToCart = () => {
     requireAuth(() => {
-      // Add to cart logic here
-      console.log('Adding to cart:', product.id, { selectedColor, selectedSize, quantity });
+      ; (async () => {
+        const userId = await getUserFromCookies()
+        
+        const cartItem = {
+          userId,
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: quantity,
+          image: product.images[0],
+          selectedColor,
+          selectedSize
+        }
+        
+        const result = await dispatch(addToCart(cartItem))
+        if (addToCart.fulfilled.match(result)) {
+          show('Added to cart')
+        } else if (addToCart.rejected.match(result)) {
+          show('Failed to add to cart', 'error')
+        }
+      })()
     });
   };
 

@@ -2,17 +2,38 @@ import Image from 'next/image'
 import { useAuth } from '../contexts/AuthContext'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchWishlist } from '@/store/slices/wishlistSlice'
+import { fetchWishlist, removeFromWishlist } from '@/store/slices/wishlistSlice'
+import { addToCart } from '@/store/slices/cartSlice'
 
 export default function WishlistDrawer({ open, onClose }) {
-  const { requireAuth } = useAuth()
+  const { requireAuth, user } = useAuth()
   const dispatch = useDispatch()
-  const { items } = useSelector(state => state.wishlist)
+  const { items, loading } = useSelector(state => state.wishlist)
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (item) => {
     requireAuth(() => {
-      // Add to cart logic here
-      console.log('Adding to cart from wishlist')
+      if (user?.id) {
+        const cartItem = {
+          userId: user.id,
+          productId: item.productId,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+          quantity: 1
+        }
+        dispatch(addToCart(cartItem))
+      }
+    })
+  }
+
+  const handleRemoveFromWishlist = (item) => {
+    requireAuth(() => {
+      if (user?.id) {
+        dispatch(removeFromWishlist({
+          userId: user.id,
+          productId: item.productId
+        }))
+      }
     })
   }
 
@@ -39,27 +60,49 @@ export default function WishlistDrawer({ open, onClose }) {
         </div>
         <div className="drawer-divider" />
         <div className="drawer-content">
-          {items && items.length > 0 ? (
+          {loading ? (
+            <div style={{ color: '#666', textAlign: 'center', padding: '20px' }}>
+              Loading wishlist...
+            </div>
+          ) : items && items.length > 0 ? (
             items.map((it, idx) => (
-              <div className="wishlist-item" key={idx}>
-                <Image src='/iphone.jpg' alt={it.name || 'Wishlist item'} width={130} height={100} className="wishlist-image" />
+              <div className="wishlist-item" key={it.productId || idx}>
+                <Image 
+                  src={it.image || '/iphone.jpg'} 
+                  alt={it.name || 'Wishlist item'} 
+                  width={130} 
+                  height={100} 
+                  className="wishlist-image" 
+                />
                 <div className="wishlist-info">
                   <div className="wishlist-brand">{it.brand || ''}</div>
                   <div className="wishlist-name">{it.name}</div>
                   <div className="wishlist-price">{typeof it.price !== 'undefined' ? `AED ${it.price}` : ''}</div>
                   <div className="wishlist-actions">
-                    <button className="wishlist-cart-btn" onClick={handleAddToCart}>
+                    <button 
+                      className="wishlist-cart-btn" 
+                      onClick={() => handleAddToCart(it)}
+                      disabled={loading}
+                    >
                       <svg width="28" height="28" viewBox="6 8 28 28" fill="none">
                         <path d="M16.1818 15.1538C16.1818 15.1538 16.1818 11 20 11C23.8182 11 23.8182 15.1538 23.8182 15.1538M13 15.1538V29H27V15.1538H13Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </button>
                   </div>
                 </div>
-                <button className="wishlist-remove-btn">Remove</button>
+                <button 
+                  className="wishlist-remove-btn"
+                  onClick={() => handleRemoveFromWishlist(it)}
+                  disabled={loading}
+                >
+                  Remove
+                </button>
               </div>
             ))
           ) : (
-            <div style={{ color: '#666' }}>No items in wishlist</div>
+            <div style={{ color: '#666', textAlign: 'center', padding: '20px' }}>
+              No items in wishlist
+            </div>
           )}
         </div>
       </div>
@@ -157,6 +200,18 @@ export default function WishlistDrawer({ open, onClose }) {
           display: flex;
           align-items: center;
           justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .wishlist-cart-btn:hover:not(:disabled) {
+          background: #0082FF;
+        }
+        .wishlist-cart-btn:hover:not(:disabled) svg path {
+          stroke: #fff;
+        }
+        .wishlist-cart-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
         .wishlist-remove-btn {
           background: none;
@@ -166,6 +221,14 @@ export default function WishlistDrawer({ open, onClose }) {
           font-weight: 500;
           margin-left: 16px;
           cursor: pointer;
+          transition: color 0.2s ease;
+        }
+        .wishlist-remove-btn:hover:not(:disabled) {
+          color: #ff4444;
+        }
+        .wishlist-remove-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
         @media (max-width: 600px) {
           .drawer {

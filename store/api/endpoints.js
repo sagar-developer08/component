@@ -25,6 +25,10 @@ export const auth = {
 
 export const cart = {
   base: BASES.cart,
+  add: `${BASES.cart}/cart/add`,
+  get: `${BASES.cart}/cart`,
+  update: `${BASES.cart}/cart/update`,
+  remove: `${BASES.cart}/cart/remove`,
   wishlistAdd: `${BASES.cart}/wishlist/add`,
   wishlistGet: `${BASES.cart}/wishlist`,
 }

@@ -4,8 +4,10 @@ import { useAuth } from '../contexts/AuthContext'
 import { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { addToWishlist } from '@/store/slices/wishlistSlice'
-import { decryptText } from '@/utils/crypto'
+import { addToCart } from '@/store/slices/cartSlice'
+import { getUserFromCookies } from '@/utils/userUtils'
 import { useToast } from '@/contexts/ToastContext'
+import { decryptText } from '@/utils/crypto'
 
 export default function ProductCard({
   id,
@@ -54,17 +56,40 @@ export default function ProductCard({
           image: image
         }))
         if (addToWishlist.fulfilled.match(result)) {
-          show('Added to wishlist')
+          if (result.payload?.isDuplicate) {
+            show('Item already in wishlist')
+          } else {
+            show('Added to wishlist')
+          }
+        } else if (addToWishlist.rejected.match(result)) {
+          show('Failed to add to wishlist', 'error')
         }
       })()
     })
   }
 
-  const handleCartClick = (e) => {
+  const handleCartClick = async (e) => {
     e.stopPropagation()
     requireAuth(() => {
-      // Add to cart logic here
-      console.log('Adding to cart:', id)
+      ; (async () => {
+        const userId = await getUserFromCookies()
+        
+        const cartItem = {
+          userId,
+          productId: id,
+          name: title,
+          price: typeof price === 'string' ? Number(String(price).replace(/[^0-9.]/g, '')) : price,
+          quantity: 1,
+          image: image
+        }
+        
+        const result = await dispatch(addToCart(cartItem))
+        if (addToCart.fulfilled.match(result)) {
+          show('Added to cart')
+        } else if (addToCart.rejected.match(result)) {
+          show('Failed to add to cart', 'error')
+        }
+      })()
     })
   }
 

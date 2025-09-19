@@ -1,18 +1,262 @@
-import { createSlice } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
+import { getAuthToken } from '../../utils/userUtils'
+
+// Async thunks for API calls
+export const addToCart = createAsyncThunk(
+  'cart/addToCart',
+  async (cartItem, { rejectWithValue }) => {
+    try {
+      const token = await getAuthToken()
+      
+      const response = await fetch('https://backendcart.qliq.ae/api/cart/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(cartItem),
+      })
+
+      if (!response.ok) {
+        const text = await response.text()
+        throw new Error(text || `HTTP error ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const fetchCart = createAsyncThunk(
+  'cart/fetchCart',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const token = await getAuthToken()
+      
+      const response = await fetch(`https://backendcart.qliq.ae/api/cart?userId=${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      })
+
+      if (!response.ok) {
+        const text = await response.text()
+        throw new Error(text || `HTTP error ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const updateCartItem = createAsyncThunk(
+  'cart/updateCartItem',
+  async ({ userId, productId, quantity }, { rejectWithValue }) => {
+    try {
+      const token = await getAuthToken()
+      
+      const response = await fetch('https://backendcart.qliq.ae/api/cart/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ userId, productId, quantity }),
+      })
+
+      if (!response.ok) {
+        const text = await response.text()
+        throw new Error(text || `HTTP error ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+export const removeFromCart = createAsyncThunk(
+  'cart/removeFromCart',
+  async ({ userId, productId }, { rejectWithValue }) => {
+    try {
+      const token = await getAuthToken()
+      
+      const response = await fetch('https://backendcart.qliq.ae/api/cart/remove', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ userId, productId }),
+      })
+
+      if (!response.ok) {
+        const text = await response.text()
+        throw new Error(text || `HTTP error ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
 
 const cartSlice = createSlice({
   name: 'cart',
   initialState: {
+    items: [],
     itemsCount: 0,
+    total: 0,
+    loading: false,
+    error: null,
   },
   reducers: {
     setCartCount: (state, action) => {
       state.itemsCount = Number(action.payload) || 0
+    },
+    clearCart: (state) => {
+      state.items = []
+      state.itemsCount = 0
+      state.total = 0
+    },
+    clearError: (state) => {
+      state.error = null
     }
+  },
+  extraReducers: (builder) => {
+    builder
+      // Add to cart
+      .addCase(addToCart.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(addToCart.fulfilled, (state, action) => {
+        state.loading = false
+        // Handle the API response structure and update local state
+        const responseData = action.payload.data || action.payload
+        const cartData = responseData.cart || responseData
+        const addedItem = responseData.item || responseData
+        
+        console.log('Add to cart response:', action.payload)
+        
+        if (cartData) {
+          // If the API returns the full cart, use that
+          state.items = cartData.items || []
+          state.itemsCount = cartData.totalItems || 0
+          state.total = cartData.totalPrice || 0
+        } else if (addedItem) {
+          // Fallback: update individual item
+          const existingItem = state.items.find(item => item.productId === addedItem.productId)
+          if (existingItem) {
+            existingItem.quantity += addedItem.quantity || 1
+          } else {
+            state.items.push(addedItem)
+          }
+          
+          // Recalculate totals
+          state.itemsCount = state.items.reduce((total, item) => total + item.quantity, 0)
+          state.total = state.items.reduce((total, item) => total + (item.price * item.quantity), 0)
+        }
+      })
+      .addCase(addToCart.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      // Fetch cart
+      .addCase(fetchCart.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchCart.fulfilled, (state, action) => {
+        state.loading = false
+        // Handle the API response structure: { success, message, data: { cart: { items, totalItems, totalPrice } } }
+        const cartData = action.payload.data?.cart || action.payload.cart || action.payload
+        state.items = cartData.items || []
+        state.itemsCount = cartData.totalItems || cartData.itemsCount || 0
+        state.total = cartData.totalPrice || cartData.total || 0
+      })
+      .addCase(fetchCart.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      // Update cart item
+      .addCase(updateCartItem.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(updateCartItem.fulfilled, (state, action) => {
+        state.loading = false
+        // The update API returns the entire updated cart, not just the item
+        const responseData = action.payload.data || action.payload
+        const cartData = responseData.cart || responseData
+        
+        console.log('Update cart response:', action.payload)
+        console.log('Cart data extracted:', cartData)
+        
+        if (cartData) {
+          // Update the entire cart state with the fresh data from API
+          state.items = cartData.items || []
+          state.itemsCount = cartData.totalItems || 0
+          state.total = cartData.totalPrice || 0
+          
+          console.log('Updated cart state:', { 
+            items: state.items, 
+            itemsCount: state.itemsCount, 
+            total: state.total 
+          })
+        }
+      })
+      .addCase(updateCartItem.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      // Remove from cart
+      .addCase(removeFromCart.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(removeFromCart.fulfilled, (state, action) => {
+        state.loading = false
+        // The remove API likely returns the entire updated cart as well
+        const responseData = action.payload.data || action.payload
+        const cartData = responseData.cart || responseData
+        
+        if (cartData) {
+          // Update the entire cart state with the fresh data from API
+          state.items = cartData.items || []
+          state.itemsCount = cartData.totalItems || 0
+          state.total = cartData.totalPrice || 0
+        } else {
+          // Fallback: remove the item manually if cart data is not available
+          const removedProductId = responseData.productId || action.payload.productId
+          if (removedProductId) {
+            state.items = state.items.filter(item => item.productId !== removedProductId)
+            // Recalculate totals
+            state.itemsCount = state.items.reduce((total, item) => total + item.quantity, 0)
+            state.total = state.items.reduce((total, item) => total + (item.price * item.quantity), 0)
+          }
+        }
+      })
+      .addCase(removeFromCart.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
   }
 })
 
-export const { setCartCount } = cartSlice.actions
+export const { setCartCount, clearCart, clearError } = cartSlice.actions
 export default cartSlice.reducer
 
 
