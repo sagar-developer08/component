@@ -33,6 +33,15 @@ export const cart = {
   wishlistGet: `${BASES.cart}/wishlist`,
 }
 
-export default { catalog, auth, cart }
+export const addresses = {
+  base: `${BASES.auth}/addresses`,
+  get: `${BASES.auth}/addresses`,
+  create: `${BASES.auth}/addresses`,
+  update: `${BASES.auth}/addresses`,
+  delete: `${BASES.auth}/addresses`,
+  setDefault: `${BASES.auth}/addresses/default`,
+}
+
+export default { catalog, auth, cart, addresses }
 
 

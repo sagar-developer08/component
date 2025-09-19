@@ -70,8 +70,8 @@ export default function CartDrawer({ open, onClose }) {
 
     const handleCheckout = () => {
         requireAuth(() => {
-            // Checkout logic here
-            console.log('Proceeding to checkout')
+            // Redirect to checkout page
+            window.location.href = '/checkout'
         })
     }
 
