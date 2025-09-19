@@ -181,7 +181,7 @@ export default function Navigation() {
                   {wishlistCount > 0 && <span className="badge-count">{wishlistCount}</span>}
                 </div>
 
-                <div className="profile-btn" onClick={() => router.push('/profile')}>
+                <div className="profile-btn" onClick={() => requireAuth(() => router.push('/profile'))}>
                   <Image
                     src="https://api.builder.io/api/v1/image/assets/TEMP/e6affc0737515f664c7d8288ba0b3068f64a0ade?width=80"
                     alt="Profile"

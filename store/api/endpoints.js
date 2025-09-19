@@ -5,6 +5,7 @@ export const BASES = {
   catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'https://backendcatalog.qliq.ae/api',
   auth: process.env.NEXT_PUBLIC_AUTH_BASE_URL || 'https://backendauth.qliq.ae/api',
   cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'https://backendcart.qliq.ae/api',
+  payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'http://localhost:8002/api',
 }
 
 // Catalog endpoints
@@ -21,6 +22,7 @@ export const auth = {
   login: `${BASES.auth}/auth/login`,
   register: `${BASES.auth}/auth/register`,
   me: `${BASES.auth}/auth/me`,
+  profile: `${BASES.auth}/auth/profile`,
 }
 
 export const cart = {
@@ -31,6 +33,11 @@ export const cart = {
   remove: `${BASES.cart}/cart/remove`,
   wishlistAdd: `${BASES.cart}/wishlist/add`,
   wishlistGet: `${BASES.cart}/wishlist`,
+}
+
+export const payment = {
+  base: BASES.payment,
+  stripeCheckout: `${BASES.payment}/payment/stripe/checkout`,
 }
 
 export const addresses = {

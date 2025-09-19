@@ -5,6 +5,7 @@ import storesReducer from './slices/storesSlice'
 import authReducer from './slices/authSlice'
 import wishlistReducer from './slices/wishlistSlice'
 import cartReducer from './slices/cartSlice'
+import profileReducer from './slices/profileSlice'
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     auth: authReducer,
     wishlist: wishlistReducer,
     cart: cartReducer,
+    profile: profileReducer,
   },
 })
 

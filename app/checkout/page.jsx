@@ -5,7 +5,7 @@ import Footer from '@/components/Footer'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { addresses } from '@/store/api/endpoints'
+import { addresses, payment } from '@/store/api/endpoints'
 import { getAuthToken, getUserFromCookies } from '@/utils/userUtils'
 import { fetchCart } from '@/store/slices/cartSlice'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -256,37 +256,71 @@ export default function CheckoutPage() {
         return
       }
 
-      // Prepare order data
-      const orderData = {
-        items: cartItems,
-        deliveryAddress: selectedAddress,
-        shippingAddress: shippingSameAsDelivery ? selectedAddress : null, // You might want to add shipping address form data here
-        paymentMethod: selectedPaymentMethod,
-        total: finalTotal,
-        subtotal: finalTotal,
-        vat: finalTotal * 0.05,
-        shipping: 0, // Free shipping
-        discount: 0
+      // Check if credit/debit card payment is selected
+      if (selectedPaymentMethod === 'credit-card') {
+        // Prepare Stripe checkout data
+        const stripeCheckoutData = {
+          items: cartItems.map(item => ({
+            productId: item.productId || item.id || `product_${Math.random().toString(36).substr(2, 9)}`,
+            name: item.name || 'Product',
+            quantity: item.quantity || 1,
+            price: item.price || 0,
+            image: item.image || 'https://example.com/image.jpg'
+          })),
+          currency: 'usd'
+        }
+
+        console.log('Calling Stripe checkout API with data:', stripeCheckoutData)
+
+        // Call Stripe checkout API
+        const response = await fetch(payment.stripeCheckout, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(stripeCheckoutData)
+        })
+
+        if (response.ok) {
+          const responseData = await response.json()
+          console.log('Stripe checkout response:', responseData)
+          
+          // Handle successful Stripe response
+          // This could redirect to Stripe checkout page or handle the response as needed
+          alert('Redirecting to Stripe checkout...')
+          
+          // You might want to redirect to Stripe checkout URL if provided in response
+          // if (responseData.checkout_url) {
+          //   window.location.href = responseData.checkout_url
+          // }
+        } else {
+          const errorData = await response.json()
+          setError(errorData.message || 'Failed to process payment. Please try again.')
+          console.error('Stripe checkout error:', errorData)
+        }
+      } else {
+        // Handle other payment methods (tabby, tamara)
+        const orderData = {
+          items: cartItems,
+          deliveryAddress: selectedAddress,
+          shippingAddress: shippingSameAsDelivery ? selectedAddress : null,
+          paymentMethod: selectedPaymentMethod,
+          total: finalTotal,
+          subtotal: finalTotal,
+          vat: finalTotal * 0.05,
+          shipping: 0,
+          discount: 0
+        }
+
+        console.log('Order placed successfully:', orderData)
+        
+        // Show success message
+        alert('Order placed successfully!')
+        
+        // Redirect to order confirmation or home page
+        window.location.href = '/'
       }
-
-      // Here you would call your order API
-      // const response = await fetch('/api/orders', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `Bearer ${token}`,
-      //     'Content-Type': 'application/json'
-      //   },
-      //   body: JSON.stringify(orderData)
-      // })
-
-      // For now, we'll just simulate success
-      console.log('Order placed successfully:', orderData)
-      
-      // Show success message
-      alert('Order placed successfully!')
-      
-      // Redirect to order confirmation or home page
-      window.location.href = '/'
       
     } catch (error) {
       setError('Failed to place order. Please try again.')

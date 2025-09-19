@@ -14,13 +14,7 @@ import QoynsHistory from '../../components/profile/QoynsHistory/QoynsHistory'
 import SendQoyn from '../../components/profile/SendQoyn/SendQoyn'
 import NewAddress from '../../components/profile/NewAddress/newAddress'
 
-// Sample user data - in a real app, this would come from an API
-const userData = {
-  name: 'AMA CRUIZE',
-  email: 'example@gmail.com',
-  phone: '+971 555 4444',
-  avatar: 'https://api.builder.io/api/v1/image/assets/TEMP/e6affc0737515f664c7d8288ba0b3068f64a0ade?width=80'
-}
+// User data is now fetched from API in PersonalInfo component
 
 const sampleOrders = [
   {
