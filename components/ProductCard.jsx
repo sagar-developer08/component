@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useDispatch } from 'react-redux'
 import { addToWishlist } from '@/store/slices/wishlistSlice'
 import { decryptText } from '@/utils/crypto'
+import { useToast } from '@/contexts/ToastContext'
 
 export default function ProductCard({
   id,
@@ -20,6 +21,7 @@ export default function ProductCard({
   const dispatch = useDispatch()
   const { requireAuth } = useAuth()
   const [imageError, setImageError] = useState(false)
+  const { show } = useToast()
 
   // Fallback image URL
   const fallbackImage = 'https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644'
@@ -44,13 +46,16 @@ export default function ProductCard({
             } catch { }
           }
         }
-        dispatch(addToWishlist({
+        const result = await dispatch(addToWishlist({
           userId,
           productId: id,
           name: title,
           price: typeof price === 'string' ? Number(String(price).replace(/[^0-9.]/g, '')) : price,
           image: image
         }))
+        if (addToWishlist.fulfilled.match(result)) {
+          show('Added to wishlist')
+        }
       })()
     })
   }

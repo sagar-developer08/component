@@ -80,21 +80,51 @@ const wishlistSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(addToWishlist.pending, (state) => {
+      .addCase(addToWishlist.pending, (state, action) => {
         state.loading = true
         state.error = null
+        // Optimistically add the item so UI updates instantly
+        const optimistic = action.meta?.arg
+        if (optimistic && optimistic.productId) {
+          const exists = state.items.some(it => it.productId === optimistic.productId)
+          if (!exists) {
+            state.items.unshift({
+              productId: optimistic.productId,
+              name: optimistic.name,
+              price: optimistic.price,
+              image: optimistic.image,
+              addedAt: new Date().toISOString(),
+              _optimistic: true,
+            })
+          }
+        }
       })
       .addCase(addToWishlist.fulfilled, (state, action) => {
         state.loading = false
         state.error = null
-        // Optionally push local representation if API returns item
-        if (action.payload?.item) {
-          state.items.push(action.payload.item)
+        const posted = action.meta?.arg
+        const serverItem = action.payload?.item
+        if (serverItem && serverItem.productId) {
+          // Replace optimistic item if present, else append
+          const idx = state.items.findIndex(it => it.productId === serverItem.productId)
+          if (idx !== -1) {
+            state.items[idx] = { ...serverItem }
+          } else {
+            state.items.unshift(serverItem)
+          }
+        } else if (posted && posted.productId) {
+          // Ensure we don't end up with duplicates; nothing else to do
+          // since optimistic item already present
         }
       })
       .addCase(addToWishlist.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || 'Failed to add to wishlist'
+        // Revert optimistic add
+        const failed = action.meta?.arg
+        if (failed && failed.productId) {
+          state.items = state.items.filter(it => it.productId !== failed.productId)
+        }
       })
       .addCase(fetchWishlist.pending, (state) => {
         state.loading = true

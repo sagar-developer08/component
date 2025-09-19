@@ -1,6 +1,7 @@
 import './globals.css'
 import { AuthProvider } from '../contexts/AuthContext'
 import { ReduxProvider } from '../store/ReduxProvider'
+import { ToastProvider } from '../contexts/ToastContext'
 
 export const metadata = {
   title: 'QLIQ - Marketplace',
@@ -23,7 +24,9 @@ export default function RootLayout({
       <body>
         <ReduxProvider>
           <AuthProvider>
-            {children}
+            <ToastProvider>
+              {children}
+            </ToastProvider>
           </AuthProvider>
         </ReduxProvider>
       </body>

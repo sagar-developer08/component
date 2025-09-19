@@ -2,11 +2,13 @@ import Image from 'next/image'
 import { useAuth } from '../contexts/AuthContext'
 import { useDispatch, useSelector } from 'react-redux'
 import { loginUser } from '@/store/slices/authSlice'
+import { useToast } from '@/contexts/ToastContext'
 
 export default function LoginModal({ open, onClose }) {
   const { login } = useAuth()
   const dispatch = useDispatch()
   const authState = useSelector(state => state.auth)
+  const { show } = useToast()
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -19,7 +21,11 @@ export default function LoginModal({ open, onClose }) {
       const user = payload?.user
       if (token && user) {
         login(user, token)
+        show('Logged in successfully')
       }
+    } else if (loginUser.rejected.match(resultAction)) {
+      const errMsg = resultAction.payload || 'Login failed'
+      show(typeof errMsg === 'string' ? errMsg : 'Login failed')
     }
   }
 
