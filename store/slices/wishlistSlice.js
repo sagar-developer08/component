@@ -4,22 +4,9 @@ import { decryptText } from '@/utils/crypto'
 
 export const addToWishlist = createAsyncThunk(
   'wishlist/addToWishlist',
-  async ({ userId, productId, name, price, image }, { rejectWithValue, getState }) => {
+  async ({ userId, productId, name, price, image }, { rejectWithValue }) => {
     try {
-      // Check if item already exists in wishlist
-      const state = getState()
-      const existingItem = state.wishlist.items.find(item => item.productId === productId)
-      if (existingItem) {
-        // Return a success response for duplicate items to avoid errors
-        return { 
-          success: true, 
-          message: 'Item already in wishlist',
-          item: existingItem,
-          isDuplicate: true 
-        }
-      }
-
-      // Decrypt access token from cookie for Authorization header
+      // Always call the API, do not check local state for duplicates
       let token = ''
       if (typeof document !== 'undefined') {
         const cookies = document.cookie.split(';').map(c => c.trim())
@@ -229,7 +216,5 @@ const wishlistSlice = createSlice({
       })
   }
 })
-
 export default wishlistSlice.reducer
-
 

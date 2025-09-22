@@ -249,16 +249,13 @@ export default function CheckoutPage() {
 
     try {
       const token = await getAuthToken()
-      
       if (!token) {
         setError('Authentication required. Please login again.')
         setIsPlacingOrder(false)
         return
       }
 
-      // Check if credit/debit card payment is selected
       if (selectedPaymentMethod === 'credit-card') {
-        // Prepare Stripe checkout data
         const stripeCheckoutData = {
           items: cartItems.map(item => ({
             productId: item.productId || item.id || `product_${Math.random().toString(36).substr(2, 9)}`,
@@ -270,9 +267,7 @@ export default function CheckoutPage() {
           currency: 'usd'
         }
 
-        console.log('Calling Stripe checkout API with data:', stripeCheckoutData)
-
-        // Call Stripe checkout API
+        // 1. Create checkout session (your existing call)
         const response = await fetch(payment.stripeCheckout, {
           method: 'POST',
           headers: {
@@ -284,16 +279,29 @@ export default function CheckoutPage() {
 
         if (response.ok) {
           const responseData = await response.json()
-          console.log('Stripe checkout response:', responseData)
-          
-          // Handle successful Stripe response
-          // This could redirect to Stripe checkout page or handle the response as needed
-          alert('Redirecting to Stripe checkout...')
-          
-          // You might want to redirect to Stripe checkout URL if provided in response
-          // if (responseData.checkout_url) {
-          //   window.location.href = responseData.checkout_url
-          // }
+          // 2. Call webhook to get Stripe checkout URL
+          const webhookRes = await fetch('http://localhost:8002/api/payment/stripe/webhook', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              paymentIntentId: responseData.data?.paymentIntentId,
+              clientSecret: responseData.data?.clientSecret,
+              totalAmount: responseData.data?.totalAmount,
+              currency: responseData.data?.currency,
+              status: responseData.data?.status
+            })
+          })
+          if (webhookRes.ok) {
+            const webhookData = await webhookRes.json()
+            if (webhookData.checkout_url) {
+              window.location.href = webhookData.checkout_url
+              return
+            }
+          }
+          // fallback
+          alert('Stripe checkout session created, but no redirect URL provided.')
         } else {
           const errorData = await response.json()
           setError(errorData.message || 'Failed to process payment. Please try again.')

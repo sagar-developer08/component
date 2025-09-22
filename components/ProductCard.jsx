@@ -48,6 +48,11 @@ export default function ProductCard({
             } catch { }
           }
         }
+        if (!userId) {
+          show('Please login to add to wishlist', 'error')
+          return
+        }
+        // Always call the API, do not rely on local state for duplicate check
         const result = await dispatch(addToWishlist({
           userId,
           productId: id,
@@ -345,3 +350,4 @@ export default function ProductCard({
     </div>
   )
 }
+
