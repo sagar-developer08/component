@@ -3,8 +3,8 @@
 
 export const BASES = {
   catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'http://localhost:8003/api',
-  auth: process.env.NEXT_PUBLIC_AUTH_BASE_URL || 'https://backendauth.qliq.ae/api',
-  cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'https://backendcart.qliq.ae/api',
+  auth: process.env.NEXT_PUBLIC_AUTH_BASE_URL || 'http://localhost:8888/api',
+  cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'http://localhost:8002/api',
   payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'http://backendcart.qliq.ae/api',
 }
 
