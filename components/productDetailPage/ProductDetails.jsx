@@ -4,6 +4,7 @@ import OtherSellersDrawer from './OtherSellersDrawer';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '../../store/slices/cartSlice';
+import { addToWishlist } from '../../store/slices/wishlistSlice';
 import { getUserFromCookies } from '../../utils/userUtils';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -55,8 +56,24 @@ export default function ProductDetails({ product }) {
 
   const handleAddToFavourite = () => {
     requireAuth(() => {
-      // Add to wishlist logic here
-      console.log('Adding to wishlist:', product.id);
+      ; (async () => {
+        const userId = await getUserFromCookies()
+        const wishlistItem = {
+          userId,
+          productId: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.images[0]
+        }
+
+        const result = await dispatch(addToWishlist(wishlistItem))
+        if (addToWishlist.fulfilled.match(result)) {
+          const isDuplicate = result.payload?.isDuplicate
+          show(isDuplicate ? 'Already in wishlist' : 'Added to wishlist')
+        } else if (addToWishlist.rejected.match(result)) {
+          show('Failed to add to wishlist', 'error')
+        }
+      })()
     });
   };
 

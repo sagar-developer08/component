@@ -56,13 +56,9 @@ const storesSlice = createSlice({
           const allStores = action.payload.stores || []
           state.stores = allStores
           
-          // Filter top stores (you can customize this logic based on your criteria)
-          // For now, I'll take the first 4 stores as "top stores"
-          state.topStores = allStores.slice(0, 4)
-          
-          // Filter new stores (you can customize this logic based on your criteria)
-          // For now, I'll take stores from index 4 onwards as "new stores"
-          state.newStores = allStores.slice(4)
+          // Show all stores in both sections for now
+          state.topStores = allStores
+          state.newStores = allStores
           
           state.pagination = action.payload.pagination || {}
         }

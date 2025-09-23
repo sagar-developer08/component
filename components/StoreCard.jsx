@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 
 export default function StoreCard({
   id,
@@ -10,13 +9,10 @@ export default function StoreCard({
   image,
   location,
   isTopStore = false,
-  isNewStore = false
+  isNewStore = false,
+  onClick
 }) {
-  const router = useRouter()
-
-  const handleCardClick = () => {
-    router.push(`/storeDetail`)
-  }
+  const handleCardClick = onClick
 
   const getBadge = () => {
     if (isNewStore) return "New Store"
@@ -51,7 +47,7 @@ export default function StoreCard({
         </div>
 
         <div className="store-bottom">
-          <div className="store-location">Dubai, UAE</div>
+          <div className="store-location">{location}</div>
           <div className="store-rating">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M6.99937 10.0742L9.4202 11.5384C9.86354 11.8067 10.406 11.41 10.2894 10.9084L9.64771 8.15503L11.7885 6.30003C12.1794 5.96169 11.9694 5.32003 11.456 5.27919L8.63854 5.04003L7.53604 2.43836C7.3377 1.96586 6.66104 1.96586 6.4627 2.43836L5.3602 5.03419L2.5427 5.27336C2.02937 5.31419 1.81937 5.95586 2.2102 6.29419L4.35104 8.14919L3.70937 10.9025C3.5927 11.4042 4.1352 11.8009 4.57854 11.5325L6.99937 10.0742Z" fill="#0082FF"/>
@@ -61,7 +57,7 @@ export default function StoreCard({
         </div>
 
         <div className="store-category">
-          {category}
+          {/* {category} */}
         </div>
       </div>
 

@@ -4,11 +4,14 @@ import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchWishlist, removeFromWishlist } from '@/store/slices/wishlistSlice'
 import { addToCart } from '@/store/slices/cartSlice'
+import { useToast } from '@/contexts/ToastContext'
+import { getUserFromCookies } from '@/utils/userUtils'
 
 export default function WishlistDrawer({ open, onClose }) {
   const { requireAuth, user } = useAuth()
   const dispatch = useDispatch()
   const { items, loading } = useSelector(state => state.wishlist)
+  const { show } = useToast()
 
   const handleAddToCart = (item) => {
     requireAuth(() => {
@@ -28,12 +31,22 @@ export default function WishlistDrawer({ open, onClose }) {
 
   const handleRemoveFromWishlist = (item) => {
     requireAuth(() => {
-      if (user?.id) {
-        dispatch(removeFromWishlist({
-          userId: user.id,
-          productId: item.productId
-        }))
-      }
+      ;(async () => {
+        const userId = user?.id || await getUserFromCookies()
+        if (userId) {
+          const result = await dispatch(removeFromWishlist({
+            userId,
+            productId: item.productId,
+            id: item.id || item._id,
+          }))
+          if (removeFromWishlist.fulfilled.match(result)) {
+            show('Removed from wishlist')
+          } else {
+            show('Failed to remove from wishlist', 'error')
+            dispatch(fetchWishlist())
+          }
+        }
+      })()
     })
   }
 

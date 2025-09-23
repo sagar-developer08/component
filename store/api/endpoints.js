@@ -2,7 +2,7 @@
 // Configure base URLs via environment variables if available
 
 export const BASES = {
-  catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'https://backendcatalog.qliq.ae/api',
+  catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'http://localhost:8003/api',
   auth: process.env.NEXT_PUBLIC_AUTH_BASE_URL || 'https://backendauth.qliq.ae/api',
   cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'https://backendcart.qliq.ae/api',
   payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'http://backendcart.qliq.ae/api',
@@ -20,7 +20,7 @@ export const catalog = {
 export const auth = {
   base: `${BASES.auth}/auth`,
   login: `${BASES.auth}/auth/login`,
-  register: `${BASES.auth}/auth/register`,
+  register: `${BASES.auth}/auth/signup`,
   me: `${BASES.auth}/auth/me`,
   profile: `${BASES.auth}/auth/profile`,
 }
@@ -33,6 +33,7 @@ export const cart = {
   remove: `${BASES.cart}/cart/remove`,
   wishlistAdd: `${BASES.cart}/wishlist/add`,
   wishlistGet: `${BASES.cart}/wishlist`,
+  wishlistRemove: `${BASES.cart}/wishlist/remove`,
 }
 
 export const payment = {

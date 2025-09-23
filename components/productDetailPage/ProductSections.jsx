@@ -3,9 +3,18 @@ import SectionHeader from '@/components/SectionHeader'
 import ProductInformation from '@/components/productDetailPage/ProductInformation'
 import { useState } from 'react'
 
-export default function ProductSections({ relatedProducts }) {
+export default function ProductSections({ relatedProducts, productData }) {
   const [expandedItem, setExpandedItem] = useState(0)
   const [manufacturerImageIndex, setManufacturerImageIndex] = useState(0)
+
+  // Normalize relatedProducts to always be an array
+  const relatedList = Array.isArray(relatedProducts)
+    ? relatedProducts
+    : (relatedProducts?.data?.products
+      || relatedProducts?.data?.items
+      || relatedProducts?.data
+      || relatedProducts?.items
+      || [])
 
   const toggleAccordion = (index) => {
     setExpandedItem(expandedItem === index ? -1 : index)
@@ -30,6 +39,105 @@ export default function ProductSections({ relatedProducts }) {
     )
   }
 
+  // Create comprehensive specifications from API data
+  const createSpecifications = () => {
+    if (!productData) return []
+
+    const specs = []
+
+    // Add specifications from API
+    if (productData.specifications) {
+      Object.entries(productData.specifications).forEach(([key, value]) => {
+        specs.push({
+          label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          value: value
+        })
+      })
+    }
+
+    // Add category information
+    if (productData.level4?.name) {
+      specs.push({ label: 'Category', value: productData.level4.name })
+    }
+    if (productData.level3?.name) {
+      specs.push({ label: 'Sub Category', value: productData.level3.name })
+    }
+
+    // Add brand information
+    if (productData.brand_id?.name) {
+      specs.push({ label: 'Brand', value: productData.brand_id.name })
+    }
+
+    // Add weight and dimensions
+    if (productData.weight) {
+      specs.push({ label: 'Weight', value: `${productData.weight}kg` })
+    }
+    if (productData.dimensions) {
+      const { length, width, height } = productData.dimensions
+      specs.push({ label: 'Dimensions', value: `${length} x ${width} x ${height} cm` })
+    }
+
+    // Add SKU
+    if (productData.sku) {
+      specs.push({ label: 'SKU', value: productData.sku })
+    }
+
+    return specs
+  }
+
+  // Create comprehensive attributes from API data
+  const createAttributes = () => {
+    if (!productData) return []
+
+    const attrs = []
+
+    // Add attributes from API
+    if (productData.attributes) {
+      Object.entries(productData.attributes).forEach(([key, value]) => {
+        attrs.push({
+          label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+          value: value
+        })
+      })
+    }
+
+    // Add warranty information
+    if (productData.warranty_period && productData.warranty_type) {
+      attrs.push({ label: 'Warranty', value: `${productData.warranty_period} months (${productData.warranty_type})` })
+    }
+
+    // Add store information
+    if (productData.store_id?.name) {
+      attrs.push({ label: 'Store', value: productData.store_id.name })
+    }
+
+    // Add status information
+    if (productData.status) {
+      attrs.push({ label: 'Status', value: productData.status.charAt(0).toUpperCase() + productData.status.slice(1) })
+    }
+
+    // Add product flags
+    const flags = []
+    if (productData.is_featured) flags.push('Featured')
+    if (productData.is_best_seller) flags.push('Best Seller')
+    if (productData.is_offer) flags.push('On Offer')
+    if (productData.special_deals_for_qliq_plus) flags.push('Qliq Plus Deal')
+
+    if (flags.length > 0) {
+      attrs.push({ label: 'Product Flags', value: flags.join(', ') })
+    }
+
+    // Add tags
+    if (productData.tags && productData.tags.length > 0) {
+      attrs.push({ label: 'Tags', value: productData.tags.join(', ') })
+    }
+
+    return attrs
+  }
+
+  const specifications = createSpecifications()
+  const attributes = createAttributes()
+
   return (
     <div>
       {/* Related Products Section */}
@@ -41,11 +149,11 @@ export default function ProductSections({ relatedProducts }) {
             showButton={true}
             buttonText="Upgrade"
           />
-          <div className="products-grid">
-            {relatedProducts.map((product, index) => (
-              <ProductCard key={index} {...product} />
-            ))}
-          </div>
+            <div className="products-grid">
+             {relatedList.slice(0, 4).map((product, index) => (
+               <ProductCard key={product.id || `product-${index}`} {...product} />
+             ))}
+            </div>
         </div>
       </section>
 
@@ -82,60 +190,24 @@ export default function ProductSections({ relatedProducts }) {
             <div className="spec-table spec-table-left">
               <table>
                 <tbody>
-                  <tr>
-                    <th>Heading</th>
-                    <td>Lorem Ipsum</td>
-                  </tr>
-                  <tr>
-                    <th>Heading</th>
-                    <td>Lorem Ipsum</td>
-                  </tr>
-                  <tr>
-                    <th>Heading</th>
-                    <td>Lorem Ipsum</td>
-                  </tr>
-                  <tr>
-                    <th>Heading</th>
-                    <td>Lorem Ipsum</td>
-                  </tr>
-                  <tr>
-                    <th>Heading</th>
-                    <td>Lorem Ipsum</td>
-                  </tr>
-                  <tr>
-                    <th>Heading</th>
-                    <td>Lorem Ipsum</td>
-                  </tr>
+                  {specifications.slice(0, Math.ceil(specifications.length / 2)).map((spec, index) => (
+                    <tr key={index}>
+                      <th>{spec.label}</th>
+                      <td>{spec.value}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
             <div className="spec-table spec-table-right">
               <table>
                 <tbody>
-                  <tr>
-                    <th>Heading</th>
-                    <td>Lorem Ipsum</td>
-                  </tr>
-                  <tr>
-                    <th>Heading</th>
-                    <td>Lorem Ipsum</td>
-                  </tr>
-                  <tr>
-                    <th>Heading</th>
-                    <td>Lorem Ipsum</td>
-                  </tr>
-                  <tr>
-                    <th>Heading</th>
-                    <td>Lorem Ipsum</td>
-                  </tr>
-                  <tr>
-                    <th>Heading</th>
-                    <td>Lorem Ipsum</td>
-                  </tr>
-                  <tr>
-                    <th>Heading</th>
-                    <td>Lorem Ipsum</td>
-                  </tr>
+                  {attributes.slice(0, Math.ceil(attributes.length / 2)).map((attr, index) => (
+                    <tr key={index}>
+                      <th>{attr.label}</th>
+                      <td>{attr.value}</td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
@@ -247,11 +319,11 @@ export default function ProductSections({ relatedProducts }) {
             showButton={false}
             buttonText="Upgrade"
           />
-          <div className="products-grid">
-            {relatedProducts.map((product, index) => (
-              <ProductCard key={index} {...product} />
-            ))}
-          </div>
+            <div className="products-grid">
+             {relatedList.slice(0, 4).map((product, index) => (
+               <ProductCard key={product.id || `product-${index}`} {...product} />
+             ))}
+            </div>
         </div>
       </section>
 

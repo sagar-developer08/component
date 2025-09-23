@@ -1,14 +1,17 @@
 import Image from 'next/image'
+import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useDispatch, useSelector } from 'react-redux'
 import { loginUser } from '@/store/slices/authSlice'
 import { useToast } from '@/contexts/ToastContext'
+import RegisterModal from './RegisterModal'
 
 export default function LoginModal({ open, onClose }) {
   const { login } = useAuth()
   const dispatch = useDispatch()
   const authState = useSelector(state => state.auth)
   const { show } = useToast()
+  const [showRegisterModal, setShowRegisterModal] = useState(false)
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -31,67 +34,80 @@ export default function LoginModal({ open, onClose }) {
 
   const handleCreateAccount = (e) => {
     e.preventDefault()
-    // Mock account creation - replace with actual logic
-    const mockUser = { name: 'New User', email: 'newuser@example.com' }
-    const mockToken = 'mock-jwt-token-' + Date.now()
-    login(mockUser, mockToken)
+    setShowRegisterModal(true) // Open registration modal (keep login modal open behind it)
   }
+
+  const handleSwitchToLogin = () => {
+    setShowRegisterModal(false) // Close registration modal
+    // Reopen login modal by calling onClose and then reopening
+    // This will be handled by the parent component's state management
+  }
+
 
   if (!open) return null
   return (
-    <div className="login-modal-overlay">
-      <div className="login-modal">
-        <button className="login-modal-close" onClick={onClose}>
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-            <circle cx="14" cy="14" r="14" fill="#F5F5F5" />
-            <path d="M9 9L19 19M19 9L9 19" stroke="#000" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </button>
-        <div className="login-modal-content">
-          <div className="login-modal-left">
-            <h1 className="login-title">Welcome to QLIQ</h1>
-            <p className="login-desc">
-              Vorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.
-            </p>
-            <form className="login-form">
-              <label className="login-label">Email</label>
-              <input className="login-input" type="email" placeholder="Email" />
-              <div className="login-password-row">
-                <label className="login-label">Password</label>
-                <span className="login-forgot">Forget password?</span>
+    <>
+      <div className="login-modal-overlay">
+        <div className="login-modal">
+          <button className="login-modal-close" onClick={onClose}>
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="14" fill="#F5F5F5" />
+              <path d="M9 9L19 19M19 9L9 19" stroke="#000" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+          <div className="login-modal-content">
+            <div className="login-modal-left">
+              <h1 className="login-title">Welcome to QLIQ</h1>
+              <p className="login-desc">
+                Vorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.
+              </p>
+              <form className="login-form">
+                <label className="login-label">Email</label>
+                <input className="login-input" type="email" placeholder="Email" />
+                <div className="login-password-row">
+                  <label className="login-label">Password</label>
+                  <span className="login-forgot">Forget password?</span>
+                </div>
+                <input className="login-input" type="password" placeholder="Password" />
+                <div className="login-btn-row">
+                  <button type="button" className="login-create-btn" onClick={handleCreateAccount}>Create Account</button>
+                  <button type="submit" className="login-btn" onClick={handleLogin} disabled={authState.loading}>
+                    {authState.loading ? 'Logging in...' : 'Login'}
+                  </button>
+                </div>
+              </form>
+              <div className="login-divider-row">
+                <hr className="login-divider" />
+                <span className="login-divider-text">Login with</span>
+                <hr className="login-divider" />
               </div>
-              <input className="login-input" type="password" placeholder="Password" />
-              <div className="login-btn-row">
-                <button type="button" className="login-create-btn" onClick={handleCreateAccount}>Create Account</button>
-                <button type="submit" className="login-btn" onClick={handleLogin} disabled={authState.loading}>
-                  {authState.loading ? 'Logging in...' : 'Login'}
-                </button>
+              <div className="login-social-row">
+                <button className="login-social-btn"><img src="/google.svg" alt="Google" /></button>
+                <button className="login-social-btn"><img src="/facebook.svg" alt="Facebook" /></button>
+                <button className="login-social-btn"><img src="/tiktok.svg" alt="TikTok" /></button>
+                <button className="login-social-btn"><img src="/insta.svg" alt="Instagram" /></button>
               </div>
-            </form>
-            <div className="login-divider-row">
-              <hr className="login-divider" />
-              <span className="login-divider-text">Login with</span>
-              <hr className="login-divider" />
             </div>
-            <div className="login-social-row">
-              <button className="login-social-btn"><img src="/google.svg" alt="Google" /></button>
-              <button className="login-social-btn"><img src="/facebook.svg" alt="Facebook" /></button>
-              <button className="login-social-btn"><img src="/tiktok.svg" alt="TikTok" /></button>
-              <button className="login-social-btn"><img src="/insta.svg" alt="Instagram" /></button>
+            <div className="login-modal-right">
+              <Image
+                src="/loginImage.jpg"
+                alt="Login"
+                width={610}
+                height={740}
+                className="login-image"
+                style={{ borderRadius: '32px', objectFit: 'cover', width: '100%', height: '100%' }}
+              />
             </div>
-          </div>
-          <div className="login-modal-right">
-            <Image
-              src="/loginImage.jpg"
-              alt="Login"
-              width={610}
-              height={740}
-              className="login-image"
-              style={{ borderRadius: '32px', objectFit: 'cover', width: '100%', height: '100%' }}
-            />
           </div>
         </div>
       </div>
+      
+      <RegisterModal 
+        open={showRegisterModal}
+        onClose={onClose}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
+      
       <style jsx>{`
         .login-modal-overlay {
           position: fixed;
@@ -276,6 +292,6 @@ export default function LoginModal({ open, onClose }) {
           }
         }
       `}</style>
-    </div>
+    </>
   )
 }

@@ -81,7 +81,7 @@ export const fetchWishlist = createAsyncThunk(
 
 export const removeFromWishlist = createAsyncThunk(
   'wishlist/removeFromWishlist',
-  async ({ userId, productId }, { rejectWithValue }) => {
+  async ({ userId, productId, id, _id }, { rejectWithValue }) => {
     try {
       let token = ''
       if (typeof document !== 'undefined') {
@@ -95,13 +95,21 @@ export const removeFromWishlist = createAsyncThunk(
         }
       }
 
-      const response = await fetch(`${cart.base}/wishlist/remove`, {
+      // Support APIs that remove by productId or by wishlist item id
+      const body = {
+        userId,
+        ...(productId ? { productId } : {}),
+        ...(id ? { id } : {}),
+        ...(_id ? { id: _id } : {}),
+      }
+
+      const response = await fetch(cart.wishlistRemove, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ userId, productId }),
+        body: JSON.stringify(body),
       })
       if (!response.ok) {
         const text = await response.text()

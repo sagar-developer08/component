@@ -20,6 +20,25 @@ export const fetchProducts = createAsyncThunk(
   }
 )
 
+// Async thunk for fetching store products
+export const fetchStoreProducts = createAsyncThunk(
+  'products/fetchStoreProducts',
+  async (storeId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${catalog.products}?storeId=${storeId}`)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 
 const productsSlice = createSlice({
   name: 'products',
@@ -29,6 +48,7 @@ const productsSlice = createSlice({
     offers: [],
     qliqPlusDeals: [],
     featured: [],
+    storeProducts: [],
     pagination: {},
     loading: false,
     error: null,
@@ -44,6 +64,7 @@ const productsSlice = createSlice({
       state.offers = []
       state.qliqPlusDeals = []
       state.featured = []
+      state.storeProducts = []
       state.pagination = {}
     }
   },
@@ -68,6 +89,24 @@ const productsSlice = createSlice({
         state.error = null
       })
       .addCase(fetchProducts.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+        state.success = false
+      })
+      .addCase(fetchStoreProducts.pending, (state) => {
+        state.loading = true
+        state.error = null
+        state.success = false
+      })
+      .addCase(fetchStoreProducts.fulfilled, (state, action) => {
+        state.loading = false
+        state.success = action.payload.success
+        if (action.payload.success && action.payload.data) {
+          state.storeProducts = action.payload.data.products || action.payload.data || []
+        }
+        state.error = null
+      })
+      .addCase(fetchStoreProducts.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
         state.success = false

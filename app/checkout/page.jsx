@@ -196,24 +196,30 @@ export default function CheckoutPage() {
       return
     }
 
-    const orderData = {
-      items: cartItems,
-      deliveryAddress: selectedAddress,
-      shippingAddress: shippingSameAsDelivery ? selectedAddress : null,
-      paymentMethod: selectedPaymentMethod,
-      total: finalTotal,
-      subtotal: finalTotal,
-      vat: finalTotal * 0.05,
-      shipping: 0,
-      discount: 0
-    }
+        const orderData = {
+          items: cartItems,
+          deliveryAddress: selectedAddress,
+          shippingAddress: shippingSameAsDelivery ? selectedAddress : null,
+          paymentMethod: selectedPaymentMethod,
+          total: finalTotal,
+          subtotal: finalTotal,
+          vat: finalTotal * 0.05,
+          shipping: 0,
+          discount: 0
+        }
 
     dispatch(placeOrder(orderData))
   }
 
   const handleHostedCheckout = async () => {
     try {
-      const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+      const key = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY : undefined
+      const publishableKey = (typeof key === 'string' && key.trim()) ? key : ''
+      if (!publishableKey) {
+        console.error('Stripe publishable key is missing. Set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY')
+        return
+      }
+      const stripe = await loadStripe(publishableKey)
       if (!stripe) {
         console.error('Stripe failed to initialize')
         return

@@ -11,6 +11,7 @@ import { decryptText } from '@/utils/crypto'
 
 export default function ProductCard({
   id,
+  slug,
   title,
   price,
   rating,
@@ -30,7 +31,10 @@ export default function ProductCard({
   const imageSrc = imageError ? fallbackImage : image
 
   const handleCardClick = () => {
-    router.push(`/product/${id}`)
+    const generatedSlug = (slug
+      || (typeof title === 'string' ? title.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-') : '')
+      || id)
+    router.push(`/product/${generatedSlug}`)
   }
 
   const handleWishlistClick = async (e) => {

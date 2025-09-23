@@ -8,7 +8,10 @@ import StoreCard from '@/components/StoreCard'
 import SectionHeader from '@/components/SectionHeader'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchStores } from '@/store/slices/storesSlice'
+import { useRouter } from 'next/navigation'
 
 const productData = [
   {
@@ -47,6 +50,13 @@ const productData = [
 
 export default function Home() {
   const [filterOpen, setFilterOpen] = useState(false)
+  const dispatch = useDispatch()
+  const { topStores, newStores, loading, error } = useSelector(state => state.stores)
+  const router = useRouter()
+
+  useEffect(() => {
+    dispatch(fetchStores())
+  }, [dispatch])
   return (
     <main className="home-page">
       <Navigation />
@@ -66,9 +76,6 @@ export default function Home() {
         </div>
       </section>
 
-
-      {/* Fastest Delivery */}
-
       <section className="section">
         <div className="container">
           <SectionHeader
@@ -77,15 +84,30 @@ export default function Home() {
             showButton={true}
             buttonText="See All"
           />
-          <div className="products-grid">
-            {productData.map((product, index) => (
-              <StoreCard key={index} {...product} />
-            ))}
-          </div>
-          <div className="products-grid">
-            {productData.map((product, index) => (
-              <StoreCard key={index} {...product} />
-            ))}
+          {error && (
+            <div style={{ margin: '16px 0', color: 'red' }}>{error}</div>
+          )}
+          <div className="stores-grid">
+            {(loading && (!topStores || topStores.length === 0)) ? (
+              productData.map((product, index) => (
+                <StoreCard key={`skeleton-${index}`} {...product} />
+              ))
+            ) : (
+              (topStores || []).map((store, index) => (
+                <StoreCard
+                  key={store._id || store.id || `store-${index}`}
+                  id={store._id || store.id}
+                  title={store.name || store.title || 'Store'}
+                  category={store.category?.name || store.category || 'General'}
+                  rating={store.rating || '4.0'}
+                  deliveryTime={store.deliveryTime || '30 Min'}
+                  image={store.image || store.logo || '/iphone.jpg'}
+                  location={(store.address && store.address.city) || 'Dubai, UAE'}
+                  isTopStore
+                  onClick={() => router.push(`/storeDetail?storeId=${store._id || store.id}`)}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>

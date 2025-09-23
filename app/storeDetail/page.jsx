@@ -8,7 +8,10 @@ import StoreCard from '@/components/StoreCard'
 import SectionHeader from '@/components/SectionHeader'
 import Footer from '@/components/Footer'
 import FilterDrawer from '@/components/FilterDrawer'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams } from 'next/navigation'
+import { fetchStoreProducts } from '@/store/slices/productsSlice'
 
 const productData = [
   {
@@ -47,6 +50,16 @@ const productData = [
 
 export default function StoreDetail() {
   const [filterOpen, setFilterOpen] = useState(false)
+  const searchParams = useSearchParams()
+  const storeId = useMemo(() => searchParams.get('storeId'), [searchParams])
+  const dispatch = useDispatch()
+  const { storeProducts, loading, error } = useSelector(state => state.products)
+
+  useEffect(() => {
+    if (storeId) {
+      dispatch(fetchStoreProducts(storeId))
+    }
+  }, [dispatch, storeId])
   return (
     <main className="home-page">
       <Navigation />
@@ -71,11 +84,29 @@ export default function StoreDetail() {
 
               <div className="products-scroll-container">
                 <div className="grid-3">
-                  {productData.concat(productData).map((product, index) => (
-                    <div key={index} className="grid-item">
-                      <ProductCard {...product} />
-                    </div>
-                  ))}
+                  {loading ? (
+                    productData.slice(0,6).map((product, index) => (
+                      <div key={`skeleton-${index}`} className="grid-item">
+                        <ProductCard {...product} />
+                      </div>
+                    ))
+                  ) : error ? (
+                    <div style={{ gridColumn: '1 / -1', color: 'red' }}>Failed to load products: {error}</div>
+                  ) : (
+                    (storeProducts && storeProducts.length > 0 ? storeProducts : []).map((product, index) => (
+                      <div key={product._id || product.id || `p-${index}`} className="grid-item">
+                        <ProductCard 
+                          id={product._id || product.id}
+                          slug={product.slug || product._id || product.id}
+                          title={product.name || product.title || 'Product'}
+                          price={product.price ? `AED ${product.price}` : 'AED 0'}
+                          rating={product.rating || '4.0'}
+                          deliveryTime={product.deliveryTime || '30 Min'}
+                          image={product.image || product.images?.[0] || '/iphone.jpg'}
+                        />
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
