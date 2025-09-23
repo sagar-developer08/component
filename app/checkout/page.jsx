@@ -12,6 +12,7 @@ import {
   createAddress, 
   setDefaultAddress, 
   placeOrder,
+  createStripePaymentIntent,
   setSelectedAddress,
   setShowAddressForm,
   updateAddressForm,
@@ -21,8 +22,11 @@ import {
   setSelectedPaymentMethod,
   clearError,
   clearAddressError,
-  clearOrderError
+  clearOrderError,
+  clearPaymentIntentError,
+  clearStripeData
 } from '@/store/slices/checkoutSlice'
+import StripeCheckout from '@/components/StripeCheckout'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHome, faBriefcase, faMapMarkerAlt, faCheck, faPlus, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons'
 import styles from './checkout.module.css'
@@ -46,7 +50,11 @@ export default function CheckoutPage() {
     showShippingForm,
     selectedPaymentMethod,
     isPlacingOrder,
-    orderError
+    orderError,
+    stripeClientSecret,
+    stripePaymentIntentId,
+    isCreatingPaymentIntent,
+    paymentIntentError
   } = useSelector(state => state.checkout)
   
   // Calculate total if not provided by API
@@ -54,7 +62,7 @@ export default function CheckoutPage() {
   const finalTotal = cartTotal || calculatedTotal
   
   // Combined error state
-  const error = addressError || orderError
+  const error = addressError || orderError || paymentIntentError
 
   // Fetch user addresses and cart on component mount
   useEffect(() => {
@@ -121,6 +129,20 @@ export default function CheckoutPage() {
     }
   }, [cartItems.length, cartLoading, dispatch])
 
+  // Auto-create Stripe payment intent when credit card is selected and we have all required data
+  useEffect(() => {
+    if (
+      selectedPaymentMethod === 'credit-card' &&
+      selectedAddress &&
+      cartItems.length > 0 &&
+      !stripeClientSecret &&
+      !isCreatingPaymentIntent &&
+      !paymentIntentError
+    ) {
+      handleCreateStripePaymentIntent()
+    }
+  }, [selectedPaymentMethod, selectedAddress, cartItems.length, stripeClientSecret, isCreatingPaymentIntent, paymentIntentError])
+
   // Address form handlers
   const handleAddressFormChange = (field, value) => {
     dispatch(updateAddressForm({ [field]: value }))
@@ -133,6 +155,32 @@ export default function CheckoutPage() {
 
   const handleSetDefaultAddress = (addressId) => {
     dispatch(setDefaultAddress(addressId))
+  }
+
+  const handleCreateStripePaymentIntent = async () => {
+    if (!selectedAddress) {
+      dispatch(clearPaymentIntentError())
+      return
+    }
+
+    if (cartItems.length === 0) {
+      dispatch(clearPaymentIntentError())
+      return
+    }
+
+    const orderData = {
+      items: cartItems,
+      deliveryAddress: selectedAddress,
+      shippingAddress: shippingSameAsDelivery ? selectedAddress : null,
+      paymentMethod: selectedPaymentMethod,
+      total: finalTotal,
+      subtotal: finalTotal,
+      vat: finalTotal * 0.05,
+      shipping: 0,
+      discount: 0
+    }
+
+    dispatch(createStripePaymentIntent(orderData))
   }
 
   const handlePlaceOrder = async () => {
@@ -159,6 +207,17 @@ export default function CheckoutPage() {
     }
 
     dispatch(placeOrder(orderData))
+  }
+
+  const handlePaymentSuccess = () => {
+    // Clear Stripe data and redirect to success page
+    dispatch(clearStripeData())
+    window.location.href = '/checkout/success'
+  }
+
+  const handlePaymentError = (error) => {
+    console.error('Payment error:', error)
+    dispatch(clearPaymentIntentError())
   }
   return (
     <div className={styles.checkoutPage}>
@@ -706,7 +765,10 @@ export default function CheckoutPage() {
                     name="paymentMethod"
                     value="credit-card"
                     checked={selectedPaymentMethod === 'credit-card'}
-                    onChange={(e) => dispatch(setSelectedPaymentMethod(e.target.value))}
+                    onChange={(e) => {
+                      dispatch(setSelectedPaymentMethod(e.target.value))
+                      dispatch(clearStripeData()) // Clear previous Stripe data when switching
+                    }}
                     className={styles.paymentRadio}
                   />
                   <div className={styles.paymentContent}>
@@ -719,7 +781,10 @@ export default function CheckoutPage() {
                     name="paymentMethod"
                     value="tabby"
                     checked={selectedPaymentMethod === 'tabby'}
-                    onChange={(e) => dispatch(setSelectedPaymentMethod(e.target.value))}
+                    onChange={(e) => {
+                      dispatch(setSelectedPaymentMethod(e.target.value))
+                      dispatch(clearStripeData()) // Clear Stripe data when switching to other methods
+                    }}
                     className={styles.paymentRadio}
                   />
                   <div className={styles.paymentContent}>
@@ -734,7 +799,10 @@ export default function CheckoutPage() {
                     name="paymentMethod"
                     value="tamara"
                     checked={selectedPaymentMethod === 'tamara'}
-                    onChange={(e) => dispatch(setSelectedPaymentMethod(e.target.value))}
+                    onChange={(e) => {
+                      dispatch(setSelectedPaymentMethod(e.target.value))
+                      dispatch(clearStripeData()) // Clear Stripe data when switching to other methods
+                    }}
                     className={styles.paymentRadio}
                   />
                   <div className={styles.paymentContent}>
@@ -744,6 +812,35 @@ export default function CheckoutPage() {
                   </div>
                 </label>
               </div>
+
+              {/* Stripe Payment Form */}
+              {selectedPaymentMethod === 'credit-card' && (
+                <div className={styles.stripePaymentSection}>
+                  {isCreatingPaymentIntent ? (
+                    <div className={styles.loadingText}>Creating payment form...</div>
+                  ) : paymentIntentError ? (
+                    <div className={styles.errorMessage}>
+                      {paymentIntentError}
+                      <button 
+                        className={styles.retryButton}
+                        onClick={handleCreateStripePaymentIntent}
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : stripeClientSecret ? (
+                    <StripeCheckout
+                      clientSecret={stripeClientSecret}
+                      onPaymentSuccess={handlePaymentSuccess}
+                      onPaymentError={handlePaymentError}
+                    />
+                  ) : (
+                    <div className={styles.paymentPrompt}>
+                      Please select an address to continue with payment
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -822,13 +919,20 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               )}
-              <button 
-                className={styles.placeOrderBtn}
-                onClick={handlePlaceOrder}
-                disabled={isPlacingOrder || cartItems.length === 0}
-              >
-                {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
-              </button>
+              {selectedPaymentMethod === 'credit-card' ? (
+                // For Stripe, the payment button is in the Stripe Elements component
+                <div className={styles.stripeNote}>
+                  Complete payment using the form above
+                </div>
+              ) : (
+                <button 
+                  className={styles.placeOrderBtn}
+                  onClick={handlePlaceOrder}
+                  disabled={isPlacingOrder || cartItems.length === 0}
+                >
+                  {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
+                </button>
+              )}
             </div>
           </div>
         </div>

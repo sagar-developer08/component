@@ -96,6 +96,66 @@ export const setDefaultAddress = createAsyncThunk(
   }
 )
 
+export const createStripePaymentIntent = createAsyncThunk(
+  'checkout/createStripePaymentIntent',
+  async (orderData, { rejectWithValue }) => {
+    try {
+      const token = await getAuthToken()
+      
+      if (!token) {
+        throw new Error('Authentication required')
+      }
+
+      // Handle Stripe payment
+      const stripeCheckoutData = {
+        items: orderData.items.map(item => ({
+          productId: item.productId || item.id || `product_${Math.random().toString(36).substr(2, 9)}`,
+          name: item.name || 'Product',
+          quantity: item.quantity || 1,
+          price: item.price || 0,
+          image: item.image || 'https://example.com/image.jpg'
+        })),
+        currency: 'usd'
+      }
+
+      const response = await fetch(payment.stripeCheckout, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(stripeCheckoutData)
+      })
+
+      if (!response.ok) {
+        // Robust error handling when server returns non-JSON (e.g., HTML error page)
+        const raw = await response.text()
+        try {
+          const errorData = JSON.parse(raw)
+          throw new Error(errorData.message || 'Failed to create payment intent')
+        } catch (_) {
+          // Surface status and a snippet of the body to help debugging
+          const snippet = (raw || '').slice(0, 200)
+          throw new Error(`Payment API error (${response.status}): ${snippet}`)
+        }
+      }
+
+      const responseData = await response.json()
+      
+      return {
+        type: 'stripe',
+        clientSecret: responseData.data?.clientSecret,
+        paymentIntentId: responseData.data?.paymentIntentId,
+        totalAmount: responseData.data?.totalAmount,
+        currency: responseData.data?.currency,
+        paymentData: responseData.data
+      }
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 export const placeOrder = createAsyncThunk(
   'checkout/placeOrder',
   async (orderData, { rejectWithValue }) => {
@@ -107,58 +167,12 @@ export const placeOrder = createAsyncThunk(
       }
 
       if (orderData.paymentMethod === 'credit-card') {
-        // Handle Stripe payment
-        const stripeCheckoutData = {
-          items: orderData.items.map(item => ({
-            productId: item.productId || item.id || `product_${Math.random().toString(36).substr(2, 9)}`,
-            name: item.name || 'Product',
-            quantity: item.quantity || 1,
-            price: item.price || 0,
-            image: item.image || 'https://example.com/image.jpg'
-          })),
-          currency: 'usd'
-        }
-
-        const response = await fetch(payment.stripeCheckout, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(stripeCheckoutData)
-        })
-
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.message || 'Failed to process payment')
-        }
-
-        const responseData = await response.json()
-        
-        // Call webhook to get Stripe checkout URL
-        const webhookRes = await fetch('https://backendcart.qliq.ae/api/payment/stripe/webhook', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            paymentIntentId: responseData.data?.paymentIntentId,
-            clientSecret: responseData.data?.clientSecret,
-            totalAmount: responseData.data?.totalAmount,
-            currency: responseData.data?.currency,
-            status: responseData.data?.status
-          })
-        })
-
-        if (webhookRes.ok) {
-          const webhookData = await webhookRes.json()
-          return {
-            type: 'stripe',
-            checkoutUrl: webhookData.checkout_url,
-            paymentData: responseData.data
-          }
-        } else {
-          throw new Error('Failed to get checkout URL')
+        // For Stripe, we just return the order data
+        // The actual payment will be handled by Stripe Elements
+        return {
+          type: 'stripe',
+          orderData,
+          message: 'Payment intent created. Please complete payment.'
         }
       } else {
         // Handle other payment methods (tabby, tamara)
@@ -208,6 +222,12 @@ const checkoutSlice = createSlice({
     
     // Payment
     selectedPaymentMethod: 'credit-card',
+    
+    // Stripe payment
+    stripeClientSecret: null,
+    stripePaymentIntentId: null,
+    isCreatingPaymentIntent: false,
+    paymentIntentError: null,
     
     // Order placement
     isPlacingOrder: false,
@@ -264,12 +284,21 @@ const checkoutSlice = createSlice({
       state.error = null
       state.addressError = null
       state.orderError = null
+      state.paymentIntentError = null
     },
     clearAddressError: (state) => {
       state.addressError = null
     },
     clearOrderError: (state) => {
       state.orderError = null
+    },
+    clearPaymentIntentError: (state) => {
+      state.paymentIntentError = null
+    },
+    clearStripeData: (state) => {
+      state.stripeClientSecret = null
+      state.stripePaymentIntentId = null
+      state.paymentIntentError = null
     }
   },
   extraReducers: (builder) => {
@@ -334,6 +363,21 @@ const checkoutSlice = createSlice({
         }))
       })
       
+      // Create Stripe Payment Intent
+      .addCase(createStripePaymentIntent.pending, (state) => {
+        state.isCreatingPaymentIntent = true
+        state.paymentIntentError = null
+      })
+      .addCase(createStripePaymentIntent.fulfilled, (state, action) => {
+        state.isCreatingPaymentIntent = false
+        state.stripeClientSecret = action.payload.clientSecret
+        state.stripePaymentIntentId = action.payload.paymentIntentId
+      })
+      .addCase(createStripePaymentIntent.rejected, (state, action) => {
+        state.isCreatingPaymentIntent = false
+        state.paymentIntentError = action.payload
+      })
+      
       // Place order
       .addCase(placeOrder.pending, (state) => {
         state.isPlacingOrder = true
@@ -342,9 +386,9 @@ const checkoutSlice = createSlice({
       .addCase(placeOrder.fulfilled, (state, action) => {
         state.isPlacingOrder = false
         
-        if (action.payload.type === 'stripe' && action.payload.checkoutUrl) {
-          // Redirect to Stripe checkout
-          window.location.href = action.payload.checkoutUrl
+        if (action.payload.type === 'stripe') {
+          // For Stripe, payment will be handled by Stripe Elements
+          // No redirect needed
         } else if (action.payload.type === 'other') {
           // Show success message and redirect
           alert(action.payload.message)
@@ -368,7 +412,9 @@ export const {
   setSelectedPaymentMethod,
   clearError,
   clearAddressError,
-  clearOrderError
+  clearOrderError,
+  clearPaymentIntentError,
+  clearStripeData
 } = checkoutSlice.actions
 
 export default checkoutSlice.reducer
