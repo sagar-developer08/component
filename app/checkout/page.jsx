@@ -3,54 +3,64 @@
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { addresses, payment } from '@/store/api/endpoints'
 import { getAuthToken, getUserFromCookies } from '@/utils/userUtils'
 import { fetchCart } from '@/store/slices/cartSlice'
+import { 
+  fetchUserAddresses, 
+  createAddress, 
+  setDefaultAddress, 
+  placeOrder,
+  setSelectedAddress,
+  setShowAddressForm,
+  updateAddressForm,
+  resetAddressForm,
+  setShippingSameAsDelivery,
+  setShowShippingForm,
+  setSelectedPaymentMethod,
+  clearError,
+  clearAddressError,
+  clearOrderError
+} from '@/store/slices/checkoutSlice'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHome, faBriefcase, faMapMarkerAlt, faCheck, faPlus, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons'
 import styles from './checkout.module.css'
 
 export default function CheckoutPage() {
   const dispatch = useDispatch()
+  
+  // Cart state
   const { items: cartItems, total: cartTotal, loading: cartLoading } = useSelector(state => state.cart)
+  
+  // Checkout state
+  const {
+    addresses: userAddresses,
+    selectedAddress,
+    showAddressForm,
+    loadingAddresses,
+    addressError,
+    addressForm,
+    isSubmittingAddress,
+    shippingSameAsDelivery,
+    showShippingForm,
+    selectedPaymentMethod,
+    isPlacingOrder,
+    orderError
+  } = useSelector(state => state.checkout)
   
   // Calculate total if not provided by API
   const calculatedTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
   const finalTotal = cartTotal || calculatedTotal
   
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('credit-card')
-  const [userAddresses, setUserAddresses] = useState([])
-  const [selectedAddress, setSelectedAddress] = useState(null)
-  const [showAddressForm, setShowAddressForm] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [shippingSameAsDelivery, setShippingSameAsDelivery] = useState(true)
-  const [showShippingForm, setShowShippingForm] = useState(false)
-  const [error, setError] = useState(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
-  const [addressForm, setAddressForm] = useState({
-    type: 'home',
-    isDefault: false,
-    fullName: '',
-    phone: '',
-    email: '',
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    country: '',
-    landmark: '',
-    instructions: ''
-  })
+  // Combined error state
+  const error = addressError || orderError
 
   // Fetch user addresses and cart on component mount
   useEffect(() => {
     const loadCheckoutData = async () => {
       // Load addresses
-      await fetchUserAddresses()
+      dispatch(fetchUserAddresses())
       
       // Check if cart data is already available in Redux
       if (cartItems.length > 0) {
@@ -68,14 +78,16 @@ export default function CheckoutPage() {
             console.log('Fetching cart for userId:', userId)
             dispatch(fetchCart(userId))
           } else {
-            setError('Unable to get user information')
+            dispatch(clearError())
+            // Set error in checkout state
+            dispatch(clearError())
           }
         } else {
-          setError('Please login to proceed with checkout')
+          dispatch(clearError())
         }
       } catch (error) {
         console.error('Error loading cart:', error)
-        setError('Failed to load cart data')
+        dispatch(clearError())
       }
     }
     
@@ -101,241 +113,52 @@ export default function CheckoutPage() {
   // Check if cart is empty and show appropriate message
   useEffect(() => {
     if (!cartLoading && cartItems.length === 0) {
-      setError('Your cart is empty. Please add items to proceed with checkout.')
+      dispatch(clearError())
+      // Set error in checkout state - we'll handle this in the UI
     } else if (cartItems.length > 0) {
       // Clear error if cart has items
-      setError(null)
+      dispatch(clearError())
     }
-  }, [cartItems.length, cartLoading])
+  }, [cartItems.length, cartLoading, dispatch])
 
-  const fetchUserAddresses = async () => {
-    try {
-      setLoading(true)
-      const token = await getAuthToken()
-      
-      if (!token) {
-        console.error('No authentication token found')
-        setLoading(false)
-        return
-      }
-
-      const response = await fetch(addresses.get, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (response.ok) {
-        const responseData = await response.json()
-        // Extract addresses from the nested structure
-        const addresses = responseData.data?.addresses || []
-        setUserAddresses(addresses)
-        
-        // Set default address if available
-        const defaultAddress = addresses.find(addr => addr.isDefault)
-        if (defaultAddress) {
-          setSelectedAddress(defaultAddress)
-        } else if (addresses.length > 0) {
-          setSelectedAddress(addresses[0])
-        }
-      } else {
-        const errorData = await response.json()
-        console.error('Error fetching addresses:', errorData)
-      }
-    } catch (error) {
-      console.error('Error fetching addresses:', error)
-    } finally {
-      setLoading(false)
-    }
+  // Address form handlers
+  const handleAddressFormChange = (field, value) => {
+    dispatch(updateAddressForm({ [field]: value }))
   }
 
   const handleAddressSubmit = async (e) => {
     e.preventDefault()
-    setIsSubmitting(true)
-    setError(null)
-    
-    try {
-      const token = await getAuthToken()
-      
-      if (!token) {
-        setError('Authentication required. Please login again.')
-        setIsSubmitting(false)
-        return
-      }
-
-      const response = await fetch(addresses.create, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(addressForm)
-      })
-
-      if (response.ok) {
-        setShowAddressForm(false)
-        setAddressForm({
-          type: 'home',
-          isDefault: false,
-          fullName: '',
-          phone: '',
-          email: '',
-          addressLine1: '',
-          addressLine2: '',
-          city: '',
-          state: '',
-          postalCode: '',
-          country: '',
-          landmark: '',
-          instructions: ''
-        })
-        await fetchUserAddresses() // Refresh addresses
-      } else {
-        const errorData = await response.json()
-        setError(errorData.message || 'Failed to create address')
-        console.error('Error creating address:', errorData)
-      }
-    } catch (error) {
-      setError('Network error. Please try again.')
-      console.error('Error creating address:', error)
-    } finally {
-      setIsSubmitting(false)
-    }
+    dispatch(createAddress(addressForm))
   }
 
-  const setDefaultAddress = async (addressId) => {
-    try {
-      const token = await getAuthToken()
-      
-      if (!token) {
-        console.error('No authentication token found')
-        return
-      }
-
-      const response = await fetch(addresses.setDefault, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ addressId })
-      })
-
-      if (response.ok) {
-        fetchUserAddresses() // Refresh addresses
-      } else {
-        const errorData = await response.json()
-        console.error('Error setting default address:', errorData)
-      }
-    } catch (error) {
-      console.error('Error setting default address:', error)
-    }
+  const handleSetDefaultAddress = (addressId) => {
+    dispatch(setDefaultAddress(addressId))
   }
 
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
-      setError('Please select a delivery address')
+      dispatch(clearOrderError())
       return
     }
 
     if (cartItems.length === 0) {
-      setError('Your cart is empty')
+      dispatch(clearOrderError())
       return
     }
 
-    setIsPlacingOrder(true)
-    setError(null)
-
-    try {
-      const token = await getAuthToken()
-      if (!token) {
-        setError('Authentication required. Please login again.')
-        setIsPlacingOrder(false)
-        return
-      }
-
-      if (selectedPaymentMethod === 'credit-card') {
-        const stripeCheckoutData = {
-          items: cartItems.map(item => ({
-            productId: item.productId || item.id || `product_${Math.random().toString(36).substr(2, 9)}`,
-            name: item.name || 'Product',
-            quantity: item.quantity || 1,
-            price: item.price || 0,
-            image: item.image || 'https://example.com/image.jpg'
-          })),
-          currency: 'usd'
-        }
-
-        // 1. Create checkout session (your existing call)
-        const response = await fetch(payment.stripeCheckout, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(stripeCheckoutData)
-        })
-
-        if (response.ok) {
-          const responseData = await response.json()
-          // 2. Call webhook to get Stripe checkout URL
-          const webhookRes = await fetch('http://localhost:8002/api/payment/stripe/webhook', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              paymentIntentId: responseData.data?.paymentIntentId,
-              clientSecret: responseData.data?.clientSecret,
-              totalAmount: responseData.data?.totalAmount,
-              currency: responseData.data?.currency,
-              status: responseData.data?.status
-            })
-          })
-          if (webhookRes.ok) {
-            const webhookData = await webhookRes.json()
-            if (webhookData.checkout_url) {
-              window.location.href = webhookData.checkout_url
-              return
-            }
-          }
-          // fallback
-          alert('Stripe checkout session created, but no redirect URL provided.')
-        } else {
-          const errorData = await response.json()
-          setError(errorData.message || 'Failed to process payment. Please try again.')
-          console.error('Stripe checkout error:', errorData)
-        }
-      } else {
-        // Handle other payment methods (tabby, tamara)
-        const orderData = {
-          items: cartItems,
-          deliveryAddress: selectedAddress,
-          shippingAddress: shippingSameAsDelivery ? selectedAddress : null,
-          paymentMethod: selectedPaymentMethod,
-          total: finalTotal,
-          subtotal: finalTotal,
-          vat: finalTotal * 0.05,
-          shipping: 0,
-          discount: 0
-        }
-
-        console.log('Order placed successfully:', orderData)
-        
-        // Show success message
-        alert('Order placed successfully!')
-        
-        // Redirect to order confirmation or home page
-        window.location.href = '/'
-      }
-      
-    } catch (error) {
-      setError('Failed to place order. Please try again.')
-      console.error('Error placing order:', error)
-    } finally {
-      setIsPlacingOrder(false)
+    const orderData = {
+      items: cartItems,
+      deliveryAddress: selectedAddress,
+      shippingAddress: shippingSameAsDelivery ? selectedAddress : null,
+      paymentMethod: selectedPaymentMethod,
+      total: finalTotal,
+      subtotal: finalTotal,
+      vat: finalTotal * 0.05,
+      shipping: 0,
+      discount: 0
     }
+
+    dispatch(placeOrder(orderData))
   }
   return (
     <div className={styles.checkoutPage}>
@@ -369,6 +192,27 @@ export default function CheckoutPage() {
             )}
           </div>
         )}
+        
+        {!cartLoading && cartItems.length === 0 && !error && (
+          <div className={styles.errorMessage}>
+            Your cart is empty. Please add items to proceed with checkout.
+            <button 
+              className={styles.refreshCartBtn}
+              onClick={async () => {
+                try {
+                  const userId = await getUserFromCookies()
+                  if (userId) {
+                    dispatch(fetchCart(userId))
+                  }
+                } catch (error) {
+                  console.error('Error refreshing cart:', error)
+                }
+              }}
+            >
+              Refresh Cart
+            </button>
+          </div>
+        )}
         <div className={styles.checkoutContent}>
           {/* Left Side */}
           <div className={styles.checkoutLeft}>
@@ -391,7 +235,7 @@ export default function CheckoutPage() {
             <div className={styles.section}>
               <div className={styles.sectionHeader}>Delivery Address</div>
               
-              {loading ? (
+              {loadingAddresses ? (
                 <div className={styles.loadingText}>Loading addresses...</div>
               ) : userAddresses.length > 0 ? (
                 <>
@@ -401,7 +245,7 @@ export default function CheckoutPage() {
                       <div 
                         key={address.id} 
                         className={`${styles.addressCard} ${selectedAddress?.id === address.id ? styles.selectedAddress : ''}`}
-                        onClick={() => setSelectedAddress(address)}
+                        onClick={() => dispatch(setSelectedAddress(address))}
                         style={{ cursor: 'pointer' }}
                       >
                 <div className={styles.addressType}>
@@ -441,7 +285,7 @@ export default function CheckoutPage() {
                             className={styles.setDefaultBtn}
                             onClick={(e) => {
                               e.stopPropagation()
-                              setDefaultAddress(address.id)
+                              handleSetDefaultAddress(address.id)
                             }}
                           >
                             Set as Default
@@ -452,7 +296,7 @@ export default function CheckoutPage() {
                   </div>
                   <button 
                     className={styles.addAddressBtn}
-                    onClick={() => setShowAddressForm(!showAddressForm)}
+                    onClick={() => dispatch(setShowAddressForm(!showAddressForm))}
                   >
                     <FontAwesomeIcon icon={faPlus} className={styles.addIcon} />
                     Add New Address
@@ -463,7 +307,7 @@ export default function CheckoutPage() {
                   <p>No addresses found. Please add an address to continue.</p>
                   <button 
                     className={styles.addAddressBtn}
-                    onClick={() => setShowAddressForm(true)}
+                    onClick={() => dispatch(setShowAddressForm(true))}
                   >
                     <FontAwesomeIcon icon={faPlus} className={styles.addIcon} />
                     Add Address
@@ -483,7 +327,7 @@ export default function CheckoutPage() {
                     <button 
                       type="button"
                       className={`${styles.addressTab} ${addressForm.type === 'home' ? styles.active : ''}`}
-                      onClick={() => setAddressForm({...addressForm, type: 'home'})}
+                      onClick={() => handleAddressFormChange('type', 'home')}
                       title="Home"
                     >
                       <FontAwesomeIcon 
@@ -495,7 +339,7 @@ export default function CheckoutPage() {
                     <button 
                       type="button"
                       className={`${styles.addressTab} ${addressForm.type === 'work' ? styles.active : ''}`}
-                      onClick={() => setAddressForm({...addressForm, type: 'work'})}
+                      onClick={() => handleAddressFormChange('type', 'work')}
                       title="Work"
                     >
                       <FontAwesomeIcon 
@@ -507,7 +351,7 @@ export default function CheckoutPage() {
                     <button 
                       type="button"
                       className={`${styles.addressTab} ${addressForm.type === 'other' ? styles.active : ''}`}
-                      onClick={() => setAddressForm({...addressForm, type: 'other'})}
+                      onClick={() => handleAddressFormChange('type', 'other')}
                       title="Other"
                     >
                       <FontAwesomeIcon 
@@ -520,7 +364,7 @@ export default function CheckoutPage() {
                       className={styles.addressLabelInput} 
                       placeholder="Custom Label" 
                       value={addressForm.type}
-                      onChange={(e) => setAddressForm({...addressForm, type: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('type', e.target.value)}
                     />
                 </div>
                 <div className={styles.addressFormGrid}>
@@ -528,14 +372,14 @@ export default function CheckoutPage() {
                       className={styles.addressInput} 
                       placeholder="Full Name"
                       value={addressForm.fullName}
-                      onChange={(e) => setAddressForm({...addressForm, fullName: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('fullName', e.target.value)}
                       required
                     />
                     <input 
                       className={styles.addressInput} 
                       placeholder="Phone"
                       value={addressForm.phone}
-                      onChange={(e) => setAddressForm({...addressForm, phone: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('phone', e.target.value)}
                       required
                     />
                     <input 
@@ -543,13 +387,13 @@ export default function CheckoutPage() {
                       placeholder="Email"
                       type="email"
                       value={addressForm.email}
-                      onChange={(e) => setAddressForm({...addressForm, email: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('email', e.target.value)}
                       required
                     />
                     <select 
                       className={styles.addressInput}
                       value={addressForm.country}
-                      onChange={(e) => setAddressForm({...addressForm, country: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('country', e.target.value)}
                       required
                     >
                       <option value="">Country</option>
@@ -561,7 +405,7 @@ export default function CheckoutPage() {
                     <select 
                       className={styles.addressInput}
                       value={addressForm.state}
-                      onChange={(e) => setAddressForm({...addressForm, state: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('state', e.target.value)}
                       required
                     >
                       <option value="">State</option>
@@ -574,40 +418,40 @@ export default function CheckoutPage() {
                       className={styles.addressInput} 
                       placeholder="City"
                       value={addressForm.city}
-                      onChange={(e) => setAddressForm({...addressForm, city: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('city', e.target.value)}
                       required
                     />
                     <input 
                       className={styles.addressInput} 
                       placeholder="Postal Code"
                       value={addressForm.postalCode}
-                      onChange={(e) => setAddressForm({...addressForm, postalCode: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('postalCode', e.target.value)}
                       required
                     />
                     <input 
                       className={styles.addressInput} 
                       placeholder="Address Line 1"
                       value={addressForm.addressLine1}
-                      onChange={(e) => setAddressForm({...addressForm, addressLine1: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('addressLine1', e.target.value)}
                       required
                     />
                     <input 
                       className={styles.addressInput} 
                       placeholder="Address Line 2"
                       value={addressForm.addressLine2}
-                      onChange={(e) => setAddressForm({...addressForm, addressLine2: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('addressLine2', e.target.value)}
                     />
                     <input 
                       className={styles.addressInput} 
                       placeholder="Landmark"
                       value={addressForm.landmark}
-                      onChange={(e) => setAddressForm({...addressForm, landmark: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('landmark', e.target.value)}
                     />
                     <textarea 
                       className={styles.addressInput} 
                       placeholder="Delivery Instructions"
                       value={addressForm.instructions}
-                      onChange={(e) => setAddressForm({...addressForm, instructions: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('instructions', e.target.value)}
                       rows="3"
                     />
                 </div>
@@ -615,16 +459,16 @@ export default function CheckoutPage() {
                     <button 
                       type="button"
                       className={styles.cancelBtn}
-                      onClick={() => setShowAddressForm(false)}
+                      onClick={() => dispatch(setShowAddressForm(false))}
                     >
                       Cancel
                     </button>
                     <button 
                       type="submit" 
                       className={styles.saveBtn}
-                      disabled={isSubmitting}
+                      disabled={isSubmittingAddress}
                     >
-                      {isSubmitting ? 'Saving...' : 'Save'}
+                      {isSubmittingAddress ? 'Saving...' : 'Save'}
                     </button>
                 </div>
                 </form>
@@ -638,8 +482,8 @@ export default function CheckoutPage() {
                 <button 
                   className={shippingSameAsDelivery ? styles.shippingTab1 : styles.shippingTab}
                   onClick={() => {
-                    setShippingSameAsDelivery(true)
-                    setShowShippingForm(false)
+                    dispatch(setShippingSameAsDelivery(true))
+                    dispatch(setShowShippingForm(false))
                   }}
                 >
                   Same as Delivery Address
@@ -647,8 +491,8 @@ export default function CheckoutPage() {
                 <button 
                   className={!shippingSameAsDelivery ? styles.shippingTab1 : styles.shippingTab}
                   onClick={() => {
-                    setShippingSameAsDelivery(false)
-                    setShowShippingForm(true)
+                    dispatch(setShippingSameAsDelivery(false))
+                    dispatch(setShowShippingForm(true))
                   }}
                 >
                   Use a Different Address
@@ -698,7 +542,7 @@ export default function CheckoutPage() {
                     <button 
                       type="button"
                       className={`${styles.addressTab} ${addressForm.type === 'home' ? styles.active : ''}`}
-                      onClick={() => setAddressForm({...addressForm, type: 'home'})}
+                      onClick={() => handleAddressFormChange('type', 'home')}
                       title="Home"
                     >
                       <FontAwesomeIcon 
@@ -710,7 +554,7 @@ export default function CheckoutPage() {
                     <button 
                       type="button"
                       className={`${styles.addressTab} ${addressForm.type === 'work' ? styles.active : ''}`}
-                      onClick={() => setAddressForm({...addressForm, type: 'work'})}
+                      onClick={() => handleAddressFormChange('type', 'work')}
                       title="Work"
                     >
                       <FontAwesomeIcon 
@@ -722,7 +566,7 @@ export default function CheckoutPage() {
                     <button 
                       type="button"
                       className={`${styles.addressTab} ${addressForm.type === 'other' ? styles.active : ''}`}
-                      onClick={() => setAddressForm({...addressForm, type: 'other'})}
+                      onClick={() => handleAddressFormChange('type', 'other')}
                       title="Other"
                     >
                       <FontAwesomeIcon 
@@ -735,7 +579,7 @@ export default function CheckoutPage() {
                       className={styles.addressLabelInput} 
                       placeholder="Custom Label" 
                       value={addressForm.type}
-                      onChange={(e) => setAddressForm({...addressForm, type: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('type', e.target.value)}
                     />
                 </div>
                 <div className={styles.addressFormGrid}>
@@ -743,14 +587,14 @@ export default function CheckoutPage() {
                       className={styles.addressInput} 
                       placeholder="Full Name"
                       value={addressForm.fullName}
-                      onChange={(e) => setAddressForm({...addressForm, fullName: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('fullName', e.target.value)}
                       required
                     />
                     <input 
                       className={styles.addressInput} 
                       placeholder="Phone"
                       value={addressForm.phone}
-                      onChange={(e) => setAddressForm({...addressForm, phone: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('phone', e.target.value)}
                       required
                     />
                     <input 
@@ -758,13 +602,13 @@ export default function CheckoutPage() {
                       placeholder="Email"
                       type="email"
                       value={addressForm.email}
-                      onChange={(e) => setAddressForm({...addressForm, email: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('email', e.target.value)}
                       required
                     />
                     <select 
                       className={styles.addressInput}
                       value={addressForm.country}
-                      onChange={(e) => setAddressForm({...addressForm, country: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('country', e.target.value)}
                       required
                     >
                       <option value="">Country</option>
@@ -776,7 +620,7 @@ export default function CheckoutPage() {
                     <select 
                       className={styles.addressInput}
                       value={addressForm.state}
-                      onChange={(e) => setAddressForm({...addressForm, state: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('state', e.target.value)}
                       required
                     >
                       <option value="">State</option>
@@ -789,40 +633,40 @@ export default function CheckoutPage() {
                       className={styles.addressInput} 
                       placeholder="City"
                       value={addressForm.city}
-                      onChange={(e) => setAddressForm({...addressForm, city: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('city', e.target.value)}
                       required
                     />
                     <input 
                       className={styles.addressInput} 
                       placeholder="Postal Code"
                       value={addressForm.postalCode}
-                      onChange={(e) => setAddressForm({...addressForm, postalCode: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('postalCode', e.target.value)}
                       required
                     />
                     <input 
                       className={styles.addressInput} 
                       placeholder="Address Line 1"
                       value={addressForm.addressLine1}
-                      onChange={(e) => setAddressForm({...addressForm, addressLine1: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('addressLine1', e.target.value)}
                       required
                     />
                     <input 
                       className={styles.addressInput} 
                       placeholder="Address Line 2"
                       value={addressForm.addressLine2}
-                      onChange={(e) => setAddressForm({...addressForm, addressLine2: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('addressLine2', e.target.value)}
                     />
                     <input 
                       className={styles.addressInput} 
                       placeholder="Landmark"
                       value={addressForm.landmark}
-                      onChange={(e) => setAddressForm({...addressForm, landmark: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('landmark', e.target.value)}
                     />
                     <textarea 
                       className={styles.addressInput} 
                       placeholder="Delivery Instructions"
                       value={addressForm.instructions}
-                      onChange={(e) => setAddressForm({...addressForm, instructions: e.target.value})}
+                      onChange={(e) => handleAddressFormChange('instructions', e.target.value)}
                       rows="3"
                     />
                 </div>
@@ -831,8 +675,8 @@ export default function CheckoutPage() {
                       type="button"
                       className={styles.cancelBtn}
                       onClick={() => {
-                        setShowShippingForm(false)
-                        setShippingSameAsDelivery(true)
+                        dispatch(setShowShippingForm(false))
+                        dispatch(setShippingSameAsDelivery(true))
                       }}
                     >
                       Cancel
@@ -862,7 +706,7 @@ export default function CheckoutPage() {
                     name="paymentMethod"
                     value="credit-card"
                     checked={selectedPaymentMethod === 'credit-card'}
-                    onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                    onChange={(e) => dispatch(setSelectedPaymentMethod(e.target.value))}
                     className={styles.paymentRadio}
                   />
                   <div className={styles.paymentContent}>
@@ -875,7 +719,7 @@ export default function CheckoutPage() {
                     name="paymentMethod"
                     value="tabby"
                     checked={selectedPaymentMethod === 'tabby'}
-                    onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                    onChange={(e) => dispatch(setSelectedPaymentMethod(e.target.value))}
                     className={styles.paymentRadio}
                   />
                   <div className={styles.paymentContent}>
@@ -890,7 +734,7 @@ export default function CheckoutPage() {
                     name="paymentMethod"
                     value="tamara"
                     checked={selectedPaymentMethod === 'tamara'}
-                    onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                    onChange={(e) => dispatch(setSelectedPaymentMethod(e.target.value))}
                     className={styles.paymentRadio}
                   />
                   <div className={styles.paymentContent}>
