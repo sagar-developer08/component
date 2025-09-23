@@ -26,6 +26,8 @@ import {
   clearPaymentIntentError,
   clearStripeData
 } from '@/store/slices/checkoutSlice'
+import { payment as paymentEndpoints } from '@/store/api/endpoints'
+import { loadStripe } from '@stripe/stripe-js'
 import StripeCheckout from '@/components/StripeCheckout'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHome, faBriefcase, faMapMarkerAlt, faCheck, faPlus, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons'
@@ -207,6 +209,49 @@ export default function CheckoutPage() {
     }
 
     dispatch(placeOrder(orderData))
+  }
+
+  const handleHostedCheckout = async () => {
+    try {
+      const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+      if (!stripe) {
+        console.error('Stripe failed to initialize')
+        return
+      }
+
+      const token = await getAuthToken()
+      if (!token) return
+
+      const body = {
+        items: cartItems.map(item => ({
+          productId: item.productId || item.id || `product_${Math.random().toString(36).slice(2)}`,
+          name: item.name || 'Product',
+          quantity: item.quantity || 1,
+          price: item.price || 0,
+          image: item.image || undefined
+        })),
+        currency: 'usd',
+        successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: `${window.location.origin}/checkout`
+      }
+
+      const res = await fetch(paymentEndpoints.stripeHostedCheckout, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+      })
+      if (!res.ok) {
+        const text = await res.text()
+        throw new Error(text)
+      }
+      const { data } = await res.json()
+      await stripe.redirectToCheckout({ sessionId: data.sessionId })
+    } catch (e) {
+      console.error('Hosted checkout error:', e)
+    }
   }
 
   const handlePaymentSuccess = () => {
@@ -813,32 +858,16 @@ export default function CheckoutPage() {
                 </label>
               </div>
 
-              {/* Stripe Payment Form */}
+              {/* Stripe Hosted Checkout Button */}
               {selectedPaymentMethod === 'credit-card' && (
                 <div className={styles.stripePaymentSection}>
-                  {isCreatingPaymentIntent ? (
-                    <div className={styles.loadingText}>Creating payment form...</div>
-                  ) : paymentIntentError ? (
-                    <div className={styles.errorMessage}>
-                      {paymentIntentError}
-                      <button 
-                        className={styles.retryButton}
-                        onClick={handleCreateStripePaymentIntent}
-                      >
-                        Retry
-                      </button>
-                    </div>
-                  ) : stripeClientSecret ? (
-                    <StripeCheckout
-                      clientSecret={stripeClientSecret}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentError={handlePaymentError}
-                    />
-                  ) : (
-                    <div className={styles.paymentPrompt}>
-                      Please select an address to continue with payment
-                    </div>
-                  )}
+                  <button 
+                    className={styles.placeOrderBtn}
+                    onClick={handleHostedCheckout}
+                    disabled={cartItems.length === 0 || !selectedAddress}
+                  >
+                    Pay with Card (Stripe Checkout)
+                  </button>
                 </div>
               )}
             </div>

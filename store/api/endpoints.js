@@ -38,6 +38,7 @@ export const cart = {
 export const payment = {
   base: BASES.payment,
   stripeCheckout: `${BASES.payment}/payment/stripe/checkout`,
+  stripeHostedCheckout: `${BASES.payment}/payment/stripe/hosted-checkout`,
 }
 
 export const addresses = {
