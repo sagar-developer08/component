@@ -23,6 +23,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { fetchProducts } from '@/store/slices/productsSlice'
 import { fetchBrands } from '@/store/slices/brandsSlice'
 import { fetchStores } from '@/store/slices/storesSlice'
+import { ProductCardSkeleton, CategoryCardSkeleton } from '@/components/SkeletonLoader'
 
 // Helper function to transform API product data to match ProductCard component format
 const transformProductData = (apiProduct) => {
@@ -380,8 +381,10 @@ export default function Home() {
               onNext={handleBestsellersNext}
             />
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '20px' }}>
-                Loading products...
+              <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+                {[...Array(4)].map((_, index) => (
+                  <ProductCardSkeleton key={`skeleton-${index}`} />
+                ))}
               </div>
             ) : error ? (
               <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
@@ -501,8 +504,10 @@ export default function Home() {
               onNext={handleTopBrandsNext}
             />
             {brandsLoading ? (
-              <div style={{ textAlign: 'center', padding: '20px' }}>
-                Loading brands...
+              <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+                {[...Array(6)].map((_, index) => (
+                  <CategoryCardSkeleton key={`skeleton-${index}`} />
+                ))}
               </div>
             ) : brandsError ? (
               <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
@@ -571,8 +576,10 @@ export default function Home() {
               onNext={handleTopStoresNext}
             />
             {storesLoading ? (
-              <div style={{ textAlign: 'center', padding: '20px' }}>
-                Loading stores...
+              <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+                {[...Array(6)].map((_, index) => (
+                  <CategoryCardSkeleton key={`skeleton-${index}`} />
+                ))}
               </div>
             ) : storesError ? (
               <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
@@ -616,8 +623,10 @@ export default function Home() {
               onNext={handleNext}
             />
             {storesLoading ? (
-              <div style={{ textAlign: 'center', padding: '20px' }}>
-                Loading stores...
+              <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+                {[...Array(6)].map((_, index) => (
+                  <CategoryCardSkeleton key={`skeleton-${index}`} />
+                ))}
               </div>
             ) : storesError ? (
               <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>

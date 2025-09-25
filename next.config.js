@@ -33,7 +33,6 @@ const nextConfig = {
     NEXT_PUBLIC_ENVIRONMENT: process.env.NEXT_PUBLIC_ENVIRONMENT,
   },
   experimental: {
-    optimizeCss: true,
     optimizePackageImports: ['@/components'],
   },
   compiler: {

@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null)
   const [user, setUser] = useState(null)
   const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   // Check for existing token on mount
   useEffect(() => {
@@ -21,6 +22,7 @@ export function AuthProvider({ children }) {
         setIsAuthenticated(true)
       }
     }
+    setIsInitialized(true)
   }, [])
 
   const login = (userData, authToken) => {
@@ -61,6 +63,7 @@ export function AuthProvider({ children }) {
     token,
     user,
     loginModalOpen,
+    isInitialized,
     login,
     logout,
     openLoginModal,
