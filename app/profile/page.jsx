@@ -14,74 +14,7 @@ import QoynsHistory from '../../components/profile/QoynsHistory/QoynsHistory'
 import SendQoyn from '../../components/profile/SendQoyn/SendQoyn'
 import NewAddress from '../../components/profile/NewAddress/newAddress'
 
-// User data is now fetched from API in PersonalInfo component
-
-const sampleOrders = [
-  {
-    id: 'ORD001',
-    date: '2024-01-15',
-    status: 'Delivered',
-    total: 'AED 245.50',
-    items: 3
-  },
-  {
-    id: 'ORD002',
-    date: '2024-01-10',
-    status: 'In Transit',
-    total: 'AED 189.00',
-    items: 2
-  },
-  {
-    id: 'ORD003',
-    date: '2024-01-05',
-    status: 'Processing',
-    total: 'AED 320.75',
-    items: 5
-  }
-]
-
-const sampleTransactions = [
-  {
-    id: 'TXN001',
-    type: 'credit',
-    amount: 'AED 100.00',
-    description: 'Wallet Top-up',
-    date: '2024-01-15'
-  },
-  {
-    id: 'TXN002',
-    type: 'debit',
-    amount: 'AED 45.50',
-    description: 'Order Payment',
-    date: '2024-01-14'
-  },
-  {
-    id: 'TXN003',
-    type: 'credit',
-    amount: 'AED 25.00',
-    description: 'Cashback Reward',
-    date: '2024-01-12'
-  }
-]
-
-const sampleAddresses = [
-  {
-    id: 1,
-    label: 'Home',
-    type: 'home',
-    address: '123 Main Street, Downtown Dubai, Dubai, UAE',
-    pincode: '12345',
-    isDefault: true
-  },
-  {
-    id: 2,
-    label: 'Office',
-    type: 'work',
-    address: '456 Business Bay, Dubai Marina, Dubai, UAE',
-    pincode: '67890',
-    isDefault: false
-  }
-]
+// User data is now fetched from the aggregated API in each component
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('personal-info')

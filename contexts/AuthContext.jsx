@@ -5,6 +5,13 @@ import { createContext, useContext, useState, useEffect } from 'react'
 const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
+  // Use a safe toast function that won't break if ToastProvider isn't available
+  const showToast = (message, type = 'success') => {
+    if (typeof window !== 'undefined') {
+      const ev = new CustomEvent('app:toast', { detail: { message, type } })
+      window.dispatchEvent(ev)
+    }
+  }
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [token, setToken] = useState(null)
   const [user, setUser] = useState(null)
@@ -30,6 +37,7 @@ export function AuthProvider({ children }) {
     setUser(userData)
     setIsAuthenticated(true)
     setLoginModalOpen(false)
+    showToast('Logged in')
   }
 
   const logout = () => {
@@ -40,6 +48,7 @@ export function AuthProvider({ children }) {
       document.cookie = 'cognitoId=; Max-Age=0; Path=/; SameSite=Lax'
       document.cookie = 'accessToken=; Max-Age=0; Path=/; SameSite=Lax'
     }
+    showToast('Logged out')
   }
 
   const openLoginModal = () => {

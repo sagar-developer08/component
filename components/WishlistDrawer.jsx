@@ -24,7 +24,14 @@ export default function WishlistDrawer({ open, onClose }) {
           image: item.image,
           quantity: 1
         }
-        dispatch(addToCart(cartItem))
+        ;(async () => {
+          const result = await dispatch(addToCart(cartItem))
+          if (addToCart.fulfilled.match(result)) {
+            show('Added to cart')
+          } else {
+            show('Failed to add to cart', 'error')
+          }
+        })()
       }
     })
   }

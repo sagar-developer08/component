@@ -1,30 +1,118 @@
+'use client'
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchProfile } from '../../../store/slices/profileSlice'
 import Image from 'next/image'
 import styles from './orders.module.css'
 
 export default function Orders() {
-  return (
-    <div className={styles.ordersList}>
-      <div className={styles.orderItem}>
-        <div className={styles.orderImageSection}>
-          <Image
-            src="/iphone.jpg"
-            alt="Nike Airforce 01"
-            width={120}
-            height={80}
-            className={styles.orderImage}
-          />
-        </div>
-        <div className={styles.orderInfoSection}>
-          <div className={styles.orderBrand}>Nike</div>
-          <div className={styles.orderName}>Airforce 01</div>
-          <div className={styles.orderPrice}>AED 1,200</div>
-          <div className={styles.orderStatus}>Delivered</div>
-        </div>
-        <div className={styles.orderRightSection}>
-          <div className={styles.orderDate}>20 Aug 2025</div>
+  const dispatch = useDispatch()
+  const { orders, loading, error } = useSelector(state => state.profile)
+
+  useEffect(() => {
+    dispatch(fetchProfile())
+  }, [dispatch])
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
+  }
+
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case 'delivered':
+        return '#4CAF50'
+      case 'pending':
+        return '#FF9800'
+      case 'cancelled':
+        return '#F44336'
+      case 'processing':
+        return '#2196F3'
+      default:
+        return '#666'
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className={styles.ordersList}>
+        <div style={{ textAlign: 'center', padding: '20px' }}>Loading orders...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className={styles.ordersList}>
+        <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+          Error loading orders: {error}
         </div>
       </div>
-      {/* ...repeat above block for each order as needed... */}
+    )
+  }
+
+  if (!orders || orders.length === 0) {
+    return (
+      <div className={styles.ordersList}>
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          No orders found
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.ordersList}>
+      {orders.map((order) => (
+        <div key={order._id} className={styles.orderItem}>
+          <div className={styles.orderImageSection}>
+            {order.items && order.items.length > 0 ? (
+              <Image
+                src="/iphone.jpg" // You might want to use actual product images
+                alt={order.items[0].name}
+                width={120}
+                height={80}
+                className={styles.orderImage}
+              />
+            ) : (
+              <div className={styles.orderImage} style={{ backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                No Image
+              </div>
+            )}
+          </div>
+          <div className={styles.orderInfoSection}>
+            <div className={styles.orderBrand}>Order #{order.orderNumber}</div>
+            <div className={styles.orderName}>
+              {order.items && order.items.length > 0 
+                ? `${order.items[0].name}${order.items.length > 1 ? ` +${order.items.length - 1} more` : ''}`
+                : 'No items'
+              }
+            </div>
+            <div className={styles.orderPrice}>
+              {order.currency} {order.totalAmount}
+            </div>
+            <div 
+              className={styles.orderStatus}
+              style={{ color: getStatusColor(order.status) }}
+            >
+              {order.status}
+            </div>
+          </div>
+          <div className={styles.orderRightSection}>
+            <div className={styles.orderDate}>{formatDate(order.createdAt)}</div>
+            <div className={styles.paymentStatus} style={{ 
+              color: order.paymentStatus === 'paid' ? '#4CAF50' : '#FF9800',
+              fontSize: '12px',
+              marginTop: '4px'
+            }}>
+              {order.paymentStatus}
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

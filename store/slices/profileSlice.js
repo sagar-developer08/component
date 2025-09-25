@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { auth } from '../api/endpoints'
 import { decryptText } from '../../utils/crypto'
 
-// Fetch user profile data
+// Fetch user profile data with aggregated information
 export const fetchProfile = createAsyncThunk(
   'profile/fetchProfile',
   async (_, { rejectWithValue }) => {
@@ -19,7 +19,7 @@ export const fetchProfile = createAsyncThunk(
         }
       }
 
-      const response = await fetch(auth.profile, {
+      const response = await fetch(`${auth.base}/profile/aggregated`, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
           'Content-Type': 'application/json',
@@ -40,6 +40,8 @@ export const fetchProfile = createAsyncThunk(
 
 const initialState = {
   user: null,
+  addresses: [],
+  orders: [],
   loading: false,
   error: null,
 }
@@ -50,6 +52,8 @@ const profileSlice = createSlice({
   reducers: {
     clearProfile: (state) => {
       state.user = null
+      state.addresses = []
+      state.orders = []
       state.error = null
     },
     updateProfile: (state, action) => {
@@ -64,13 +68,19 @@ const profileSlice = createSlice({
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.loading = false
-        state.user = action.payload.user
+        // Handle the aggregated response structure
+        const responseData = action.payload.data || action.payload
+        state.user = responseData.profile || null
+        state.addresses = responseData.addresses?.data || []
+        state.orders = responseData.orders?.orders || []
         state.error = null
       })
       .addCase(fetchProfile.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
         state.user = null
+        state.addresses = []
+        state.orders = []
       })
   }
 })

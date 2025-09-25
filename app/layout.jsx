@@ -27,13 +27,13 @@ export default function RootLayout({
       </head>
       <body>
         <ReduxProvider>
-          <AuthProvider>
-            <ToastProvider>
+          <ToastProvider>
+            <AuthProvider>
               <ClientWrapper>
                 {children}
               </ClientWrapper>
-            </ToastProvider>
-          </AuthProvider>
+            </AuthProvider>
+          </ToastProvider>
         </ReduxProvider>
       </body>
     </html>

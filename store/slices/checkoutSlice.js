@@ -390,8 +390,11 @@ const checkoutSlice = createSlice({
           // For Stripe, payment will be handled by Stripe Elements
           // No redirect needed
         } else if (action.payload.type === 'other') {
-          // Show success message and redirect
-          alert(action.payload.message)
+          // Show success message and redirect (use native event to allow UI-level toast)
+          if (typeof window !== 'undefined') {
+            const ev = new CustomEvent('app:toast', { detail: { message: action.payload.message, type: 'success' } })
+            window.dispatchEvent(ev)
+          }
           window.location.href = '/'
         }
       })
