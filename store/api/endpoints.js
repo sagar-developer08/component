@@ -1,13 +1,19 @@
 // Centralized API endpoints
 // Configure base URLs via environment variables if available
 
-export const BASES = {
-  catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'http://localhost:8003/api',
-  auth: process.env.NEXT_PUBLIC_AUTH_BASE_URL || 'http://localhost:8888/api',
-  cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'http://localhost:8002/api',
-  payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'http://backendcart.qliq.ae/api',
-}
+// export const BASES = {
+//   catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'http://localhost:8003/api',
+//   auth: process.env.NEXT_PUBLIC_AUTH_BASE_URL || 'http://localhost:8888/api',
+//   cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'http://localhost:8002/api',
+//   payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'http://localhost:8002/api',
+// }
 
+export const BASES = {
+  catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development' ? 'http://localhost:8003/api' : 'https://backendcatalog.qliq.ae/api'),
+  auth: process.env.NEXT_PUBLIC_AUTH_BASE_URL || (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development' ? 'http://localhost:8888/api' : 'https://backendauth.qliq.ae/api'),
+  cart: process.env.NEXT_PUBLIC_CART_BASE_URL || (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development' ? 'http://localhost:8002/api' : 'https://backendcart.qliq.ae/api'),
+  payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development' ? 'http://localhost:8002/api' : 'https://backendcart.qliq.ae/api'),
+}
 // Catalog endpoints
 export const catalog = {
   base: BASES.catalog,

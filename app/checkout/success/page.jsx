@@ -33,7 +33,7 @@ export default function CheckoutSuccessPage() {
         }
 
         // Confirm payment with backend
-        const response = await fetch(`https://backendcart.qliq.ae/api/payment/stripe/confirm/${paymentIntentId}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_PAYMENT_BASE_URL}/payment/stripe/confirm/${paymentIntentId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
