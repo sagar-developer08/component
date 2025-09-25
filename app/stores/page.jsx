@@ -10,7 +10,7 @@ import Footer from '@/components/Footer'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchStores } from '@/store/slices/storesSlice'
+import { fetchGeneralStores } from '@/store/slices/storesSlice'
 import { useRouter } from 'next/navigation'
 
 const productData = [
@@ -51,11 +51,11 @@ const productData = [
 export default function Home() {
   const [filterOpen, setFilterOpen] = useState(false)
   const dispatch = useDispatch()
-  const { topStores, newStores, loading, error } = useSelector(state => state.stores)
+  const { generalStores, loading, error } = useSelector(state => state.stores)
   const router = useRouter()
 
   useEffect(() => {
-    dispatch(fetchStores())
+    dispatch(fetchGeneralStores())
   }, [dispatch])
   return (
     <main className="home-page">
@@ -81,19 +81,19 @@ export default function Home() {
           <SectionHeader
             title="Stores"
             showNavigation={false}
-            showButton={true}
+            showButton={false}
             buttonText="See All"
           />
           {error && (
             <div style={{ margin: '16px 0', color: 'red' }}>{error}</div>
           )}
           <div className="stores-grid">
-            {(loading && (!topStores || topStores.length === 0)) ? (
+            {(loading && (!generalStores || generalStores.length === 0)) ? (
               productData.map((product, index) => (
                 <StoreCard key={`skeleton-${index}`} {...product} />
               ))
             ) : (
-              (topStores || []).map((store, index) => (
+              (generalStores || []).map((store, index) => (
                 <StoreCard
                   key={store._id || store.id || `store-${index}`}
                   id={store._id || store.id}
@@ -103,7 +103,6 @@ export default function Home() {
                   deliveryTime={store.deliveryTime || '30 Min'}
                   image={store.image || store.logo || '/iphone.jpg'}
                   location={(store.address && store.address.city) || 'Dubai, UAE'}
-                  isTopStore
                   onClick={() => router.push(`/storeDetail?storeId=${store._id || store.id}`)}
                 />
               ))

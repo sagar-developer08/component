@@ -14,7 +14,10 @@ import Footer from '@/components/Footer'
 import QuickNav from '@/components/QuickNav'
 import FilterDrawer from '@/components/FilterDrawer'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchSupermarketStores } from '@/store/slices/storesSlice'
+import { useRouter } from 'next/navigation'
 
 const productData = [
   {
@@ -53,6 +56,13 @@ const productData = [
 
 export default function Home() {
   const [filterOpen, setFilterOpen] = useState(false)
+  const dispatch = useDispatch()
+  const router = useRouter()
+  const { supermarketStores, loading, error } = useSelector(state => state.stores)
+
+  useEffect(() => {
+    dispatch(fetchSupermarketStores())
+  }, [dispatch])
   return (
     <main className="home-page">
       <Navigation />
@@ -78,21 +88,35 @@ export default function Home() {
       <section className="section">
         <div className="container">
           <SectionHeader
-            title="Stores"
+            title="Supermarket"
             showNavigation={false}
-            showButton={true}
+            showButton={false}
             buttonText="Filter"
             onButtonClick={() => setFilterOpen(true)}
           />
-          <div className="products-grid">
-            {productData.map((product, index) => (
-              <StoreCard key={index} {...product} />
-            ))}
-          </div>
-          <div className="products-grid">
-            {productData.map((product, index) => (
-              <StoreCard key={index} {...product} />
-            ))}
+          {error && (
+            <div style={{ margin: '16px 0', color: 'red' }}>{error}</div>
+          )}
+          <div className="stores-grid">
+            {(loading && (!supermarketStores || supermarketStores.length === 0)) ? (
+              productData.map((product, index) => (
+                <StoreCard key={`skeleton-${index}`} {...product} />
+              ))
+            ) : (
+              (supermarketStores || []).map((store, index) => (
+                <StoreCard
+                  key={store._id || store.id || `store-${index}`}
+                  id={store._id || store.id}
+                  title={store.name || 'Store'}
+                  category={store.category?.name || store.category || 'General'}
+                  rating={store.rating || '4.0'}
+                  deliveryTime={store.deliveryTime || '30 Min'}
+                  image= '/iphone.jpg'
+                  location={(store.address && store.address.city) || 'Dubai, UAE'}
+                  onClick={() => router.push(`/storeDetail?storeId=${store._id || store.id}`)}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>

@@ -93,16 +93,16 @@ export default function StoreDetail() {
                   ) : error ? (
                     <div style={{ gridColumn: '1 / -1', color: 'red' }}>Failed to load products: {error}</div>
                   ) : (
-                    (storeProducts && storeProducts.length > 0 ? storeProducts : []).map((product, index) => (
+                    (Array.isArray(storeProducts) && storeProducts.length > 0 ? storeProducts : []).map((product, index) => (
                       <div key={product._id || product.id || `p-${index}`} className="grid-item">
                         <ProductCard 
                           id={product._id || product.id}
                           slug={product.slug || product._id || product.id}
-                          title={product.name || product.title || 'Product'}
+                          title={product.title || product.name || 'Product'}
                           price={product.price ? `AED ${product.price}` : 'AED 0'}
-                          rating={product.rating || '4.0'}
+                          rating={product.average_rating || product.rating || '4.0'}
                           deliveryTime={product.deliveryTime || '30 Min'}
-                          image={product.image || product.images?.[0] || '/iphone.jpg'}
+                          image={product.images?.[0]?.url || product.image || '/iphone.jpg'}
                         />
                       </div>
                     ))

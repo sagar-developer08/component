@@ -25,7 +25,7 @@ export const fetchStoreProducts = createAsyncThunk(
   'products/fetchStoreProducts',
   async (storeId, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${catalog.products}?storeId=${storeId}`)
+      const response = await fetch(`${catalog.base}/products/store/${storeId}`)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)

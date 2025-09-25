@@ -20,12 +20,66 @@ export const fetchStores = createAsyncThunk(
   }
 )
 
+// Fetch Hypermarket stores
+export const fetchHypermarketStores = createAsyncThunk(
+  'stores/fetchHypermarketStores',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${catalog.base}/stores/hypermarket`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+// Fetch Supermarket stores
+export const fetchSupermarketStores = createAsyncThunk(
+  'stores/fetchSupermarketStores',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${catalog.base}/stores/supermarket`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+// Fetch General store (general-store) stores
+export const fetchGeneralStores = createAsyncThunk(
+  'stores/fetchGeneralStores',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${catalog.base}/stores/general-store`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const storesSlice = createSlice({
   name: 'stores',
   initialState: {
     stores: [],
     topStores: [],
     newStores: [],
+    hypermarketStores: [],
+    supermarketStores: [],
+    generalStores: [],
     pagination: {},
     loading: false,
     error: null,
@@ -69,6 +123,51 @@ const storesSlice = createSlice({
         state.loading = false
         state.error = action.payload
         state.success = false
+      })
+      // Hypermarket
+      .addCase(fetchHypermarketStores.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchHypermarketStores.fulfilled, (state, action) => {
+        state.loading = false
+        const responseData = action.payload?.data || action.payload
+        state.hypermarketStores = Array.isArray(responseData?.stores) ? responseData.stores : []
+        state.pagination = responseData?.pagination || {}
+      })
+      .addCase(fetchHypermarketStores.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      // Supermarket
+      .addCase(fetchSupermarketStores.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchSupermarketStores.fulfilled, (state, action) => {
+        state.loading = false
+        const responseData = action.payload?.data || action.payload
+        state.supermarketStores = Array.isArray(responseData?.stores) ? responseData.stores : []
+        state.pagination = responseData?.pagination || {}
+      })
+      .addCase(fetchSupermarketStores.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      // General Stores
+      .addCase(fetchGeneralStores.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchGeneralStores.fulfilled, (state, action) => {
+        state.loading = false
+        const responseData = action.payload?.data || action.payload
+        state.generalStores = Array.isArray(responseData?.stores) ? responseData.stores : []
+        state.pagination = responseData?.pagination || {}
+      })
+      .addCase(fetchGeneralStores.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
       })
   }
 })

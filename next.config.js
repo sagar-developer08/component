@@ -6,7 +6,9 @@ const nextConfig = {
       'example.com',
       'backendcatalog.qliq.ae',
       'images.unsplash.com',
-      'picsum.photos'
+      'source.unsplash.com',
+      'picsum.photos',
+      'image.shutterstock.com'
     ],
     remotePatterns: [
       {
@@ -18,6 +20,18 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'backendcatalog.qliq.ae',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'image.shutterstock.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'source.unsplash.com',
         port: '',
         pathname: '/**',
       },

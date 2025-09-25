@@ -99,21 +99,21 @@ export default function ProductPage({ params }) {
   }, [params.id])
 
   // Map the fetched product data to the format expected by ProductDetails
-  const mappedProduct = productData ? {
-    id: productData._id,
-    slug: productData.slug || params.id,
-    name: productData.title,
-    brand: productData.brand_id?.name || 'Brand',
-    price: productData.discount_price || productData.price,
-    originalPrice: productData.price,
-    discount: productData.discount_price ? Math.round(((productData.price - productData.discount_price) / productData.price) * 100) : 0,
-    rating: productData.average_rating || 5,
-    stock: productData.stock_quantity > 0 ? "In Stock" : "Out of Stock",
+  const mappedProduct = productData?.data ? {
+    id: productData.data._id,
+    slug: productData.data.slug || params.id,
+    name: productData.data.title,
+    brand: productData.data.brand_id?.name || 'Brand',
+    price: productData.data.price,
+    originalPrice: productData.data.price,
+    discount: 0, // No discount price in the API response
+    rating: productData.data.average_rating || 5,
+    stock: productData.data.stock_quantity > 0 ? "In Stock" : "Out of Stock",
     deliveryTime: "Available in 30 Minutes",
-    boughtCount: `${productData.total_reviews || 0}+ Bought in past month`,
-    description: productData.description || productData.short_description || "Product description",
-    images: productData.images?.map(img => img.url) || ["/shoes.jpg"],
-    colors: productData.attributes?.color ? [productData.attributes.color] : ["Default"],
+    boughtCount: `${productData.data.total_reviews || 0}+ Bought in past month`,
+    description: productData.data.description || productData.data.short_description || "Product description",
+    images: productData.data.images?.map(img => img.url) || ["/shoes.jpg"],
+    colors: productData.data.attributes?.color ? [productData.data.attributes.color] : ["Default"],
     sizes: ["04", "05", "06", "07", "08"] // Default sizes since not in API
   } : mockProduct
 
@@ -128,7 +128,7 @@ export default function ProductPage({ params }) {
         deliveryTime: product.deliveryTime || '30 Min',
         image: product.image || product.images?.[0] || '/shoes.jpg'
       }))
-    : productData // Fallback to mock data if no API data
+    : [] // Always return an array, even if empty
 
   return (
     <div className="product-page">
@@ -142,7 +142,7 @@ export default function ProductPage({ params }) {
             <ProductDetails product={mappedProduct} />
             <ProductSections 
               relatedProducts={relatedProducts}
-              productData={productData}
+              productData={productData?.data}
             />
           </>
         )}

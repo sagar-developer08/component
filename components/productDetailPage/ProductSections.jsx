@@ -10,11 +10,11 @@ export default function ProductSections({ relatedProducts, productData }) {
   // Normalize relatedProducts to always be an array
   const relatedList = Array.isArray(relatedProducts)
     ? relatedProducts
-    : (relatedProducts?.data?.products
-      || relatedProducts?.data?.items
-      || relatedProducts?.data
-      || relatedProducts?.items
-      || [])
+    : (Array.isArray(relatedProducts?.data?.products) ? relatedProducts.data.products
+      : Array.isArray(relatedProducts?.data?.items) ? relatedProducts.data.items
+      : Array.isArray(relatedProducts?.data) ? relatedProducts.data
+      : Array.isArray(relatedProducts?.items) ? relatedProducts.items
+      : [])
 
   const toggleAccordion = (index) => {
     setExpandedItem(expandedItem === index ? -1 : index)
@@ -48,9 +48,19 @@ export default function ProductSections({ relatedProducts, productData }) {
     // Add specifications from API
     if (productData.specifications) {
       Object.entries(productData.specifications).forEach(([key, value]) => {
+        // Convert value to string if it's an object or array
+        let displayValue = value
+        if (typeof value === 'object' && value !== null) {
+          if (Array.isArray(value)) {
+            displayValue = value.join(', ')
+          } else {
+            displayValue = JSON.stringify(value)
+          }
+        }
+        
         specs.push({
           label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          value: value
+          value: displayValue
         })
       })
     }
@@ -72,8 +82,8 @@ export default function ProductSections({ relatedProducts, productData }) {
     if (productData.weight) {
       specs.push({ label: 'Weight', value: `${productData.weight}kg` })
     }
-    if (productData.dimensions) {
-      const { length, width, height } = productData.dimensions
+    if (productData.attributes?.dimensions) {
+      const { length, width, height } = productData.attributes.dimensions
       specs.push({ label: 'Dimensions', value: `${length} x ${width} x ${height} cm` })
     }
 
@@ -94,16 +104,29 @@ export default function ProductSections({ relatedProducts, productData }) {
     // Add attributes from API
     if (productData.attributes) {
       Object.entries(productData.attributes).forEach(([key, value]) => {
+        // Skip dimensions as it's handled separately
+        if (key === 'dimensions') return
+        
+        // Convert value to string if it's an object or array
+        let displayValue = value
+        if (typeof value === 'object' && value !== null) {
+          if (Array.isArray(value)) {
+            displayValue = value.join(', ')
+          } else {
+            displayValue = JSON.stringify(value)
+          }
+        }
+        
         attrs.push({
           label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          value: value
+          value: displayValue
         })
       })
     }
 
     // Add warranty information
-    if (productData.warranty_period && productData.warranty_type) {
-      attrs.push({ label: 'Warranty', value: `${productData.warranty_period} months (${productData.warranty_type})` })
+    if (productData.attributes?.warranty_period && productData.attributes?.warranty_type) {
+      attrs.push({ label: 'Warranty', value: `${productData.attributes.warranty_period} months (${productData.attributes.warranty_type})` })
     }
 
     // Add store information
@@ -150,9 +173,13 @@ export default function ProductSections({ relatedProducts, productData }) {
             buttonText="Upgrade"
           />
             <div className="products-grid">
-             {relatedList.slice(0, 4).map((product, index) => (
+             {Array.isArray(relatedList) && relatedList.length > 0 ? relatedList.slice(0, 4).map((product, index) => (
                <ProductCard key={product.id || `product-${index}`} {...product} />
-             ))}
+             )) : (
+               <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                 No related products available
+               </div>
+             )}
             </div>
         </div>
       </section>
@@ -170,9 +197,13 @@ export default function ProductSections({ relatedProducts, productData }) {
             buttonText="Upgrade"
           />
           <div className="description-content">
-            <p>Qorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu turpis molestie, dictum est a, mattis tellus. Sed dignissim, metus nec fringilla accumsan, risus sem sollicitudin lacus, ut interdum tellus elit sed risus. Maecenas eget condimentum velit, sit amet feugiat lectus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent auctor purus luctus enim egestas, ac scelerisque ante pulvinar. Donec ut rhoncus ex. Suspendisse ac rhoncus nisl, eu tempor urna. Curabitur vel bibendum lorem. Morbi convallis convallis diam sit amet lacinia. Aliquam in elementum tellus.</p>
-            <br />
-            <p>Qorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam eu turpis molestie, dictum est a, mattis tellus. Sed dignissim, metus nec fringilla accumsan, risus sem sollicitudin lacus, ut interdum tellus elit sed risus. Maecenas eget condimentum velit, sit amet feugiat lectus. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Praesent auctor purus luctus enim egestas, ac scelerisque ante pulvinar. Donec ut rhoncus ex. Suspendisse ac rhoncus nisl, eu tempor urna. Curabitur vel bibendum lorem. Morbi convallis convallis diam sit amet lacinia. Aliquam in elementum tellus.</p>
+            <p>{productData?.description || productData?.short_description || "Product description not available."}</p>
+            {productData?.description && productData?.short_description && productData.description !== productData.short_description && (
+              <>
+                <br />
+                <p>{productData.short_description}</p>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -193,7 +224,7 @@ export default function ProductSections({ relatedProducts, productData }) {
                   {specifications.slice(0, Math.ceil(specifications.length / 2)).map((spec, index) => (
                     <tr key={index}>
                       <th>{spec.label}</th>
-                      <td>{spec.value}</td>
+                      <td>{String(spec.value || '')}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -205,7 +236,7 @@ export default function ProductSections({ relatedProducts, productData }) {
                   {attributes.slice(0, Math.ceil(attributes.length / 2)).map((attr, index) => (
                     <tr key={index}>
                       <th>{attr.label}</th>
-                      <td>{attr.value}</td>
+                      <td>{String(attr.value || '')}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -320,9 +351,13 @@ export default function ProductSections({ relatedProducts, productData }) {
             buttonText="Upgrade"
           />
             <div className="products-grid">
-             {relatedList.slice(0, 4).map((product, index) => (
+             {Array.isArray(relatedList) && relatedList.length > 0 ? relatedList.slice(0, 4).map((product, index) => (
                <ProductCard key={product.id || `product-${index}`} {...product} />
-             ))}
+             )) : (
+               <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                 No related products available
+               </div>
+             )}
             </div>
         </div>
       </section>
