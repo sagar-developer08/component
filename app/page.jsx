@@ -223,7 +223,7 @@ export default function Home() {
   const dispatch = useDispatch();
   const { products, bestsellers, offers, qliqPlusDeals, featured, loading, error } = useSelector(state => state.products);
   const { brands, loading: brandsLoading, error: brandsError } = useSelector(state => state.brands);
-  const { stores, loading: storesLoading, error: storesError } = useSelector(state => state.stores);
+  const { stores, topStores, newStores, loading: storesLoading, error: storesError } = useSelector(state => state.stores);
 
   const swiperRef = useRef(null);
   const topStoresSwiperRef = useRef(null);
@@ -248,8 +248,8 @@ export default function Home() {
   const transformedSpecialDeals = qliqPlusDeals.map(transformProductData);
   const transformedFeaturedOffers = featured.map(transformProductData);
   const transformedBrands = brands.map(transformBrandData);
-  const transformedTopStores = stores.map(transformStoreData);
-  const transformedNewStores = stores.map(transformStoreData);
+  const transformedTopStores = topStores.map(transformStoreData);
+  const transformedNewStores = newStores.map(transformStoreData);
 
   const handlePrev = () => {
     if (swiperRef.current && swiperRef.current.swiper) {

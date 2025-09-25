@@ -1,12 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { catalog } from '../api/endpoints'
 
-// Async thunk for fetching stores
+// Async thunk for fetching stores discovery data
 export const fetchStores = createAsyncThunk(
   'stores/fetchStores',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(catalog.stores)
+      const response = await fetch(catalog.storesDiscovery)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -52,15 +52,16 @@ const storesSlice = createSlice({
       .addCase(fetchStores.fulfilled, (state, action) => {
         state.loading = false
         state.success = true
-        if (action.payload && action.payload.stores) {
-          const allStores = action.payload.stores || []
-          state.stores = allStores
-          
-          // Show all stores in both sections for now
-          state.topStores = allStores
-          state.newStores = allStores
-          
-          state.pagination = action.payload.pagination || {}
+        // Handle the API response structure: { success, message, data: { newStores: [...], topStores: [...], totalNewStores, totalTopStores } }
+        const responseData = action.payload?.data || action.payload
+        if (responseData) {
+          state.newStores = responseData.newStores || []
+          state.topStores = responseData.topStores || []
+          state.stores = [...(responseData.newStores || []), ...(responseData.topStores || [])]
+          state.pagination = {
+            totalNewStores: responseData.totalNewStores || 0,
+            totalTopStores: responseData.totalTopStores || 0
+          }
         }
         state.error = null
       })

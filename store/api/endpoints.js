@@ -17,9 +17,10 @@ export const BASES = {
 // Catalog endpoints
 export const catalog = {
   base: BASES.catalog,
-  brands: `${BASES.catalog}/brands`,
+  brands: `${BASES.catalog}/brands/top`,
   products: `${BASES.catalog}/products`,
   stores: `${BASES.catalog}/stores`,
+  storesDiscovery: `${BASES.catalog}/stores/discovery`,
 }
 
 // Auth endpoints (auth base is explicitly namespaced with /auth as requested)

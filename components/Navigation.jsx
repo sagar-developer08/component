@@ -25,11 +25,11 @@ export default function Navigation() {
   const getActiveNav = () => {
     if (pathname === '/') return 'Discovery'
     if (pathname === '/hypermarket') return 'Hypermarket'
-    if (pathname === '/ecommerce') return 'E-Shop'
+    if (pathname === '/eshop') return 'E-Shop'
     if (pathname === '/supermarket') return 'Supermarket'
     // Remove highlight for store detail page
     if (pathname === '/storeDetail') return ''
-    if (pathname === '/store') return 'Stores'
+    if (pathname === '/stores') return 'Stores'
     if (pathname === '/profile') return 'Profile'
     if (pathname === '/checkout') return 'Checkout'
     return 'Discovery'
@@ -76,7 +76,7 @@ export default function Navigation() {
     },
     {
       key: 'Stores', 
-      path: '/store',
+      path: '/stores',
       icon: (
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path
@@ -91,7 +91,7 @@ export default function Navigation() {
     },
     {
       key: 'E-Shop', 
-      path: '/ecommerce',
+      path: '/eshop',
       icon: (
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
           <path

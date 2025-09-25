@@ -6,8 +6,6 @@ const nextConfig = {
       'example.com',
       'backendcatalog.qliq.ae',
       'images.unsplash.com',
-      'source.unsplash.com',
-      'images.pexels.com',
       'picsum.photos'
     ],
     remotePatterns: [
@@ -24,19 +22,6 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
-  },
-  env: {
-    NEXT_PUBLIC_CATALOG_BASE_URL: process.env.NEXT_PUBLIC_CATALOG_BASE_URL,
-    NEXT_PUBLIC_AUTH_BASE_URL: process.env.NEXT_PUBLIC_AUTH_BASE_URL,
-    NEXT_PUBLIC_CART_BASE_URL: process.env.NEXT_PUBLIC_CART_BASE_URL,
-    NEXT_PUBLIC_PAYMENT_BASE_URL: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL,
-    NEXT_PUBLIC_ENVIRONMENT: process.env.NEXT_PUBLIC_ENVIRONMENT,
-  },
-  experimental: {
-    optimizePackageImports: ['@/components'],
-  },
-  compiler: {
-    removeConsole: process.env.NODE_ENV === 'production',
   },
 }
 

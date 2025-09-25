@@ -8,7 +8,7 @@ export const addToCart = createAsyncThunk(
     try {
       const token = await getAuthToken()
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CART_BASE_URL}/cart/add`, {
+      const response = await fetch('https://backendcart.qliq.ae/api/cart/add', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,7 +36,7 @@ export const fetchCart = createAsyncThunk(
     try {
       const token = await getAuthToken()
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CART_BASE_URL}/cart?userId=${userId}`, {
+      const response = await fetch(`https://backendcart.qliq.ae/api/cart?userId=${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -63,7 +63,7 @@ export const updateCartItem = createAsyncThunk(
     try {
       const token = await getAuthToken()
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CART_BASE_URL}/cart/update`, {
+      const response = await fetch('https://backendcart.qliq.ae/api/cart/update', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ export const removeFromCart = createAsyncThunk(
     try {
       const token = await getAuthToken()
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CART_BASE_URL}/cart/remove`, {
+      const response = await fetch('https://backendcart.qliq.ae/api/cart/remove', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

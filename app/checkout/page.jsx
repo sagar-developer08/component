@@ -609,39 +609,11 @@ export default function CheckoutPage() {
                 </button>
               </div>
               
-              {/* Show selected delivery address if same as delivery */}
+              {/* Show message when same as delivery address is selected */}
               {shippingSameAsDelivery && selectedAddress && (
-                <div className={styles.selectedAddressCard}>
-                  <div className={styles.addressType}>
-                    <div className={styles.addressTypeInfo}>
-                      <FontAwesomeIcon 
-                        icon={
-                          selectedAddress.type === 'home' ? faHome : 
-                          selectedAddress.type === 'work' ? faBriefcase : 
-                          faMapMarkerAlt
-                        } 
-                        className={styles.addressTypeIcon}
-                      />
-                      <span className={styles.addressLabel}>{selectedAddress.type}</span>
-                      {selectedAddress.isDefault && (
-                        <span className={styles.defaultBadge}>Default</span>
-                      )}
-                    </div>
-                    <div className={styles.selectedIndicator}>
-                      <FontAwesomeIcon icon={faCheck} className={styles.checkIcon} />
-                    </div>
-                  </div>
-                  <div className={styles.addressDetails}>
-                    <div className={styles.addressText}>
-                      {selectedAddress.addressLine1}
-                      {selectedAddress.addressLine2 && `, ${selectedAddress.addressLine2}`}
-                    </div>
-                    <div className={styles.addressLocation}>
-                      {selectedAddress.city}, {selectedAddress.state} {selectedAddress.postalCode}
-                    </div>
-                    <div className={styles.addressContact}>{selectedAddress.phone}</div>
-                    <div className={styles.addressContact}>{selectedAddress.email}</div>
-                  </div>
+                <div className={styles.sameAsDeliveryMessage}>
+                  <FontAwesomeIcon icon={faCheck} className={styles.checkIcon} />
+                  <span>Using the same address as delivery address</span>
                 </div>
               )}
 
@@ -889,7 +861,7 @@ export default function CheckoutPage() {
                   {cartItems.map((item, index) => (
                     <div key={index} className={styles.productItem}>
                 <Image
-                        src={item.image || "/images/placeholder.jpg"}
+                        src="/iphone.jpg"
                         alt={item.name || "Product"}
                   width={60}
                   height={60}
