@@ -82,6 +82,7 @@ export default function ProductPage({ params }) {
         try {
           setProductLoading(true)
           const response = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_BASE_URL}/products/slug/${params.id}`)
+          console.log(response)
           if (response.ok) {
             const data = await response.json()
             setProductData(data)
