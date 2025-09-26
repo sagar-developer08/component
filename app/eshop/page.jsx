@@ -22,7 +22,7 @@ import 'swiper/css/navigation'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchProducts } from '@/store/slices/productsSlice'
 import { fetchBrands } from '@/store/slices/brandsSlice'
-import { fetchStores } from '@/store/slices/storesSlice'
+import { fetchEshopStores } from '@/store/slices/storesSlice'
 
 // Helper function to transform API product data to match ProductCard component format
 const transformProductData = (apiProduct) => {
@@ -59,8 +59,16 @@ const transformBrandData = (apiBrand) => {
 // Helper function to transform API store data to match CategoryCard component format
 const transformStoreData = (apiStore) => {
   return {
+    id: apiStore._id,
     name: apiStore.name || 'Store Name',
-    image: apiStore.logo || 'https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412'
+    slug: apiStore.slug,
+    description: apiStore.description,
+    image: apiStore.logo || 'https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412',
+    isTopStore: apiStore.isTopStore,
+    email: apiStore.email,
+    phone: apiStore.phone,
+    address: apiStore.address,
+    isActive: apiStore.isActive
   }
 }
 
@@ -96,7 +104,7 @@ export default function Home() {
   const dispatch = useDispatch();
   const { products, bestsellers, offers, qliqPlusDeals, featured, loading, error } = useSelector(state => state.products);
   const { brands, loading: brandsLoading, error: brandsError } = useSelector(state => state.brands);
-  const { stores, loading: storesLoading, error: storesError } = useSelector(state => state.stores);
+  const { eshopStores, eshopNewStores, eshopTopStores, loading: storesLoading, error: storesError } = useSelector(state => state.stores);
 
   const swiperRef = useRef(null);
   const topStoresSwiperRef = useRef(null);
@@ -107,11 +115,11 @@ export default function Home() {
   const featuredOffersSwiperRef = useRef(null);
   const [activeStoreFilter, setActiveStoreFilter] = useState('all');
 
-  // Fetch products, brands, and stores on component mount
+  // Fetch products, brands, and e-shop stores on component mount
   useEffect(() => {
     dispatch(fetchProducts());
     dispatch(fetchBrands());
-    dispatch(fetchStores());
+    dispatch(fetchEshopStores());
   }, [dispatch]);
 
   // Transform API data for different sections
@@ -121,8 +129,8 @@ export default function Home() {
   const transformedSpecialDeals = qliqPlusDeals.map(transformProductData);
   const transformedFeaturedOffers = featured.map(transformProductData);
   const transformedBrands = brands.map(transformBrandData);
-  const transformedTopStores = stores.map(transformStoreData);
-  const transformedNewStores = stores.map(transformStoreData);
+  const transformedTopStores = eshopTopStores.map(transformStoreData);
+  const transformedNewStores = eshopNewStores.map(transformStoreData);
 
   const handlePrev = () => {
     if (swiperRef.current && swiperRef.current.swiper) {
@@ -223,11 +231,11 @@ export default function Home() {
   const getFilteredStores = () => {
     switch (activeStoreFilter) {
       case 'top':
-        return storeData.filter(store => store.isTopStore);
+        return transformedTopStores;
       case 'new':
-        return storeData.filter(store => store.isNewStore);
+        return transformedNewStores;
       default:
-        return storeData;
+        return eshopStores.map(transformStoreData);
     }
   };
 

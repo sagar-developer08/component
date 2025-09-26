@@ -1,0 +1,537 @@
+/* Container and Layout */
+.container {
+  max-width: 1392px;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: #ffffff;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Header Section */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  padding: 0 8px;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: white;
+  border: 2px solid #3b82f6;
+  border-radius: 25px;
+  color: #3b82f6;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+.orderNumber {
+  font-size: 40px;
+  font-weight: 600;
+  color: #000;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+/* Order Information Card */
+.orderInfoCard {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 32px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.orderInfoLeft,
+.orderInfoRight {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+  flex: 1;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.infoLabel {
+  font-size: 16px;
+  color: #000;
+  font-weight: 600;
+}
+
+.infoValue {
+  font-size: 16px;
+  color: #000;
+  font-weight: 600;
+}
+
+.deliveredStatus {
+  color: #059669;
+}
+
+/* Content Grid */
+.contentGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Address Cards Row */
+.addressRow {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+}
+
+/* Address Cards */
+.addressCard {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  padding: 24px;
+  flex: 1;
+}
+
+.cardTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #000;
+  margin: 0 0 16px 0;
+}
+
+.addressContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.addressType {
+  font-size: 16px;
+  color: #000;
+  font-weight: 600;
+}
+
+.addressText {
+  font-size: 16px;
+  color: #000;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.contactInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contactNumber,
+.contactEmail {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* Review Card */
+.reviewCard {
+  background: white;
+  max-width: 460px;
+  width: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 16px;  
+  padding: 24px;
+  flex: 1;
+}
+
+.reviewForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ratingSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.formLabel {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 600;
+  min-width: 100px;
+}
+
+.starRating {
+  display: flex;
+  gap: 4px;
+}
+
+.star {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s ease;
+}
+
+.star:hover {
+  transform: scale(1.1);
+}
+
+.starFilled {
+  color: #3b82f6;
+}
+
+.starEmpty {
+  color: #3b82f6;
+  opacity: 0.3;
+}
+
+.formGroup {
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  align-items: center;
+  gap: 16px;
+}
+
+.formInput {
+  padding: 16px 16px;
+  border: transparent;
+  border-radius: 16px;
+  font-size: 14px;
+  color: #374151;
+  background: white;
+  transition: border-color 0.2s ease;
+  flex: 1;
+  max-width: 100%;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: none
+}
+
+.uploadInput {
+  display: flex;
+  align-items: center;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+  gap: 8px;
+  flex: 1;
+  max-width: 100%;
+}
+
+.uploadButton {
+  padding: 12px;
+  background: transparent;
+  border: transparent;
+  border-radius: 8px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.formTextarea {
+  padding: 16px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  background: white;
+  resize: vertical;
+  min-height: 100px;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+  flex: 1;
+  max-width: 100%;
+}
+
+.formTextarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.reviewButtons {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+
+}
+
+.cancelButton {
+  flex: 1;
+  padding: 12px 24px;
+  background: white;
+  border: 2px solid #0082FF;
+  border-radius:25px;
+  color: #0082FF;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submitButton {
+  flex: 1;
+  padding: 12px 24px;
+  background: rgb(0, 130, 255, 0.2);
+  border: 2px solid #3b82f6;
+  border-radius: 25px;
+  color: #0082FF;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Bottom Row Container */
+.bottomRow {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+}
+
+/* Order Summary Card */
+.orderSummaryCard {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  padding: 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.productSection {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.productImage {
+  flex-shrink: 0;
+}
+
+.productImg {
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.productDetails {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.productBrand {
+  font-size: 12px;
+  font-weight: 600;
+  color: #000;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.productName {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.productQuantity {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.productPrice {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.costBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.costItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.costLabel {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.costValue {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.discountValue {
+  color: #3b82f6;
+}
+
+.totalItem {
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 8px;
+}
+
+.totalValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.summaryButtons {
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.buyAgainButton {
+  flex: 1;
+  padding: 12px 24px;
+  background: white;
+  border: 2px solid #0082FF;
+  border-radius: 25px;
+  color: #0082FF;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.downloadInvoiceButton {
+  flex: 1;
+  padding: 12px 24px;
+  background: rgb(0, 130, 255, 0.2);
+  border: 2px solid #0082FF;
+  border-radius: 25px;
+  color: #0082FF;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .addressRow {
+    flex-direction: column;
+  }
+  
+  .bottomRow {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .orderNumber {
+    font-size: 40px;
+    font-weight: 600;
+  }
+  
+  .orderInfoCard {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 24px;
+  }
+  
+  .contentGrid {
+    gap: 16px;
+  }
+  
+  .addressCard,
+  .reviewCard,
+  .orderSummaryCard {
+    padding: 20px;
+  }
+  
+  .reviewButtons,
+  .summaryButtons {
+    flex-direction: column;
+  }
+  
+  .cancelButton,
+  .submitButton,
+  .buyAgainButton,
+  .downloadInvoiceButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 12px;
+  }
+  
+  .orderNumber {
+    font-size: 20px;
+  }
+  
+  .orderInfoCard {
+    padding: 20px;
+  }
+  
+  .addressCard,
+  .reviewCard,
+  .orderSummaryCard {
+    padding: 16px;
+  }
+  
+  .productSection {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+}

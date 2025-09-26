@@ -71,6 +71,23 @@ export const fetchGeneralStores = createAsyncThunk(
   }
 )
 
+// Fetch E-Shop stores
+export const fetchEshopStores = createAsyncThunk(
+  'stores/fetchEshopStores',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${catalog.base}/stores/eshop`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const storesSlice = createSlice({
   name: 'stores',
   initialState: {
@@ -80,6 +97,9 @@ const storesSlice = createSlice({
     hypermarketStores: [],
     supermarketStores: [],
     generalStores: [],
+    eshopStores: [],
+    eshopNewStores: [],
+    eshopTopStores: [],
     pagination: {},
     loading: false,
     error: null,
@@ -168,6 +188,33 @@ const storesSlice = createSlice({
       .addCase(fetchGeneralStores.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
+      })
+      // E-Shop Stores
+      .addCase(fetchEshopStores.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchEshopStores.fulfilled, (state, action) => {
+        state.loading = false
+        state.success = true
+        // Handle the API response structure: { success, message, data: { newStores: [...], topStores: [...], totalNewStores, totalTopStores } }
+        const responseData = action.payload?.data || action.payload
+        if (responseData) {
+          state.eshopNewStores = responseData.newStores || []
+          state.eshopTopStores = responseData.topStores || []
+          state.eshopStores = [...(responseData.newStores || []), ...(responseData.topStores || [])]
+          state.pagination = {
+            ...state.pagination,
+            totalEshopNewStores: responseData.totalNewStores || 0,
+            totalEshopTopStores: responseData.totalTopStores || 0
+          }
+        }
+        state.error = null
+      })
+      .addCase(fetchEshopStores.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+        state.success = false
       })
   }
 })
