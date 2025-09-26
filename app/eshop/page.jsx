@@ -23,6 +23,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { fetchProducts } from '@/store/slices/productsSlice'
 import { fetchBrands } from '@/store/slices/brandsSlice'
 import { fetchEshopStores } from '@/store/slices/storesSlice'
+import { fetchEcommerceCategories, fetchEcommerceLevel3Categories } from '@/store/slices/categoriesSlice'
 
 // Helper function to transform API product data to match ProductCard component format
 const transformProductData = (apiProduct) => {
@@ -56,6 +57,16 @@ const transformBrandData = (apiBrand) => {
   }
 }
 
+// Helper function to transform API category data to match CategoryCard component format
+const transformCategoryData = (apiCategory) => {
+  return {
+    id: apiCategory._id,
+    name: apiCategory.name || 'Category Name',
+    slug: apiCategory.slug,
+    image: 'https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412' // Default image since API doesn't provide images
+  }
+}
+
 // Helper function to transform API store data to match CategoryCard component format
 const transformStoreData = (apiStore) => {
   return {
@@ -72,32 +83,6 @@ const transformStoreData = (apiStore) => {
   }
 }
 
-const categoryData = [
-  {
-    name: "Pet Supplies",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/b96c7d3062a93a3b6d8e9a2a4bd11acfa542dced?width=412"
-  },
-  {
-    name: "Health n Beauty",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/81e3ee1beeaa2c8941600c27d3ec9733bac0869c?width=412"
-  },
-  {
-    name: "Books",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/5839901b9e3641626fef47388dc1036c852a0aa5?width=412"
-  },
-  {
-    name: "Computers",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/4a25e8a2b689f4d8cf2f809de9e46f2c26c36d46?width=412"
-  },
-  {
-    name: "Electronics",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/bb3de20fdb53760293d946ca033adbf4489bed56?width=412"
-  },
-  {
-    name: "Home Appliances",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/f291940d1feaf8e5cb0a7335f629e12091d26a73?width=412"
-  }
-]
 
 export default function Home() {
   const router = useRouter();
@@ -105,6 +90,7 @@ export default function Home() {
   const { products, bestsellers, offers, qliqPlusDeals, featured, loading, error } = useSelector(state => state.products);
   const { brands, loading: brandsLoading, error: brandsError } = useSelector(state => state.brands);
   const { eshopStores, eshopNewStores, eshopTopStores, loading: storesLoading, error: storesError } = useSelector(state => state.stores);
+  const { ecommerceCategories, ecommerceLevel3Categories, loading: categoriesLoading, error: categoriesError } = useSelector(state => state.categories);
 
   const swiperRef = useRef(null);
   const topStoresSwiperRef = useRef(null);
@@ -113,13 +99,17 @@ export default function Home() {
   const offersSwiperRef = useRef(null);
   const specialDealsSwiperRef = useRef(null);
   const featuredOffersSwiperRef = useRef(null);
+  const categoriesSwiperRef = useRef(null);
+  const level3CategoriesSwiperRef = useRef(null);
   const [activeStoreFilter, setActiveStoreFilter] = useState('all');
 
-  // Fetch products, brands, and e-shop stores on component mount
+  // Fetch products, brands, e-shop stores, and categories on component mount
   useEffect(() => {
     dispatch(fetchProducts());
     dispatch(fetchBrands());
     dispatch(fetchEshopStores());
+    dispatch(fetchEcommerceCategories());
+    dispatch(fetchEcommerceLevel3Categories());
   }, [dispatch]);
 
   // Transform API data for different sections
@@ -131,6 +121,8 @@ export default function Home() {
   const transformedBrands = brands.map(transformBrandData);
   const transformedTopStores = eshopTopStores.map(transformStoreData);
   const transformedNewStores = eshopNewStores.map(transformStoreData);
+  const transformedCategories = ecommerceCategories.map(transformCategoryData);
+  const transformedLevel3Categories = ecommerceLevel3Categories.map(transformCategoryData);
 
   const handlePrev = () => {
     if (swiperRef.current && swiperRef.current.swiper) {
@@ -216,6 +208,30 @@ export default function Home() {
     }
   };
 
+  const handleCategoriesPrev = () => {
+    if (categoriesSwiperRef.current && categoriesSwiperRef.current.swiper) {
+      categoriesSwiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleCategoriesNext = () => {
+    if (categoriesSwiperRef.current && categoriesSwiperRef.current.swiper) {
+      categoriesSwiperRef.current.swiper.slideNext();
+    }
+  };
+
+  const handleLevel3CategoriesPrev = () => {
+    if (level3CategoriesSwiperRef.current && level3CategoriesSwiperRef.current.swiper) {
+      level3CategoriesSwiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleLevel3CategoriesNext = () => {
+    if (level3CategoriesSwiperRef.current && level3CategoriesSwiperRef.current.swiper) {
+      level3CategoriesSwiperRef.current.swiper.slideNext();
+    }
+  };
+
   const handleStoreFilter = (filter) => {
     setActiveStoreFilter(filter);
   };
@@ -292,12 +308,37 @@ export default function Home() {
         {/* Other Categories Section */}
         <section className="section">
           <div className="container">
-            <SectionHeader title="Other Categories" showNavigation={true} />
-            <div className="categories-grid">
-              {categoryData.map((category, index) => (
-                <CategoryCard key={index} {...category} />
-              ))}
-            </div>
+            <SectionHeader
+              title="Other Categories"
+              showNavigation={true}
+              onPrev={handleCategoriesPrev}
+              onNext={handleCategoriesNext}
+            />
+            {categoriesLoading ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                Loading categories...
+              </div>
+            ) : categoriesError ? (
+              <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+                Error loading categories: {categoriesError}
+              </div>
+            ) : (
+              <Swiper
+                ref={categoriesSwiperRef}
+                modules={[SwiperNavigation]}
+                slidesPerView="auto"
+                spaceBetween={24}
+                grabCursor={true}
+                freeMode={true}
+                style={{ width: '1360px' }}
+              >
+                {transformedCategories.map((category, index) => (
+                  <SwiperSlide key={category.id || index} style={{ width: 'auto' }}>
+                    <CategoryCard {...category} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            )}
           </div>
         </section>
 
@@ -464,6 +505,44 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Level 3 Categories Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader 
+              title="Popular Categories" 
+              showNavigation={true}
+              onPrev={handleLevel3CategoriesPrev}
+              onNext={handleLevel3CategoriesNext}
+            />
+            {categoriesLoading ? (
+              <div style={{ textAlign: 'center', padding: '20px' }}>
+                Loading categories...
+              </div>
+            ) : categoriesError ? (
+              <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+                Error loading categories: {categoriesError}
+              </div>
+            ) : (
+              <Swiper
+                ref={level3CategoriesSwiperRef}
+                modules={[SwiperNavigation]}
+                slidesPerView="auto"
+                spaceBetween={24}
+                grabCursor={true}
+                freeMode={true}
+                style={{ width: '1360px' }}
+              >
+                {transformedLevel3Categories.map((category, index) => (
+                  <SwiperSlide key={category.id || index} style={{ width: 'auto' }}>
+                    <CategoryCard {...category} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            )}
+          </div>
+        </section>
+
+
         {/* New Stores Section */}
         <section className="section">
           <div className="container">
@@ -500,7 +579,7 @@ export default function Home() {
             )}
           </div>
         </section>
-        
+
         <Footer />
         {/* Test Authentication Link */}
       </main>
