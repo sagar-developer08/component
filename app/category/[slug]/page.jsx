@@ -59,8 +59,11 @@ const transformCategoryData = (apiCategory) => {
   const imageIndex = Math.abs(hash) % placeholderImages.length
 
   return {
+    id: apiCategory._id,
     name: apiCategory.name || 'Category Name',
-    image: placeholderImages[imageIndex]
+    image: placeholderImages[imageIndex],
+    slug: apiCategory.slug || apiCategory.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+    level: apiCategory.level
   }
 }
 
@@ -170,7 +173,7 @@ export default function CategoryPage() {
   const handleCategoryClick = (category) => {
     // Use the slug from the API data or create a slug from the name
     const slug = category.slug || category.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    router.push(`/category/${slug}`);
+    router.push(`/${slug}?categoryLevel=4`);
   }
 
   // Navigation handlers for swipers

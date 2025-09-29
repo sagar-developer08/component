@@ -22,6 +22,7 @@ export const catalog = {
   products: `${BASES.catalog}/products`,
   productsByBrand: (brandSlug) => `${BASES.catalog}/products/brand/${brandSlug}`,
   productsByStore: (storeId) => `${BASES.catalog}/products/store/${storeId}`,
+  productsByLevel4Category: (categorySlug) => `${BASES.catalog}/products/level4/${categorySlug}`,
   stores: `${BASES.catalog}/stores`,
   storesDiscovery: `${BASES.catalog}/stores/discovery`,
   popularCategories: `${BASES.catalog}/categories/level3`,

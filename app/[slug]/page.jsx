@@ -34,6 +34,7 @@ export default function BrandPage() {
   const dispatch = useDispatch()
   const slug = params.slug
   const storeId = searchParams.get('storeId')
+  const categoryLevel = searchParams.get('categoryLevel')
   
   const { products, loading, error } = useSelector(state => state.products)
   const [brandInfo, setBrandInfo] = useState(null)
@@ -41,22 +42,24 @@ export default function BrandPage() {
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [filterOpen, setFilterOpen] = useState(false)
   const [isStore, setIsStore] = useState(false)
+  const [isCategory, setIsCategory] = useState(false)
 
   // Fetch products when component mounts
   useEffect(() => {
     dispatch(fetchProducts())
   }, [dispatch])
 
-  // Fetch brand/store info and products by slug
+  // Fetch brand/store/category info and products by slug
   useEffect(() => {
     const fetchData = async () => {
       if (slug) {
         try {
           setLoadingProducts(true)
           
-          // Check if this is a store (has storeId parameter) or a brand
+          // Check if this is a store (has storeId parameter), category (has categoryLevel), or a brand
           if (storeId) {
             setIsStore(true)
+            setIsCategory(false)
             // Fetch store products using the store API endpoint
             const response = await fetch(catalog.productsByStore(storeId))
             
@@ -73,8 +76,24 @@ export default function BrandPage() {
                 setBrandProducts(data.data.products || [])
               }
             }
+          } else if (categoryLevel) {
+            setIsStore(false)
+            setIsCategory(true)
+            // Fetch category products using the level4 category API endpoint
+            const response = await fetch(catalog.productsByLevel4Category(slug))
+            
+            if (response.ok) {
+              const data = await response.json()
+              console.log('Category API Response:', data)
+              
+              if (data.success && data.data) {
+                setBrandInfo(data.data.category) // Category info
+                setBrandProducts(data.data.products || [])
+              }
+            }
           } else {
             setIsStore(false)
+            setIsCategory(false)
             // Fetch brand data using the correct API endpoint format: /products/brand/[slug]
             const response = await fetch(`${catalog.base}/products/brand/${slug}`)
             
@@ -97,7 +116,7 @@ export default function BrandPage() {
     }
 
     fetchData()
-  }, [slug, storeId])
+  }, [slug, storeId, categoryLevel])
 
   // Transform API data
   const transformedProducts = brandProducts.map(transformProductData)
@@ -153,7 +172,7 @@ export default function BrandPage() {
             {/* Main Content Area with Scrollable Products */}
             <div className="content-area">
               <SectionHeader
-                title={`${brandInfo?.name || (isStore ? 'Store' : 'Brand')} Products`}
+                title={`${brandInfo?.name || (isStore ? 'Store' : isCategory ? 'Category' : 'Brand')} Products`}
                 showNavigation={false}
                 showButton={true}
                 buttonText="Sort By"
@@ -177,7 +196,7 @@ export default function BrandPage() {
                 </div>
               ) : (
                 <div className="no-products">
-                  <p>No products found for this {isStore ? 'store' : 'brand'}.</p>
+                  <p>No products found for this {isStore ? 'store' : isCategory ? 'category' : 'brand'}.</p>
                 </div>
               )}
             </div>
