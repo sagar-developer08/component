@@ -35,7 +35,7 @@ export default function BrandPage() {
   const slug = params.slug
   const storeId = searchParams.get('storeId')
   const categoryLevel = searchParams.get('categoryLevel')
-  
+
   const { products, loading, error } = useSelector(state => state.products)
   const [brandInfo, setBrandInfo] = useState(null)
   const [brandProducts, setBrandProducts] = useState([])
@@ -55,18 +55,18 @@ export default function BrandPage() {
       if (slug) {
         try {
           setLoadingProducts(true)
-          
+
           // Check if this is a store (has storeId parameter), category (has categoryLevel), or a brand
           if (storeId) {
             setIsStore(true)
             setIsCategory(false)
             // Fetch store products using the store API endpoint
             const response = await fetch(catalog.productsByStore(storeId))
-            
+
             if (response.ok) {
               const data = await response.json()
               console.log('Store API Response:', data)
-              
+
               if (data.success && data.data) {
                 // Extract store info from the first product's store_id
                 const firstProduct = data.data.products?.[0]
@@ -81,11 +81,11 @@ export default function BrandPage() {
             setIsCategory(true)
             // Fetch category products using the level4 category API endpoint
             const response = await fetch(catalog.productsByLevel4Category(slug))
-            
+
             if (response.ok) {
               const data = await response.json()
               console.log('Category API Response:', data)
-              
+
               if (data.success && data.data) {
                 setBrandInfo(data.data.category) // Category info
                 setBrandProducts(data.data.products || [])
@@ -96,11 +96,11 @@ export default function BrandPage() {
             setIsCategory(false)
             // Fetch brand data using the correct API endpoint format: /products/brand/[slug]
             const response = await fetch(`${catalog.base}/products/brand/${slug}`)
-            
+
             if (response.ok) {
               const data = await response.json()
               console.log('Brand API Response:', data)
-              
+
               if (data.success && data.data) {
                 setBrandInfo(data.data.brand)
                 setBrandProducts(data.data.products || [])
@@ -128,45 +128,13 @@ export default function BrandPage() {
   return (
     <main className="home-page">
       <Navigation />
-
-      {/* Brand Header Section */}
-      <section className="section">
-        <div className="container">
-          <div className="brand-header">
-            <button className="back-button" onClick={handleBack}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Back to Home
-            </button>
-            
-            {brandInfo && (
-              <div className="brand-info">
-                <div className="brand-logo">
-                  <img 
-                    src={brandInfo.logo || '/logo.png'} 
-                    alt={brandInfo.name}
-                    width={120}
-                    height={120}
-                  />
-                </div>
-                <div className="brand-details">
-                  <h1>{brandInfo.name}</h1>
-                  <p>{brandInfo.description || 'Discover amazing products from this brand'}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
       {/* Products Section */}
       <section className="section">
         <div className="container">
           <div className="listing-layout">
             {/* Sticky Filter Sidebar */}
             <aside className="filters-sidebar">
-              <FilterDrawer open={true} inline sticky stickyTop={112} onClose={() => {}} />
+              <FilterDrawer open={true} inline sticky stickyTop={112} onClose={() => { }} />
             </aside>
 
             {/* Main Content Area with Scrollable Products */}
@@ -176,9 +144,9 @@ export default function BrandPage() {
                 showNavigation={false}
                 showButton={true}
                 buttonText="Sort By"
-                onButtonClick={() => {}}
+                onButtonClick={() => { }}
               />
-              
+
               {loadingProducts ? (
                 <div className="loading-container">
                   <div className="loading-spinner"></div>
@@ -210,141 +178,86 @@ export default function BrandPage() {
       <Footer />
 
       <style jsx>{`
-        .brand-header {
-          padding: 40px 0;
-        }
-
-        .back-button {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: none;
-          border: none;
-          color: #666;
-          font-size: 16px;
-          cursor: pointer;
-          margin-bottom: 24px;
-          transition: color 0.2s ease;
-        }
-
-        .back-button:hover {
-          color: #000;
-        }
-
-        .brand-info {
-          display: flex;
-          align-items: center;
-          gap: 24px;
-          padding: 32px;
-          background: #f8f9fa;
-          border-radius: 16px;
-        }
-
-        .brand-logo img {
-          border-radius: 12px;
-          object-fit: cover;
-        }
-
-        .brand-details h1 {
-          font-size: 32px;
-          font-weight: 600;
-          color: #000;
-          margin: 0 0 8px 0;
-        }
-
-        .brand-details p {
-          font-size: 16px;
-          color: #666;
-          margin: 0;
-          line-height: 1.5;
-        }
-
         .listing-layout {
           display: flex;
           gap: 24px;
-          min-height: 600px;
+          align-items: flex-start;
+          min-height: calc(100vh - 200px);
         }
-
+        
         .filters-sidebar {
-          width: 300px;
+          position: sticky;
+          top: 112px; /* below fixed navbar */
+          width: 320px;
           flex-shrink: 0;
+          z-index: 10;
+          height: fit-content;
+          max-height: calc(100vh - 112px);
+          overflow-y: auto;
+           /* Hide scrollbar, keep scroll functionality */
+           -ms-overflow-style: none; /* IE and Edge */
+           scrollbar-width: none; /* Firefox */
         }
+         .filters-sidebar::-webkit-scrollbar { display: none; }
 
-        .content-area {
+        .content-area { 
           flex: 1;
-          min-width: 0;
+          min-width: 0; /* allows flex item to shrink below content size */
         }
-
+        
         .products-scroll-container {
+          width: 100%;
           max-height: calc(100vh - 200px);
           overflow-y: auto;
-          padding-right: 8px;
+          padding-right: 8px; /* space for scrollbar */
+           /* Hide scrollbar, keep scroll functionality */
+           -ms-overflow-style: none; /* IE and Edge */
+           scrollbar-width: none; /* Firefox */
         }
-
+         .products-scroll-container::-webkit-scrollbar { display: none; }
+        
         .grid-3 {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 24px;
+          padding-bottom: 40px; /* extra space at bottom */
+        }
+        
+        .grid-item { 
+          display: flex; 
+          justify-content: center; 
         }
 
-        .grid-item {
-          width: 100%;
-        }
-
-        .loading-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 60px 20px;
-          color: #666;
-        }
-
-        .loading-spinner {
-          width: 40px;
-          height: 40px;
-          border: 4px solid #f3f3f3;
-          border-top: 4px solid #007bff;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-          margin-bottom: 16px;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        .no-products {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 60px 20px;
-          color: #666;
-          font-size: 18px;
-        }
-
-        @media (max-width: 768px) {
-          .brand-info {
-            flex-direction: column;
-            text-align: center;
-            padding: 24px;
+        @media (max-width: 1024px) {
+          .listing-layout { 
+            flex-direction: column; 
+            gap: 16px;
           }
-
-          .brand-details h1 {
-            font-size: 24px;
+          
+          .filters-sidebar { 
+            position: relative; 
+            top: 0; 
+            width: 100%; 
+            z-index: 1;
+            max-height: none;
+            overflow-y: visible;
           }
-
-          .listing-layout {
-            flex-direction: column;
+          
+          .products-scroll-container {
+            max-height: none;
+            overflow-y: visible;
+            padding-right: 0;
           }
-
-          .filters-sidebar {
-            width: 100%;
+          
+          .grid-3 { 
+            grid-template-columns: repeat(2, minmax(0, 1fr)); 
+            gap: 16px;
           }
-
-          .grid-3 {
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        }
+        
+        @media (max-width: 640px) {
+          .grid-3 { 
+            grid-template-columns: 1fr; 
             gap: 16px;
           }
         }

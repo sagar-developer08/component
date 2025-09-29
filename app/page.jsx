@@ -776,7 +776,7 @@ export default function Home() {
               >
                 {transformedTopStores.map((store, index) => (
                   <SwiperSlide key={store.name || index} style={{ width: 'auto' }}>
-                    <CategoryCard name={store.name} image={store.image} />
+                    <CategoryCard name={store.name} image={store.image} onClick={() => handleStoreClick(store)} />
                   </SwiperSlide>
                 ))}
               </Swiper>
@@ -800,6 +800,9 @@ export default function Home() {
               showNavigation={true}
               onPrev={handlePrev}
               onNext={handleNext}
+              showButton={false}
+              buttonText={""}
+              onButtonClick={() => {}}
             />
             {storesLoading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -823,7 +826,7 @@ export default function Home() {
               >
                 {transformedNewStores.reverse().map((store, index) => (
                   <SwiperSlide key={store.name || index} style={{ width: 'auto' }}>
-                    <CategoryCard name={store.name} image={store.image} />
+                    <CategoryCard name={store.name} image={store.image} onClick={() => handleStoreClick(store)} />
                   </SwiperSlide>
                 ))}
               </Swiper>
