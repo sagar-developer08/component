@@ -3,10 +3,12 @@ import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchProfile } from '../../../store/slices/profileSlice'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import styles from './orders.module.css'
 
 export default function Orders() {
   const dispatch = useDispatch()
+  const router = useRouter()
   const { orders, loading, error } = useSelector(state => state.profile)
 
   useEffect(() => {
@@ -34,6 +36,11 @@ export default function Orders() {
       default:
         return '#666'
     }
+  }
+
+  const handleOrderClick = (order) => {
+    // Navigate to order history page with order data
+    router.push(`/orderhistory?orderId=${order._id}`)
   }
 
   if (loading) {
@@ -67,7 +74,12 @@ export default function Orders() {
   return (
     <div className={styles.ordersList}>
       {orders.map((order) => (
-        <div key={order._id} className={styles.orderItem}>
+        <div 
+          key={order._id} 
+          className={styles.orderItem}
+          onClick={() => handleOrderClick(order)}
+          style={{ cursor: 'pointer' }}
+        >
           <div className={styles.orderImageSection}>
             {order.items && order.items.length > 0 ? (
               <Image

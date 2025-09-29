@@ -1,17 +1,45 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchProfile } from '../../store/slices/profileSlice';
 import Navigation from '@/components/Navigation';
 import styles from './orderHistory.module.css';
 import Image from 'next/image';
 
 const OrderHistoryPage = () => {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get('orderId');
+  const dispatch = useDispatch();
+  const { orders, loading, error } = useSelector(state => state.profile);
+  
   const [rating, setRating] = useState(3);
   const [reviewData, setReviewData] = useState({
     name: '',
     photo: '',
     review: ''
   });
+  const [orderData, setOrderData] = useState(null);
+
+  // Fetch profile data if not already loaded
+  useEffect(() => {
+    if (!orders || orders.length === 0) {
+      dispatch(fetchProfile());
+    }
+  }, [dispatch, orders]);
+
+  // Find the specific order when orders are loaded
+  useEffect(() => {
+    if (orders && orders.length > 0 && orderId) {
+      const order = orders.find(o => o._id === orderId);
+      if (order) {
+        setOrderData(order);
+      } else {
+        console.error('Order not found');
+      }
+    }
+  }, [orders, orderId]);
 
   const handleRatingChange = (newRating) => {
     setRating(newRating);
@@ -45,19 +73,82 @@ const OrderHistoryPage = () => {
     setRating(3);
   };
 
+  // Helper functions for formatting
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case 'delivered':
+        return '#4CAF50';
+      case 'pending':
+        return '#FF9800';
+      case 'cancelled':
+        return '#F44336';
+      case 'processing':
+        return '#2196F3';
+      default:
+        return '#666';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <Navigation />
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            Loading order details...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <Navigation />
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', padding: '50px', color: 'red' }}>
+            Error loading order: {error}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!orderData) {
+    return (
+      <div>
+        <Navigation />
+        <div className={styles.container}>
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            Order not found
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Navigation />
       <div className={styles.container}>
       {/* Header Section */}
       <div className={styles.header}>
-        <button className={styles.backButton}>
+        <button className={styles.backButton} onClick={() => window.history.back()}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
           Back
         </button>
-        <h1 className={styles.orderNumber}>ORDER #400-4109943-785621</h1>
+        <h1 className={styles.orderNumber}>ORDER #{orderData.orderNumber}</h1>
       </div>
 
       {/* Order Information Card */}
@@ -65,19 +156,24 @@ const OrderHistoryPage = () => {
         <div className={styles.orderInfoLeft}>
           <div className={styles.infoItem}>
             <span className={styles.infoLabel}>Order Placed</span>
-            <span className={styles.infoValue}>17 September 2025</span>
+            <span className={styles.infoValue}>{formatDate(orderData.createdAt)}</span>
           </div>
           <div className={styles.infoItem}>
             <span className={styles.infoLabel}>Order Number</span>
-            <span className={styles.infoValue}>400-4109943-785621</span>
+            <span className={styles.infoValue}>{orderData.orderNumber}</span>
           </div>
           <div className={styles.infoItem}>
             <span className={styles.infoLabel}>Payment Method</span>
-            <span className={styles.infoValue}>Credit/Debit Card</span>
+            <span className={styles.infoValue}>{orderData.paymentMethod || 'Credit/Debit Card'}</span>
           </div>
           <div className={styles.infoItem}>
             <span className={styles.infoLabel}>Order Status</span>
-            <span className={`${styles.infoValue} ${styles.deliveredStatus}`}>Delivered</span>
+            <span 
+              className={`${styles.infoValue} ${styles.deliveredStatus}`}
+              style={{ color: getStatusColor(orderData.status) }}
+            >
+              {orderData.status}
+            </span>
           </div>
         </div>
       </div>
@@ -92,11 +188,19 @@ const OrderHistoryPage = () => {
             <div className={styles.addressContent}>
               <span className={styles.addressType}>Home</span>
               <p className={styles.addressText}>
-                Gorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.
+                {orderData.deliveryAddress && orderData.deliveryAddress.addressLine1 !== "Address not provided" ? 
+                  `${orderData.deliveryAddress.fullName || ''}\n${orderData.deliveryAddress.addressLine1}, ${orderData.deliveryAddress.city}, ${orderData.deliveryAddress.state} ${orderData.deliveryAddress.postalCode}, ${orderData.deliveryAddress.country}` :
+                  'Delivery address not provided'
+                }
               </p>
               <div className={styles.contactInfo}>
-                <span className={styles.contactNumber}>970 500 500</span>
-                <span className={styles.contactEmail}>example@gmail.com</span>
+                <span className={styles.contactNumber}>
+                  {orderData.deliveryAddress?.phone && orderData.deliveryAddress.phone !== "+1234567890" ? 
+                    orderData.deliveryAddress.phone : 'Phone not provided'}
+                </span>
+                <span className={styles.contactEmail}>
+                  {orderData.deliveryAddress?.email || 'Email not provided'}
+                </span>
               </div>
             </div>
           </div>
@@ -107,11 +211,19 @@ const OrderHistoryPage = () => {
             <div className={styles.addressContent}>
               <span className={styles.addressType}>Home</span>
               <p className={styles.addressText}>
-                Gorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.
+                {orderData.shippingAddress && orderData.shippingAddress.addressLine1 !== "Address not provided" ? 
+                  `${orderData.shippingAddress.fullName || ''}\n${orderData.shippingAddress.addressLine1}, ${orderData.shippingAddress.city}, ${orderData.shippingAddress.state} ${orderData.shippingAddress.postalCode}, ${orderData.shippingAddress.country}` :
+                  'Shipping address not provided'
+                }
               </p>
               <div className={styles.contactInfo}>
-                <span className={styles.contactNumber}>970 500 500</span>
-                <span className={styles.contactEmail}>example@gmail.com</span>
+                <span className={styles.contactNumber}>
+                  {orderData.shippingAddress?.phone && orderData.shippingAddress.phone !== "+1234567890" ? 
+                    orderData.shippingAddress.phone : 'Phone not provided'}
+                </span>
+                <span className={styles.contactEmail}>
+                  {orderData.shippingAddress?.email || 'Email not provided'}
+                </span>
               </div>
             </div>
           </div>
@@ -214,44 +326,62 @@ const OrderHistoryPage = () => {
           {/* Order Summary Card */}
           <div className={styles.orderSummaryCard}>
             <h3 className={styles.cardTitle}>Order Summary</h3>
-            <div className={styles.productSection}>
-              <div className={styles.productImage}>
-                <Image
-                  src="/images/nike-airforce-01-white.jpg"
-                  alt="Nike Airforce 01"
-                  width={60}
-                  height={60}
-                  className={styles.productImg}
-                />
+            
+            {/* Order Items */}
+            {orderData.items && orderData.items.map((item, index) => (
+              <div key={index} className={styles.productSection}>
+                <div className={styles.productImage}>
+                  <Image
+                    src="/iphone.jpg"
+                    alt={item.name}
+                    width={60}
+                    height={60}
+                    className={styles.productImg}
+                  />
+                </div>
+                <div className={styles.productDetails}>
+                  <h6 className={styles.productBrand}>Product</h6>
+                  <h4 className={styles.productName}>{item.name}</h4>
+                  <p className={styles.productQuantity}>Qty: {item.quantity}</p>
+                  <p className={styles.productPrice}>{orderData.currency} {item.price}</p>
+                </div>
               </div>
-              <div className={styles.productDetails}>
-              <h6 className={styles.productBrand}>Nike</h6>
-                <h4 className={styles.productName}>Airforce 01</h4>
-                <p className={styles.productQuantity}>Qty: 1</p>
-                <p className={styles.productPrice}>AED 1,200</p>
-              </div>
-            </div>
+            ))}
 
             <div className={styles.costBreakdown}>
               <div className={styles.costItem}>
                 <span className={styles.costLabel}>Subtotal</span>
-                <span className={styles.costValue}>AED 1,200</span>
+                <span className={styles.costValue}>{orderData.currency} {orderData.subtotal || orderData.totalAmount}</span>
               </div>
               <div className={styles.costItem}>
                 <span className={styles.costLabel}>Shipping</span>
-                <span className={styles.costValue}>FREE</span>
+                <span className={styles.costValue}>
+                  {orderData.shippingCost === 0 ? 'FREE' : `${orderData.currency} ${orderData.shippingCost}`}
+                </span>
               </div>
-              <div className={styles.costItem}>
-                <span className={styles.costLabel}>VAT</span>
-                <span className={styles.costValue}>AED 50</span>
-              </div>
-              <div className={styles.costItem}>
-                <span className={styles.costLabel}>Discount</span>
-                <span className={`${styles.costValue} ${styles.discountValue}`}>- AED 500</span>
-              </div>
+              {orderData.tax && (
+                <div className={styles.costItem}>
+                  <span className={styles.costLabel}>Tax</span>
+                  <span className={styles.costValue}>{orderData.currency} {orderData.tax}</span>
+                </div>
+              )}
+              {orderData.vat && (
+                <div className={styles.costItem}>
+                  <span className={styles.costLabel}>VAT</span>
+                  <span className={styles.costValue}>{orderData.currency} {orderData.vat}</span>
+                </div>
+              )}
+              {orderData.discount && orderData.discount > 0 && (
+                <div className={styles.costItem}>
+                  <span className={styles.costLabel}>Discount</span>
+                  <span className={`${styles.costValue} ${styles.discountValue}`}>
+                    - {orderData.currency} {orderData.discount}
+                  </span>
+                </div>
+              )}
               <div className={`${styles.costItem} ${styles.totalItem}`}>
                 <span className={styles.costLabel}>Order Total</span>
-                <span className={styles.totalValue}>AED 700</span>
+                <span className={styles.totalValue}>{orderData.currency} {orderData.totalAmount}</span>
               </div>
             </div>
 
