@@ -244,6 +244,12 @@ export default function Home() {
     router.push('/ecommerce');
   };
 
+  const handleCategoryClick = (category) => {
+    // Use the slug from the API data or create a slug from the name
+    const slug = category.slug || category.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    router.push(`/category/${slug}`);
+  };
+
   const getFilteredStores = () => {
     switch (activeStoreFilter) {
       case 'top':
@@ -334,7 +340,7 @@ export default function Home() {
               >
                 {transformedCategories.map((category, index) => (
                   <SwiperSlide key={category.id || index} style={{ width: 'auto' }}>
-                    <CategoryCard {...category} />
+                    <CategoryCard {...category} onClick={() => handleCategoryClick(category)} />
                   </SwiperSlide>
                 ))}
               </Swiper>
@@ -534,7 +540,7 @@ export default function Home() {
               >
                 {transformedLevel3Categories.map((category, index) => (
                   <SwiperSlide key={category.id || index} style={{ width: 'auto' }}>
-                    <CategoryCard {...category} />
+                    <CategoryCard {...category} onClick={() => handleCategoryClick(category)} />
                   </SwiperSlide>
                 ))}
               </Swiper>

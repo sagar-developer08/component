@@ -21,6 +21,9 @@ export const catalog = {
   products: `${BASES.catalog}/products`,
   stores: `${BASES.catalog}/stores`,
   storesDiscovery: `${BASES.catalog}/stores/discovery`,
+  popularCategories: `${BASES.catalog}/categories/level3`,
+  level2Categories: `${BASES.catalog}/categories/level2`,
+  categoryChildren: (slug) => `${BASES.catalog}/categories/level2/${slug}/children`,
 }
 
 // Auth endpoints (auth base is explicitly namespaced with /auth as requested)
