@@ -28,6 +28,7 @@ export const catalog = {
   popularCategories: `${BASES.catalog}/categories/level3`,
   level2Categories: `${BASES.catalog}/categories/level2`,
   categoryChildren: (slug) => `${BASES.catalog}/categories/level2/${slug}/children`,
+  searchProducts: (query) => `${BASES.catalog}/search/products?q=${encodeURIComponent(query)}`,
 }
 
 // Auth endpoints (auth base is explicitly namespaced with /auth as requested)

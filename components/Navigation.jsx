@@ -16,6 +16,10 @@ export default function Navigation() {
   const [navHeight, setNavHeight] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
   const [wishlistOpen, setWishlistOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  const [isDebouncing, setIsDebouncing] = useState(false)
   
   const router = useRouter()
   const pathname = usePathname()
@@ -38,6 +42,35 @@ export default function Navigation() {
   const wishlistCount = useSelector(state => state.wishlist.items?.length || 0)
   const cartCount = useSelector(state => state.cart.itemsCount || 0)
 
+  const handleSearchClick = () => {
+    setSearchOpen(!searchOpen)
+    if (!searchOpen) {
+      // Focus the input when opening
+      setTimeout(() => {
+        const searchInput = document.getElementById('search-input')
+        if (searchInput) searchInput.focus()
+      }, 100)
+    }
+  }
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      // Navigate to search results or perform search
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      setSearchOpen(false)
+      setSearchQuery('')
+      setDebouncedQuery('')
+    }
+  }
+
+  const handleSearchClose = () => {
+    setSearchOpen(false)
+    setSearchQuery('')
+    setDebouncedQuery('')
+    setIsDebouncing(false)
+  }
+
   useEffect(() => {
     const updateHeight = () => {
       if (navRef.current) {
@@ -48,6 +81,40 @@ export default function Navigation() {
     window.addEventListener('resize', updateHeight)
     return () => window.removeEventListener('resize', updateHeight)
   }, [])
+
+  // Debounce search query
+  useEffect(() => {
+    if (searchQuery) {
+      setIsDebouncing(true)
+    }
+    
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery)
+      setIsDebouncing(false)
+    }, 500) // 500ms delay
+
+    return () => {
+      clearTimeout(timer)
+      setIsDebouncing(false)
+    }
+  }, [searchQuery])
+
+  // Close search when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchOpen && !event.target.closest('.search-container') && !event.target.closest('.action-btn')) {
+        setSearchOpen(false)
+        setSearchQuery('')
+        setDebouncedQuery('')
+        setIsDebouncing(false)
+      }
+    }
+
+    if (searchOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [searchOpen])
 
   const navItems = [
     {
@@ -159,7 +226,7 @@ export default function Navigation() {
                     fill="black" />
                   </svg>
                 </div>
-                <div className="action-btn">
+                <div className="action-btn" onClick={handleSearchClick}>
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                     <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
                     <circle cx="20" cy="20" r="7.5" stroke="black" strokeWidth="1.66667" />
@@ -193,6 +260,45 @@ export default function Navigation() {
               </div>
             </div>
           </div>
+
+          {/* Search Input */}
+          {searchOpen && (
+            <div className="search-container">
+              <div className="container">
+                <form onSubmit={handleSearchSubmit} className="search-form">
+                  <div className="search-input-wrapper">
+                    {isDebouncing ? (
+                      <div className="search-loading">
+                        <div className="loading-spinner"></div>
+                      </div>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="search-icon">
+                        <circle cx="9" cy="9" r="8" stroke="#666" strokeWidth="1.5" />
+                        <path d="m21 21-4.35-4.35" stroke="#666" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    )}
+                    <input
+                      id="search-input"
+                      type="text"
+                      placeholder="Search for products, stores, categories..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="search-input"
+                      style={{ 
+                        background: isDebouncing ? '#F0F9FF' : '#F9FAFB',
+                        borderColor: isDebouncing ? '#0082FF' : '#E5E7EB'
+                      }}
+                    />
+                    <button type="button" onClick={handleSearchClose} className="search-close">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M15 5L5 15M5 5L15 15" stroke="#666" strokeWidth="1.5" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
 
           <style jsx>{`
         .navbar {
@@ -318,11 +424,113 @@ export default function Navigation() {
         .profile-btn:hover {
           transform: scale(1.05);
         }
+
+        .search-container {
+          position: absolute;
+          top: 100%;
+          left: 0;
+          width: 100%;
+          background: #FFF;
+          border-bottom: 1px solid rgba(0, 130, 255, 0.24);
+          padding: 16px 0;
+          z-index: 999;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .search-form {
+          width: 100%;
+          max-width: 1392px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+        }
+
+        .search-input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          width: 100%;
+          max-width: 1392px;
+        }
+
+        .search-icon {
+          position: absolute;
+          left: 16px;
+          z-index: 1;
+        }
+
+        .search-input {
+          width: 100%;
+          height: 48px;
+          padding: 12px 16px 12px 48px;
+          border: 2px solid #E5E7EB;
+          border-radius: 24px;
+          font-size: 16px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          outline: none;
+          transition: all 0.2s ease;
+          background: #F9FAFB;
+          box-sizing: border-box;
+        }
+
+        .search-input:focus {
+          border-color: #0082FF;
+          background: #FFF;
+          box-shadow: 0 0 0 3px rgba(0, 130, 255, 0.1);
+        }
+
+        .search-input::placeholder {
+          color: #9CA3AF;
+        }
+
+        .search-close {
+          position: absolute;
+          right: 16px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 4px;
+          border-radius: 50%;
+          transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .search-close:hover {
+          background: #F3F4F6;
+        }
+
+        .search-loading {
+          position: absolute;
+          left: 16px;
+          z-index: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .loading-spinner {
+          width: 16px;
+          height: 16px;
+          border: 2px solid #E5E7EB;
+          border-top: 2px solid #0082FF;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
       `}</style>
         </div>
 
         {/* Spacer to prevent content from jumping under the fixed navbar */}
-        <div style={{ height: navHeight }} aria-hidden />
+        <div style={{ height: navHeight + (searchOpen ? 80 : 0) }} aria-hidden />
       </div>
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       <WishlistDrawer open={wishlistOpen} onClose={() => setWishlistOpen(false)} />
