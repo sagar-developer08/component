@@ -23,6 +23,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { fetchProducts } from '@/store/slices/productsSlice'
 import { fetchBrands } from '@/store/slices/brandsSlice'
 import { fetchStores } from '@/store/slices/storesSlice'
+import { fetchLevel2Categories } from '@/store/slices/categoriesSlice'
 import { ProductCardSkeleton, CategoryCardSkeleton } from '@/components/SkeletonLoader'
 
 // Helper function to transform API product data to match ProductCard component format
@@ -62,6 +63,36 @@ const transformStoreData = (apiStore) => {
   return {
     name: apiStore.name || 'Store Name',
     image: apiStore.logo || 'https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412'
+  }
+}
+
+// Helper function to transform API category data to match CategoryCard component format
+const transformCategoryData = (apiCategory) => {
+  // Map category names to appropriate images
+  const getCategoryImage = (categoryName) => {
+    const imageMap = {
+      'Beauty & Personal Care': 'https://api.builder.io/api/v1/image/assets/TEMP/81e3ee1beeaa2c8941600c27d3ec9733bac0869c?width=412',
+      'Dairy & Eggs': 'https://api.builder.io/api/v1/image/assets/TEMP/b96c7d3062a93a3b6d8e9a2a4bd11acfa542dced?width=412',
+      'Electronics': 'https://api.builder.io/api/v1/image/assets/TEMP/bb3de20fdb53760293d946ca033adbf4489bed56?width=412',
+      'Electronics & Gadgets': 'https://api.builder.io/api/v1/image/assets/TEMP/bb3de20fdb53760293d946ca033adbf4489bed56?width=412',
+      'Fashion': 'https://api.builder.io/api/v1/image/assets/TEMP/5944fb96605e58c0b0a225611b6e462119c6f6bd?width=412',
+      'Fashion & Apparel': 'https://api.builder.io/api/v1/image/assets/TEMP/5944fb96605e58c0b0a225611b6e462119c6f6bd?width=412',
+      'Fresh Produce': 'https://api.builder.io/api/v1/image/assets/TEMP/b96c7d3062a93a3b6d8e9a2a4bd11acfa542dced?width=412',
+      'Groceries': 'https://api.builder.io/api/v1/image/assets/TEMP/b96c7d3062a93a3b6d8e9a2a4bd11acfa542dced?width=412',
+      'Household': 'https://api.builder.io/api/v1/image/assets/TEMP/f291940d1feaf8e5cb0a7335f629e12091d26a73?width=412'
+    }
+    return imageMap[categoryName] || 'https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412'
+  }
+
+  return {
+    id: apiCategory._id,
+    name: apiCategory.name || 'Category Name',
+    image: getCategoryImage(apiCategory.name),
+    slug: apiCategory.slug,
+    onClick: () => {
+      // Handle category click - you can navigate to category page or show products
+      console.log('Category clicked:', apiCategory.name, apiCategory.slug)
+    }
   }
 }
 
@@ -224,6 +255,7 @@ export default function Home() {
   const { products, bestsellers, offers, qliqPlusDeals, featured, loading, error } = useSelector(state => state.products);
   const { brands, loading: brandsLoading, error: brandsError } = useSelector(state => state.brands);
   const { stores, topStores, newStores, loading: storesLoading, error: storesError } = useSelector(state => state.stores);
+  const { level2Categories, loading: categoriesLoading, error: categoriesError } = useSelector(state => state.categories);
 
   const swiperRef = useRef(null);
   const topStoresSwiperRef = useRef(null);
@@ -234,11 +266,12 @@ export default function Home() {
   const featuredOffersSwiperRef = useRef(null);
   const [activeStoreFilter, setActiveStoreFilter] = useState('all');
 
-  // Fetch products, brands, and stores on component mount
+  // Fetch products, brands, stores, and categories on component mount
   useEffect(() => {
     dispatch(fetchProducts());
     dispatch(fetchBrands());
     dispatch(fetchStores());
+    dispatch(fetchLevel2Categories());
   }, [dispatch]);
 
   // Transform API data for different sections
@@ -250,6 +283,7 @@ export default function Home() {
   const transformedBrands = brands.map(transformBrandData);
   const transformedTopStores = topStores.map(transformStoreData);
   const transformedNewStores = newStores.map(transformStoreData);
+  const transformedCategories = level2Categories.map(transformCategoryData);
 
   const handlePrev = () => {
     if (swiperRef.current && swiperRef.current.swiper) {
@@ -414,11 +448,23 @@ export default function Home() {
         <section className="section">
           <div className="container">
             <SectionHeader title="Other Categories" showNavigation={true} />
-            <div className="categories-grid">
-              {categoryData.map((category, index) => (
-                <CategoryCard key={index} {...category} />
-              ))}
-            </div>
+            {categoriesLoading ? (
+              <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+                {[...Array(6)].map((_, index) => (
+                  <CategoryCardSkeleton key={`category-skeleton-${index}`} />
+                ))}
+              </div>
+            ) : categoriesError ? (
+              <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+                Error loading categories: {categoriesError}
+              </div>
+            ) : (
+              <div className="categories-grid">
+                {transformedCategories.map((category, index) => (
+                  <CategoryCard key={category.id || index} {...category} />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 

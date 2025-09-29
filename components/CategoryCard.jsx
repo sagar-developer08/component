@@ -2,11 +2,20 @@
 
 import Image from 'next/image'
 
-export default function CategoryCard({ name, image, onClick }) {
+export default function CategoryCard({ name, image, onClick, id, slug }) {
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      // Default behavior - you can customize this
+      console.log('Category clicked:', { name, id, slug });
+    }
+  };
+
   return (
-    <div className="category-card" onClick={onClick}>
+    <div className="category-card" onClick={handleClick}>
       <Image
-        src="https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412"
+        src={image || "https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412"}
         alt={name}
         width={206}
         height={206}
