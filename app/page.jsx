@@ -54,14 +54,17 @@ const transformProductData = (apiProduct) => {
 const transformBrandData = (apiBrand) => {
   return {
     name: apiBrand.name || 'Brand Name',
-    image: apiBrand.logo || 'https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412'
+    image: apiBrand.logo || 'https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412',
+    slug: apiBrand.slug || apiBrand.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
   }
 }
 
 // Helper function to transform API store data to match CategoryCard component format
 const transformStoreData = (apiStore) => {
   return {
+    id: apiStore._id,
     name: apiStore.name || 'Store Name',
+    slug: apiStore.slug || apiStore.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
     image: apiStore.logo || 'https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412'
   }
 }
@@ -437,6 +440,18 @@ export default function Home() {
     router.push(`/category/${slug}`);
   };
 
+  const handleBrandClick = (brand) => {
+    // Use the slug from the API data or create a slug from the name
+    const slug = brand.slug || brand.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    router.push(`/${slug}`);
+  };
+
+  const handleStoreClick = (store) => {
+    // Use the slug from the API data or create a slug from the name
+    const slug = store.slug || store.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    router.push(`/${slug}?storeId=${store.id}`);
+  };
+
   const getFilteredStores = () => {
     switch (activeStoreFilter) {
       case 'top':
@@ -646,7 +661,7 @@ export default function Home() {
               >
                 {transformedBrands.map((brand, index) => (
                   <SwiperSlide key={brand.name || index} style={{ width: 'auto' }}>
-                    <CategoryCard {...brand} />
+                    <CategoryCard {...brand} onClick={() => handleBrandClick(brand)} />
                   </SwiperSlide>
                 ))}
               </Swiper>

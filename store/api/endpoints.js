@@ -18,7 +18,10 @@ export const BASES = {
 export const catalog = {
   base: BASES.catalog,
   brands: `${BASES.catalog}/brands/top`,
+  brandBySlug: (slug) => `${BASES.catalog}/brands/slug/${slug}`,
   products: `${BASES.catalog}/products`,
+  productsByBrand: (brandSlug) => `${BASES.catalog}/products/brand/${brandSlug}`,
+  productsByStore: (storeId) => `${BASES.catalog}/products/store/${storeId}`,
   stores: `${BASES.catalog}/stores`,
   storesDiscovery: `${BASES.catalog}/stores/discovery`,
   popularCategories: `${BASES.catalog}/categories/level3`,

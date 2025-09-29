@@ -103,7 +103,10 @@ export default function Home() {
                   deliveryTime={store.deliveryTime || '30 Min'}
                   image={store.image || store.logo || '/iphone.jpg'}
                   location={(store.address && store.address.city) || 'Dubai, UAE'}
-                  onClick={() => router.push(`/storeDetail?storeId=${store._id || store.id}`)}
+                  onClick={() => {
+                    const slug = store.slug || store.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                    router.push(`/${slug}?storeId=${store._id || store.id}`);
+                  }}
                 />
               ))
             )}
