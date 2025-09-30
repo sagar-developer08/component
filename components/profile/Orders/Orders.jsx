@@ -38,9 +38,11 @@ export default function Orders() {
     }
   }
 
-  const handleOrderClick = (order) => {
-    // Navigate to order history page with order data
-    router.push(`/orderhistory?orderId=${order._id}`)
+  const handleOrderClick = (order, item) => {
+    // Navigate to order history page with order and specific product
+    const pid = item?.productId || item?.id || ''
+    const url = pid ? `/orderhistory?orderId=${order._id}&productId=${encodeURIComponent(pid)}` : `/orderhistory?orderId=${order._id}`
+    router.push(url)
   }
 
   if (loading) {
@@ -74,56 +76,55 @@ export default function Orders() {
   return (
     <div className={styles.ordersList}>
       {orders.map((order) => (
-        <div 
-          key={order._id} 
-          className={styles.orderItem}
-          onClick={() => handleOrderClick(order)}
-          style={{ cursor: 'pointer' }}
-        >
-          <div className={styles.orderImageSection}>
-            {order.items && order.items.length > 0 ? (
-              <Image
-                src="/iphone.jpg" // You might want to use actual product images
-                alt={order.items[0].name}
-                width={120}
-                height={80}
-                className={styles.orderImage}
-              />
-            ) : (
-              <div className={styles.orderImage} style={{ backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                No Image
+        (order.items || []).map((item, idx) => (
+          <div 
+            key={`${order._id}_${idx}`}
+            className={styles.orderItem}
+            onClick={() => handleOrderClick(order, item)}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className={styles.orderImageSection}>
+              {item ? (
+                <Image
+                  src="/iphone.jpg"
+                  alt={item.name || 'Product'}
+                  width={120}
+                  height={80}
+                  className={styles.orderImage}
+                />
+              ) : (
+                <div className={styles.orderImage} style={{ backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  No Image
+                </div>
+              )}
+            </div>
+            <div className={styles.orderInfoSection}>
+              <div className={styles.orderBrand}>Order #{order.orderNumber}</div>
+              <div className={styles.orderName}>
+                {item?.name || 'No items'}
               </div>
-            )}
-          </div>
-          <div className={styles.orderInfoSection}>
-            <div className={styles.orderBrand}>Order #{order.orderNumber}</div>
-            <div className={styles.orderName}>
-              {order.items && order.items.length > 0 
-                ? `${order.items[0].name}${order.items.length > 1 ? ` +${order.items.length - 1} more` : ''}`
-                : 'No items'
-              }
+              <div className={styles.orderPrice}>
+                {"AED"} {item?.price ?? order.totalAmount}
+              </div>
+              <div 
+                className={styles.orderStatus}
+                style={{ color: getStatusColor(order.status) }}
+              >
+                {order.status}
+              </div>
             </div>
-            <div className={styles.orderPrice}>
-              {order.currency} {order.totalAmount}
-            </div>
-            <div 
-              className={styles.orderStatus}
-              style={{ color: getStatusColor(order.status) }}
-            >
-              {order.status}
-            </div>
-          </div>
-          <div className={styles.orderRightSection}>
-            <div className={styles.orderDate}>{formatDate(order.createdAt)}</div>
-            <div className={styles.paymentStatus} style={{ 
-              color: order.paymentStatus === 'paid' ? '#4CAF50' : '#FF9800',
-              fontSize: '12px',
-              marginTop: '4px'
-            }}>
-              {order.paymentStatus}
+            <div className={styles.orderRightSection}>
+              <div className={styles.orderDate}>{formatDate(order.createdAt)}</div>
+              <div className={styles.paymentStatus} style={{ 
+                color: order.paymentStatus === 'paid' ? '#4CAF50' : '#FF9800',
+                fontSize: '12px',
+                marginTop: '4px'
+              }}>
+                {order.paymentStatus}
+              </div>
             </div>
           </div>
-        </div>
+        ))
       ))}
     </div>
   )

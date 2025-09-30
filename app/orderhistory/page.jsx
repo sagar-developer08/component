@@ -11,6 +11,7 @@ import Image from 'next/image';
 const OrderHistoryPage = () => {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
+  const productId = searchParams.get('productId');
   const dispatch = useDispatch();
   const { orders, loading, error } = useSelector(state => state.profile);
   
@@ -34,12 +35,17 @@ const OrderHistoryPage = () => {
     if (orders && orders.length > 0 && orderId) {
       const order = orders.find(o => o._id === orderId);
       if (order) {
-        setOrderData(order);
+        if (productId && Array.isArray(order.items)) {
+          const filtered = { ...order, items: order.items.filter(it => (it.productId || it.id || '').toString() === productId.toString()) };
+          setOrderData(filtered.items.length > 0 ? filtered : order);
+        } else {
+          setOrderData(order);
+        }
       } else {
         console.error('Order not found');
       }
     }
-  }, [orders, orderId]);
+  }, [orders, orderId, productId]);
 
   const handleRatingChange = (newRating) => {
     setRating(newRating);
@@ -95,6 +101,90 @@ const OrderHistoryPage = () => {
       default:
         return '#666';
     }
+  };
+
+  // Compute per-item unit price including VAT and Tax
+  const getItemUnitPriceWithTaxes = (item, order) => {
+    const base = Number(item?.unitPrice ?? item?.price ?? 0) || 0;
+    const qty = Math.max(1, Number(item?.quantity) || 1);
+    const lineTax = Number(item?.tax) || 0;
+    const lineVat = Number(item?.vat) || 0;
+
+    // Prefer item-level tax/vat if provided (assumed totals for the line)
+    if (lineTax || lineVat) {
+      const perUnitTaxes = (lineTax + lineVat) / qty;
+      const inclusive = base + perUnitTaxes;
+      return Number(inclusive.toFixed(2));
+    }
+
+    // Otherwise compute a tax rate from order totals and apply to the unit price
+    const derivedSubtotal = Number(order?.subtotal);
+    const fallbackSubtotal = Array.isArray(order?.items)
+      ? order.items.reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.quantity) || 1), 0)
+      : 0;
+    const orderSubtotal = (isNaN(derivedSubtotal) || derivedSubtotal <= 0) ? fallbackSubtotal : derivedSubtotal;
+    const orderTax = Number(order?.tax) || 0;
+    const orderVat = Number(order?.vat) || 0;
+
+    if (orderSubtotal > 0 && (orderTax || orderVat)) {
+      const taxRate = (orderTax + orderVat) / orderSubtotal; // fraction applied to unit price
+      const inclusive = base * (1 + taxRate);
+      return Number(inclusive.toFixed(2));
+    }
+
+    // Fallback: no taxes available
+    return Number(base.toFixed(2));
+  };
+
+  // Compute subtotal from items' unit prices (excluding taxes), respecting quantity
+  const getItemsSubtotal = (order) => {
+    if (!order || !Array.isArray(order.items)) return 0;
+    const sum = order.items.reduce((acc, it) => {
+      const unit = Number(it?.unitPrice ?? it?.price ?? 0) || 0;
+      const qty = Math.max(1, Number(it?.quantity) || 1);
+      return acc + unit * qty;
+    }, 0);
+    return Number(sum.toFixed(2));
+  };
+
+  // Compute total tax across displayed items (prefer item-level tax, else proportional share from order.tax)
+  const getItemsTax = (order) => {
+    if (!order || !Array.isArray(order.items)) return 0;
+    const orderSubtotal = getItemsSubtotal(order) || 0;
+    const orderTax = Number(order?.tax) || 0;
+    let sum = 0;
+    for (const it of order.items) {
+      const qty = Math.max(1, Number(it?.quantity) || 1);
+      const unit = Number(it?.unitPrice ?? it?.price ?? 0) || 0;
+      const lineBase = unit * qty;
+      const lineTax = Number(it?.tax) || 0;
+      if (lineTax) {
+        sum += lineTax;
+      } else if (orderSubtotal > 0 && orderTax) {
+        sum += (lineBase / orderSubtotal) * orderTax;
+      }
+    }
+    return Number(sum.toFixed(2));
+  };
+
+  // Compute total VAT across displayed items (prefer item-level vat, else proportional share from order.vat)
+  const getItemsVat = (order) => {
+    if (!order || !Array.isArray(order.items)) return 0;
+    const orderSubtotal = getItemsSubtotal(order) || 0;
+    const orderVat = Number(order?.vat) || 0;
+    let sum = 0;
+    for (const it of order.items) {
+      const qty = Math.max(1, Number(it?.quantity) || 1);
+      const unit = Number(it?.unitPrice ?? it?.price ?? 0) || 0;
+      const lineBase = unit * qty;
+      const lineVat = Number(it?.vat) || 0;
+      if (lineVat) {
+        sum += lineVat;
+      } else if (orderSubtotal > 0 && orderVat) {
+        sum += (lineBase / orderSubtotal) * orderVat;
+      }
+    }
+    return Number(sum.toFixed(2));
   };
 
   if (loading) {
@@ -343,7 +433,7 @@ const OrderHistoryPage = () => {
                   <h6 className={styles.productBrand}>Product</h6>
                   <h4 className={styles.productName}>{item.name}</h4>
                   <p className={styles.productQuantity}>Qty: {item.quantity}</p>
-                  <p className={styles.productPrice}>{orderData.currency} {item.price}</p>
+                  <p className={styles.productPrice}>{'AED'} {(Number(item?.unitPrice ?? item?.price ?? 0)).toFixed(2)}</p>
                 </div>
               </div>
             ))}
@@ -351,37 +441,37 @@ const OrderHistoryPage = () => {
             <div className={styles.costBreakdown}>
               <div className={styles.costItem}>
                 <span className={styles.costLabel}>Subtotal</span>
-                <span className={styles.costValue}>{orderData.currency} {orderData.subtotal || orderData.totalAmount}</span>
+                <span className={styles.costValue}>{'AED'} {getItemsSubtotal(orderData)}</span>
               </div>
               <div className={styles.costItem}>
                 <span className={styles.costLabel}>Shipping</span>
                 <span className={styles.costValue}>
-                  {orderData.shippingCost === 0 ? 'FREE' : `${orderData.currency} ${orderData.shippingCost}`}
+                  {orderData.shippingCost === 0 ? 'FREE' : `${'AED'} ${orderData.shippingCost}`}
                 </span>
               </div>
-              {orderData.tax && (
+              {getItemsTax(orderData) > 0 && (
                 <div className={styles.costItem}>
                   <span className={styles.costLabel}>Tax</span>
-                  <span className={styles.costValue}>{orderData.currency} {orderData.tax}</span>
+                  <span className={styles.costValue}>{'AED'} {getItemsTax(orderData)}</span>
                 </div>
               )}
-              {orderData.vat && (
+              {getItemsVat(orderData) > 0 && (
                 <div className={styles.costItem}>
                   <span className={styles.costLabel}>VAT</span>
-                  <span className={styles.costValue}>{orderData.currency} {orderData.vat}</span>
+                  <span className={styles.costValue}>{'AED'} {getItemsVat(orderData)}</span>
                 </div>
               )}
               {orderData.discount && orderData.discount > 0 && (
                 <div className={styles.costItem}>
                   <span className={styles.costLabel}>Discount</span>
                   <span className={`${styles.costValue} ${styles.discountValue}`}>
-                    - {orderData.currency} {orderData.discount}
+                    - {orderData.currency} {Number(orderData.discount).toFixed(2)}
                   </span>
                 </div>
               )}
               <div className={`${styles.costItem} ${styles.totalItem}`}>
                 <span className={styles.costLabel}>Order Total</span>
-                <span className={styles.totalValue}>{orderData.currency} {orderData.totalAmount}</span>
+                <span className={styles.totalValue}>{'AED'} {Number(getItemsSubtotal(orderData) + getItemsTax(orderData) + getItemsVat(orderData)).toFixed(2)}</span>
               </div>
             </div>
 
@@ -396,7 +486,7 @@ const OrderHistoryPage = () => {
           </div>
         </div>
       </div>
-      </div>
+    </div>
     </div>
   );
 };
