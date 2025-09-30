@@ -115,6 +115,7 @@ export const createStripePaymentIntent = createAsyncThunk(
           price: item.price || 0,
           image: item.image || 'https://example.com/image.jpg'
         })),
+        total: orderData.total,
         currency: 'usd'
       }
 

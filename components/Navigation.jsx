@@ -3,16 +3,20 @@
 
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useRouter, usePathname } from 'next/navigation'
 import CartDrawer from './CartDrawer'
 import WishlistDrawer from './WishlistDrawer'
 import LoginModal from './LoginModal'
 import { useAuth } from '../contexts/AuthContext'
+import { fetchCart } from '@/store/slices/cartSlice'
+import { fetchWishlist } from '@/store/slices/wishlistSlice'
+import { getUserFromCookies } from '@/utils/userUtils'
 
 export default function Navigation() {
   // Measure navbar height so we can add a spacer that preserves layout
   const navRef = useRef(null)
+  const dispatch = useDispatch()
   const [navHeight, setNavHeight] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
   const [wishlistOpen, setWishlistOpen] = useState(false)
@@ -23,7 +27,7 @@ export default function Navigation() {
   
   const router = useRouter()
   const pathname = usePathname()
-  const { requireAuth, loginModalOpen, closeLoginModal } = useAuth()
+  const { requireAuth, loginModalOpen, closeLoginModal, isAuthenticated } = useAuth()
   
   // Determine active nav based on current path
   const getActiveNav = () => {
@@ -31,16 +35,15 @@ export default function Navigation() {
     if (pathname === '/hypermarket') return 'Hypermarket'
     if (pathname === '/eshop') return 'E-Shop'
     if (pathname === '/supermarket') return 'Supermarket'
-    // Remove highlight for store detail page
-    if (pathname === '/storeDetail') return ''
     if (pathname === '/stores') return 'Stores'
-    if (pathname === '/profile') return 'Profile'
-    if (pathname === '/checkout') return 'Checkout'
-    return 'Discovery'
+    // For any other route (including details, profile, checkout, etc.), do not highlight
+    return ''
   }
   const activeNav = getActiveNav()
   const wishlistCount = useSelector(state => state.wishlist.items?.length || 0)
   const cartCount = useSelector(state => state.cart.itemsCount || 0)
+  const displayCartCount = isAuthenticated ? cartCount : 0
+  const displayWishlistCount = isAuthenticated ? wishlistCount : 0
 
   const handleSearchClick = () => {
     setSearchOpen(!searchOpen)
@@ -82,6 +85,33 @@ export default function Navigation() {
     return () => window.removeEventListener('resize', updateHeight)
   }, [])
 
+  // Reset local badge counts when logged out (defensive; actual state remains in Redux)
+  useEffect(() => {
+    const handleLogout = () => {
+      // No-op: counts derive from Redux but we keep this if we need side effects
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('app:logout', handleLogout)
+      return () => window.removeEventListener('app:logout', handleLogout)
+    }
+  }, [])
+
+  // When authenticated, fetch cart and wishlist to populate counts
+  useEffect(() => {
+    if (!isAuthenticated) return
+    (async () => {
+      try {
+        const userId = await getUserFromCookies()
+        if (userId) {
+          dispatch(fetchCart(userId))
+        }
+      } catch (e) {
+        console.error('Nav: failed to fetch cart after login', e)
+      }
+      dispatch(fetchWishlist())
+    })()
+  }, [isAuthenticated, dispatch])
+
   // Debounce search query
   useEffect(() => {
     if (searchQuery) {
@@ -102,7 +132,7 @@ export default function Navigation() {
   // Close search when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (searchOpen && !event.target.closest('.search-container') && !event.target.closest('.action-btn')) {
+      if (searchOpen && !event.target.closest('.search-input-wrapper') && !event.target.closest('.action-btn')) {
         setSearchOpen(false)
         setSearchQuery('')
         setDebouncedQuery('')
@@ -206,7 +236,7 @@ export default function Navigation() {
 
               {/* nav-menu */}
               <div className="nav-menu">
-                {navItems.map(item => (
+                {!searchOpen && navItems.map(item => (
                   <div
                     key={item.key}
                     className={`nav-item${activeNav === item.key ? ' active' : ''}`}
@@ -216,6 +246,39 @@ export default function Navigation() {
                     <span>{item.label}</span>
                   </div>
                 ))}
+                {searchOpen && (
+                  <form onSubmit={handleSearchSubmit} className="search-form">
+                    <div className="search-input-wrapper">
+                      {isDebouncing ? (
+                        <div className="search-loading">
+                          <div className="loading-spinner"></div>
+                        </div>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="search-icon">
+                          <circle cx="9" cy="9" r="8" stroke="#666" strokeWidth="1.5" />
+                          <path d="m21 21-4.35-4.35" stroke="#666" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      )}
+                      <input
+                        id="search-input"
+                        type="text"
+                        placeholder="Search for products, stores, categories..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="search-input"
+                        style={{ 
+                          background: isDebouncing ? '#F0F9FF' : '#F9FAFB',
+                          borderColor: isDebouncing ? '#0082FF' : '#E5E7EB'
+                        }}
+                      />
+                      <button type="button" onClick={handleSearchClose} className="search-close">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                          <path d="M15 5L5 15M5 5L15 15" stroke="#666" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
               {/* nav-actions */}
               <div className="nav-actions">
@@ -238,14 +301,14 @@ export default function Navigation() {
                     <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
                     <path d="M16.1818 15.1538C16.1818 15.1538 16.1818 11 20 11C23.8182 11 23.8182 15.1538 23.8182 15.1538M13 15.1538V29H27V15.1538H13Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  {cartCount > 0 && <span className="badge-count">{cartCount}</span>}
+                  {displayCartCount > 0 && <span className="badge-count">{displayCartCount}</span>}
                 </div>
                 <div className="action-btn" onClick={() => requireAuth(() => setWishlistOpen(true))}>
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                     <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
                     <path d="M20.09 25.5586L20 25.6458L19.901 25.5586C15.626 21.8005 12.8 19.3155 12.8 16.7956C12.8 15.0518 14.15 13.7439 15.95 13.7439C17.336 13.7439 18.686 14.6158 19.163 15.8016H20.837C21.314 14.6158 22.664 13.7439 24.05 13.7439C25.85 13.7439 27.2 15.0518 27.2 16.7956C27.2 19.3155 24.374 21.8005 20.09 25.5586ZM24.05 12C22.484 12 20.981 12.7063 20 13.8136C19.019 12.7063 17.516 12 15.95 12C13.178 12 11 14.1014 11 16.7956C11 20.0828 14.06 22.7771 18.695 26.849L20 28L21.305 26.849C25.94 22.7771 29 20.0828 29 16.7956C29 14.1014 26.822 12 24.05 12Z" fill="black" />
                   </svg>
-                  {wishlistCount > 0 && <span className="badge-count">{wishlistCount}</span>}
+                  {displayWishlistCount > 0 && <span className="badge-count">{displayWishlistCount}</span>}
                 </div>
 
                 <div className="profile-btn" onClick={() => requireAuth(() => router.push('/profile'))}>
@@ -261,44 +324,7 @@ export default function Navigation() {
             </div>
           </div>
 
-          {/* Search Input */}
-          {searchOpen && (
-            <div className="search-container">
-              <div className="container">
-                <form onSubmit={handleSearchSubmit} className="search-form">
-                  <div className="search-input-wrapper">
-                    {isDebouncing ? (
-                      <div className="search-loading">
-                        <div className="loading-spinner"></div>
-                      </div>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="search-icon">
-                        <circle cx="9" cy="9" r="8" stroke="#666" strokeWidth="1.5" />
-                        <path d="m21 21-4.35-4.35" stroke="#666" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    )}
-                    <input
-                      id="search-input"
-                      type="text"
-                      placeholder="Search for products, stores, categories..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="search-input"
-                      style={{ 
-                        background: isDebouncing ? '#F0F9FF' : '#F9FAFB',
-                        borderColor: isDebouncing ? '#0082FF' : '#E5E7EB'
-                      }}
-                    />
-                    <button type="button" onClick={handleSearchClose} className="search-close">
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M15 5L5 15M5 5L15 15" stroke="#666" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
+          {/* Search Input moved inline into nav-menu when open */}
 
           <style jsx>{`
         .navbar {
@@ -530,7 +556,7 @@ export default function Navigation() {
         </div>
 
         {/* Spacer to prevent content from jumping under the fixed navbar */}
-        <div style={{ height: navHeight + (searchOpen ? 80 : 0) }} aria-hidden />
+        <div style={{ height: navHeight }} aria-hidden />
       </div>
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       <WishlistDrawer open={wishlistOpen} onClose={() => setWishlistOpen(false)} />

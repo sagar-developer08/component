@@ -21,6 +21,9 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchProducts } from '@/store/slices/productsSlice'
+import { fetchCart } from '@/store/slices/cartSlice'
+import { fetchWishlist } from '@/store/slices/wishlistSlice'
+import { getUserFromCookies } from '@/utils/userUtils'
 import { fetchBrands } from '@/store/slices/brandsSlice'
 import { fetchStores } from '@/store/slices/storesSlice'
 import { fetchPopularCategories, fetchLevel2Categories } from '@/store/slices/categoriesSlice'
@@ -286,6 +289,22 @@ export default function Home() {
     dispatch(fetchPopularCategories());
     dispatch(fetchLevel2Categories());
   }, [dispatch]);
+
+  // Ensure cart and wishlist are loaded on home page
+  useEffect(() => {
+    (async () => {
+      try {
+        const userId = await getUserFromCookies()
+        if (userId) {
+          dispatch(fetchCart(userId))
+        }
+      } catch (e) {
+        console.error('Failed to load cart on home:', e)
+      }
+      // Wishlist fetch uses token from cookies internally
+      dispatch(fetchWishlist())
+    })()
+  }, [dispatch])
 
   // Transform API data for different sections
   const transformedProducts = products.map(transformProductData);

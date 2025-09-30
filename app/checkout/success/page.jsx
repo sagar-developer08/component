@@ -1,15 +1,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
-import { getAuthToken } from '@/utils/userUtils'
+import { getAuthToken, getUserFromCookies } from '@/utils/userUtils'
 import styles from '../checkout.module.css'
 import successStyles from './success.module.css'
+import { removeFromCart, clearCart } from '@/store/slices/cartSlice'
 
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams()
+  const dispatch = useDispatch()
+  const cartItems = useSelector(state => state.cart.items || [])
   const [paymentStatus, setPaymentStatus] = useState('loading')
   const [paymentData, setPaymentData] = useState(null)
   const [error, setError] = useState(null)
@@ -109,6 +113,27 @@ export default function CheckoutSuccessPage() {
 
     handlePaymentSuccess()
   }, [searchParams])
+
+  // After success, remove all items from cart using API then clear local state
+  useEffect(() => {
+    if (paymentStatus !== 'success') return
+    (async () => {
+      try {
+        const userId = await getUserFromCookies()
+        if (userId && Array.isArray(cartItems) && cartItems.length > 0) {
+          await Promise.all(
+            cartItems.map(item =>
+              dispatch(removeFromCart({ userId, productId: item.productId || item.id })).unwrap().catch(() => {})
+            )
+          )
+        }
+      } catch (e) {
+        // ignore; we'll still clear local cart
+      } finally {
+        dispatch(clearCart())
+      }
+    })()
+  }, [paymentStatus, dispatch, cartItems])
 
   if (paymentStatus === 'loading') {
     return (

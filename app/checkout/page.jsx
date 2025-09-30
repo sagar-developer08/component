@@ -177,7 +177,7 @@ export default function CheckoutPage() {
       paymentMethod: selectedPaymentMethod,
       total: finalTotal,
       subtotal: finalTotal,
-      vat: finalTotal * 0.05,
+      vat: 0,
       shipping: 0,
       discount: 0
     }
@@ -203,7 +203,7 @@ export default function CheckoutPage() {
           paymentMethod: selectedPaymentMethod,
           total: finalTotal,
           subtotal: finalTotal,
-          vat: finalTotal * 0.05,
+          vat: 0,
           shipping: 0,
           discount: 0
         }
@@ -236,6 +236,7 @@ export default function CheckoutPage() {
           price: item.price || 0,
           image: item.image || undefined
         })),
+        total: finalTotal,
         currency: 'usd',
         successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/checkout`
@@ -360,18 +361,18 @@ export default function CheckoutPage() {
                       >
                 <div className={styles.addressType}>
                           <div className={styles.addressTypeInfo}>
-                            <FontAwesomeIcon 
+                            {/* <FontAwesomeIcon 
                               icon={
                                 address.type === 'home' ? faHome : 
                                 address.type === 'work' ? faBriefcase : 
                                 faMapMarkerAlt
                               } 
                               className={styles.addressTypeIcon}
-                            />
+                            /> */}
                             <span className={styles.addressLabel}>{address.type}</span>
-                            {address.isDefault && (
+                            {/* {address.isDefault && (
                               <span className={styles.defaultBadge}>Default</span>
-                            )}
+                            )} */}
                           </div>
                           {selectedAddress?.id === address.id && (
                             <div className={styles.selectedIndicator}>
@@ -390,7 +391,7 @@ export default function CheckoutPage() {
                           <div className={styles.addressContact}>{address.phone}</div>
                           <div className={styles.addressContact}>{address.email}</div>
                         </div>
-                        {!address.isDefault && (
+                        {/* {!address.isDefault && (
                           <button 
                             className={styles.setDefaultBtn}
                             onClick={(e) => {
@@ -400,7 +401,7 @@ export default function CheckoutPage() {
                           >
                             Set as Default
                           </button>
-                        )}
+                        )} */}
                       </div>
                     ))}
                   </div>
@@ -443,7 +444,7 @@ export default function CheckoutPage() {
                       <FontAwesomeIcon 
                         icon={faHome} 
                         className={styles.addressTabIcon}
-                        style={{ color: addressForm.type === 'home' ? '#0082FF' : '#E5E5E5' }}
+                        style={{ color: addressForm.type === 'home' ? '#FFFFFF' : '#000000' }}
                       />
                     </button>
                     <button 
@@ -455,7 +456,7 @@ export default function CheckoutPage() {
                       <FontAwesomeIcon 
                         icon={faBriefcase} 
                         className={styles.addressTabIcon}
-                        style={{ color: addressForm.type === 'work' ? '#0082FF' : '#E5E5E5' }}
+                        style={{ color: addressForm.type === 'work' ? '#FFFFFF' : '#000000' }}
                       />
                     </button>
                     <button 
@@ -467,7 +468,7 @@ export default function CheckoutPage() {
                       <FontAwesomeIcon 
                         icon={faMapMarkerAlt} 
                         className={styles.addressTabIcon}
-                        style={{ color: addressForm.type === 'other' ? '#0082FF' : '#E5E5E5' }}
+                        style={{ color: addressForm.type === 'other' ? '#FFFFFF' : '#000000' }}
                       />
                     </button>
                     <input 
@@ -630,7 +631,7 @@ export default function CheckoutPage() {
                       <FontAwesomeIcon 
                         icon={faHome} 
                         className={styles.addressTabIcon}
-                        style={{ color: addressForm.type === 'home' ? '#0082FF' : '#E5E5E5' }}
+                        style={{ color: addressForm.type === 'home' ? '#FFFFFF' : '#000000' }}
                       />
                     </button>
                     <button 
@@ -642,7 +643,7 @@ export default function CheckoutPage() {
                       <FontAwesomeIcon 
                         icon={faBriefcase} 
                         className={styles.addressTabIcon}
-                        style={{ color: addressForm.type === 'work' ? '#0082FF' : '#E5E5E5' }}
+                        style={{ color: addressForm.type === 'work' ? '#FFFFFF' : '#000000' }}
                       />
                     </button>
                     <button 
@@ -654,7 +655,7 @@ export default function CheckoutPage() {
                       <FontAwesomeIcon 
                         icon={faMapMarkerAlt} 
                         className={styles.addressTabIcon}
-                        style={{ color: addressForm.type === 'other' ? '#0082FF' : '#E5E5E5' }}
+                        style={{ color: addressForm.type === 'other' ? '#FFFFFF' : '#000000' }}
                       />
                     </button>
                     <input 
@@ -912,17 +913,13 @@ export default function CheckoutPage() {
                   <span>Shipping</span>
                   <span>FREE</span>
                 </div>
-                <div className={styles.totalRow}>
-                  <span>VAT</span>
-                    <span>AED {(finalTotal * 0.05).toFixed(2)}</span>
-                </div>
                 <div className={styles.totalRowDiscount}>
                   <span>Discount</span>
                     <span>- AED 0.00</span>
                 </div>
                 <div className={styles.totalRowFinal}>
                   <span>Order Total</span>
-                    <span>AED {(finalTotal * 1.05).toFixed(2)}</span>
+                    <span>AED {finalTotal.toFixed(2)}</span>
                   </div>
                 </div>
               )}

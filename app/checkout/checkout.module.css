@@ -196,8 +196,8 @@
   width: 40px;
   height: 40px;
   border-radius: 100px;
-  background: #0082FF;
-  border: none;
+  background: #F8F9FA;
+  border: 1px solid #0082FF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -206,6 +206,7 @@
 
 .addressTab.active {
   background: #0082FF;
+  border: none;
 }
 
 .addressLabelInput {
@@ -336,6 +337,15 @@
   color: #000;
   font-size: 14px;
   font-weight: 600;
+}
+.addressTypeInfo{
+  color: #000;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-direction: row;
 }
 
 .paymentMethods {

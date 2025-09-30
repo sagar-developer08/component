@@ -48,6 +48,11 @@ export function AuthProvider({ children }) {
       document.cookie = 'cognitoId=; Max-Age=0; Path=/; SameSite=Lax'
       document.cookie = 'accessToken=; Max-Age=0; Path=/; SameSite=Lax'
     }
+    // Broadcast an event so interested slices/components can clear auth-dependent state
+    if (typeof window !== 'undefined') {
+      const ev = new CustomEvent('app:logout')
+      window.dispatchEvent(ev)
+    }
     showToast('Logged out')
   }
 
