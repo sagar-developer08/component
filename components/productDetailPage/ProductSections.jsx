@@ -12,9 +12,9 @@ export default function ProductSections({ relatedProducts, productData }) {
     ? relatedProducts
     : (Array.isArray(relatedProducts?.data?.products) ? relatedProducts.data.products
       : Array.isArray(relatedProducts?.data?.items) ? relatedProducts.data.items
-      : Array.isArray(relatedProducts?.data) ? relatedProducts.data
-      : Array.isArray(relatedProducts?.items) ? relatedProducts.items
-      : [])
+        : Array.isArray(relatedProducts?.data) ? relatedProducts.data
+          : Array.isArray(relatedProducts?.items) ? relatedProducts.items
+            : [])
 
   const toggleAccordion = (index) => {
     setExpandedItem(expandedItem === index ? -1 : index)
@@ -57,7 +57,7 @@ export default function ProductSections({ relatedProducts, productData }) {
             displayValue = JSON.stringify(value)
           }
         }
-        
+
         specs.push({
           label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
           value: displayValue
@@ -106,7 +106,7 @@ export default function ProductSections({ relatedProducts, productData }) {
       Object.entries(productData.attributes).forEach(([key, value]) => {
         // Skip dimensions as it's handled separately
         if (key === 'dimensions') return
-        
+
         // Convert value to string if it's an object or array
         let displayValue = value
         if (typeof value === 'object' && value !== null) {
@@ -116,7 +116,7 @@ export default function ProductSections({ relatedProducts, productData }) {
             displayValue = JSON.stringify(value)
           }
         }
-        
+
         attrs.push({
           label: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
           value: displayValue
@@ -172,15 +172,15 @@ export default function ProductSections({ relatedProducts, productData }) {
             showButton={true}
             buttonText="Upgrade"
           />
-            <div className="products-grid">
-             {Array.isArray(relatedList) && relatedList.length > 0 ? relatedList.slice(0, 4).map((product, index) => (
-               <ProductCard key={product.id || `product-${index}`} {...product} />
-             )) : (
-               <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-                 No related products available
-               </div>
-             )}
-            </div>
+          <div className="products-grid">
+            {Array.isArray(relatedList) && relatedList.length > 0 ? relatedList.slice(0, 4).map((product, index) => (
+              <ProductCard key={product.id || `product-${index}`} {...product} />
+            )) : (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                No related products available
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -283,21 +283,46 @@ export default function ProductSections({ relatedProducts, productData }) {
         </div>
         <div className="reviews-ratings-container">
           <div className="reviews-left">
-            <h3 className="reviews-title-2">Write a Review</h3>
-            <form className="review-form">
-              <input className="form-input" type="text" placeholder="Name" />
-              <div className="form-upload-container">
-                <label className="form-upload-label">
-                  Upload Photo
-                  <input type="file" id="photo-upload" className="upload-input" />
-                </label>
+            {/* Overall Rating Summary */}
+            <div className="overall-rating-box">
+              <div className="overall-rating-label">Overall Rating</div>
+              <div className="overall-rating-score">4.0</div>
+              <div className="overall-rating-stars">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <svg key={i} width="28" height="28" viewBox="0 0 24 24" fill={i <= 4 ? "#2196F3" : "#E0E0E0"} style={{ marginRight: 2 }}>
+                    <path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" />
+                  </svg>
+                ))}
               </div>
-              <textarea className="form-textarea" placeholder="Review" rows={3} />
-              <div className="form-actions">
-                <button type="button" className="form-cancel">Cancel</button>
-                <button type="submit" className="form-submit">Submit</button>
+              <div className="overall-rating-based">Based on 25 ratings</div>
+              <div className="overall-rating-bars">
+                <div className="rating-bar-row">
+                  <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#2196F3" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 5</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: '79%', background: '#2196F3' }}></div></div>
+                  <span className="rating-bar-percent">79%</span>
+                </div>
+                <div className="rating-bar-row">
+                  <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#4CAF50" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 4</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: '9%', background: '#4CAF50' }}></div></div>
+                  <span className="rating-bar-percent">09%</span>
+                </div>
+                <div className="rating-bar-row">
+                  <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#FFC107" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 3</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: '3%', background: '#FFC107' }}></div></div>
+                  <span className="rating-bar-percent">03%</span>
+                </div>
+                <div className="rating-bar-row">
+                  <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#A0522D" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 2</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: '2%', background: '#A0522D' }}></div></div>
+                  <span className="rating-bar-percent">02%</span>
+                </div>
+                <div className="rating-bar-row">
+                  <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#F44336" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 1</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: '8%', background: '#F44336' }}></div></div>
+                  <span className="rating-bar-percent">08%</span>
+                </div>
               </div>
-            </form>
+            </div>
           </div>
           <div className="reviews-right">
             <div className="reviews-summary">
@@ -350,15 +375,15 @@ export default function ProductSections({ relatedProducts, productData }) {
             showButton={false}
             buttonText="Upgrade"
           />
-            <div className="products-grid">
-             {Array.isArray(relatedList) && relatedList.length > 0 ? relatedList.slice(0, 4).map((product, index) => (
-               <ProductCard key={product.id || `product-${index}`} {...product} />
-             )) : (
-               <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-                 No related products available
-               </div>
-             )}
-            </div>
+          <div className="products-grid">
+            {Array.isArray(relatedList) && relatedList.length > 0 ? relatedList.slice(0, 4).map((product, index) => (
+              <ProductCard key={product.id || `product-${index}`} {...product} />
+            )) : (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                No related products available
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -740,6 +765,87 @@ export default function ProductSections({ relatedProducts, productData }) {
           max-width: 1392px;
           margin: 0 auto;
           padding: 0 24px;
+        }
+          .reviews-left {
+          flex: 1;
+          max-width: 340px;
+        }
+        .reviews-title {
+          font-size: 32px;
+          font-weight: 600;
+          margin-bottom: 8px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+          .reviews-title-2 {
+          font-size: 24px;
+          font-weight: 600;
+          margin-bottom: 16px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+        .overall-rating-box {
+          background: #fff;
+          border-radius: 16px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          margin-bottom: 32px;
+          min-width: 320px;
+          max-width: 340px;
+        }
+        .overall-rating-label {
+          font-size: 24px;
+          font-weight: 600;
+          color: #000;
+          margin-bottom: 0;
+        }
+        .overall-rating-score {
+          font-size: 48px;
+          font-weight: 700;
+          color: #111;
+          margin-bottom: 4px;
+        }
+        .overall-rating-stars {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+        .overall-rating-based {
+          font-size: 15px;
+          color: #222;
+          margin-bottom: 18px;
+        }
+        .overall-rating-bars {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .rating-bar-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 15px;
+        }
+        .rating-bar-label {
+          width: 48px;
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          font-weight: 600;
+        }
+        .rating-bar-track {
+          flex: 1;
+          height: 8px;
+          background: #eee;
+          border-radius: 8px;
+          overflow: hidden;
+          margin: 0 8px;
+        }
+        .rating-bar-fill {
+          height: 100%;
+          border-radius: 8px;
+        }
+        .rating-bar-percent {
+          width: 38px;
+          text-align: right;
+          font-weight: 600;
         }
         .reviews-left {
           flex: 1;
