@@ -48,13 +48,94 @@ export const fetchStoreProducts = createAsyncThunk(
   }
 )
 
-// Async thunk for searching products
+// Async thunk for searching products with filters
 export const searchProducts = createAsyncThunk(
   'products/searchProducts',
-  async (query, { rejectWithValue }) => {
+  async ({ query, filters = {} }, { rejectWithValue }) => {
     try {
-      console.log('Searching for:', query)
-      const response = await fetch(search.products(query))
+      console.log('Searching for:', query, 'with filters:', filters)
+      
+      // Build query params from filters
+      const params = new URLSearchParams({ q: query })
+      
+      // Price filter
+      if (filters.price?.min !== undefined && filters.price?.min !== '') {
+        params.append('min_price', filters.price.min)
+      }
+      if (filters.price?.max !== undefined && filters.price?.max !== '') {
+        params.append('max_price', filters.price.max)
+      }
+      
+      // Availability filter
+      if (filters.availability instanceof Set) {
+        if (filters.availability.has('in') && !filters.availability.has('out')) {
+          params.append('in_stock', 'true')
+        } else if (filters.availability.has('out') && !filters.availability.has('in')) {
+          params.append('in_stock', 'false')
+        }
+      }
+      
+      // Rating filter
+      if (typeof filters.rating === 'number') {
+        params.append('min_rating', filters.rating)
+      }
+      
+      // Offer filter
+      if (filters.offer instanceof Set && filters.offer.has('on_offer')) {
+        params.append('is_offer', 'true')
+      }
+      
+      // Brand filter (multiple)
+      if (filters.brand instanceof Set && filters.brand.size > 0) {
+        Array.from(filters.brand).forEach(b => params.append('brand_id', b))
+      }
+      
+      // Store filter (multiple)
+      if (filters.store instanceof Set && filters.store.size > 0) {
+        Array.from(filters.store).forEach(s => params.append('store_id', s))
+      }
+      
+      // Category filters
+      const categoryMapping = {
+        'department': 'level2',
+        'subcategory': 'level3',
+        'category': 'level4'
+      }
+      for (const [key, apiParam] of Object.entries(categoryMapping)) {
+        if (filters[key] instanceof Set && filters[key].size > 0) {
+          // For simplicity, we'll use the first selected category (extend if needed)
+          const firstCat = Array.from(filters[key])[0]
+          params.append(apiParam, firstCat)
+        }
+      }
+      
+      // Tags filter
+      if (filters.tags instanceof Set && filters.tags.size > 0) {
+        Array.from(filters.tags).forEach(t => params.append('tags', t))
+      }
+      
+      // Dynamic attribute filters (attr.*)
+      Object.keys(filters).forEach(key => {
+        if (key.startsWith('attr.')) {
+          const attrKey = key.substring(5)
+          const values = filters[key] instanceof Set ? Array.from(filters[key]) : []
+          values.forEach(v => params.append(`attr_${attrKey}`, v))
+        }
+      })
+      
+      // Dynamic specification filters (spec.*)
+      Object.keys(filters).forEach(key => {
+        if (key.startsWith('spec.')) {
+          const specKey = key.substring(5)
+          const values = filters[key] instanceof Set ? Array.from(filters[key]) : []
+          values.forEach(v => params.append(`spec_${specKey}`, v))
+        }
+      })
+      
+      const url = `${search.base}/search/products?${params.toString()}`
+      console.log('Search URL:', url)
+      
+      const response = await fetch(url)
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)

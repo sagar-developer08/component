@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
@@ -9,7 +9,10 @@ import SectionHeader from '@/components/SectionHeader'
 import ProductCard from '@/components/ProductCard'
 import FilterDrawer from '@/components/FilterDrawer'
 import { fetchProducts } from '@/store/slices/productsSlice'
-import { catalog } from '@/store/api/endpoints'
+import { catalog, search } from '@/store/api/endpoints'
+import { buildFacetsFromCategoryFilters } from '@/utils/categoryFilters'
+import { buildFacetsFromBrandFilters } from '@/utils/brandFilters'
+import { buildFacetsFromStoreFilters } from '@/utils/storeFilters'
 
 // Helper function to transform API product data
 const transformProductData = (apiProduct) => {
@@ -43,11 +46,64 @@ export default function BrandPage() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [isStore, setIsStore] = useState(false)
   const [isCategory, setIsCategory] = useState(false)
+  const [filterData, setFilterData] = useState(null)
+  const [selectedFilters, setSelectedFilters] = useState({})
 
   // Fetch products when component mounts
   useEffect(() => {
     dispatch(fetchProducts())
   }, [dispatch])
+
+  // Fetch filter data for category, brand, and store pages
+  useEffect(() => {
+    const fetchFilterData = async () => {
+      if (categoryLevel && slug) {
+        // Fetch category filters
+        try {
+          const response = await fetch(search.categoryFilters(slug, categoryLevel))
+          if (response.ok) {
+            const data = await response.json()
+            console.log('Category Filter API Response:', data)
+            if (data.success && data.data) {
+              setFilterData(data.data)
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching category filter data:', error)
+        }
+      } else if (storeId) {
+        // Fetch store filters
+        try {
+          const response = await fetch(search.storeFilters(storeId))
+          if (response.ok) {
+            const data = await response.json()
+            console.log('Store Filter API Response:', data)
+            if (data.success && data.data) {
+              setFilterData(data.data)
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching store filter data:', error)
+        }
+      } else if (slug) {
+        // Fetch brand filters (when it's not a store and not a category)
+        try {
+          const response = await fetch(search.brandFilters(slug))
+          if (response.ok) {
+            const data = await response.json()
+            console.log('Brand Filter API Response:', data)
+            if (data.success && data.data) {
+              setFilterData(data.data)
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching brand filter data:', error)
+        }
+      }
+    }
+
+    fetchFilterData()
+  }, [slug, categoryLevel, storeId])
 
   // Fetch brand/store/category info and products by slug
   useEffect(() => {
@@ -60,8 +116,61 @@ export default function BrandPage() {
           if (storeId) {
             setIsStore(true)
             setIsCategory(false)
-            // Fetch store products using the store API endpoint
-            const response = await fetch(catalog.productsByStore(storeId))
+            
+            // Build filter params for store
+            const params = new URLSearchParams()
+            
+            // Price filter
+            if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
+              params.append('min_price', selectedFilters.price.min)
+            }
+            if (selectedFilters.price?.max !== undefined && selectedFilters.price?.max !== '') {
+              params.append('max_price', selectedFilters.price.max)
+            }
+            
+            // Availability filter
+            if (selectedFilters.availability instanceof Set) {
+              if (selectedFilters.availability.has('in') && !selectedFilters.availability.has('out')) {
+                params.append('in_stock', 'true')
+              } else if (selectedFilters.availability.has('out') && !selectedFilters.availability.has('in')) {
+                params.append('in_stock', 'false')
+              }
+            }
+            
+            // Rating filter
+            if (typeof selectedFilters.rating === 'number') {
+              params.append('min_rating', selectedFilters.rating)
+            }
+            
+            // Brand filter (multiple)
+            if (selectedFilters.brand instanceof Set && selectedFilters.brand.size > 0) {
+              Array.from(selectedFilters.brand).forEach(b => params.append('brand_id', b))
+            }
+            
+            // Dynamic attribute filters (attr.*)
+            Object.keys(selectedFilters).forEach(key => {
+              if (key.startsWith('attr.')) {
+                const attrKey = key.substring(5)
+                const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+                values.forEach(v => params.append(`attr_${attrKey}`, v))
+              }
+            })
+            
+            // Dynamic specification filters (spec.*)
+            Object.keys(selectedFilters).forEach(key => {
+              if (key.startsWith('spec.')) {
+                const specKey = key.substring(5)
+                const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+                values.forEach(v => params.append(`spec_${specKey}`, v))
+              }
+            })
+            
+            // Fetch store products with filters
+            const url = params.toString() 
+              ? `${catalog.productsByStore(storeId)}?${params.toString()}`
+              : catalog.productsByStore(storeId)
+            
+            const response = await fetch(url)
 
             if (response.ok) {
               const data = await response.json()
@@ -79,8 +188,66 @@ export default function BrandPage() {
           } else if (categoryLevel) {
             setIsStore(false)
             setIsCategory(true)
-            // Fetch category products using the level4 category API endpoint
-            const response = await fetch(catalog.productsByLevel4Category(slug))
+            
+            // Build filter params
+            const params = new URLSearchParams()
+            
+            // Price filter
+            if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
+              params.append('min_price', selectedFilters.price.min)
+            }
+            if (selectedFilters.price?.max !== undefined && selectedFilters.price?.max !== '') {
+              params.append('max_price', selectedFilters.price.max)
+            }
+            
+            // Availability filter
+            if (selectedFilters.availability instanceof Set) {
+              if (selectedFilters.availability.has('in') && !selectedFilters.availability.has('out')) {
+                params.append('in_stock', 'true')
+              } else if (selectedFilters.availability.has('out') && !selectedFilters.availability.has('in')) {
+                params.append('in_stock', 'false')
+              }
+            }
+            
+            // Rating filter
+            if (typeof selectedFilters.rating === 'number') {
+              params.append('min_rating', selectedFilters.rating)
+            }
+            
+            // Brand filter (multiple)
+            if (selectedFilters.brand instanceof Set && selectedFilters.brand.size > 0) {
+              Array.from(selectedFilters.brand).forEach(b => params.append('brand_id', b))
+            }
+            
+            // Store filter (multiple)
+            if (selectedFilters.store instanceof Set && selectedFilters.store.size > 0) {
+              Array.from(selectedFilters.store).forEach(s => params.append('store_id', s))
+            }
+            
+            // Dynamic attribute filters (attr.*)
+            Object.keys(selectedFilters).forEach(key => {
+              if (key.startsWith('attr.')) {
+                const attrKey = key.substring(5)
+                const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+                values.forEach(v => params.append(`attr_${attrKey}`, v))
+              }
+            })
+            
+            // Dynamic specification filters (spec.*)
+            Object.keys(selectedFilters).forEach(key => {
+              if (key.startsWith('spec.')) {
+                const specKey = key.substring(5)
+                const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+                values.forEach(v => params.append(`spec_${specKey}`, v))
+              }
+            })
+            
+            // Fetch category products with filters
+            const url = params.toString() 
+              ? `${catalog.productsByLevel4Category(slug)}${params.toString() ? '&' + params.toString() : ''}`
+              : catalog.productsByLevel4Category(slug)
+            
+            const response = await fetch(url)
 
             if (response.ok) {
               const data = await response.json()
@@ -94,8 +261,61 @@ export default function BrandPage() {
           } else {
             setIsStore(false)
             setIsCategory(false)
-            // Fetch brand data using the correct API endpoint format: /products/brand/[slug]
-            const response = await fetch(`${catalog.base}/products/brand/${slug}`)
+            
+            // Build filter params for brand
+            const params = new URLSearchParams()
+            
+            // Price filter
+            if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
+              params.append('min_price', selectedFilters.price.min)
+            }
+            if (selectedFilters.price?.max !== undefined && selectedFilters.price?.max !== '') {
+              params.append('max_price', selectedFilters.price.max)
+            }
+            
+            // Availability filter
+            if (selectedFilters.availability instanceof Set) {
+              if (selectedFilters.availability.has('in') && !selectedFilters.availability.has('out')) {
+                params.append('in_stock', 'true')
+              } else if (selectedFilters.availability.has('out') && !selectedFilters.availability.has('in')) {
+                params.append('in_stock', 'false')
+              }
+            }
+            
+            // Rating filter
+            if (typeof selectedFilters.rating === 'number') {
+              params.append('min_rating', selectedFilters.rating)
+            }
+            
+            // Store filter (multiple)
+            if (selectedFilters.store instanceof Set && selectedFilters.store.size > 0) {
+              Array.from(selectedFilters.store).forEach(s => params.append('store_id', s))
+            }
+            
+            // Dynamic attribute filters (attr.*)
+            Object.keys(selectedFilters).forEach(key => {
+              if (key.startsWith('attr.')) {
+                const attrKey = key.substring(5)
+                const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+                values.forEach(v => params.append(`attr_${attrKey}`, v))
+              }
+            })
+            
+            // Dynamic specification filters (spec.*)
+            Object.keys(selectedFilters).forEach(key => {
+              if (key.startsWith('spec.')) {
+                const specKey = key.substring(5)
+                const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+                values.forEach(v => params.append(`spec_${specKey}`, v))
+              }
+            })
+            
+            // Fetch brand data with filters
+            const url = params.toString() 
+              ? `${catalog.base}/products/brand/${slug}?${params.toString()}`
+              : `${catalog.base}/products/brand/${slug}`
+            
+            const response = await fetch(url)
 
             if (response.ok) {
               const data = await response.json()
@@ -116,10 +336,31 @@ export default function BrandPage() {
     }
 
     fetchData()
-  }, [slug, storeId, categoryLevel])
+  }, [slug, storeId, categoryLevel, selectedFilters])
 
   // Transform API data
   const transformedProducts = brandProducts.map(transformProductData)
+
+  // Build facets from filter API response for category, brand, or store pages
+  const facets = useMemo(() => {
+    if (isCategory && filterData) {
+      return buildFacetsFromCategoryFilters(filterData)
+    } else if (isStore && filterData) {
+      return buildFacetsFromStoreFilters(filterData)
+    } else if (!isStore && !isCategory && filterData) {
+      // It's a brand page
+      return buildFacetsFromBrandFilters(filterData)
+    }
+    return []
+  }, [isCategory, isStore, filterData])
+
+  const handleFilterChange = (key, value) => {
+    setSelectedFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const handleClearFilters = () => {
+    setSelectedFilters({})
+  }
 
   const handleBack = () => {
     router.push('/')
@@ -134,7 +375,17 @@ export default function BrandPage() {
           <div className="listing-layout">
             {/* Sticky Filter Sidebar */}
             <aside className="filters-sidebar">
-              <FilterDrawer open={true} inline sticky stickyTop={112} onClose={() => { }} />
+              <FilterDrawer 
+                open={true} 
+                inline 
+                sticky 
+                stickyTop={112} 
+                facets={facets}
+                selected={selectedFilters}
+                onChange={handleFilterChange}
+                onClear={handleClearFilters}
+                onClose={() => { }} 
+              />
             </aside>
 
             {/* Main Content Area with Scrollable Products */}
@@ -173,7 +424,14 @@ export default function BrandPage() {
       </section>
 
       {/* Drawer for small screens */}
-      <FilterDrawer open={filterOpen} onClose={() => setFilterOpen(false)} />
+      <FilterDrawer 
+        open={filterOpen} 
+        onClose={() => setFilterOpen(false)} 
+        facets={facets}
+        selected={selectedFilters}
+        onChange={handleFilterChange}
+        onClear={handleClearFilters}
+      />
 
       <Footer />
 

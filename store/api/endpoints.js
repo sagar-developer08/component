@@ -49,6 +49,12 @@ export const search = {
     const usp = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null)));
     return `${BASES.search}/search/trending?${usp.toString()}`;
   },
+  // Category filters endpoint
+  categoryFilters: (slug, level) => `${BASES.search}/search/filters?slug=${encodeURIComponent(slug)}&level=${level}`,
+  // Brand filters endpoint
+  brandFilters: (slug) => `${BASES.search}/search/filters/brand?slug=${encodeURIComponent(slug)}`,
+  // Store filters endpoint
+  storeFilters: (storeId) => `${BASES.search}/search/filters/store?storeId=${encodeURIComponent(storeId)}`,
 }
 
 // Auth endpoints (auth base is explicitly namespaced with /auth as requested)

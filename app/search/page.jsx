@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'next/navigation'
 import { searchProducts } from '@/store/slices/productsSlice'
+import { buildFacetsFromProducts } from '@/utils/facets'
 
 // Helper function to transform API product data to match ProductCard component format
 const transformProductData = (apiProduct) => {
@@ -36,22 +37,33 @@ const transformProductData = (apiProduct) => {
 
 export default function SearchPage() {
   const [filterOpen, setFilterOpen] = useState(false)
+  const [selectedFilters, setSelectedFilters] = useState({})
   const searchParams = useSearchParams()
   const query = useMemo(() => searchParams.get('q'), [searchParams])
   const dispatch = useDispatch()
   
   const { searchResults, searchQuery, searchLoading, searchError, searchPagination } = useSelector(state => state.products)
 
-  // Debounce search query to prevent too many API calls
+  // Debounce search query and filters to prevent too many API calls
   useEffect(() => {
     if (query) {
       const timer = setTimeout(() => {
-        dispatch(searchProducts(query))
+        dispatch(searchProducts({ query, filters: selectedFilters }))
       }, 300) // 300ms delay for search page
 
       return () => clearTimeout(timer)
     }
-  }, [dispatch, query])
+  }, [dispatch, query, selectedFilters])
+
+  const facets = useMemo(() => buildFacetsFromProducts(Array.isArray(searchResults) ? searchResults : []), [searchResults])
+
+  const handleFilterChange = (key, value) => {
+    setSelectedFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const handleClearFilters = () => {
+    setSelectedFilters({})
+  }
 
   return (
     <main className="home-page">
@@ -62,7 +74,17 @@ export default function SearchPage() {
           <div className="listing-layout">
             {/* Sticky Filter Sidebar */}
             <aside className="filters-sidebar">
-              <FilterDrawer open={true} inline sticky stickyTop={112} onClose={() => { }} />
+              <FilterDrawer
+                open={true}
+                inline
+                sticky
+                stickyTop={112}
+                facets={facets}
+                selected={selectedFilters}
+                onChange={handleFilterChange}
+                onClear={handleClearFilters}
+                onClose={() => { }}
+              />
             </aside>
 
             {/* Main Content Area with Scrollable Products */}
@@ -116,7 +138,7 @@ export default function SearchPage() {
       </section>
 
       {/* Drawer for small screens or other triggers (unchanged elsewhere) */}
-      <FilterDrawer open={filterOpen} onClose={() => setFilterOpen(false)} />
+      <FilterDrawer open={filterOpen} onClose={() => setFilterOpen(false)} facets={facets} selected={selectedFilters} onChange={handleFilterChange} onClear={handleClearFilters} />
 
       <Footer />
 

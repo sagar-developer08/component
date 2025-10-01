@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export default function FilterDrawer({ open, onClose, inline = false, sticky = false, stickyTop = 112 }) {
+export default function FilterDrawer({ open, onClose, inline = false, sticky = false, stickyTop = 112, facets = [], selected = {}, onChange, onClear }) {
   useEffect(() => {
     if (inline) return; // Do not alter body scroll in inline mode
     if (open) document.body.style.overflow = 'hidden';
@@ -9,6 +9,29 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
   }, [open, inline]);
 
   if (!open) return null;
+
+  const handleCheckboxToggle = (facetKey, value) => {
+    if (!onChange) return
+    const current = selected[facetKey] instanceof Set
+      ? new Set(Array.from(selected[facetKey]))
+      : new Set(Array.isArray(selected[facetKey]) ? selected[facetKey] : [])
+    if (current.has(value)) current.delete(value)
+    else current.add(value)
+    onChange(facetKey, current)
+  }
+
+  const handleRangeChange = (facetKey, field, value) => {
+    if (!onChange) return
+    const next = { ...(selected[facetKey] || {}) }
+    const num = value === '' ? undefined : Number(value)
+    next[field] = isNaN(num) ? undefined : num
+    onChange(facetKey, next)
+  }
+
+  const handleMinSelect = (facetKey, value) => {
+    if (!onChange) return
+    onChange(facetKey, typeof value === 'number' ? value : undefined)
+  }
 
   return (
     <div className={inline ? "filter-drawer-inline-wrapper" : "filter-drawer-overlay"}>
@@ -26,19 +49,90 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
         </div>
         <div className="filter-divider"></div>
         <div className="filter-list">
-          {["Availability", "Price", "Product Type", "Collections", "Color", "Size", "Strap Material"].map((label, i) => (
-            <div className="filter-row" key={label}>
-              <span className="filter-label">{label}</span>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M6 8L10 12L14 8" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-          ))}
+          {Array.isArray(facets) && facets.length > 0 ? (
+            facets.map((facet) => (
+              <div className="filter-section" key={facet.key}>
+                <div className="filter-row" style={{ cursor: 'default' }}>
+                  <span className="filter-label">{facet.label}</span>
+                </div>
+                {facet.type === 'checkbox' && (
+                  <div className="filter-options">
+                    {(facet.options || []).map(opt => {
+                      const checked = selected[facet.key] instanceof Set
+                        ? selected[facet.key].has(opt.value)
+                        : Array.isArray(selected[facet.key])
+                          ? selected[facet.key].includes(opt.value)
+                          : false
+                      return (
+                        <label className="filter-option" key={`${facet.key}:${opt.value}`}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => handleCheckboxToggle(facet.key, opt.value)}
+                          />
+                          <span className="option-text">{opt.label}</span>
+                          {typeof opt.count === 'number' && <span className="option-count">{opt.count}</span>}
+                        </label>
+                      )
+                    })}
+                  </div>
+                )}
+                {facet.type === 'range' && (
+                  <div className="filter-range">
+                    <div className="range-inputs">
+                      <input
+                        type="number"
+                        placeholder={facet.min !== undefined ? String(facet.min) : 'Min'}
+                        value={selected[facet.key]?.min ?? ''}
+                        min={facet.min}
+                        max={facet.max}
+                        onChange={(e) => handleRangeChange(facet.key, 'min', e.target.value)}
+                      />
+                      <span className="range-sep">—</span>
+                      <input
+                        type="number"
+                        placeholder={facet.max !== undefined ? String(facet.max) : 'Max'}
+                        value={selected[facet.key]?.max ?? ''}
+                        min={facet.min}
+                        max={facet.max}
+                        onChange={(e) => handleRangeChange(facet.key, 'max', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                )}
+                {facet.type === 'min' && (
+                  <div className="filter-options">
+                    {(facet.options || []).map(opt => (
+                      <label className="filter-option" key={`${facet.key}:${opt.value}`}>
+                        <input
+                          type="radio"
+                          name={`min-${facet.key}`}
+                          checked={Number(selected[facet.key] || 0) === Number(opt.value)}
+                          onChange={() => handleMinSelect(facet.key, opt.value)}
+                        />
+                        <span className="option-text">{opt.label}</span>
+                        {typeof opt.count === 'number' && <span className="option-count">{opt.count}</span>}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            ["Availability", "Price", "Product Type", "Collections", "Color", "Size", "Strap Material"].map((label) => (
+              <div className="filter-row" key={label}>
+                <span className="filter-label">{label}</span>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M6 8L10 12L14 8" stroke="#222" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            ))
+          )}
         </div>
         {!inline && (
           <div className="filter-actions">
-            <button className="filter-clear">Clear All</button>
-            <button className="filter-results">See Results</button>
+            <button className="filter-clear" onClick={onClear}>Clear All</button>
+            <button className="filter-results" onClick={onClose}>See Results</button>
           </div>
         )}
       </div>
@@ -101,6 +195,7 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
           flex-direction: column;
           gap: 16px;
         }
+        .filter-section { padding-bottom: 8px; border-bottom: 1px solid #eee; }
         .filter-row {
           display: flex;
           align-items: center;
@@ -112,6 +207,14 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
           font-weight: 600;
           color: #111;
         }
+        .filter-options { display: flex; flex-direction: column; gap: 10px; padding: 8px 0 0 0; }
+        .filter-option { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #222; }
+        .option-text { flex: 1; }
+        .option-count { color: #666; font-size: 12px; }
+        .filter-range { padding-top: 8px; }
+        .range-inputs { display: flex; align-items: center; gap: 8px; }
+        .range-inputs input { width: 120px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .range-sep { color: #999; }
         .filter-actions {
           display: flex;
           gap: 18px;
