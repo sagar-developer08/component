@@ -5,7 +5,10 @@ import Navigation from '../../../components/Navigation'
 import Footer from '../../../components/Footer'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { fetchProducts } from '@/store/slices/productsSlice'
+import { fetchProductDetail, fetchProductVariant, fetchProductVariants, setSelectedAttributes, setProductId } from '@/store/slices/productDetailSlice'
+import { generateVariantUrl, findMatchingVariant, transformProductData } from '@/utils/productUtils'
 
 // Mock product data - in a real app this would come from an API
 const mockProduct = {
@@ -68,53 +71,93 @@ const productData = [
 
 export default function ProductPage({ params }) {
   const dispatch = useDispatch()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  
   const { products, loading, error } = useSelector(state => state.products)
-  const [productData, setProductData] = useState(null)
-  const [productLoading, setProductLoading] = useState(true)
+  const { 
+    product, 
+    parent, 
+    variants, 
+    variantOptions, 
+    selectedVariant, 
+    selectedAttributes,
+    currentProductId,
+    loading: productDetailLoading, 
+    error: productDetailError 
+  } = useSelector(state => state.productDetail)
+
+  // Extract product ID and slug from URL params
+  const productId = searchParams.get('pid') // Only get pid from query params, not from params.id
+  const productSlug = params.id
 
   useEffect(() => {
     dispatch(fetchProducts())
   }, [dispatch])
 
   useEffect(() => {
-    const fetchProductBySlug = async () => {
-      if (params.id) {
-        try {
-          setProductLoading(true)
-          const response = await fetch(`${process.env.NEXT_PUBLIC_CATALOG_BASE_URL}/products/slug/${params.id}`)
-          console.log(response)
-          if (response.ok) {
-            const data = await response.json()
-            setProductData(data)
-          }
-        } catch (error) {
-          console.error('Error fetching product:', error)
-        } finally {
-          setProductLoading(false)
-        }
-      }
+    if (productSlug) {
+      // Pass id only if it exists, otherwise pass null/undefined
+      dispatch(fetchProductDetail({ id: productId || null, slug: productSlug }))
     }
+  }, [dispatch, productId, productSlug])
 
-    fetchProductBySlug()
-  }, [params.id])
+  // Update URL when we get the product ID from API response
+  useEffect(() => {
+    if (currentProductId && !productId && productSlug) {
+      // If we have a product ID from the API but not in the URL, update the URL
+      const newUrl = `/product/${productSlug}?pid=${currentProductId}`
+      router.replace(newUrl)
+    }
+  }, [currentProductId, productId, productSlug, router])
+
+  // Fetch variants when we have a product with parent_product_id
+  useEffect(() => {
+    if (product && product.parent_product_id && variants.length === 0) {
+      dispatch(fetchProductVariants(product.parent_product_id))
+    }
+  }, [dispatch, product, variants.length])
+
+  // Handle variant selection
+  const handleVariantChange = (attributeType, value) => {
+    dispatch(setSelectedAttributes({ key: attributeType, value }))
+    
+    // Find the matching variant and navigate to it
+    const newAttributes = { ...selectedAttributes, [attributeType]: value }
+    const matchingVariant = findMatchingVariant(variants, newAttributes)
+    
+    if (matchingVariant) {
+      // Update URL to the new variant using utility function
+      const newUrl = generateVariantUrl(matchingVariant)
+      router.push(newUrl)
+    }
+  }
 
   // Map the fetched product data to the format expected by ProductDetails
-  const mappedProduct = productData?.data ? {
-    id: productData.data._id,
-    slug: productData.data.slug || params.id,
-    name: productData.data.title,
-    brand: productData.data.brand_id?.name || 'Brand',
-    price: productData.data.price,
-    originalPrice: productData.data.price,
-    discount: 0, // No discount price in the API response
-    rating: productData.data.average_rating || 5,
-    stock: productData.data.stock_quantity > 0 ? "In Stock" : "Out of Stock",
+  const mappedProduct = product ? {
+    id: product._id,
+    slug: product.slug || params.id,
+    name: product.title,
+    brand: product.brand_id?.name || 'Brand',
+    price: product.discount_price || product.price,
+    originalPrice: product.price,
+    discount: product.discount_price && product.price ? 
+      Math.round(((product.price - product.discount_price) / product.price) * 100) : 0,
+    rating: product.average_rating || 5,
+    stock: product.stock_quantity > 0 ? "In Stock" : "Out of Stock",
     deliveryTime: "Available in 30 Minutes",
-    boughtCount: `${productData.data.total_reviews || 0}+ Bought in past month`,
-    description: productData.data.description || productData.data.short_description || "Product description",
-    images: productData.data.images?.map(img => img.url) || ["/shoes.jpg"],
-    colors: productData.data.attributes?.color ? [productData.data.attributes.color] : ["Default"],
-    sizes: ["04", "05", "06", "07", "08"] // Default sizes since not in API
+    boughtCount: `${product.total_reviews || 0}+ Bought in past month`,
+    description: product.description || product.short_description || "Product description",
+    images: product.images?.map(img => img.url) || ["/shoes.jpg"],
+    colors: variantOptions.color && variantOptions.color.length > 1 ? variantOptions.color : 
+            (product.variant_attributes?.color ? [product.variant_attributes.color] : []),
+    sizes: variantOptions.storage && variantOptions.storage.length > 1 ? variantOptions.storage : 
+           (product.variant_attributes?.storage ? [product.variant_attributes.storage] : []),
+    // Add variant selection handlers
+    onColorChange: (color) => handleVariantChange('color', color),
+    onSizeChange: (size) => handleVariantChange('storage', size),
+    selectedColor: selectedAttributes.color || product.variant_attributes?.color,
+    selectedSize: selectedAttributes.storage || product.variant_attributes?.storage
   } : mockProduct
 
   // Map API products to the format expected by ProductSections
@@ -135,14 +178,18 @@ export default function ProductPage({ params }) {
       <Navigation />
 
       <main className="main-content">
-        {productLoading ? (
+        {productDetailLoading ? (
           <div style={{ padding: '40px', textAlign: 'center' }}>Loading product...</div>
+        ) : productDetailError ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'red' }}>
+            Error loading product: {productDetailError}
+          </div>
         ) : (
           <>
             <ProductDetails product={mappedProduct} />
             <ProductSections 
               relatedProducts={relatedProducts}
-              productData={productData?.data}
+              productData={product}
             />
           </>
         )}

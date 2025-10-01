@@ -1,12 +1,36 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function FilterDrawer({ open, onClose, inline = false, sticky = false, stickyTop = 112, facets = [], selected = {}, onChange, onClear }) {
+  // Initialize with all facets expanded by default
+  const [expandedFacets, setExpandedFacets] = useState(() => {
+    return new Set(facets.map(facet => facet.key));
+  });
+
   useEffect(() => {
     if (inline) return; // Do not alter body scroll in inline mode
     if (open) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = '';
     return () => { document.body.style.overflow = ''; };
   }, [open, inline]);
+
+  // Update expanded facets when facets change (new filter data loaded)
+  useEffect(() => {
+    if (facets.length > 0) {
+      setExpandedFacets(new Set(facets.map(facet => facet.key)));
+    }
+  }, [facets]);
+
+  const toggleFacetExpansion = (facetKey) => {
+    setExpandedFacets(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(facetKey)) {
+        newSet.delete(facetKey);
+      } else {
+        newSet.add(facetKey);
+      }
+      return newSet;
+    });
+  };
 
   if (!open) return null;
 
@@ -52,10 +76,21 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
           {Array.isArray(facets) && facets.length > 0 ? (
             facets.map((facet) => (
               <div className="filter-section" key={facet.key}>
-                <div className="filter-row" style={{ cursor: 'default' }}>
+                <div className="filter-row" style={{ cursor: 'pointer' }} onClick={() => toggleFacetExpansion(facet.key)}>
                   <span className="filter-label">{facet.label}</span>
+                  <svg 
+                    className={`filter-chevron ${expandedFacets.has(facet.key) ? 'expanded' : ''}`}
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 16 16" 
+                    fill="none"
+                  >
+                    <path d="M4 6L8 10L12 6" stroke="#666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </div>
-                {facet.type === 'checkbox' && (
+                {expandedFacets.has(facet.key) && (
+                  <>
+                    {facet.type === 'checkbox' && (
                   <div className="filter-options">
                     {(facet.options || []).map(opt => {
                       const checked = selected[facet.key] instanceof Set
@@ -115,6 +150,8 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                       </label>
                     ))}
                   </div>
+                )}
+                  </>
                 )}
               </div>
             ))
@@ -206,6 +243,12 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
           font-size: 18px;
           font-weight: 600;
           color: #111;
+        }
+        .filter-chevron {
+          transition: transform 0.2s ease;
+        }
+        .filter-chevron.expanded {
+          transform: rotate(180deg);
         }
         .filter-options { display: flex; flex-direction: column; gap: 10px; padding: 8px 0 0 0; }
         .filter-option { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #222; }

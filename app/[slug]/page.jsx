@@ -48,6 +48,11 @@ export default function BrandPage() {
   const [isCategory, setIsCategory] = useState(false)
   const [filterData, setFilterData] = useState(null)
   const [selectedFilters, setSelectedFilters] = useState({})
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMoreProducts, setHasMoreProducts] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   // Fetch products when component mounts
   useEffect(() => {
@@ -72,9 +77,61 @@ export default function BrandPage() {
           console.error('Error fetching category filter data:', error)
         }
       } else if (storeId) {
-        // Fetch store filters
+        // Fetch store filters with current selected filters for accurate counts
         try {
-          const response = await fetch(search.storeFilters(storeId))
+          // Build filter params for the store filters API
+          const filterParams = new URLSearchParams()
+          
+          // Price filter
+          if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
+            filterParams.append('min_price', selectedFilters.price.min)
+          }
+          if (selectedFilters.price?.max !== undefined && selectedFilters.price?.max !== '') {
+            filterParams.append('max_price', selectedFilters.price.max)
+          }
+          
+          // Availability filter
+          if (selectedFilters.availability instanceof Set) {
+            if (selectedFilters.availability.has('in') && !selectedFilters.availability.has('out')) {
+              filterParams.append('in_stock', 'true')
+            } else if (selectedFilters.availability.has('out') && !selectedFilters.availability.has('in')) {
+              filterParams.append('in_stock', 'false')
+            }
+          }
+          
+          // Rating filter
+          if (typeof selectedFilters.rating === 'number') {
+            filterParams.append('min_rating', selectedFilters.rating)
+          }
+          
+          // Brand filter (multiple)
+          if (selectedFilters.brand instanceof Set && selectedFilters.brand.size > 0) {
+            Array.from(selectedFilters.brand).forEach(b => filterParams.append('brand_id', b))
+          }
+          
+          // Dynamic attribute filters (attr.*)
+          Object.keys(selectedFilters).forEach(key => {
+            if (key.startsWith('attr.')) {
+              const attrKey = key.substring(5)
+              const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+              values.forEach(v => filterParams.append(`attr_${attrKey}`, v))
+            }
+          })
+          
+          // Dynamic specification filters (spec.*)
+          Object.keys(selectedFilters).forEach(key => {
+            if (key.startsWith('spec.')) {
+              const specKey = key.substring(5)
+              const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+              values.forEach(v => filterParams.append(`spec_${specKey}`, v))
+            }
+          })
+          
+          const url = filterParams.toString() 
+            ? `${search.storeFilters(storeId)}&${filterParams.toString()}`
+            : search.storeFilters(storeId)
+          
+          const response = await fetch(url)
           if (response.ok) {
             const data = await response.json()
             console.log('Store Filter API Response:', data)
@@ -103,7 +160,14 @@ export default function BrandPage() {
     }
 
     fetchFilterData()
-  }, [slug, categoryLevel, storeId])
+  }, [slug, categoryLevel, storeId, selectedFilters])
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+    setHasMoreProducts(true)
+    setBrandProducts([])
+  }, [selectedFilters, slug, storeId, categoryLevel])
 
   // Fetch brand/store/category info and products by slug
   useEffect(() => {
@@ -119,6 +183,10 @@ export default function BrandPage() {
             
             // Build filter params for store
             const params = new URLSearchParams()
+            
+            // Add pagination params
+            params.append('page', currentPage.toString())
+            params.append('limit', '10')
             
             // Price filter
             if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
@@ -165,24 +233,35 @@ export default function BrandPage() {
               }
             })
             
-            // Fetch store products with filters
-            const url = params.toString() 
-              ? `${catalog.productsByStore(storeId)}?${params.toString()}`
-              : catalog.productsByStore(storeId)
+            // Use search service for filtered store products
+            const url = search.storeProducts(storeId, Object.fromEntries(params))
             
             const response = await fetch(url)
 
             if (response.ok) {
               const data = await response.json()
-              console.log('Store API Response:', data)
+              console.log('Store Search API Response:', data)
 
               if (data.success && data.data) {
                 // Extract store info from the first product's store_id
                 const firstProduct = data.data.products?.[0]
-                if (firstProduct?.store_id) {
+                if (firstProduct?.store_id && currentPage === 1) {
                   setBrandInfo(firstProduct.store_id) // Store info
                 }
-                setBrandProducts(data.data.products || [])
+                
+                const newProducts = data.data.products || []
+                
+                if (currentPage === 1) {
+                  // First page - replace products
+                  setBrandProducts(newProducts)
+                } else {
+                  // Subsequent pages - append products
+                  setBrandProducts(prev => [...prev, ...newProducts])
+                }
+                
+                // Check if there are more products
+                const pagination = data.data.pagination
+                setHasMoreProducts(pagination && currentPage < pagination.pages)
               }
             }
           } else if (categoryLevel) {
@@ -191,6 +270,10 @@ export default function BrandPage() {
             
             // Build filter params
             const params = new URLSearchParams()
+            
+            // Add pagination params
+            params.append('page', currentPage.toString())
+            params.append('limit', '10')
             
             // Price filter
             if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
@@ -254,8 +337,23 @@ export default function BrandPage() {
               console.log('Category API Response:', data)
 
               if (data.success && data.data) {
-                setBrandInfo(data.data.category) // Category info
-                setBrandProducts(data.data.products || [])
+                if (currentPage === 1) {
+                  setBrandInfo(data.data.category) // Category info
+                }
+                
+                const newProducts = data.data.products || []
+                
+                if (currentPage === 1) {
+                  // First page - replace products
+                  setBrandProducts(newProducts)
+                } else {
+                  // Subsequent pages - append products
+                  setBrandProducts(prev => [...prev, ...newProducts])
+                }
+                
+                // Check if there are more products
+                const pagination = data.data.pagination
+                setHasMoreProducts(pagination && currentPage < pagination.pages)
               }
             }
           } else {
@@ -264,6 +362,10 @@ export default function BrandPage() {
             
             // Build filter params for brand
             const params = new URLSearchParams()
+            
+            // Add pagination params
+            params.append('page', currentPage.toString())
+            params.append('limit', '10')
             
             // Price filter
             if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
@@ -322,8 +424,23 @@ export default function BrandPage() {
               console.log('Brand API Response:', data)
 
               if (data.success && data.data) {
-                setBrandInfo(data.data.brand)
-                setBrandProducts(data.data.products || [])
+                if (currentPage === 1) {
+                  setBrandInfo(data.data.brand)
+                }
+                
+                const newProducts = data.data.products || []
+                
+                if (currentPage === 1) {
+                  // First page - replace products
+                  setBrandProducts(newProducts)
+                } else {
+                  // Subsequent pages - append products
+                  setBrandProducts(prev => [...prev, ...newProducts])
+                }
+                
+                // Check if there are more products
+                const pagination = data.data.pagination
+                setHasMoreProducts(pagination && currentPage < pagination.pages)
               }
             }
           }
@@ -336,7 +453,7 @@ export default function BrandPage() {
     }
 
     fetchData()
-  }, [slug, storeId, categoryLevel, selectedFilters])
+  }, [slug, storeId, categoryLevel, selectedFilters, currentPage])
 
   // Transform API data
   const transformedProducts = brandProducts.map(transformProductData)
@@ -365,6 +482,31 @@ export default function BrandPage() {
   const handleBack = () => {
     router.push('/')
   }
+
+  // Load more products function
+  const loadMoreProducts = () => {
+    if (!loadingMore && hasMoreProducts) {
+      setLoadingMore(true)
+      setCurrentPage(prev => prev + 1)
+    }
+  }
+
+  // Infinite scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 1000) {
+        loadMoreProducts()
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [loadingMore, hasMoreProducts])
+
+  // Reset loading more when page changes
+  useEffect(() => {
+    setLoadingMore(false)
+  }, [currentPage])
 
   return (
     <main className="home-page">
@@ -412,6 +554,17 @@ export default function BrandPage() {
                       </div>
                     ))}
                   </div>
+                  {loadingMore && (
+                    <div className="loading-more">
+                      <div className="loading-spinner"></div>
+                      <p>Loading more products...</p>
+                    </div>
+                  )}
+                  {!hasMoreProducts && transformedProducts.length > 0 && (
+                    <div className="no-more-products">
+                      <p>No more products to load</p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="no-products">
@@ -484,6 +637,36 @@ export default function BrandPage() {
         .grid-item { 
           display: flex; 
           justify-content: center; 
+        }
+
+        .loading-more {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 20px;
+          margin-top: 20px;
+        }
+
+        .loading-more .loading-spinner {
+          width: 24px;
+          height: 24px;
+          border: 2px solid #f3f3f3;
+          border-top: 2px solid #007bff;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 10px;
+        }
+
+        .no-more-products {
+          text-align: center;
+          padding: 20px;
+          color: #666;
+          font-style: italic;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
 
         @media (max-width: 1024px) {

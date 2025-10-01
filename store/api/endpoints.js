@@ -21,6 +21,9 @@ export const catalog = {
   brands: `${BASES.catalog}/brands/top`,
   brandBySlug: (slug) => `${BASES.catalog}/brands/slug/${slug}`,
   products: `${BASES.catalog}/products`,
+  productById: (id) => `${BASES.catalog}/products/${id}`,
+  productBySlug: (id, slug) => `${BASES.catalog}/products/${id}/slug/${slug}`,
+  productBySlugOnly: (slug) => `${BASES.catalog}/products/slug/${slug}`,
   productsByBrand: (brandSlug) => `${BASES.catalog}/products/brand/${brandSlug}`,
   productsByStore: (storeId) => `${BASES.catalog}/products/store/${storeId}`,
   productsByLevel4Category: (categorySlug) => `${BASES.catalog}/products/level4/${categorySlug}`,
@@ -55,6 +58,11 @@ export const search = {
   brandFilters: (slug) => `${BASES.search}/search/filters/brand?slug=${encodeURIComponent(slug)}`,
   // Store filters endpoint
   storeFilters: (storeId) => `${BASES.search}/search/filters/store?storeId=${encodeURIComponent(storeId)}`,
+  // Store products endpoint
+  storeProducts: (storeId, params = {}) => {
+    const usp = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null)));
+    return `${BASES.search}/search/store/${encodeURIComponent(storeId)}/products?${usp.toString()}`;
+  },
 }
 
 // Auth endpoints (auth base is explicitly namespaced with /auth as requested)

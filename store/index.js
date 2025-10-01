@@ -8,6 +8,7 @@ import wishlistReducer from './slices/wishlistSlice'
 import cartReducer from './slices/cartSlice'
 import profileReducer from './slices/profileSlice'
 import checkoutReducer from './slices/checkoutSlice'
+import productDetailReducer from './slices/productDetailSlice'
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     cart: cartReducer,
     profile: profileReducer,
     checkout: checkoutReducer,
+    productDetail: productDetailReducer,
   },
 })
 

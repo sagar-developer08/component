@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import OtherSellersDrawer from './OtherSellersDrawer';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,14 +9,24 @@ import { getUserFromCookies } from '../../utils/userUtils';
 import { useToast } from '../../contexts/ToastContext';
 
 export default function ProductDetails({ product }) {
-  const [selectedColor, setSelectedColor] = useState(product.colors[0]);
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0]);
+  const [selectedColor, setSelectedColor] = useState(product.selectedColor || product.colors?.[0]);
+  const [selectedSize, setSelectedSize] = useState(product.selectedSize || product.sizes?.[0]);
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { requireAuth } = useAuth();
   const dispatch = useDispatch();
   const { show } = useToast();
+
+  // Sync local state with props when they change
+  useEffect(() => {
+    if (product.selectedColor) {
+      setSelectedColor(product.selectedColor);
+    }
+    if (product.selectedSize) {
+      setSelectedSize(product.selectedSize);
+    }
+  }, [product.selectedColor, product.selectedSize]);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
@@ -168,37 +178,51 @@ export default function ProductDetails({ product }) {
             <span className="discount">{product.discount}% Off</span>
           </div>
 
-          {/* Color Selection */}
-          <div className="selection-group">
-            <label>Color:</label>
-            <div className="color-options">
-              {product.colors.map((color) => (
-                <button
-                  key={color}
-                  className={`color-btn ${selectedColor === color ? 'selected' : ''}`}
-                  onClick={() => setSelectedColor(color)}
-                >
-                  {color}
-                </button>
-              ))}
+          {/* Color Selection - Only show if multiple colors available */}
+          {product.colors && product.colors.length > 1 && (
+            <div className="selection-group">
+              <label>Color:</label>
+              <div className="color-options">
+                {product.colors.map((color) => (
+                  <button
+                    key={color}
+                    className={`color-btn ${selectedColor === color ? 'selected' : ''}`}
+                    onClick={() => {
+                      setSelectedColor(color);
+                      if (product.onColorChange) {
+                        product.onColorChange(color);
+                      }
+                    }}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Size Selection */}
-          <div className="selection-group">
-            <label>Size:</label>
-            <div className="size-options">
-              {product.sizes.map((size) => (
-                <button
-                  key={size}
-                  className={`size-btn ${selectedSize === size ? 'selected' : ''}`}
-                  onClick={() => setSelectedSize(size)}
-                >
-                  {size}
-                </button>
-              ))}
+          {/* Size Selection - Only show if multiple sizes available */}
+          {product.sizes && product.sizes.length > 1 && (
+            <div className="selection-group">
+              <label>Size:</label>
+              <div className="size-options">
+                {product.sizes.map((size) => (
+                  <button
+                    key={size}
+                    className={`size-btn ${selectedSize === size ? 'selected' : ''}`}
+                    onClick={() => {
+                      setSelectedSize(size);
+                      if (product.onSizeChange) {
+                        product.onSizeChange(size);
+                      }
+                    }}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Quantity Selector and Share Section */}
           <div className="quantity-share-container">

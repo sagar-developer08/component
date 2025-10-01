@@ -29,21 +29,21 @@ export function buildFacetsFromCategoryFilters(filterData) {
     })
   }
 
-  // Rating
-  if (filterData.ratings && Array.isArray(filterData.ratings)) {
-    const ratingOptions = [5, 4, 3, 2, 1, 0]
-      .map(r => {
-        const count = filterData.ratings
-          .filter(item => item.rating >= r)
-          .reduce((sum, item) => sum + (item.count || 0), 0)
-        return { value: r, label: `${r}+`, count }
-      })
-      .filter(opt => opt.count > 0)
-    
-    if (ratingOptions.length > 0) {
-      facets.push({ key: 'rating', label: 'Rating', type: 'min', options: ratingOptions })
-    }
-  }
+  // Rating - removed as requested
+  // if (filterData.ratings && Array.isArray(filterData.ratings)) {
+  //   const ratingOptions = [5, 4, 3, 2, 1, 0]
+  //     .map(r => {
+  //       const count = filterData.ratings
+  //         .filter(item => item.rating >= r)
+  //         .reduce((sum, item) => sum + (item.count || 0), 0)
+  //       return { value: r, label: `${r}+`, count }
+  //     })
+  //     .filter(opt => opt.count > 0)
+  //   
+  //   if (ratingOptions.length > 0) {
+  //     facets.push({ key: 'rating', label: 'Rating', type: 'min', options: ratingOptions })
+  //   }
+  // }
 
   // Brands
   if (filterData.brands && Array.isArray(filterData.brands) && filterData.brands.length > 0) {
