@@ -2,20 +2,22 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, memo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter, usePathname } from 'next/navigation'
 import CartDrawer from './CartDrawer'
 import WishlistDrawer from './WishlistDrawer'
 import LoginModal from './LoginModal'
+import SearchSuggestions from './SearchSuggestions'
 import { useAuth } from '../contexts/AuthContext'
 import { fetchCart } from '@/store/slices/cartSlice'
 import { fetchWishlist } from '@/store/slices/wishlistSlice'
 import { getUserFromCookies } from '@/utils/userUtils'
 
-export default function Navigation() {
+const Navigation = memo(function Navigation() {
   // Measure navbar height so we can add a spacer that preserves layout
   const navRef = useRef(null)
+  const searchInputRef = useRef(null)
   const dispatch = useDispatch()
   const [navHeight, setNavHeight] = useState(0)
   const [cartOpen, setCartOpen] = useState(false)
@@ -50,8 +52,9 @@ export default function Navigation() {
     if (!searchOpen) {
       // Focus the input when opening
       setTimeout(() => {
-        const searchInput = document.getElementById('search-input')
-        if (searchInput) searchInput.focus()
+        if (searchInputRef.current) {
+          searchInputRef.current.focus()
+        }
       }, 100)
     }
   }
@@ -68,6 +71,13 @@ export default function Navigation() {
   }
 
   const handleSearchClose = () => {
+    setSearchOpen(false)
+    setSearchQuery('')
+    setDebouncedQuery('')
+    setIsDebouncing(false)
+  }
+
+  const handleSuggestionSelect = () => {
     setSearchOpen(false)
     setSearchQuery('')
     setDebouncedQuery('')
@@ -260,6 +270,7 @@ export default function Navigation() {
                         </svg>
                       )}
                       <input
+                        ref={searchInputRef}
                         id="search-input"
                         type="text"
                         placeholder="Search for products, stores, categories..."
@@ -276,6 +287,13 @@ export default function Navigation() {
                           <path d="M15 5L5 15M5 5L15 15" stroke="#666" strokeWidth="1.5" strokeLinecap="round" />
                         </svg>
                       </button>
+                      <SearchSuggestions
+                        query={debouncedQuery}
+                        isVisible={searchOpen && debouncedQuery.length >= 2}
+                        onClose={handleSearchClose}
+                        onSelect={handleSuggestionSelect}
+                        inputRef={searchInputRef}
+                      />
                     </div>
                   </form>
                 )}
@@ -563,4 +581,6 @@ export default function Navigation() {
       <LoginModal open={loginModalOpen} onClose={closeLoginModal} />
     </>
   )
-}
+})
+
+export default Navigation

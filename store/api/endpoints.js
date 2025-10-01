@@ -3,6 +3,7 @@
 
 export const BASES = {
   catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'https://backendcatalog.qliq.ae/api',
+  search: process.env.NEXT_PUBLIC_SEARCH_BASE_URL || 'https://search.qliq.ae/api',
   auth: process.env.NEXT_PUBLIC_AUTH_BASE_URL || 'https://backendauth.qliq.ae/api',
   cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'https://backendcart.qliq.ae/api',
   payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'https://backendcart.qliq.ae/api',
@@ -29,6 +30,25 @@ export const catalog = {
   level2Categories: `${BASES.catalog}/categories/level2`,
   categoryChildren: (slug) => `${BASES.catalog}/categories/level2/${slug}/children`,
   searchProducts: (query) => `${BASES.catalog}/search/products?q=${encodeURIComponent(query)}`,
+}
+
+// Search endpoints (new microservice)
+export const search = {
+  base: BASES.search,
+  global: (query, type = 'all', page = 1, limit = 10) => `${BASES.search}/search?q=${encodeURIComponent(query)}&type=${type}&page=${page}&limit=${limit}`,
+  products: (query, params = {}) => {
+    const usp = new URLSearchParams({ q: query, ...Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null)) });
+    return `${BASES.search}/search/products?${usp.toString()}`;
+  },
+  suggestions: (query) => `${BASES.search}/search/suggestions?q=${encodeURIComponent(query)}`,
+  byCategory: (categoryId, params = {}) => {
+    const usp = new URLSearchParams({ categoryId, ...Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null)) });
+    return `${BASES.search}/search/category?${usp.toString()}`;
+  },
+  trending: (params = {}) => {
+    const usp = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null)));
+    return `${BASES.search}/search/trending?${usp.toString()}`;
+  },
 }
 
 // Auth endpoints (auth base is explicitly namespaced with /auth as requested)
@@ -66,6 +86,6 @@ export const addresses = {
   setDefault: `${BASES.auth}/addresses/default`,
 }
 
-export default { catalog, auth, cart, addresses }
+export default { catalog, search, auth, cart, addresses }
 
 

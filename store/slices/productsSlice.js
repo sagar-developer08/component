@@ -1,11 +1,20 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { catalog } from '../api/endpoints'
+import { catalog, search } from '../api/endpoints'
 
 // Async thunk for fetching products
 export const fetchProducts = createAsyncThunk(
   'products/fetchProducts',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
+      const state = getState()
+      const { lastFetchTime, cacheExpiry } = state.products
+      
+      // Check if data is still fresh (within cache expiry time)
+      if (lastFetchTime && Date.now() - lastFetchTime < cacheExpiry) {
+        console.log('Using cached products data')
+        return { fromCache: true }
+      }
+      
       const response = await fetch(catalog.products)
       
       if (!response.ok) {
@@ -45,7 +54,7 @@ export const searchProducts = createAsyncThunk(
   async (query, { rejectWithValue }) => {
     try {
       console.log('Searching for:', query)
-      const response = await fetch(catalog.searchProducts(query))
+      const response = await fetch(search.products(query))
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -56,6 +65,33 @@ export const searchProducts = createAsyncThunk(
       return data
     } catch (error) {
       console.error('Search error:', error)
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+// Async thunk for fetching search suggestions
+export const fetchSearchSuggestions = createAsyncThunk(
+  'products/fetchSearchSuggestions',
+  async (query, { rejectWithValue }) => {
+    try {
+      if (!query || query.trim().length < 2) {
+        return { suggestions: [] }
+      }
+      
+      console.log('Fetching suggestions for:', query)
+      // Use the same endpoint as search results but with limit for suggestions
+      const response = await fetch(search.products(query, { limit: 5 }))
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      console.log('Suggestions response:', data)
+      return data
+    } catch (error) {
+      console.error('Suggestions error:', error)
       return rejectWithValue(error.message)
     }
   }
@@ -74,12 +110,18 @@ const productsSlice = createSlice({
     searchResults: [],
     searchQuery: '',
     searchPagination: {},
+    searchSuggestions: [],
+    suggestionsLoading: false,
+    suggestionsError: null,
     pagination: {},
     loading: false,
     searchLoading: false,
     error: null,
     searchError: null,
-    success: false
+    success: false,
+    // Cache timestamps for performance
+    lastFetchTime: null,
+    cacheExpiry: 5 * 60 * 1000, // 5 minutes
   },
   reducers: {
     clearError: (state) => {
@@ -93,6 +135,10 @@ const productsSlice = createSlice({
       state.featured = []
       state.storeProducts = []
       state.pagination = {}
+    },
+    clearSuggestions: (state) => {
+      state.searchSuggestions = []
+      state.suggestionsError = null
     }
   },
   extraReducers: (builder) => {
@@ -105,13 +151,16 @@ const productsSlice = createSlice({
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false
         state.success = action.payload.success
-        if (action.payload.success && action.payload.data) {
+        
+        // Only update data if not from cache
+        if (!action.payload.fromCache && action.payload.success && action.payload.data) {
           state.products = action.payload.data.products || []
           state.bestsellers = action.payload.data.bestseller || []
           state.offers = action.payload.data.offers || []
           state.qliqPlusDeals = action.payload.data.qliqPlusDeals || []
           state.featured = action.payload.data.featured || []
           state.pagination = action.payload.data.pagination || {}
+          state.lastFetchTime = Date.now()
         }
         state.error = null
       })
@@ -158,8 +207,28 @@ const productsSlice = createSlice({
         state.searchError = action.payload
         state.success = false
       })
+      // Search suggestions cases
+      .addCase(fetchSearchSuggestions.pending, (state) => {
+        state.suggestionsLoading = true
+        state.suggestionsError = null
+      })
+      .addCase(fetchSearchSuggestions.fulfilled, (state, action) => {
+        state.suggestionsLoading = false
+        if (action.payload.success && action.payload.data) {
+          // Use the same data structure as search results since we're using the same endpoint
+          state.searchSuggestions = action.payload.data.products || []
+        } else {
+          state.searchSuggestions = []
+        }
+        state.suggestionsError = null
+      })
+      .addCase(fetchSearchSuggestions.rejected, (state, action) => {
+        state.suggestionsLoading = false
+        state.suggestionsError = action.payload
+        state.searchSuggestions = []
+      })
   }
 })
 
-export const { clearError, clearProducts } = productsSlice.actions
+export const { clearError, clearProducts, clearSuggestions } = productsSlice.actions
 export default productsSlice.reducer

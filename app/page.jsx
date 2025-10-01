@@ -13,7 +13,7 @@ import Footer from '@/components/Footer'
 import QuickNav from '@/components/QuickNav'
 import StoreCard from '@/components/StoreCard'
 import Image from 'next/image'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useMemo, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation as SwiperNavigation } from 'swiper/modules'
@@ -306,25 +306,19 @@ export default function Home() {
     })()
   }, [dispatch])
 
-  // Transform API data for different sections
-  const transformedProducts = products.map(transformProductData);
-  const transformedBestsellers = bestsellers.map(transformProductData);
-  const transformedOffers = offers.map(transformProductData);
-  const transformedSpecialDeals = qliqPlusDeals.map(transformProductData);
-  const transformedFeaturedOffers = featured.map(transformProductData);
-  const transformedBrands = brands.map(transformBrandData);
-  const transformedTopStores = topStores.map(transformStoreData);
-  const transformedNewStores = newStores.map(transformStoreData);
-  const transformedPopularCategories = popularCategories.map(transformPopularCategoryData);
-  const transformedLevel2Categories = level2Categories.map(transformPopularCategoryData);
+  // Transform API data for different sections with memoization
+  const transformedProducts = useMemo(() => products.map(transformProductData), [products]);
+  const transformedBestsellers = useMemo(() => bestsellers.map(transformProductData), [bestsellers]);
+  const transformedOffers = useMemo(() => offers.map(transformProductData), [offers]);
+  const transformedSpecialDeals = useMemo(() => qliqPlusDeals.map(transformProductData), [qliqPlusDeals]);
+  const transformedFeaturedOffers = useMemo(() => featured.map(transformProductData), [featured]);
+  const transformedBrands = useMemo(() => brands.map(transformBrandData), [brands]);
+  const transformedTopStores = useMemo(() => topStores.map(transformStoreData), [topStores]);
+  const transformedNewStores = useMemo(() => newStores.map(transformStoreData), [newStores]);
+  const transformedPopularCategories = useMemo(() => popularCategories.map(transformPopularCategoryData), [popularCategories]);
+  const transformedLevel2Categories = useMemo(() => level2Categories.map(transformPopularCategoryData), [level2Categories]);
 
-  // Debug logging for categories
-  console.log('Popular Categories Data:', popularCategories);
-  console.log('Transformed Popular Categories:', transformedPopularCategories);
-  console.log('Level 2 Categories Data:', level2Categories);
-  console.log('Transformed Level 2 Categories:', transformedLevel2Categories);
-  console.log('Categories Loading:', popularCategoriesLoading);
-  console.log('Categories Error:', popularCategoriesError);
+  // Debug logging removed for performance
 
   // Temporary test data to verify rendering works
   const testCategories = [
