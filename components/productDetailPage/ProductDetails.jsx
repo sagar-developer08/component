@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import OtherSellersDrawer from './OtherSellersDrawer';
 import { useAuth } from '../../contexts/AuthContext';
-import { useDispatch } from 'react-redux';
-import { addToCart } from '../../store/slices/cartSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { addToCart, fetchCart } from '../../store/slices/cartSlice';
 import { addToWishlist } from '../../store/slices/wishlistSlice';
 import { getUserFromCookies } from '../../utils/userUtils';
 import { useToast } from '../../contexts/ToastContext';
@@ -14,9 +14,18 @@ export default function ProductDetails({ product }) {
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isAddedToCart, setIsAddedToCart] = useState(false);
+  const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
   const { requireAuth } = useAuth();
   const dispatch = useDispatch();
   const { show } = useToast();
+  
+  // Check if product is in cart or wishlist
+  const { items: cartItems } = useSelector(state => state.cart);
+  const { items: wishlistItems } = useSelector(state => state.wishlist);
+  
+  const isInCart = cartItems.some(item => item.productId === product.id);
+  const isInWishlist = wishlistItems.some(item => item.productId === product.id);
 
   // Sync local state with props when they change
   useEffect(() => {
@@ -26,7 +35,11 @@ export default function ProductDetails({ product }) {
     if (product.selectedSize) {
       setSelectedSize(product.selectedSize);
     }
-  }, [product.selectedColor, product.selectedSize]);
+    
+    // Update button states based on cart and wishlist
+    setIsAddedToCart(isInCart);
+    setIsAddedToWishlist(isInWishlist);
+  }, [product.selectedColor, product.selectedSize, isInCart, isInWishlist]);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
@@ -39,6 +52,12 @@ export default function ProductDetails({ product }) {
   };
 
   const handleAddToCart = () => {
+    // If already in cart, don't add again
+    if (isAddedToCart || isInCart) {
+      show('Item already in cart')
+      return
+    }
+    
     requireAuth(() => {
       ; (async () => {
         const userId = await getUserFromCookies()
@@ -57,6 +76,10 @@ export default function ProductDetails({ product }) {
         const result = await dispatch(addToCart(cartItem))
         if (addToCart.fulfilled.match(result)) {
           show('Added to cart')
+          setIsAddedToCart(true)
+          
+          // Refresh cart data
+          dispatch(fetchCart(userId))
         } else if (addToCart.rejected.match(result)) {
           show('Failed to add to cart', 'error')
         }
@@ -65,6 +88,12 @@ export default function ProductDetails({ product }) {
   };
 
   const handleAddToFavourite = () => {
+    // If already in wishlist, don't add again
+    if (isAddedToWishlist || isInWishlist) {
+      show('Item already in wishlist')
+      return
+    }
+    
     requireAuth(() => {
       ; (async () => {
         const userId = await getUserFromCookies()
@@ -80,6 +109,7 @@ export default function ProductDetails({ product }) {
         if (addToWishlist.fulfilled.match(result)) {
           const isDuplicate = result.payload?.isDuplicate
           show(isDuplicate ? 'Already in wishlist' : 'Added to wishlist')
+          setIsAddedToWishlist(true)
         } else if (addToWishlist.rejected.match(result)) {
           show('Failed to add to wishlist', 'error')
         }
@@ -255,8 +285,20 @@ export default function ProductDetails({ product }) {
 
           {/* Action Buttons */}
           <div className="action-buttons">
-            <button className="add-to-cart" onClick={handleAddToCart}>Add To Cart</button>
-            <button className="add-to-favourite" onClick={handleAddToFavourite}>Add To Favourite</button>
+            <button 
+              className={`add-to-cart ${(isAddedToCart || isInCart) ? 'added' : ''}`} 
+              onClick={handleAddToCart}
+              disabled={isAddedToCart || isInCart}
+            >
+              {(isAddedToCart || isInCart) ? 'Added To Cart' : 'Add To Cart'}
+            </button>
+            <button 
+              className={`add-to-favourite ${(isAddedToWishlist || isInWishlist) ? 'added' : ''}`} 
+              onClick={handleAddToFavourite}
+              disabled={isAddedToWishlist || isInWishlist}
+            >
+              {(isAddedToWishlist || isInWishlist) ? 'Added To Wishlist' : 'Add To Wishlist'}
+            </button>
           </div>
 
           {/* Other Sellers */}
@@ -592,6 +634,16 @@ export default function ProductDetails({ product }) {
           cursor: pointer;
           transition: background 0.2s ease;
         }
+        
+        .add-to-cart.added {
+          background: rgba(0, 204, 102, 0.24);
+          color: #00CC66;
+        }
+        
+        .add-to-cart:disabled {
+          cursor: default;
+          opacity: 0.9;
+        }
 
         .add-to-favourite {
           padding: 12px 40px;
@@ -605,6 +657,17 @@ export default function ProductDetails({ product }) {
           font-weight: 600;
           cursor: pointer;
           transition: all 0.2s ease;
+        }
+        
+        .add-to-favourite.added {
+          background: rgba(0, 130, 255, 0.05);
+          color: #0082FF;
+          border: 2px solid #0082FF;
+        }
+        
+        .add-to-favourite:disabled {
+          cursor: default;
+          opacity: 0.9;
         }
 
         .share-section {

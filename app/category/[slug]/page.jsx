@@ -245,9 +245,9 @@ export default function CategoryPage() {
         <div className="banner-container">
           <div className="banner-section">
             <div className="banner-content">
-              <button className="banner-back-btn" onClick={handleBack}>
+              {/* <button className="banner-back-btn" onClick={handleBack}>
                 Back
-              </button>
+              </button> */}
               <div className="banner-info">
                 <div className="banner-title">
                   {categoryInfo?.name || slug?.toUpperCase() || 'CATEGORY'}
@@ -256,7 +256,7 @@ export default function CategoryPage() {
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.
                 </div>
               </div>
-              <button className="banner-follow-btn">Follow</button>
+              {/* <button className="banner-follow-btn">Follow</button> */}
             </div>
           </div>
         </div>
@@ -465,7 +465,7 @@ export default function CategoryPage() {
           align-items: flex-end;
           border-radius: 24px;
           background: linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, rgba(0, 0, 0, 0.60) 100%), 
-                      url('https://api.builder.io/api/v1/image/assets/TEMP/df43c644b630e11e75c5cfa0820db4ef46176c34?width=2720') lightgray 50% / cover no-repeat;
+                      url('/2.jpg') lightgray 50% / cover no-repeat;
           padding: 0 48px 40px 48px;
           box-sizing: border-box;
           position: relative;

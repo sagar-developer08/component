@@ -88,7 +88,7 @@ export default function ProductPage({ params }) {
   } = useSelector(state => state.productDetail)
 
   // Extract product ID and slug from URL params
-  const productId = searchParams.get('pid') // Only get pid from query params, not from params.id
+  const productId = searchParams.get('pid')
   const productSlug = params.id
 
   useEffect(() => {
@@ -96,19 +96,14 @@ export default function ProductPage({ params }) {
   }, [dispatch])
 
   useEffect(() => {
-    if (productSlug) {
-      // Pass id only if it exists, otherwise pass null/undefined
-      dispatch(fetchProductDetail({ id: productId || null, slug: productSlug }))
+    if (productId && productSlug) {
+      dispatch(fetchProductDetail({ id: productId, slug: productSlug }))
     }
   }, [dispatch, productId, productSlug])
 
   // Update URL when we get the product ID from API response
   useEffect(() => {
-    if (currentProductId && !productId && productSlug) {
-      // If we have a product ID from the API but not in the URL, update the URL
-      const newUrl = `/product/${productSlug}?pid=${currentProductId}`
-      router.replace(newUrl)
-    }
+    // No auto-fetch by slug; if pid is missing, do not call API
   }, [currentProductId, productId, productSlug, router])
 
   // Fetch variants when we have a product with parent_product_id

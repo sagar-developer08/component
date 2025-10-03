@@ -233,14 +233,16 @@ export default function BrandPage() {
               }
             })
             
-            // Use search service for filtered store products
-            const url = search.storeProducts(storeId, Object.fromEntries(params))
-            
+            // Use catalog store API for filtered store products
+            const url = params.toString()
+              ? `${catalog.productsByStore(storeId)}?${params.toString()}`
+              : catalog.productsByStore(storeId)
+             
             const response = await fetch(url)
 
             if (response.ok) {
               const data = await response.json()
-              console.log('Store Search API Response:', data)
+              console.log('Store Catalog API Response:', data)
 
               if (data.success && data.data) {
                 // Extract store info from the first product's store_id

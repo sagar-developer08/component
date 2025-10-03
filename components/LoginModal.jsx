@@ -4,20 +4,71 @@ import { useAuth } from '../contexts/AuthContext'
 import { useDispatch, useSelector } from 'react-redux'
 import { loginUser } from '@/store/slices/authSlice'
 import { useToast } from '@/contexts/ToastContext'
-import RegisterModal from './RegisterModal'
 
-export default function LoginModal({ open, onClose }) {
+export default function LoginModal({ open, onClose, onOpenRegister }) {
   const { login } = useAuth()
   const dispatch = useDispatch()
   const authState = useSelector(state => state.auth)
   const { show } = useToast()
-  const [showRegisterModal, setShowRegisterModal] = useState(false)
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
+  const [errors, setErrors] = useState({
+    email: '',
+    password: ''
+  })
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }))
+    }
+  }
+
+  const validateForm = () => {
+    const newErrors = {}
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required'
+    } else if (!validateEmail(formData.email)) {
+      newErrors.email = 'Please enter a valid email address'
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required'
+    }
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleLogin = async (e) => {
     e.preventDefault()
-    const email = e.currentTarget.form?.elements[0]?.value || ''
-    const password = e.currentTarget.form?.elements[1]?.value || ''
-    const resultAction = await dispatch(loginUser({ email, password }))
+    
+    if (!validateForm()) {
+      return
+    }
+
+    const resultAction = await dispatch(loginUser({ 
+      email: formData.email, 
+      password: formData.password 
+    }))
+    
     if (loginUser.fulfilled.match(resultAction)) {
       const payload = resultAction.payload
       const token = payload?.tokens?.accessToken
@@ -25,22 +76,50 @@ export default function LoginModal({ open, onClose }) {
       if (token && user) {
         login(user, token)
         show('Logged in successfully')
+        onClose()
       }
     } else if (loginUser.rejected.match(resultAction)) {
       const errMsg = resultAction.payload || 'Login failed'
-      show(typeof errMsg === 'string' ? errMsg : 'Login failed')
+      
+      // Set specific error messages based on the error
+      if (typeof errMsg === 'string') {
+        if (errMsg.toLowerCase().includes('email') || errMsg.toLowerCase().includes('user')) {
+          setErrors(prev => ({
+            ...prev,
+            email: 'Invalid email address'
+          }))
+        } else if (errMsg.toLowerCase().includes('password')) {
+          setErrors(prev => ({
+            ...prev,
+            password: 'Incorrect password'
+          }))
+        } else {
+          setErrors(prev => ({
+            ...prev,
+            email: 'Invalid email or password',
+            password: 'Invalid email or password'
+          }))
+        }
+      } else {
+        setErrors(prev => ({
+          ...prev,
+          email: 'Login failed',
+          password: 'Login failed'
+        }))
+      }
     }
   }
 
   const handleCreateAccount = (e) => {
     e.preventDefault()
-    setShowRegisterModal(true) // Open registration modal (keep login modal open behind it)
+    onOpenRegister() // Open registration modal and close login modal
   }
 
-  const handleSwitchToLogin = () => {
-    setShowRegisterModal(false) // Close registration modal
-    // Reopen login modal by calling onClose and then reopening
-    // This will be handled by the parent component's state management
+  // Reset form data when modal is closed
+  const handleLoginModalClose = () => {
+    setFormData({ email: '', password: '' })
+    setErrors({ email: '', password: '' })
+    onClose() // Close login modal
   }
 
 
@@ -49,7 +128,7 @@ export default function LoginModal({ open, onClose }) {
     <>
       <div className="login-modal-overlay">
         <div className="login-modal">
-          <button className="login-modal-close" onClick={onClose}>
+          <button className="login-modal-close" onClick={handleLoginModalClose}>
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
               <circle cx="14" cy="14" r="14" fill="#F5F5F5" />
               <path d="M9 9L19 19M19 9L9 19" stroke="#000" strokeWidth="2" strokeLinecap="round" />
@@ -62,13 +141,33 @@ export default function LoginModal({ open, onClose }) {
                 Vorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.
               </p>
               <form className="login-form">
-                <label className="login-label">Email</label>
-                <input className="login-input" type="email" placeholder="Email" />
-                <div className="login-password-row">
-                  <label className="login-label">Password</label>
-                  <span className="login-forgot">Forget password?</span>
+                <div className="login-field">
+                  <label className="login-label">Email</label>
+                  <input 
+                    className={`login-input ${errors.email ? 'login-input-error' : ''}`}
+                    type="email" 
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Email" 
+                  />
+                  {errors.email && <span className="login-error">{errors.email}</span>}
                 </div>
-                <input className="login-input" type="password" placeholder="Password" />
+                <div className="login-field">
+                  <div className="login-password-row">
+                    <label className="login-label">Password</label>
+                    <span className="login-forgot">Forget password?</span>
+                  </div>
+                  <input 
+                    className={`login-input ${errors.password ? 'login-input-error' : ''}`}
+                    type="password" 
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="Password" 
+                  />
+                  {errors.password && <span className="login-error">{errors.password}</span>}
+                </div>
                 <div className="login-btn-row">
                   <button type="button" className="login-create-btn" onClick={handleCreateAccount}>Create Account</button>
                   <button type="submit" className="login-btn" onClick={handleLogin} disabled={authState.loading}>
@@ -102,11 +201,6 @@ export default function LoginModal({ open, onClose }) {
         </div>
       </div>
       
-      <RegisterModal 
-        open={showRegisterModal}
-        onClose={onClose}
-        onSwitchToLogin={handleSwitchToLogin}
-      />
       
       <style jsx>{`
         .login-modal-overlay {
@@ -141,7 +235,7 @@ export default function LoginModal({ open, onClose }) {
           display: flex;
           flex-direction: row;
           width: 100%;
-          min-height: 480px;
+          height: 700px;
         }
         .login-modal-left {
           flex: 1;
@@ -167,6 +261,10 @@ export default function LoginModal({ open, onClose }) {
           flex-direction: column;
           gap: 16px;
         }
+        .login-field {
+          display: flex;
+          flex-direction: column;
+        }
         .login-label {
           font-size: 16px;
           color: #222;
@@ -180,6 +278,20 @@ export default function LoginModal({ open, onClose }) {
           font-size: 16px;
           font-weight: 500;
           color: #222;
+          margin-bottom: 8px;
+          transition: border-color 0.2s;
+        }
+        .login-input:focus {
+          outline: none;
+          border-color: #0082FF;
+        }
+        .login-input-error {
+          border-color: #FF4444;
+        }
+        .login-error {
+          color: #FF4444;
+          font-size: 14px;
+          margin-top: 4px;
           margin-bottom: 8px;
         }
         .login-password-row {

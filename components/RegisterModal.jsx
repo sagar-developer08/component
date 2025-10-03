@@ -22,20 +22,42 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
 
   const [errors, setErrors] = useState({})
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
   const handleInputChange = (e) => {
     const { name, value } = e.target
+    
+    // For phone field, only allow digits, +, -, spaces, and parentheses
+    if (name === 'phone') {
+      const phoneRegex = /^[0-9+\-\s()]*$/
+      if (!phoneRegex.test(value)) {
+        return // Don't update if invalid characters
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
     }))
 
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }))
+    // Validate email in real-time
+    const newErrors = { ...errors }
+    
+    if (name === 'email') {
+      if (value && !validateEmail(value)) {
+        newErrors.email = 'Please enter a valid email address'
+      } else {
+        newErrors.email = ''
+      }
+    } else if (errors[name]) {
+      // Clear error for other fields when user starts typing
+      newErrors[name] = ''
     }
+    
+    setErrors(newErrors)
   }
 
   const validateForm = () => {
@@ -324,7 +346,7 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
           display: flex;
           flex-direction: row;
           width: 100%;
-          min-height: 480px;
+          height: 700px;
         }
         .register-modal-left {
           flex: 1;

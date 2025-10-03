@@ -1,5 +1,6 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
@@ -17,8 +18,36 @@ import NewAddress from '../../components/profile/NewAddress/newAddress'
 // User data is now fetched from the aggregated API in each component
 
 export default function ProfilePage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState('personal-info')
   const [isEditing, setIsEditing] = useState(false)
+
+  // Initialize active tab from URL parameter
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab')
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl)
+    }
+  }, [searchParams])
+
+  // Update URL when tab changes
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId)
+    const url = new URL(window.location)
+    url.searchParams.set('tab', tabId)
+    router.replace(url.pathname + url.search, { scroll: false })
+  }
+
+  // Handle navigation from NewAddress component
+  const handleNewAddressCancel = () => {
+    handleTabChange('addresses')
+  }
+
+  const handleNewAddressSave = () => {
+    // TODO: Implement save address functionality
+    handleTabChange('addresses')
+  }
 
   const tabs = [
     { id: 'personal-info', label: 'Personal Info' },
@@ -51,7 +80,7 @@ export default function ProfilePage() {
                 <button
                   key={tab.id}
                   className={`${styles.tabBtn} ${activeTab === tab.id ? styles.active : ''}`}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                 >
                   {tab.label}
                 </button>
@@ -60,7 +89,7 @@ export default function ProfilePage() {
             {activeTab === 'cash-wallet' && (
               <button
                 className={styles.addCardBtn}
-                onClick={() => setActiveTab('add-card')}
+                onClick={() => handleTabChange('add-card')}
               >
                 Add New Card
               </button>
@@ -69,13 +98,13 @@ export default function ProfilePage() {
               <div className={styles.qoynsActionsRow}>
                 <button
                   className={`${styles.addCardBtn} ${activeTab === 'qoyns-history' ? styles.active : ''}`}
-                  onClick={() => setActiveTab('qoyns-history')}
+                  onClick={() => handleTabChange('qoyns-history')}
                 >
                   History
                 </button>
                 <button
                   className={`${styles.addCardBtn} ${activeTab === 'send-qoyn' ? styles.active : ''}`}
-                  onClick={() => setActiveTab('send-qoyn')}
+                  onClick={() => handleTabChange('send-qoyn')}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ verticalAlign: 'middle' }}>
@@ -111,7 +140,7 @@ export default function ProfilePage() {
                 </button>
                 <button
                   className={`${styles.addCardBtn} ${activeTab === 'new-address' ? styles.active : ''}`}
-                  onClick={() => setActiveTab('new-address')}
+                  onClick={() => handleTabChange('new-address')}
                 >
                   Add New Address 
                 </button>
@@ -161,7 +190,10 @@ export default function ProfilePage() {
             )}
             {activeTab === 'new-address' && (
               <div className={styles.sectionContent}>
-                <NewAddress />
+                <NewAddress 
+                  onCancel={handleNewAddressCancel}
+                  onSave={handleNewAddressSave}
+                />
               </div>
             )}
           </div>

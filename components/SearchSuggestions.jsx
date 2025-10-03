@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, memo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchSearchSuggestions, clearSuggestions } from '@/store/slices/productsSlice'
+import { generateProductUrl } from '@/utils/productUtils'
 
 const SearchSuggestions = memo(function SearchSuggestions({ 
   query, 
@@ -78,7 +79,9 @@ const SearchSuggestions = memo(function SearchSuggestions({
     if (suggestion.slug || suggestion._id) {
       // Navigate to product detail page
       const slug = suggestion.slug || suggestion._id
-      router.push(`/product/${slug}`)
+      const id = suggestion._id || suggestion.id
+      const url = id ? generateProductUrl(id, slug) : `/product/${slug}`
+      router.push(url)
     } else {
       // Fallback to search results page
       router.push(`/search?q=${encodeURIComponent(suggestion.title || suggestion.name || query)}`)

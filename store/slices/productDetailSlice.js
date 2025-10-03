@@ -8,14 +8,12 @@ export const fetchProductDetail = createAsyncThunk(
     try {
       console.log('Fetching product detail:', { id, slug })
       
-      // Choose the appropriate endpoint based on whether we have an ID
-      let url;
-      if (id) {
-        url = catalog.productBySlug(id, slug)
-      } else {
-        url = catalog.productBySlugOnly(slug)
+      // Require product ID; remove slug-only flow
+      if (!id) {
+        throw new Error('Product ID is required for product detail fetch')
       }
-      
+
+      const url = catalog.productBySlug(id, slug)
       const response = await fetch(url)
       
       if (!response.ok) {
@@ -39,14 +37,12 @@ export const fetchProductVariant = createAsyncThunk(
     try {
       console.log('Fetching product variant:', { id, slug })
       
-      // Choose the appropriate endpoint based on whether we have an ID
-      let url;
-      if (id) {
-        url = catalog.productBySlug(id, slug)
-      } else {
-        url = catalog.productBySlugOnly(slug)
+      // Require product ID; remove slug-only flow
+      if (!id) {
+        throw new Error('Product ID is required for product variant fetch')
       }
-      
+
+      const url = catalog.productBySlug(id, slug)
       const response = await fetch(url)
       
       if (!response.ok) {

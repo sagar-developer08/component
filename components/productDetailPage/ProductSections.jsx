@@ -22,9 +22,9 @@ export default function ProductSections({ relatedProducts, productData }) {
 
   // Sample manufacturer images
   const manufacturerImages = [
-    "/images/manufacturer-sneakers.jpg",
-    "/images/manufacturer-2.jpg",
-    "/images/manufacturer-3.jpg"
+    "/6.jpeg",
+    "/2.jpg",
+    "/1.jpg"
   ]
 
   const nextImage = () => {

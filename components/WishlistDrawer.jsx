@@ -2,8 +2,8 @@ import Image from 'next/image'
 import { useAuth } from '../contexts/AuthContext'
 import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchWishlist, removeFromWishlist } from '@/store/slices/wishlistSlice'
-import { addToCart } from '@/store/slices/cartSlice'
+import { fetchWishlist, removeFromWishlist, moveToCart } from '@/store/slices/wishlistSlice'
+import { fetchCart } from '@/store/slices/cartSlice'
 import { useToast } from '@/contexts/ToastContext'
 import { getUserFromCookies } from '@/utils/userUtils'
 
@@ -14,24 +14,24 @@ export default function WishlistDrawer({ open, onClose }) {
   const { show } = useToast()
 
   const handleAddToCart = (item) => {
-    requireAuth(() => {
-      if (user?.id) {
-        const cartItem = {
-          userId: user.id,
+    requireAuth(async () => {
+      const userId = user?.id || await getUserFromCookies()
+      if (userId) {
+        const result = await dispatch(moveToCart({
+          userId,
           productId: item.productId,
-          name: item.name,
-          price: item.price,
-          image: item.image,
           quantity: 1
+        }))
+        
+        if (moveToCart.fulfilled.match(result)) {
+          show('Moved to cart successfully')
+          // Refresh cart to show the new item
+          dispatch(fetchCart(userId))
+        } else if (moveToCart.rejected.match(result)) {
+          show(result.payload || 'Failed to move to cart', 'error')
+          // Refresh wishlist to revert optimistic update
+          dispatch(fetchWishlist())
         }
-        ;(async () => {
-          const result = await dispatch(addToCart(cartItem))
-          if (addToCart.fulfilled.match(result)) {
-            show('Added to cart')
-          } else {
-            show('Failed to add to cart', 'error')
-          }
-        })()
       }
     })
   }
@@ -173,6 +173,9 @@ export default function WishlistDrawer({ open, onClose }) {
         .drawer-content {
           padding: 24px 32px 0 32px;
           flex: 1;
+          overflow-y: auto;
+          -ms-overflow-style: auto; /* IE and Edge */
+          scrollbar-width: thin; /* Firefox */
         }
         .wishlist-item {
           display: flex;

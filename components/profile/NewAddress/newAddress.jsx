@@ -1,6 +1,6 @@
 import styles from './newAddress.module.css'
 
-export default function NewAddress() {
+export default function NewAddress({ onCancel, onSave }) {
   return (
     <div className={styles.newAddressContainer}>
       <h3 className={styles.title}>ADD NEW ADDRESS</h3>
@@ -48,8 +48,8 @@ export default function NewAddress() {
           </span>
         </div>
         <div className={styles.actions}>
-          <button type="button" className={styles.cancelBtn}>Cancel</button>
-          <button type="submit" className={styles.saveBtn}>Save</button>
+          <button type="button" className={styles.cancelBtn} onClick={onCancel}>Cancel</button>
+          <button type="submit" className={styles.saveBtn} onClick={onSave}>Save</button>
         </div>
       </form>
     </div>

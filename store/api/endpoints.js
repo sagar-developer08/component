@@ -83,6 +83,7 @@ export const cart = {
   wishlistAdd: `${BASES.cart}/wishlist/add`,
   wishlistGet: `${BASES.cart}/wishlist`,
   wishlistRemove: `${BASES.cart}/wishlist/remove`,
+  wishlistMoveToCart: `${BASES.cart}/wishlist/move-to-cart`,
 }
 
 export const payment = {

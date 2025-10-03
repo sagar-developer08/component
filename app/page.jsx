@@ -75,7 +75,7 @@ const transformStoreData = (apiStore) => {
 // Helper function to transform API popular category data to match CategoryCard component format
 const transformPopularCategoryData = (apiCategory) => {
   console.log('Transforming category:', apiCategory)
-  
+
   // Use a placeholder image since the API doesn't provide category images
   const placeholderImages = [
     'https://api.builder.io/api/v1/image/assets/TEMP/b96c7d3062a93a3b6d8e9a2a4bd11acfa542dced?width=412',
@@ -85,20 +85,20 @@ const transformPopularCategoryData = (apiCategory) => {
     'https://api.builder.io/api/v1/image/assets/TEMP/bb3de20fdb53760293d946ca033adbf4489bed56?width=412',
     'https://api.builder.io/api/v1/image/assets/TEMP/f291940d1feaf8e5cb0a7335f629e12091d26a73?width=412'
   ]
-  
+
   // Use a simple hash of the category name to consistently assign the same image
   const hash = apiCategory.name.split('').reduce((a, b) => {
     a = ((a << 5) - a) + b.charCodeAt(0)
     return a & a
   }, 0)
   const imageIndex = Math.abs(hash) % placeholderImages.length
-  
+
   const transformed = {
     name: apiCategory.name || 'Category Name',
     image: placeholderImages[imageIndex],
     slug: apiCategory.slug || apiCategory.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
   }
-  
+
   console.log('Transformed category:', transformed)
   return transformed
 }
@@ -575,8 +575,8 @@ export default function Home() {
         <Banner
           title="How To Refer & Earn on QLIQ"
           description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
-          buttonText="Learn More"
-          backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/df43c644b630e11e75c5cfa0820db4ef46176c34?width=2720"
+          buttonText="Try Qliq Live Now"
+          backgroundImage="3.jpg"
         />
 
         {/* Offers Section */}
@@ -605,43 +605,6 @@ export default function Home() {
             </Swiper>
           </div>
         </section>
-
-        {/* Special Deals Section */}
-        <section className="section">
-          <div className="container">
-            <SectionHeader
-              title="Special Deals For QLIQ+"
-              showNavigation={true}
-              showButton={true}
-              buttonText="Upgrade"
-              onPrev={handleSpecialDealsPrev}
-              onNext={handleSpecialDealsNext}
-            />
-            <Swiper
-              ref={specialDealsSwiperRef}
-              modules={[SwiperNavigation]}
-              slidesPerView="auto"
-              spaceBetween={24}
-              grabCursor={true}
-              freeMode={true}
-              style={{ width: '1360px' }}
-            >
-              {transformedSpecialDeals.map((product, index) => (
-                <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
-                  <ProductCard {...product} />
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
-        </section>
-
-        {/* Banner 2 */}
-        <Banner
-          title="How To Pay Using Qoyns"
-          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
-          buttonText="Learn More"
-          backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/30138089958b1dd1eb8be111e17374ed71a2b6c7?width=2720"
-        />
 
         {/* Top Brands Section */}
         <section className="section">
@@ -679,6 +642,115 @@ export default function Home() {
                 ))}
               </Swiper>
             )}
+          </div>
+        </section>
+
+        {/* Special Deals Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader
+              title="Special Deals For QLIQ+"
+              showNavigation={true}
+              showButton={true}
+              buttonText="Upgrade"
+              onPrev={handleSpecialDealsPrev}
+              onNext={handleSpecialDealsNext}
+            />
+            <Swiper
+              ref={specialDealsSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView="auto"
+              spaceBetween={24}
+              grabCursor={true}
+              freeMode={true}
+              style={{ width: '1360px' }}
+            >
+              {transformedSpecialDeals.map((product, index) => (
+                <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
+                  <ProductCard {...product} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
+        </section>
+
+        {/* Banner 2 */}
+        <Banner
+          title="How To Pay Using Qoyns"
+          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
+          buttonText="Download Qliq Now"
+          backgroundImage="1.jpg"
+        />
+
+        {/* Top Stores Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader
+              title="Top Stores"
+              showNavigation={true}
+              showButton={true}
+              buttonText={"See All"}
+              onButtonClick={handleSeeAllStores}
+              onPrev={handleTopStoresPrev}
+              onNext={handleTopStoresNext}
+            />
+            {storesLoading ? (
+              <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+                {[...Array(6)].map((_, index) => (
+                  <CategoryCardSkeleton key={`skeleton-${index}`} />
+                ))}
+              </div>
+            ) : storesError ? (
+              <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+                Error loading stores: {storesError}
+              </div>
+            ) : (
+              <Swiper
+                ref={topStoresSwiperRef}
+                modules={[SwiperNavigation]}
+                slidesPerView="auto"
+                spaceBetween={24}
+                grabCursor={true}
+                freeMode={true}
+                style={{ width: '1360px' }}
+              >
+                {transformedTopStores.map((store, index) => (
+                  <SwiperSlide key={store.name || index} style={{ width: 'auto' }}>
+                    <CategoryCard name={store.name} image={store.image} onClick={() => handleStoreClick(store)} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            )}
+          </div>
+        </section>
+
+        {/* Featured Offers Section */}
+        <section className="section">
+          <div className="container">
+            <SectionHeader
+              title="Featured Offers"
+              showNavigation={true}
+              showButton={true}
+              buttonText="See All"
+              onButtonClick={handleSeeAllFeaturedOffers}
+              onPrev={handleFeaturedOffersPrev}
+              onNext={handleFeaturedOffersNext}
+            />
+            <Swiper
+              ref={featuredOffersSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView="auto"
+              spaceBetween={24}
+              grabCursor={true}
+              freeMode={true}
+              style={{ width: '1360px' }}
+            >
+              {transformedFeaturedOffers.map((product, index) => (
+                <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
+                  <ProductCard {...product} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
           </div>
         </section>
 
@@ -725,84 +797,12 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Featured Offers Section */}
-        <section className="section">
-          <div className="container">
-            <SectionHeader
-              title="Featured Offers"
-              showNavigation={true}
-              showButton={true}
-              buttonText="See All"
-              onButtonClick={handleSeeAllFeaturedOffers}
-              onPrev={handleFeaturedOffersPrev}
-              onNext={handleFeaturedOffersNext}
-            />
-            <Swiper
-              ref={featuredOffersSwiperRef}
-              modules={[SwiperNavigation]}
-              slidesPerView="auto"
-              spaceBetween={24}
-              grabCursor={true}
-              freeMode={true}
-              style={{ width: '1360px' }}
-            >
-              {transformedFeaturedOffers.map((product, index) => (
-                <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
-                  <ProductCard {...product} />
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
-        </section>
-
-        {/* Top Stores Section */}
-        <section className="section">
-          <div className="container">
-            <SectionHeader
-              title="Top Stores"
-              showNavigation={true}
-              showButton={true}
-              buttonText={"See All"}
-              onButtonClick={handleSeeAllStores}
-              onPrev={handleTopStoresPrev}
-              onNext={handleTopStoresNext}
-            />
-            {storesLoading ? (
-              <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
-                {[...Array(6)].map((_, index) => (
-                  <CategoryCardSkeleton key={`skeleton-${index}`} />
-                ))}
-              </div>
-            ) : storesError ? (
-              <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
-                Error loading stores: {storesError}
-              </div>
-            ) : (
-              <Swiper
-                ref={topStoresSwiperRef}
-                modules={[SwiperNavigation]}
-                slidesPerView="auto"
-                spaceBetween={24}
-                grabCursor={true}
-                freeMode={true}
-                style={{ width: '1360px' }}
-              >
-                {transformedTopStores.map((store, index) => (
-                  <SwiperSlide key={store.name || index} style={{ width: 'auto' }}>
-                    <CategoryCard name={store.name} image={store.image} onClick={() => handleStoreClick(store)} />
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-            )}
-          </div>
-        </section>
-
         {/* Banner 3 */}
         <Banner
           title="How To Save on QLIQ"
           description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
-          buttonText="Learn More"
-          backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/5f1b6b2bdfa8e9703d7d31aedb5e297922c9a082?width=2720"
+          buttonText="Login on Qliq Live Now"
+          backgroundImage="2.jpg"
         />
 
         {/* New Stores Section */}
@@ -815,7 +815,7 @@ export default function Home() {
               onNext={handleNext}
               showButton={false}
               buttonText={""}
-              onButtonClick={() => {}}
+              onButtonClick={() => { }}
             />
             {storesLoading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -848,23 +848,23 @@ export default function Home() {
         </section>
 
         {/* Banner 4 */}
-        <Banner
+        {/* <Banner
           title="How To Earn Doing a GIG"
           description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
           buttonText="Learn More"
           backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/f70eb37fe9b38478a141ee9536f057811ff47ace?width=2720"
-        />
+        /> */}
 
         {/* FAQ Section */}
         <FAQ />
 
         {/* Final Banner */}
-        <Banner
+        {/* <Banner
           title="Become a Vendor"
           description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
           buttonText="Learn More"
           backgroundImage="https://api.builder.io/api/v1/image/assets/TEMP/c1726d63175ccf7d26ef79e2d2a0ffde926ef9d0?width=2720"
-        />
+        /> */}
         <Footer />
         {/* Test Authentication Link */}
       </main>

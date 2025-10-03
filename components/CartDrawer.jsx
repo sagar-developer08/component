@@ -6,186 +6,190 @@ import { useEffect } from 'react'
 import { getUserFromCookies } from '../utils/userUtils'
 
 export default function CartDrawer({ open, onClose }) {
-    const { requireAuth, user } = useAuth()
-    const dispatch = useDispatch()
-    const { items, total, itemsCount, loading, error } = useSelector(state => state.cart)
+  const { requireAuth, user } = useAuth()
+  const dispatch = useDispatch()
+  const { items, total, itemsCount, loading, error } = useSelector(state => state.cart)
 
-    // Fetch cart when drawer opens and user is authenticated
-    useEffect(() => {
-        if (open) {
-            const fetchUserCart = async () => {
-                let userId = user?.id || await getUserFromCookies()
-                if (userId) {
-                    console.log('Fetching cart for userId:', userId)
-                    dispatch(fetchCart(userId))
-                }
-            }
-            fetchUserCart()
+  // Fetch cart when drawer opens and user is authenticated
+  useEffect(() => {
+    if (open) {
+      const fetchUserCart = async () => {
+        let userId = user?.id || await getUserFromCookies()
+        if (userId) {
+          console.log('Fetching cart for userId:', userId)
+          dispatch(fetchCart(userId))
         }
-    }, [open, user?.id, dispatch])
-
-    // Debug: Log cart data when it changes
-    useEffect(() => {
-        console.log('Cart data updated:', { items, total, itemsCount, loading, error })
-    }, [items, total, itemsCount, loading, error])
-
-    const handleQuantityChange = (productId, newQuantity) => {
-        requireAuth(() => {
-            const updateQuantity = async () => {
-                const userId = user?.id || await getUserFromCookies()
-                if (userId) {
-                    console.log('Updating quantity:', { userId, productId, newQuantity })
-                    dispatch(updateCartItem({ 
-                        userId, 
-                        productId, 
-                        quantity: newQuantity 
-                    }))
-                }
-            }
-            updateQuantity()
-        })
+      }
+      fetchUserCart()
     }
+  }, [open, user?.id, dispatch])
 
-    const handleRemoveItem = (productId) => {
-        requireAuth(() => {
-            const removeItem = async () => {
-                const userId = user?.id || await getUserFromCookies()
-                if (userId) {
-                    dispatch(removeFromCart({ 
-                        userId, 
-                        productId 
-                    }))
-                }
-            }
-            removeItem()
-        })
-    }
+  // Debug: Log cart data when it changes
+  useEffect(() => {
+    console.log('Cart data updated:', { items, total, itemsCount, loading, error })
+  }, [items, total, itemsCount, loading, error])
 
-    const handleAddToWishlist = (productId) => {
-        requireAuth(() => {
-            // Add to wishlist logic here
-            console.log('Adding to wishlist from cart:', productId)
-        })
-    }
+  const handleQuantityChange = (productId, newQuantity) => {
+    requireAuth(() => {
+      const updateQuantity = async () => {
+        const userId = user?.id || await getUserFromCookies()
+        if (userId) {
+          console.log('Updating quantity:', { userId, productId, newQuantity })
+          dispatch(updateCartItem({
+            userId,
+            productId,
+            quantity: newQuantity
+          }))
+        }
+      }
+      updateQuantity()
+    })
+  }
 
-    const handleCheckout = () => {
-        requireAuth(() => {
-            // Redirect to checkout page
-            window.location.href = '/checkout'
-        })
-    }
+  const handleRemoveItem = (productId) => {
+    requireAuth(() => {
+      const removeItem = async () => {
+        const userId = user?.id || await getUserFromCookies()
+        if (userId) {
+          dispatch(removeFromCart({
+            userId,
+            productId
+          }))
+        }
+      }
+      removeItem()
+    })
+  }
 
-    if (!open) return null
-    return (
-        <div className="drawer-overlay">
-            <div className="drawer">
-                <div className="drawer-header">
-                    <span className="drawer-title">Your Cart</span>
-                    <button className="drawer-close" onClick={onClose}>
-                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                            <circle cx="14" cy="14" r="14" fill="#F5F5F5" />
-                            <path d="M9 9L19 19M19 9L9 19" stroke="#000" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                    </button>
-                </div>
-                <div className="drawer-divider" />
-                <div className="drawer-content">
-                    {loading ? (
-                        <div className="cart-loading">
-                            <div className="loading-spinner"></div>
-                            <p>Loading cart...</p>
-                        </div>
-                    ) : error ? (
-                        <div className="cart-error">
-                            <p>Error loading cart: {error}</p>
-                            <button onClick={() => user?.id && dispatch(fetchCart(user.id))}>
-                                Retry
-                            </button>
-                        </div>
-                    ) : items.length === 0 ? (
-                        <div className="cart-empty">
-                            <div className="empty-cart-icon">
-                                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                                    <path d="M16 16L20 44H44L48 16H16Z" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                    <path d="M20 20V12C20 8.68629 22.6863 6 26 6H38C41.3137 6 44 8.68629 44 12V20" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                </svg>
-                            </div>
-                            <h3>Your cart is empty</h3>
-                            <p>Add some products to get started!</p>
-                        </div>
-                    ) : (
-                        <div className="cart-items">
-                            {items && items.length > 0 ? items.map((item) => (
-                                <div key={item.productId} className="cart-item">
-                                    <div className="cart-image-wrap">
-                                        <Image 
-                                            src="/iphone.jpg" 
-                                            alt={item.name} 
-                                            width={120} 
-                                            height={100} 
-                                            className="cart-image" 
-                                        />
-                                    </div>
-                                    <div className="cart-info">
-                                        <div className="cart-brand">{item.brand || 'Product'}</div>
-                                        <div className="cart-name">{item.name}</div>
-                                        <div className="cart-price">AED {item.price}</div>
-                                        <div className="cart-actions">
-                                            <div className='cart-qty-control'>
-                                                <button 
-                                                    className="cart-qty-btn"
-                                                    onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
-                                                    disabled={item.quantity <= 1}
-                                                >
-                                                    -
-                                                </button>
-                                                <span className="cart-qty">{item.quantity}</span>
-                                                <button 
-                                                    className="cart-qty-btn"
-                                                    onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
+  const handleAddToWishlist = (productId) => {
+    requireAuth(() => {
+      // Add to wishlist logic here
+      console.log('Adding to wishlist from cart:', productId)
+    })
+  }
 
-                                            <button 
-                                                className="cart-wishlist-btn" 
-                                                onClick={() => handleAddToWishlist(item.productId)}
-                                            >
-                                                <svg width="28" height="28" viewBox="6 0 28 26" fill="none">
-                                                    <path d="M20.09 18.5586L20 18.6458L19.901 18.5586C15.626 14.8005 12.8 12.3155 12.8 9.7956C12.8 8.0518 14.15 6.7439 15.95 6.7439C17.336 6.7439 18.686 7.6158 19.163 8.8016H20.837C21.314 7.6158 22.664 6.7439 24.05 6.7439C25.85 6.7439 27.2 8.0518 27.2 9.7956C27.2 12.3155 24.374 14.8005 20.09 18.5586Z" stroke="#0082FF" strokeWidth="2" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <button 
-                                        className="cart-remove-btn"
-                                        onClick={() => handleRemoveItem(item.productId)}
-                                    >
-                                        Remove
-                                    </button>
-                                </div>
-                            )) : (
-                                <div className="cart-empty">
-                                    <h3>No items found</h3>
-                                    <p>Something went wrong loading your cart.</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-                <div className="drawer-footer">
-                    <button 
-                        className="drawer-checkout-btn" 
-                        onClick={handleCheckout}
-                        disabled={items.length === 0}
-                    >
-                        Checkout
-                    </button>
-                    <span className="drawer-total">AED {total.toFixed(2)}</span>
-                </div>
+  const handleCheckout = () => {
+    requireAuth(() => {
+      // Redirect to checkout page
+      window.location.href = '/checkout'
+    })
+  }
+
+  if (!open) return null
+  return (
+    <div className="drawer-overlay">
+      <div className="drawer">
+        <div className="drawer-header">
+          <span className="drawer-title">Your Cart</span>
+          <button className="drawer-close" onClick={onClose}>
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="14" r="14" fill="#F5F5F5" />
+              <path d="M9 9L19 19M19 9L9 19" stroke="#000" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+        <div className="drawer-divider" />
+        <div className="drawer-content">
+          {loading ? (
+            <div className="cart-loading">
+              <div className="loading-spinner"></div>
+              <p>Loading cart...</p>
             </div>
-            <style jsx>{`
+          ) : error ? (
+            <div className="cart-error">
+              <p>Error loading cart: {error}</p>
+              <button onClick={() => user?.id && dispatch(fetchCart(user.id))}>
+                Retry
+              </button>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="cart-empty">
+              <div className="empty-cart-icon">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                  <path d="M16 16L20 44H44L48 16H16Z" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M20 20V12C20 8.68629 22.6863 6 26 6H38C41.3137 6 44 8.68629 44 12V20" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <h3>Your cart is empty</h3>
+              <p>Add some products to get started!</p>
+            </div>
+          ) : (
+            <div className="cart-items">
+              {items && items.length > 0 ? items.map((item) => (
+                <div key={item.productId} className="cart-item">
+                  <div className="cart-image-wrap">
+                    <Image
+                      src="/iphone.jpg"
+                      alt={item.name}
+                      width={120}
+                      height={100}
+                      className="cart-image"
+                    />
+                  </div>
+                  <div className="cart-info">
+                    <div className="cart-brand">{item.brand || 'Product'}</div>
+                    <div className="cart-name">{item.name}</div>
+                    <div className="cart-price">AED {item.price}</div>
+                    <div className="cart-actions">
+                      <div className='cart-qty-control'>
+                        <button
+                          className="cart-qty-btn"
+                          onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                          disabled={item.quantity <= 1}
+                        >
+                          -
+                        </button>
+                        <span className="cart-qty">{item.quantity}</span>
+                        <button
+                          className="cart-qty-btn"
+                          onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                        >
+                          +
+                        </button>
+                      </div>
+
+                      <button
+                        className="cart-wishlist-btn"
+                        onClick={() => handleAddToWishlist(item.productId)}
+                      >
+                        <svg width="28" height="28" viewBox="6 0 28 26" fill="none">
+                          <path d="M20.09 18.5586L20 18.6458L19.901 18.5586C15.626 14.8005 12.8 12.3155 12.8 9.7956C12.8 8.0518 14.15 6.7439 15.95 6.7439C17.336 6.7439 18.686 7.6158 19.163 8.8016H20.837C21.314 7.6158 22.664 6.7439 24.05 6.7439C25.85 6.7439 27.2 8.0518 27.2 9.7956C27.2 12.3155 24.374 14.8005 20.09 18.5586Z" stroke="#0082FF" strokeWidth="2" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <button
+                    className="cart-remove-btn"
+                    onClick={() => handleRemoveItem(item.productId)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              )) : (
+                <div className="cart-empty">
+                  <h3>No items found</h3>
+                  <p>Something went wrong loading your cart.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="drawer-footer">
+          <div className="drawer-footer-content" 
+            onClick={handleCheckout}
+            disabled={items.length === 0}
+          >
+            <button
+              className="drawer-checkout-btn"
+              disabled={items.length === 0}
+            >
+              Checkout
+            </button>
+            <span className="drawer-total">AED {total.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+      <style jsx>{`
         .drawer-overlay {
           position: fixed;
           inset: 0;
@@ -234,6 +238,10 @@ export default function CartDrawer({ open, onClose }) {
         .drawer-content {
           padding: 32px 24px 0 24px;
           flex: 1;
+          overflow-y: auto;
+          -ms-overflow-style: auto; /* IE and Edge */
+          scrollbar-width: thin; /* Firefox */
+          padding-bottom: 120px; /* space for sticky footer */
         }
         .cart-item {
           display: flex;
@@ -338,14 +346,22 @@ export default function CartDrawer({ open, onClose }) {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 24px;
+          padding: 16px;
           border-top: 1px solid #e5e5e5;
           background: #fff;
           position: sticky;
           bottom: 0;
         }
-        .drawer-checkout-btn {
+        .drawer-footer-content {
+          display: flex;
           background: #0082FF;
+          align-items: center;
+          justify-content: space-between;
+          width: 100%;
+          border-radius: 100px;
+        }
+        .drawer-checkout-btn {
+          background: transparent;
           color: #fff;
           border: none;
           border-radius: 100px;
@@ -359,7 +375,7 @@ export default function CartDrawer({ open, onClose }) {
           font-size: 18px;
           font-weight: 700;
           color: #fff;
-          background: #0082FF;
+          background: transparent;
           border-radius: 100px;
           padding: 14px 32px;
           margin-left: 16px;
@@ -449,6 +465,6 @@ export default function CartDrawer({ open, onClose }) {
           }
         }
       `}</style>
-        </div>
-    )
+    </div>
+  )
 }

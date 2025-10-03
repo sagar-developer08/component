@@ -122,6 +122,43 @@ export const removeFromWishlist = createAsyncThunk(
   }
 )
 
+export const moveToCart = createAsyncThunk(
+  'wishlist/moveToCart',
+  async ({ userId, productId, quantity = 1 }, { rejectWithValue }) => {
+    try {
+      let token = ''
+      if (typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';').map(c => c.trim())
+        const tokenCookie = cookies.find(c => c.startsWith('accessToken='))
+        if (tokenCookie) {
+          try {
+            const enc = decodeURIComponent(tokenCookie.split('=')[1] || '')
+            token = await decryptText(enc)
+          } catch {}
+        }
+      }
+
+      const response = await fetch(cart.wishlistMoveToCart, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ userId, productId, quantity }),
+      })
+      
+      if (!response.ok) {
+        const text = await response.text()
+        throw new Error(text || `HTTP error ${response.status}`)
+      }
+      
+      return await response.json()
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const wishlistSlice = createSlice({
   name: 'wishlist',
   initialState: {
@@ -225,6 +262,27 @@ const wishlistSlice = createSlice({
       .addCase(removeFromWishlist.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload || 'Failed to remove from wishlist'
+        // Revert optimistic removal by refetching the wishlist
+        // This ensures we have the correct state from the server
+      })
+      // Move to cart
+      .addCase(moveToCart.pending, (state, action) => {
+        state.loading = true
+        state.error = null
+        // Optimistically remove the item from wishlist
+        const { productId } = action.meta?.arg || {}
+        if (productId) {
+          state.items = state.items.filter(it => it.productId !== productId)
+        }
+      })
+      .addCase(moveToCart.fulfilled, (state, action) => {
+        state.loading = false
+        state.error = null
+        // Item already removed optimistically, no additional action needed
+      })
+      .addCase(moveToCart.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload || 'Failed to move to cart'
         // Revert optimistic removal by refetching the wishlist
         // This ensures we have the correct state from the server
       })

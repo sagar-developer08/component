@@ -8,6 +8,8 @@ import { useRouter, usePathname } from 'next/navigation'
 import CartDrawer from './CartDrawer'
 import WishlistDrawer from './WishlistDrawer'
 import LoginModal from './LoginModal'
+import RegisterModal from './RegisterModal'
+import LocationModal from './LocationModal'
 import SearchSuggestions from './SearchSuggestions'
 import { useAuth } from '../contexts/AuthContext'
 import { fetchCart } from '@/store/slices/cartSlice'
@@ -27,9 +29,14 @@ const Navigation = memo(function Navigation() {
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [isDebouncing, setIsDebouncing] = useState(false)
   
+  // This effect has been removed as we no longer need to open the cart drawer automatically
+  
   const router = useRouter()
   const pathname = usePathname()
   const { requireAuth, loginModalOpen, closeLoginModal, isAuthenticated } = useAuth()
+  const [registerModalOpen, setRegisterModalOpen] = useState(false)
+  const [locationModalOpen, setLocationModalOpen] = useState(false)
+  const [currentLocation, setCurrentLocation] = useState('')
   
   // Determine active nav based on current path
   const getActiveNav = () => {
@@ -300,11 +307,10 @@ const Navigation = memo(function Navigation() {
               </div>
               {/* nav-actions */}
               <div className="nav-actions">
-                <div className="action-btn">
+                <div className="action-btn" onClick={() => setLocationModalOpen(true)}>
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                     <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
-                    <path d="M20 12.6213C18.3498 12.6213 16.7671 13.2189 15.6002 14.2826C14.4333 15.3463 13.7778 16.7889 13.7778 18.2932C13.7778 20.6122 15.3618 22.8493 17.1004 24.5824C17.9895 25.4653 18.9595 26.2775 20 27.01C20.1553 26.9014 20.3375 26.7691 20.5467 26.613C21.382 25.9877 22.1683 25.3097 22.8996 24.5841C24.6382 22.8493 26.2222 20.613 26.2222 18.2932C26.2222 16.7889 25.5667 15.3463 24.3998 14.2826C23.2329 13.2189 21.6502 12.6213 20 12.6213ZM20 29L19.496 28.684L19.4933 28.6824L19.488 28.6783L19.4702 28.667L19.4036 28.624L19.1636 28.4644C17.9474 27.6313 16.8177 26.6983 15.7884 25.6771C13.9716 23.8637 12 21.2393 12 18.2924C12 16.3583 12.8429 14.5035 14.3431 13.1359C15.8434 11.7683 17.8783 11 20 11C22.1217 11 24.1566 11.7683 25.6569 13.1359C27.1571 14.5035 28 16.3583 28 18.2924C28 21.2393 26.0284 23.8646 24.2116 25.6755C23.1826 26.6966 22.0531 27.6296 20.8373 28.4628C20.736 28.5318 20.6338 28.5996 20.5307 28.6662L20.512 28.6775L20.5067 28.6816L20.5049 28.6824L20 29ZM20 16.6727C19.5285 16.6727 19.0763 16.8434 18.7429 17.1473C18.4095 17.4512 18.2222 17.8634 18.2222 18.2932C18.2222 18.723 18.4095 19.1352 18.7429 19.4391C19.0763 19.743 19.5285 19.9137 20 19.9137C20.4715 19.9137 20.9237 19.743 21.2571 19.4391C21.5905 19.1352 21.7778 18.723 21.7778 18.2932C21.7778 17.8634 21.5905 17.4512 21.2571 17.1473C20.9237 16.8434 20.4715 16.6727 20 16.6727ZM16.4444 18.2932C16.4444 17.4336 16.819 16.6092 17.4858 16.0014C18.1526 15.3936 19.057 15.0521 20 15.0521C20.943 15.0521 21.8474 15.3936 22.5142 16.0014C23.181 16.6092 23.5556 17.4336 23.5556 18.2932C23.5556 19.1528 23.181 19.9771 22.5142 20.585C21.8474 21.1928 20.943 21.5342 20 21.5342C19.057 21.5342 18.1526 21.1928 17.4858 20.585C16.819 19.9771 16.4444 19.1528 16.4444 18.2932Z"
-                    fill="black" />
+                    <path d="M20 12.6213C18.3498 12.6213 16.7671 13.2189 15.6002 14.2826C14.4333 15.3463 13.7778 16.7889 13.7778 18.2932C13.7778 20.6122 15.3618 22.8493 17.1004 24.5824C17.9895 25.4653 18.9595 26.2775 20 27.01C20.1553 26.9014 20.3375 26.7691 20.5467 26.613C21.382 25.9877 22.1683 25.3097 22.8996 24.5841C24.6382 22.8493 26.2222 20.613 26.2222 18.2932C26.2222 16.7889 25.5667 15.3463 24.3998 14.2826C23.2329 13.2189 21.6502 12.6213 20 12.6213ZM20 29L19.496 28.684L19.4933 28.6824L19.488 28.6783L19.4702 28.667L19.4036 28.624L19.1636 28.4644C17.9474 27.6313 16.8177 26.6983 15.7884 25.6771C13.9716 23.8637 12 21.2393 12 18.2924C12 16.3583 12.8429 14.5035 14.3431 13.1359C15.8434 11.7683 17.8783 11 20 11C22.1217 11 24.1566 11.7683 25.6569 13.1359C27.1571 14.5035 28 16.3583 28 18.2924C28 21.2393 26.0284 23.8646 24.2116 25.6755C23.1826 26.6966 22.0531 27.6296 20.8373 28.4628C20.736 28.5318 20.6338 28.5996 20.5307 28.6662L20.512 28.6775L20.5067 28.6816L20.5049 28.6824L20 29ZM20 16.6727C19.5285 16.6727 19.0763 16.8434 18.7429 17.1473C18.4095 17.4512 18.2222 17.8634 18.2222 18.2932C18.2222 18.723 18.4095 19.1352 18.7429 19.4391C19.0763 19.743 19.5285 19.9137 20 19.9137C20.4715 19.9137 20.9237 19.743 21.2571 19.4391C21.5905 19.1352 21.7778 18.723 21.7778 18.2932C21.7778 17.8634 21.5905 17.4512 21.2571 17.1473C20.9237 16.8434 20.4715 16.6727 20 16.6727ZM16.4444 18.2932C16.4444 17.4336 16.819 16.6092 17.4858 16.0014C18.1526 15.3936 19.057 15.0521 20 15.0521C20.943 15.0521 21.8474 15.3936 22.5142 16.0014C23.181 16.6092 23.5556 17.4336 23.5556 18.2932C23.5556 19.1528 23.181 19.9771 22.5142 20.585C21.8474 21.1928 20.943 21.5342 20 21.5342C19.057 21.5342 18.1526 21.1928 17.4858 20.585C16.819 19.9771 16.4444 19.1528 16.4444 18.2932Z" fill="black" />
                   </svg>
                 </div>
                 <div className="action-btn" onClick={handleSearchClick}>
@@ -445,6 +451,22 @@ const Navigation = memo(function Navigation() {
           line-height: 18px;
         }
 
+        .location-container {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .location-text {
+          font-size: 12px;
+          color: #666;
+          font-weight: 500;
+          max-width: 120px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        
         .action-btn {
           display: flex;
           justify-content: center;
@@ -578,7 +600,26 @@ const Navigation = memo(function Navigation() {
       </div>
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       <WishlistDrawer open={wishlistOpen} onClose={() => setWishlistOpen(false)} />
-      <LoginModal open={loginModalOpen} onClose={closeLoginModal} />
+      <LoginModal 
+        open={loginModalOpen} 
+        onClose={closeLoginModal}
+        onOpenRegister={() => {
+          setRegisterModalOpen(true)
+          closeLoginModal()
+        }}
+      />
+      <RegisterModal 
+        open={registerModalOpen} 
+        onClose={() => setRegisterModalOpen(false)}
+        onSwitchToLogin={() => {
+          setRegisterModalOpen(false)
+          // Login modal will be opened by AuthContext when needed
+        }}
+      />
+      <LocationModal 
+        open={locationModalOpen} 
+        onClose={() => setLocationModalOpen(false)}
+      />
     </>
   )
 })
