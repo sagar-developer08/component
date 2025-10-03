@@ -41,6 +41,16 @@ export default function ProductDetails({ product }) {
     setIsAddedToWishlist(isInWishlist);
   }, [product.selectedColor, product.selectedSize, isInCart, isInWishlist]);
 
+  // Sync local state with props when they change
+  useEffect(() => {
+    if (product.selectedColor) {
+      setSelectedColor(product.selectedColor);
+    }
+    if (product.selectedSize) {
+      setSelectedSize(product.selectedSize);
+    }
+  }, [product.selectedColor, product.selectedSize]);
+
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
   };
