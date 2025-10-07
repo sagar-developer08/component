@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { loginUser } from '@/store/slices/authSlice'
 import { useToast } from '@/contexts/ToastContext'
 
-export default function LoginModal({ open, onClose, onOpenRegister }) {
+export default function LoginModal({ open, onClose, onOpenRegister, onOpenForgotPassword }) {
   const { login } = useAuth()
   const dispatch = useDispatch()
   const authState = useSelector(state => state.auth)
@@ -18,6 +18,11 @@ export default function LoginModal({ open, onClose, onOpenRegister }) {
     email: '',
     password: ''
   })
+
+  const resetForm = () => {
+    setFormData({ email: '', password: '' })
+    setErrors({ email: '', password: '' })
+  }
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -75,7 +80,9 @@ export default function LoginModal({ open, onClose, onOpenRegister }) {
       const user = payload?.user
       if (token && user) {
         login(user, token)
-        show('Logged in successfully')
+        // Don't show message here - AuthContext already shows it
+        // Reset form data before closing
+        resetForm()
         onClose()
       }
     } else if (loginUser.rejected.match(resultAction)) {
@@ -112,13 +119,13 @@ export default function LoginModal({ open, onClose, onOpenRegister }) {
 
   const handleCreateAccount = (e) => {
     e.preventDefault()
+    resetForm() // Reset login form when switching to register
     onOpenRegister() // Open registration modal and close login modal
   }
 
   // Reset form data when modal is closed
   const handleLoginModalClose = () => {
-    setFormData({ email: '', password: '' })
-    setErrors({ email: '', password: '' })
+    resetForm()
     onClose() // Close login modal
   }
 
@@ -156,7 +163,7 @@ export default function LoginModal({ open, onClose, onOpenRegister }) {
                 <div className="login-field">
                   <div className="login-password-row">
                     <label className="login-label">Password</label>
-                    <span className="login-forgot">Forget password?</span>
+                    <span className="login-forgot" onClick={onOpenForgotPassword}>Forget password?</span>
                   </div>
                   <input 
                     className={`login-input ${errors.password ? 'login-input-error' : ''}`}
@@ -303,6 +310,9 @@ export default function LoginModal({ open, onClose, onOpenRegister }) {
           font-size: 14px;
           color: #888;
           cursor: pointer;
+        }
+        .login-forgot:hover {
+          color: #0082FF;
         }
         .login-btn-row {
           display: flex;

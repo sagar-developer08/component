@@ -32,12 +32,14 @@ export function AuthProvider({ children }) {
     setIsInitialized(true)
   }, [])
 
-  const login = (userData, authToken) => {
+  const login = (userData, authToken, skipToast = false) => {
     setToken(authToken)
     setUser(userData)
     setIsAuthenticated(true)
     setLoginModalOpen(false)
-    showToast('Logged in')
+    if (!skipToast) {
+      showToast('Logged in')
+    }
   }
 
   const logout = () => {

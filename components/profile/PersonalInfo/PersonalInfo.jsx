@@ -53,18 +53,20 @@ export default function PersonalInfo() {
   }
 
   const validatePhone = (phone) => {
-    const phoneRegex = /^[0-9+\-\s()]*$/
-    return phoneRegex.test(phone)
+    return phone.length === 8
   }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
     
-    // For phone field, only allow digits, +, -, spaces, and parentheses
+    // For phone field, only allow digits and limit to 8 characters
     if (name === 'phone') {
-      const phoneRegex = /^[0-9+\-\s()]*$/
+      const phoneRegex = /^[0-9]*$/
       if (!phoneRegex.test(value)) {
         return // Don't update if invalid characters
+      }
+      if (value.length > 8) {
+        return // Don't update if more than 8 digits
       }
     }
     
@@ -85,8 +87,8 @@ export default function PersonalInfo() {
     }
     
     if (name === 'phone') {
-      if (value && !validatePhone(value)) {
-        newErrors.phone = 'Please enter a valid phone number'
+      if (value && value.length > 0 && value.length < 8) {
+        newErrors.phone = 'Please enter a valid 8-digit phone number'
       } else {
         newErrors.phone = ''
       }

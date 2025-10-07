@@ -2,13 +2,17 @@
   /* ...existing code... */
 }
 
+.addressesContainer {
+  width: 100%;
+}
+
 .addressesGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
   width: 100%;
-  margin-bottom: 60px;
-  padding-bottom: 40px;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
 }
 
 /* For 3 columns on larger screens */
@@ -32,58 +36,130 @@
   }
 }
 
-.QoynsCard {
+.addressCard {
   background: #F8F9FA;
   border-radius: 16px;
-  border: 1px solid #0082FF;
+  border: 1px solid #E5E5E5;
   padding: 16px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: 8px;
-  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
   min-height: 200px;
 }
 
-.balanceRow {
+.addressCard:hover {
+  border-color: #0082FF;
+  box-shadow: 0 4px 12px rgba(0, 130, 255, 0.15);
+}
+
+.selectedAddress {
+  border-color: #0082FF;
+  background: #fff;
+  border-width: 2px;
+}
+
+.addressType {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
   gap: 8px;
-  flex-direction: row;
+  margin-bottom: 4px;
 }
 
-.AddressTitle {
-  font-size: 14px;
-  font-weight: 600;
-  color: #000;
+.addressTypeInfo {
+  display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
 }
 
-.AddressContent {
+.addressTypeIcon {
+  font-size: 16px;
+  color: #0082FF;
+}
+
+.addressLabel {
   font-size: 16px;
   font-weight: 600;
+  color: #000;
+  line-height: 150%;
 }
 
-.CardDetails {
+.defaultBadge {
+  background: #CBE6FF;
+  color: #0082FF;
+  border-radius: 100px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.selectedIndicator {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
+  justify-content: center;
+}
+
+.checkIcon {
+  background: #0082FF;
+  border-radius: 100%;
+  padding: 4px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.addressDetails {
+  font-size: 16px;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 2px;
+  line-height: 150%;
   gap: 8px;
-  flex-direction: row;
 }
 
-.addressNumber {
-  font-size: 14px;
-  font-weight: 600;
-  color: #c5c5c5;
+.addressText {
+  margin-bottom: 4px;
 }
 
-.addressEmail {
+.addressLocation {
   font-size: 14px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.addressLandmark {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.addressContact {
+  font-size: 14px;
+  color: #555;
+}
+
+.setDefaultBtn {
+  width: 100%;
+  background: #CBE6FF;
+  color: #0082FF;
+  border: none;
+  border-radius: 100px;
+  padding: 12px 24px;
+  font-size: 16px;
   font-weight: 600;
-  color: #c5c5c5;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.setDefaultBtn:hover {
+  background: #0082FF;
+  color: #fff;
+}
+
+.setDefaultBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

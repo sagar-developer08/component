@@ -26,6 +26,7 @@ import {
   clearPaymentIntentError,
   clearStripeData
 } from '@/store/slices/checkoutSlice'
+import { fetchProfile } from '@/store/slices/profileSlice'
 import { payment as paymentEndpoints } from '@/store/api/endpoints'
 import { loadStripe } from '@stripe/stripe-js'
 import StripeCheckout from '@/components/StripeCheckout'
@@ -38,6 +39,9 @@ export default function CheckoutPage() {
   
   // Cart state
   const { items: cartItems, total: cartTotal, loading: cartLoading } = useSelector(state => state.cart)
+  
+  // Profile state - for user data
+  const { user } = useSelector(state => state.profile)
   
   // Checkout state
   const {
@@ -61,7 +65,12 @@ export default function CheckoutPage() {
   
   // Calculate total if not provided by API
   const calculatedTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-  const finalTotal = cartTotal || calculatedTotal
+  const subtotal = cartTotal || calculatedTotal
+  
+  // VAT Calculation (5% VAT - standard rate in UAE)
+  const VAT_RATE = 0.05
+  const vatAmount = subtotal * VAT_RATE
+  const finalTotal = subtotal + vatAmount
   
   // Combined error state
   const error = addressError || orderError || paymentIntentError
@@ -69,6 +78,9 @@ export default function CheckoutPage() {
   // Fetch user addresses and cart on component mount
   useEffect(() => {
     const loadCheckoutData = async () => {
+      // Load profile data for user info (name, email, phone)
+      dispatch(fetchProfile())
+      
       // Load addresses
       dispatch(fetchUserAddresses())
       
@@ -103,6 +115,17 @@ export default function CheckoutPage() {
     
     loadCheckoutData()
   }, [dispatch, cartItems.length])
+
+  // Auto-populate address form with user data when form is shown
+  useEffect(() => {
+    if (showAddressForm && user) {
+      dispatch(updateAddressForm({
+        fullName: user.name || '',
+        phone: user.phone || '',
+        email: user.email || ''
+      }))
+    }
+  }, [showAddressForm, user, dispatch])
 
   // Debug: Log cart data when it changes
   useEffect(() => {
@@ -152,7 +175,12 @@ export default function CheckoutPage() {
 
   const handleAddressSubmit = async (e) => {
     e.preventDefault()
-    dispatch(createAddress(addressForm))
+    const result = await dispatch(createAddress(addressForm))
+    
+    // Refetch addresses to ensure we have the latest data
+    if (createAddress.fulfilled.match(result)) {
+      await dispatch(fetchUserAddresses())
+    }
   }
 
   const handleSetDefaultAddress = (addressId) => {
@@ -176,8 +204,8 @@ export default function CheckoutPage() {
       shippingAddress: shippingSameAsDelivery ? selectedAddress : null,
       paymentMethod: selectedPaymentMethod,
       total: finalTotal,
-      subtotal: finalTotal,
-      vat: 0,
+      subtotal: subtotal,
+      vat: vatAmount,
       shipping: 0,
       discount: 0
     }
@@ -202,8 +230,8 @@ export default function CheckoutPage() {
           shippingAddress: shippingSameAsDelivery ? selectedAddress : null,
           paymentMethod: selectedPaymentMethod,
           total: finalTotal,
-          subtotal: finalTotal,
-          vat: 0,
+          subtotal: subtotal,
+          vat: vatAmount,
           shipping: 0,
           discount: 0
         }
@@ -907,7 +935,11 @@ export default function CheckoutPage() {
               <div className={styles.orderTotals}>
                 <div className={styles.totalRow}>
                   <span>Subtotal</span>
-                    <span>AED {finalTotal.toFixed(2)}</span>
+                    <span>AED {subtotal.toFixed(2)}</span>
+                </div>
+                <div className={styles.totalRow}>
+                  <span>VAT (5%)</span>
+                  <span>AED {vatAmount.toFixed(2)}</span>
                 </div>
                 <div className={styles.totalRow}>
                   <span>Shipping</span>
@@ -926,7 +958,7 @@ export default function CheckoutPage() {
               {selectedPaymentMethod === 'credit-card' ? (
                 // For Stripe, the payment button is in the Stripe Elements component
                 <div className={styles.stripeNote}>
-                  Complete payment using the form above
+                  {/* Complete payment using the form above */}
                 </div>
               ) : (
                 <button 

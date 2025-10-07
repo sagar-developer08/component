@@ -4,12 +4,16 @@ import { useAuth } from '../contexts/AuthContext'
 import { useDispatch, useSelector } from 'react-redux'
 import { registerUser } from '@/store/slices/authSlice'
 import { useToast } from '@/contexts/ToastContext'
+import { Country } from 'country-state-city'
 
 export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
   const { login } = useAuth()
   const dispatch = useDispatch()
   const authState = useSelector(state => state.auth)
   const { show } = useToast()
+  
+  // Get all countries for nationality dropdown
+  const countries = Country.getAllCountries()
 
   const [formData, setFormData] = useState({
     name: '',
@@ -22,6 +26,18 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
 
   const [errors, setErrors] = useState({})
 
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      email: '',
+      password: '',
+      phone: '',
+      gender: '',
+      nationality: ''
+    })
+    setErrors({})
+  }
+
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
@@ -30,11 +46,14 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
   const handleInputChange = (e) => {
     const { name, value } = e.target
     
-    // For phone field, only allow digits, +, -, spaces, and parentheses
+    // For phone field, only allow digits and limit to 8 characters
     if (name === 'phone') {
-      const phoneRegex = /^[0-9+\-\s()]*$/
+      const phoneRegex = /^[0-9]*$/
       if (!phoneRegex.test(value)) {
         return // Don't update if invalid characters
+      }
+      if (value.length > 8) {
+        return // Don't update if more than 8 digits
       }
     }
     
@@ -43,7 +62,7 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
       [name]: value
     }))
 
-    // Validate email in real-time
+    // Validate email and phone in real-time
     const newErrors = { ...errors }
     
     if (name === 'email') {
@@ -51,6 +70,12 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
         newErrors.email = 'Please enter a valid email address'
       } else {
         newErrors.email = ''
+      }
+    } else if (name === 'phone') {
+      if (value && value.length < 8) {
+        newErrors.phone = 'Please enter a valid 8-digit phone number'
+      } else {
+        newErrors.phone = ''
       }
     } else if (errors[name]) {
       // Clear error for other fields when user starts typing
@@ -82,6 +107,8 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
 
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required'
+    } else if (formData.phone.length !== 8) {
+      newErrors.phone = 'Phone number must be exactly 8 digits'
     }
 
 
@@ -119,8 +146,10 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
       const token = payload?.tokens?.accessToken
       const user = payload?.user
       if (token && user) {
-        login(user, token)
+        login(user, token, true) // Skip the "Logged in" toast
         show('Account created successfully!')
+        // Reset form data before closing
+        resetForm()
         onClose()
       }
     } else if (registerUser.rejected.match(resultAction)) {
@@ -129,12 +158,22 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
     }
   }
 
+  const handleRegisterModalClose = () => {
+    resetForm()
+    onClose()
+  }
+
+  const handleBackToLogin = () => {
+    resetForm() // Reset register form when switching to login
+    onSwitchToLogin()
+  }
+
   if (!open) return null
 
   return (
     <div className="register-modal-overlay">
       <div className="register-modal">
-        <button className="register-modal-close" onClick={onClose}>
+        <button className="register-modal-close" onClick={handleRegisterModalClose}>
           <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
             <circle cx="14" cy="14" r="14" fill="#F5F5F5" />
             <path d="M9 9L19 19M19 9L9 19" stroke="#000" strokeWidth="2" strokeLinecap="round" />
@@ -221,80 +260,19 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
                     value={formData.nationality}
                     onChange={handleInputChange}
                   >
-                    <option value="">Nationality</option>
-                    <option value="AE">United Arab Emirates</option>
-                    <option value="SA">Saudi Arabia</option>
-                    <option value="KW">Kuwait</option>
-                    <option value="QA">Qatar</option>
-                    <option value="BH">Bahrain</option>
-                    <option value="OM">Oman</option>
-                    <option value="EG">Egypt</option>
-                    <option value="JO">Jordan</option>
-                    <option value="LB">Lebanon</option>
-                    <option value="SY">Syria</option>
-                    <option value="IQ">Iraq</option>
-                    <option value="IR">Iran</option>
-                    <option value="TR">Turkey</option>
-                    <option value="IN">India</option>
-                    <option value="PK">Pakistan</option>
-                    <option value="BD">Bangladesh</option>
-                    <option value="LK">Sri Lanka</option>
-                    <option value="NP">Nepal</option>
-                    <option value="PH">Philippines</option>
-                    <option value="ID">Indonesia</option>
-                    <option value="MY">Malaysia</option>
-                    <option value="TH">Thailand</option>
-                    <option value="VN">Vietnam</option>
-                    <option value="CN">China</option>
-                    <option value="JP">Japan</option>
-                    <option value="KR">South Korea</option>
-                    <option value="SG">Singapore</option>
-                    <option value="US">United States</option>
-                    <option value="CA">Canada</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="FR">France</option>
-                    <option value="DE">Germany</option>
-                    <option value="IT">Italy</option>
-                    <option value="ES">Spain</option>
-                    <option value="NL">Netherlands</option>
-                    <option value="BE">Belgium</option>
-                    <option value="CH">Switzerland</option>
-                    <option value="AT">Austria</option>
-                    <option value="SE">Sweden</option>
-                    <option value="NO">Norway</option>
-                    <option value="DK">Denmark</option>
-                    <option value="FI">Finland</option>
-                    <option value="AU">Australia</option>
-                    <option value="NZ">New Zealand</option>
-                    <option value="ZA">South Africa</option>
-                    <option value="NG">Nigeria</option>
-                    <option value="KE">Kenya</option>
-                    <option value="GH">Ghana</option>
-                    <option value="MA">Morocco</option>
-                    <option value="TN">Tunisia</option>
-                    <option value="DZ">Algeria</option>
-                    <option value="LY">Libya</option>
-                    <option value="SD">Sudan</option>
-                    <option value="ET">Ethiopia</option>
-                    <option value="UG">Uganda</option>
-                    <option value="TZ">Tanzania</option>
-                    <option value="ZW">Zimbabwe</option>
-                    <option value="BW">Botswana</option>
-                    <option value="NA">Namibia</option>
-                    <option value="ZM">Zambia</option>
-                    <option value="MW">Malawi</option>
-                    <option value="MZ">Mozambique</option>
-                    <option value="MG">Madagascar</option>
-                    <option value="MU">Mauritius</option>
-                    <option value="SC">Seychelles</option>
-                    <option value="other">Other</option>
+                    <option value="">Select Nationality</option>
+                    {countries.map((country) => (
+                      <option key={country.isoCode} value={country.isoCode}>
+                        {country.name}
+                      </option>
+                    ))}
                   </select>
                   {errors.nationality && <span className="register-error">{errors.nationality}</span>}
                 </div>
               </div>
 
               <div className="login-btn-row">
-                <button type="button" className="login-create-btn" onClick={onSwitchToLogin}>Back</button>
+                <button type="button" className="login-create-btn" onClick={handleBackToLogin}>Back</button>
                 <button type="submit" className="login-btn" disabled={authState.loading}>
                   {authState.loading ? 'Creating...' : 'Create Account'}
                 </button>

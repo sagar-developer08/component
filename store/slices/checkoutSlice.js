@@ -331,9 +331,18 @@ const checkoutSlice = createSlice({
         state.isSubmittingAddress = true
         state.addressError = null
       })
-      .addCase(createAddress.fulfilled, (state) => {
+      .addCase(createAddress.fulfilled, (state, action) => {
         state.isSubmittingAddress = false
         state.showAddressForm = false
+        
+        // Add the newly created address to the addresses array
+        if (action.payload?.data?.address) {
+          state.addresses.push(action.payload.data.address)
+          // Auto-select the newly created address
+          state.selectedAddress = action.payload.data.address
+        }
+        
+        // Reset the form
         state.addressForm = {
           type: 'home',
           isDefault: false,

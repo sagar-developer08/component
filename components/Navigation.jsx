@@ -5,11 +5,14 @@ import Image from 'next/image'
 import { useEffect, useRef, useState, memo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter, usePathname } from 'next/navigation'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faUser } from '@fortawesome/free-solid-svg-icons'
 import CartDrawer from './CartDrawer'
 import WishlistDrawer from './WishlistDrawer'
 import LoginModal from './LoginModal'
 import RegisterModal from './RegisterModal'
 import LocationModal from './LocationModal'
+import ForgotPasswordModal from './ForgotPasswordModal'
 import SearchSuggestions from './SearchSuggestions'
 import { useAuth } from '../contexts/AuthContext'
 import { fetchCart } from '@/store/slices/cartSlice'
@@ -33,9 +36,10 @@ const Navigation = memo(function Navigation() {
   
   const router = useRouter()
   const pathname = usePathname()
-  const { requireAuth, loginModalOpen, closeLoginModal, isAuthenticated } = useAuth()
+  const { requireAuth, loginModalOpen, closeLoginModal, openLoginModal, isAuthenticated } = useAuth()
   const [registerModalOpen, setRegisterModalOpen] = useState(false)
   const [locationModalOpen, setLocationModalOpen] = useState(false)
+  const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false)
   const [currentLocation, setCurrentLocation] = useState('')
   
   // Determine active nav based on current path
@@ -335,15 +339,24 @@ const Navigation = memo(function Navigation() {
                   {displayWishlistCount > 0 && <span className="badge-count">{displayWishlistCount}</span>}
                 </div>
 
-                <div className="profile-btn" onClick={() => requireAuth(() => router.push('/profile'))}>
-                  <Image
-                    src="https://api.builder.io/api/v1/image/assets/TEMP/e6affc0737515f664c7d8288ba0b3068f64a0ade?width=80"
-                    alt="Profile"
-                    width={40}
-                    height={40}
-                    style={{ borderRadius: '50%' }}
-                  />
-                </div>
+                {isAuthenticated ? (
+                  <div className="profile-btn" onClick={() => router.push('/profile')}>
+                    <Image
+                      src="https://api.builder.io/api/v1/image/assets/TEMP/e6affc0737515f664c7d8288ba0b3068f64a0ade?width=80"
+                      alt="Profile"
+                      width={40}
+                      height={40}
+                      style={{ borderRadius: '50%' }}
+                    />
+                  </div>
+                ) : (
+                  <div className="action-btn" onClick={() => requireAuth(() => router.push('/profile'))}>
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                      <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
+                      <path d="M20 12C18.3431 12 17 13.3431 17 15C17 16.6569 18.3431 18 20 18C21.6569 18 23 16.6569 23 15C23 13.3431 21.6569 12 20 12ZM15 15C15 12.2386 17.2386 10 20 10C22.7614 10 25 12.2386 25 15C25 17.7614 22.7614 20 20 20C17.2386 20 15 17.7614 15 15ZM14 23C12.8954 23 12 23.8954 12 25V27C12 27.5523 12.4477 28 13 28C13.5523 28 14 27.5523 14 27V25C14 24.7239 14.2239 24.5 14.5 24.5H25.5C25.7761 24.5 26 24.7239 26 25V27C26 27.5523 26.4477 28 27 28C27.5523 28 28 27.5523 28 27V25C28 23.8954 27.1046 23 26 23H14Z" fill="black" />
+                    </svg>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -607,18 +620,26 @@ const Navigation = memo(function Navigation() {
           setRegisterModalOpen(true)
           closeLoginModal()
         }}
+        onOpenForgotPassword={() => {
+          setForgotPasswordModalOpen(true)
+          closeLoginModal()
+        }}
       />
       <RegisterModal 
         open={registerModalOpen} 
         onClose={() => setRegisterModalOpen(false)}
         onSwitchToLogin={() => {
           setRegisterModalOpen(false)
-          // Login modal will be opened by AuthContext when needed
+          openLoginModal()
         }}
       />
       <LocationModal 
         open={locationModalOpen} 
         onClose={() => setLocationModalOpen(false)}
+      />
+      <ForgotPasswordModal 
+        open={forgotPasswordModalOpen} 
+        onClose={() => setForgotPasswordModalOpen(false)}
       />
     </>
   )
