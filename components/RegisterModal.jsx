@@ -46,14 +46,14 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
   const handleInputChange = (e) => {
     const { name, value } = e.target
     
-    // For phone field, only allow digits and limit to 8 characters
+    // For phone field, only allow digits and limit to 10 characters
     if (name === 'phone') {
       const phoneRegex = /^[0-9]*$/
       if (!phoneRegex.test(value)) {
         return // Don't update if invalid characters
       }
-      if (value.length > 8) {
-        return // Don't update if more than 8 digits
+      if (value.length > 10) {
+        return // Don't update if more than 10 digits
       }
     }
     
@@ -72,8 +72,8 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
         newErrors.email = ''
       }
     } else if (name === 'phone') {
-      if (value && value.length < 8) {
-        newErrors.phone = 'Please enter a valid 8-digit phone number'
+      if (value && value.length < 10) {
+        newErrors.phone = 'Please enter a valid 10-digit phone number'
       } else {
         newErrors.phone = ''
       }

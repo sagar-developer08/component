@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
@@ -53,6 +53,9 @@ export default function BrandPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [hasMoreProducts, setHasMoreProducts] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
+  
+  // Ref to track if fetch is in progress
+  const isFetchingRef = useRef(false)
 
   // Fetch products when component mounts
   useEffect(() => {
@@ -167,19 +170,29 @@ export default function BrandPage() {
     setCurrentPage(1)
     setHasMoreProducts(true)
     setBrandProducts([])
+    isFetchingRef.current = false // Reset fetch lock when filters change
   }, [selectedFilters, slug, storeId, categoryLevel])
 
   // Fetch brand/store/category info and products by slug
   useEffect(() => {
     const fetchData = async () => {
-      if (slug) {
-        try {
-          setLoadingProducts(true)
+      if (!slug) return
+      
+      // Prevent duplicate fetches
+      if (isFetchingRef.current) {
+        console.log('Fetch already in progress, skipping...')
+        return
+      }
+      
+      isFetchingRef.current = true
+      
+      try {
+        setLoadingProducts(true)
 
-          // Check if this is a store (has storeId parameter), category (has categoryLevel), or a brand
-          if (storeId) {
-            setIsStore(true)
-            setIsCategory(false)
+        // Check if this is a store (has storeId parameter), category (has categoryLevel), or a brand
+        if (storeId) {
+          setIsStore(true)
+          setIsCategory(false)
             
             // Build filter params for store
             const params = new URLSearchParams()
@@ -446,11 +459,11 @@ export default function BrandPage() {
               }
             }
           }
-        } catch (error) {
-          console.error('Error fetching data:', error)
-        } finally {
-          setLoadingProducts(false)
-        }
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      } finally {
+        setLoadingProducts(false)
+        isFetchingRef.current = false
       }
     }
 
@@ -496,8 +509,11 @@ export default function BrandPage() {
   // Infinite scroll effect
   useEffect(() => {
     const handleScroll = () => {
+      if (loadingMore || !hasMoreProducts) return
+      
       if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 1000) {
-        loadMoreProducts()
+        setLoadingMore(true)
+        setCurrentPage(prev => prev + 1)
       }
     }
 
