@@ -113,6 +113,34 @@ export const removeFromCart = createAsyncThunk(
   }
 )
 
+export const moveToWishlist = createAsyncThunk(
+  'cart/moveToWishlist',
+  async ({ userId, productId }, { rejectWithValue }) => {
+    try {
+      const token = await getAuthToken()
+      
+      const response = await fetch('https://backendcart.qliq.ae/api/cart/move-to-wishlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ userId, productId }),
+      })
+
+      if (!response.ok) {
+        const text = await response.text()
+        throw new Error(text || `HTTP error ${response.status}`)
+      }
+
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const cartSlice = createSlice({
   name: 'cart',
   initialState: {
@@ -147,7 +175,7 @@ const cartSlice = createSlice({
         // Handle the API response structure and update local state
         const responseData = action.payload.data || action.payload
         const cartData = responseData.cart || responseData
-        const addedItem = responseData.item || responseData
+        const addedItem = responseData.addedItem || responseData.item || responseData
         
         console.log('Add to cart response:', action.payload)
         
@@ -162,10 +190,20 @@ const cartSlice = createSlice({
           if (existingItem) {
             existingItem.quantity += addedItem.quantity || 1
           } else {
-            state.items.push(addedItem)
+            // Map the new field names from backend to frontend
+            const itemToAdd = {
+              productId: addedItem.productId,
+              name: addedItem.name,
+              quantity: addedItem.quantity || 1,
+              price: addedItem.price,
+              // originalPrice: addedItem.original_price,
+              // discountPrice: addedItem.discount_price,
+              image: addedItem.image
+            }
+            state.items.push(itemToAdd)
           }
           
-          // Recalculate totals
+          // Recalculate totals using the price field (which now contains discount_price)
           state.itemsCount = state.items.reduce((total, item) => total + item.quantity, 0)
           state.total = state.items.reduce((total, item) => total + (item.price * item.quantity), 0)
         }
@@ -250,6 +288,28 @@ const cartSlice = createSlice({
         }
       })
       .addCase(removeFromCart.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      // Move to wishlist
+      .addCase(moveToWishlist.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(moveToWishlist.fulfilled, (state, action) => {
+        state.loading = false
+        // The API returns both updated cart and wishlist
+        const responseData = action.payload.data || action.payload
+        const cartData = responseData.cart || responseData
+        
+        if (cartData) {
+          // Update the entire cart state with the fresh data from API
+          state.items = cartData.items || []
+          state.itemsCount = cartData.totalItems || 0
+          state.total = cartData.totalPrice || 0
+        }
+      })
+      .addCase(moveToWishlist.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })

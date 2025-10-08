@@ -49,6 +49,24 @@ export default function ProfilePage() {
     handleTabChange('addresses')
   }
 
+  const handleNewCardCancel = () => {
+    handleTabChange('cash-wallet')
+  }
+
+  const handleNewCardSave = () => {
+    // TODO: Implement save address functionality
+    handleTabChange('cash-wallet')
+  }
+
+  const handleSendQoynCancel = () => {
+    handleTabChange('qoyns-wallet')
+  }
+
+  const handleSendQoynSave = () => {
+    // TODO: Implement save address functionality
+    handleTabChange('qoyns-wallet')
+  }
+
   const tabs = [
     { id: 'personal-info', label: 'Personal Info' },
     { id: 'cash-wallet', label: 'Cash Wallet' },
@@ -109,7 +127,7 @@ export default function ProfilePage() {
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ verticalAlign: 'middle' }}>
                       <circle cx="9" cy="9" r="9" fill="#111" />
-                      <path d="M9 6v6M6 9h6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M9 6v6M6 9h6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     Send Qoyn
                   </span>
@@ -136,13 +154,13 @@ export default function ProfilePage() {
             {activeTab === 'addresses' && (
               <div className={styles.qoynsActionsRow}>
                 <button className={styles.addCardBtn}>
-                  Use my Current Location 
+                  Use my Current Location
                 </button>
                 <button
                   className={`${styles.addCardBtn} ${activeTab === 'new-address' ? styles.active : ''}`}
                   onClick={() => handleTabChange('new-address')}
                 >
-                  Add New Address 
+                  Add New Address
                 </button>
               </div>
             )}
@@ -160,12 +178,16 @@ export default function ProfilePage() {
             )}
             {activeTab === 'add-card' && (
               <div className={styles.sectionContent}>
-                <AddCard />
+                <AddCard
+                  onCancel={handleNewCardCancel}
+                  onSave={handleNewCardSave}
+                />
               </div>
             )}
             {activeTab === 'qoyns-wallet' && (
               <div className={styles.sectionContent}>
-                <QoynsWallet />
+                <QoynsWallet
+                />
               </div>
             )}
             {activeTab === 'qoyns-history' && (
@@ -175,7 +197,10 @@ export default function ProfilePage() {
             )}
             {activeTab === 'send-qoyn' && (
               <div className={styles.sectionContent}>
-                <SendQoyn />
+                <SendQoyn
+                  onCancel={handleSendQoynCancel}
+                  onSave={handleSendQoynSave}
+                />
               </div>
             )}
             {activeTab === 'orders' && (
@@ -190,7 +215,7 @@ export default function ProfilePage() {
             )}
             {activeTab === 'new-address' && (
               <div className={styles.sectionContent}>
-                <NewAddress 
+                <NewAddress
                   onCancel={handleNewAddressCancel}
                   onSave={handleNewAddressSave}
                 />

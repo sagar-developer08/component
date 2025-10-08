@@ -1,6 +1,13 @@
 import styles from './sendQoyn.module.css'
 
-export default function SendQoyn() {
+export default function SendQoyn({ onCancel, onSave }) {
+  const handleCancel = () => {
+    onCancel()
+  }
+
+  const handleSave = () => {
+    onSave()
+  }
   return (
     <form className={styles.sendQoynForm}>
       <div className={styles.row}>
@@ -23,8 +30,8 @@ export default function SendQoyn() {
         </div>
       </div>
       <div className={styles.actions}>
-        <button type="button" className={styles.cancelBtn}>Cancel</button>
-        <button type="submit" className={styles.sendBtn}>Send</button>
+        <button type="button" className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
+        <button type="submit" className={styles.sendBtn} onClick={handleSave}>Send</button>
       </div>
     </form>
   )

@@ -1,14 +1,17 @@
 import Image from 'next/image'
 import { useAuth } from '../contexts/AuthContext'
 import { useSelector, useDispatch } from 'react-redux'
-import { updateCartItem, removeFromCart, fetchCart } from '../store/slices/cartSlice'
+import { updateCartItem, removeFromCart, fetchCart, moveToWishlist } from '../store/slices/cartSlice'
+import { fetchWishlist } from '../store/slices/wishlistSlice'
 import { useEffect } from 'react'
 import { getUserFromCookies } from '../utils/userUtils'
+import { useToast } from '../contexts/ToastContext'
 
 export default function CartDrawer({ open, onClose }) {
   const { requireAuth, user } = useAuth()
   const dispatch = useDispatch()
   const { items, total, itemsCount, loading, error } = useSelector(state => state.cart)
+  const { show } = useToast()
 
   // Fetch cart when drawer opens and user is authenticated
   useEffect(() => {
@@ -63,8 +66,25 @@ export default function CartDrawer({ open, onClose }) {
 
   const handleAddToWishlist = (productId) => {
     requireAuth(() => {
-      // Add to wishlist logic here
-      console.log('Adding to wishlist from cart:', productId)
+      const moveItemToWishlist = async () => {
+        const userId = user?.id || await getUserFromCookies()
+        if (userId) {
+          console.log('Moving to wishlist from cart:', { userId, productId })
+          const result = await dispatch(moveToWishlist({
+            userId,
+            productId
+          }))
+          
+          // If successful, refresh wishlist and show success message
+          if (result.type === 'cart/moveToWishlist/fulfilled') {
+            show('Moved to wishlist')
+            dispatch(fetchWishlist(userId))
+          } else if (result.type === 'cart/moveToWishlist/rejected') {
+            show(result.payload || 'Failed to move to wishlist', 'error')
+          }
+        }
+      }
+      moveItemToWishlist()
     })
   }
 
@@ -129,7 +149,12 @@ export default function CartDrawer({ open, onClose }) {
                   <div className="cart-info">
                     <div className="cart-brand">{item.brand || 'Product'}</div>
                     <div className="cart-name">{item.name}</div>
-                    <div className="cart-price">AED {item.price}</div>
+                    <div className="cart-price-container">
+                      <span className="cart-price">AED {item.discountPrice || item.price}</span>
+                      {item.originalPrice && item.originalPrice > (item.discountPrice || item.price) && (
+                        <span className="cart-original-price">AED {item.originalPrice}</span>
+                      )}
+                    </div>
                     <div className="cart-actions">
                       <div className='cart-qty-control'>
                         <button
@@ -279,10 +304,20 @@ export default function CartDrawer({ open, onClose }) {
           font-size: 18px;
           color: #000;
         }
+        .cart-price-container {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
         .cart-price {
           font-weight: 600;
           font-size: 16px;
           color: #000;
+        }
+        .cart-original-price {
+          font-size: 14px;
+          color: #888;
+          text-decoration: line-through;
         }
         .cart-actions {
           display: flex;

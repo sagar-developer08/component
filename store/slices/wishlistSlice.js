@@ -198,7 +198,7 @@ const wishlistSlice = createSlice({
         state.loading = false
         state.error = null
         const posted = action.meta?.arg
-        const serverItem = action.payload?.item
+        const serverItem = action.payload?.data?.addedItem || action.payload?.addedItem || action.payload?.item
         const isDuplicate = action.payload?.isDuplicate
         
         if (isDuplicate) {
@@ -208,12 +208,23 @@ const wishlistSlice = createSlice({
             state.items = state.items.filter(it => !it._optimistic || it.productId !== posted.productId)
           }
         } else if (serverItem && serverItem.productId) {
+          // Map the new field names from backend to frontend
+          const itemToAdd = {
+            productId: serverItem.productId,
+            name: serverItem.name,
+            price: serverItem.discount_price || serverItem.price,
+            originalPrice: serverItem.original_price,
+            discountPrice: serverItem.discount_price,
+            image: serverItem.image,
+            addedAt: serverItem.addedAt || new Date().toISOString()
+          }
+          
           // Replace optimistic item if present, else append
           const idx = state.items.findIndex(it => it.productId === serverItem.productId)
           if (idx !== -1) {
-            state.items[idx] = { ...serverItem }
+            state.items[idx] = itemToAdd
           } else {
-            state.items.unshift(serverItem)
+            state.items.unshift(itemToAdd)
           }
         } else if (posted && posted.productId) {
           // Ensure we don't end up with duplicates; nothing else to do

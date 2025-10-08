@@ -97,7 +97,12 @@ export default function WishlistDrawer({ open, onClose }) {
                 <div className="wishlist-info">
                   <div className="wishlist-brand">{it.brand || ''}</div>
                   <div className="wishlist-name">{it.name}</div>
-                  <div className="wishlist-price">{typeof it.price !== 'undefined' ? `AED ${it.price}` : ''}</div>
+                  <div className="wishlist-price-container">
+                    <span className="wishlist-price">{typeof (it.discountPrice || it.price) !== 'undefined' ? `AED ${it.discountPrice || it.price}` : ''}</span>
+                    {it.originalPrice && it.originalPrice > (it.discountPrice || it.price) && (
+                      <span className="wishlist-original-price">AED {it.originalPrice}</span>
+                    )}
+                  </div>
                   <div className="wishlist-actions">
                     <button 
                       className="wishlist-cart-btn" 
@@ -203,10 +208,20 @@ export default function WishlistDrawer({ open, onClose }) {
           font-size: 16px;
           color: #000;
         }
+        .wishlist-price-container {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
         .wishlist-price {
           font-weight: 600;
           font-size: 16px;
           color: #000;
+        }
+        .wishlist-original-price {
+          font-size: 14px;
+          color: #888;
+          text-decoration: line-through;
         }
         .wishlist-actions {
           display: flex;

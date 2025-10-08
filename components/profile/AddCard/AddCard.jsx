@@ -1,6 +1,14 @@
 import styles from './addCard.module.css'
 
-export default function AddCard() {
+export default function AddCard({ onCancel, onSave }) {
+  const handleCancel = () => {
+    onCancel()
+  }
+
+  const handleSave = () => {
+    onSave()
+  }
+
   return (
     <div className={styles.addCardContainer}>
       <h3 className={styles.addCardTitle}>ADD NEW CARD</h3>
@@ -41,8 +49,12 @@ export default function AddCard() {
           />
         </div>
         <div className={styles.cardFormActions}>
-          <button type="button" className={styles.cancelBtn}>Cancel</button>
-          <button type="submit" className={styles.saveBtn}>Save</button>
+          <button type="button" className={styles.cancelBtn} onClick={handleCancel}>
+            Cancel
+          </button>
+          <button type="submit" className={styles.saveBtn} onClick={handleSave}>
+            Save
+          </button>
         </div>
       </form>
     </div>

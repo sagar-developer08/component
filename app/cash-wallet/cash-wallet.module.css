@@ -1,0 +1,137 @@
+.cashWalletPage {
+  min-height: 100vh;
+  background: #fff;
+}
+
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px 80px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+  gap: 40px;
+}
+
+.textContent {
+  flex: 1;
+}
+
+.title {
+  font-size: 48px;
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 18px;
+  color: #666;
+  line-height: 1.6;
+  max-width: 600px;
+}
+
+.actionTop {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.addCardBtn,
+.backBtn {
+  background: #0082FF;
+  color: #fff;
+  border: none;
+  border-radius: 100px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.addCardBtn:hover,
+.backBtn:hover {
+  background: #0066CC;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 130, 255, 0.3);
+}
+
+.backBtn {
+  background: #fff;
+  color: #0082FF;
+  border: 2px solid #0082FF;
+}
+
+.backBtn:hover {
+  background: #F0F8FF;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 130, 255, 0.2);
+}
+
+.content {
+  width: 100%;
+}
+
+.sectionContent {
+  width: 100%;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1200px) {
+  .container {
+    padding: 32px 40px;
+  }
+  
+  .title {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 20px;
+  }
+  
+  .header {
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .title {
+    font-size: 32px;
+  }
+  
+  .subtitle {
+    font-size: 16px;
+  }
+  
+  .actionTop {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .addCardBtn,
+  .backBtn {
+    width: 100%;
+    padding: 12px 24px;
+  }
+}
+
