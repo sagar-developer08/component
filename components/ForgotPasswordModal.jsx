@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { useState } from 'react'
 import { useToast } from '@/contexts/ToastContext'
+import { auth } from '@/store/api/endpoints'
 
 export default function ForgotPasswordModal({ open, onClose }) {
   const { show } = useToast()
@@ -67,7 +68,7 @@ export default function ForgotPasswordModal({ open, onClose }) {
     setLoading(true)
     
     try {
-      const response = await fetch('https://backendauth.qliq.ae/api/auth/forgot-password', {
+      const response = await fetch(`${auth.base}/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -128,7 +129,7 @@ export default function ForgotPasswordModal({ open, onClose }) {
     setLoading(true)
 
     try {
-      const response = await fetch('https://backendauth.qliq.ae/api/auth/confirm-forgot-password', {
+      const response = await fetch(`${auth.base}/confirm-forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

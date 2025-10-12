@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useRouter } from 'next/navigation'
 import { fetchProfile } from '@/store/slices/profileSlice'
 import { useAuth } from '../../../contexts/AuthContext'
-import { auth } from '@/store/api/endpoints'
+import { auth, upload } from '@/store/api/endpoints'
 import { decryptText } from '@/utils/crypto'
 import styles from './personalInfo.module.css'
 
@@ -28,10 +28,13 @@ export default function PersonalInfo() {
   })
   const [profileImage, setProfileImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [errors, setErrors] = useState({
     email: '',
     phone: ''
   })
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [passwordErrors, setPasswordErrors] = useState({
     oldPassword: '',
     newPassword: '',
@@ -130,9 +133,96 @@ export default function PersonalInfo() {
     setIsEditing(true)
   }
 
-  const handleSave = () => {
-    // TODO: Implement save functionality
-    setIsEditing(false)
+  const handleSave = async () => {
+    // Validate before saving
+    if (errors.email || errors.phone) {
+      alert('Please fix validation errors before saving')
+      return
+    }
+
+    try {
+      // Get access token from cookie
+      let token = ''
+      if (typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';').map(c => c.trim())
+        const tokenCookie = cookies.find(c => c.startsWith('accessToken='))
+        if (tokenCookie) {
+          try {
+            const enc = decodeURIComponent(tokenCookie.split('=')[1] || '')
+            token = await decryptText(enc)
+          } catch (err) {
+            console.error('Error decrypting token:', err)
+          }
+        }
+      }
+
+      if (!token) {
+        throw new Error('Authentication required. Please login again.')
+      }
+
+      // Prepare update payload (partial update - only send changed fields)
+      const updateData = {}
+      
+      // Combine first and last name
+      const fullName = `${formData.firstName} ${formData.lastName}`.trim()
+      if (fullName && fullName !== user.name) {
+        updateData.name = fullName
+      }
+      
+      if (formData.phone && formData.phone !== user.phone) {
+        updateData.phone = formData.phone
+      }
+
+      // Include uploaded image URL if available
+      if (uploadedImageUrl) {
+        updateData.profileImage = uploadedImageUrl
+      }
+
+      // Only make API call if there are changes
+      if (Object.keys(updateData).length === 0) {
+        console.log('No changes to save')
+        setIsEditing(false)
+        return
+      }
+
+      console.log('Updating profile with:', updateData)
+
+      // Call update profile API
+      const response = await fetch(auth.updateProfile, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updateData)
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update profile')
+      }
+
+      console.log('✅ Profile updated successfully:', data)
+      
+      // Show success message
+      setSaveSuccess(true)
+      setTimeout(() => setSaveSuccess(false), 3000)
+      
+      // Refresh profile data
+      dispatch(fetchProfile())
+      
+      // Exit edit mode
+      setIsEditing(false)
+      
+      // Clear uploaded image state
+      setUploadedImageUrl(null)
+      setProfileImage(null)
+      setImagePreview(null)
+    } catch (error) {
+      console.error('Save profile error:', error)
+      alert(`Failed to save profile: ${error.message}`)
+    }
   }
 
   const handleCancel = () => {
@@ -154,6 +244,7 @@ export default function PersonalInfo() {
     // Clear image changes
     setProfileImage(null)
     setImagePreview(null)
+    setUploadedImageUrl(null)
     const fileInput = document.getElementById('profile-image-input')
     if (fileInput) {
       fileInput.value = ''
@@ -161,21 +252,87 @@ export default function PersonalInfo() {
     setIsEditing(false)
   }
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0]
-    if (file) {
-      setProfileImage(file)
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setImagePreview(e.target.result)
+    if (!file) return
+
+    // Show preview immediately
+    setProfileImage(file)
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setImagePreview(e.target.result)
+    }
+    reader.readAsDataURL(file)
+
+    // Upload to S3 immediately
+    try {
+      setIsUploadingImage(true)
+      
+      // Get access token from cookie
+      let token = ''
+      if (typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';').map(c => c.trim())
+        const tokenCookie = cookies.find(c => c.startsWith('accessToken='))
+        if (tokenCookie) {
+          try {
+            const enc = decodeURIComponent(tokenCookie.split('=')[1] || '')
+            token = await decryptText(enc)
+          } catch (err) {
+            console.error('Error decrypting token:', err)
+          }
+        }
       }
-      reader.readAsDataURL(file)
+
+      if (!token) {
+        throw new Error('Authentication required. Please login again.')
+      }
+
+      // Prepare form data
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'profiles/avatars')
+      formData.append('optimize', 'true')
+      formData.append('maxWidth', '400')
+      formData.append('maxHeight', '400')
+
+      // Upload to media service
+      const response = await fetch(upload.image, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to upload image')
+      }
+
+      // Store the uploaded image URL
+      setUploadedImageUrl(data.data.url)
+      console.log('✅ Image uploaded successfully:', data.data.url)
+    } catch (error) {
+      console.error('Image upload error:', error)
+      alert(`Failed to upload image: ${error.message}`)
+      // Reset image on error
+      setProfileImage(null)
+      setImagePreview(null)
+      setUploadedImageUrl(null)
+      const fileInput = document.getElementById('profile-image-input')
+      if (fileInput) {
+        fileInput.value = ''
+      }
+    } finally {
+      setIsUploadingImage(false)
     }
   }
 
   const handleRemoveImage = () => {
     setProfileImage(null)
     setImagePreview(null)
+    setUploadedImageUrl(null)
     // Reset file input
     const fileInput = document.getElementById('profile-image-input')
     if (fileInput) {
@@ -410,13 +567,26 @@ export default function PersonalInfo() {
 
   return (
     <form className={styles.profileForm}>
+      {/* Success message for profile save */}
+      {saveSuccess && !showChangePassword && (
+        <div className={styles.successMessage}>
+          ✓ Profile updated successfully!
+        </div>
+      )}
+
       {/* Only show profile details when NOT in password change mode */}
       {!showChangePassword && (
         <>
           <div className={styles.avatarEditRow}>
             <div className={styles.avatarContainer}>
+              {isUploadingImage && (
+                <div className={styles.uploadingOverlay}>
+                  <div className={styles.spinner}></div>
+                  <span>Uploading...</span>
+                </div>
+              )}
               <Image
-                src={imagePreview || "https://api.builder.io/api/v1/image/assets/TEMP/e6affc0737515f664c7d8288ba0b3068f64a0ade?width=80"}
+                src={imagePreview || user?.profileImage || "https://api.builder.io/api/v1/image/assets/TEMP/e6affc0737515f664c7d8288ba0b3068f64a0ade?width=80"}
                 alt="Profile"
                 width={80}
                 height={80}

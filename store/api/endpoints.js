@@ -74,6 +74,7 @@ export const auth = {
   register: `${BASES.auth}/auth/signup`,
   me: `${BASES.auth}/auth/me`,
   profile: `${BASES.auth}/auth/profile`,
+  updateProfile: `${BASES.auth}/auth/profile`,
   changePassword: `${BASES.auth}/auth/change-password`,
 }
 

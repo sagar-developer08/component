@@ -15,34 +15,27 @@ const nextConfig = {
       'images.unsplash.com',
       'source.unsplash.com',
       'picsum.photos',
-      'image.shutterstock.com'
+      'image.shutterstock.com',
+      'via.placeholder.com',
+      'placehold.co',
+      'dummyimage.com'
     ],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'example.com',
-        port: '',
-        pathname: '/images/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'backendcatalog.qliq.ae',
+        hostname: '**',
         port: '',
         pathname: '/**',
       },
       {
-        protocol: 'https',
-        hostname: 'image.shutterstock.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'source.unsplash.com',
+        protocol: 'http',
+        hostname: '**',
         port: '',
         pathname: '/**',
       },
     ],
+    // Allow unoptimized images (for external sources)
+    unoptimized: process.env.NODE_ENV === 'development',
     // Optimize image loading
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60,
