@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useRouter } from 'next/navigation'
 import { fetchProfile } from '@/store/slices/profileSlice'
 import { useAuth } from '../../../contexts/AuthContext'
+import { auth } from '@/store/api/endpoints'
+import { decryptText } from '@/utils/crypto'
 import styles from './personalInfo.module.css'
 
 export default function PersonalInfo() {
@@ -12,17 +14,34 @@ export default function PersonalInfo() {
   const { logout } = useAuth()
   const { user, loading, error } = useSelector(state => state.profile)
   const [isEditing, setIsEditing] = useState(false)
+  const [showChangePassword, setShowChangePassword] = useState(false)
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     phone: '',
     email: ''
   })
+  const [passwordData, setPasswordData] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
   const [profileImage, setProfileImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
   const [errors, setErrors] = useState({
     email: '',
     phone: ''
+  })
+  const [passwordErrors, setPasswordErrors] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
+  const [showPasswords, setShowPasswords] = useState({
+    oldPassword: false,
+    newPassword: false,
+    confirmPassword: false
   })
 
   useEffect(() => {
@@ -47,26 +66,36 @@ export default function PersonalInfo() {
     }
   }, [user, isEditing])
 
+  // Auto-hide success message after 3 seconds
+  useEffect(() => {
+    if (passwordSuccess) {
+      const timer = setTimeout(() => {
+        setPasswordSuccess(false)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [passwordSuccess])
+
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
   }
 
   const validatePhone = (phone) => {
-    return phone.length === 8
+    return phone.length === 10
   }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
     
-    // For phone field, only allow digits and limit to 8 characters
+    // For phone field, only allow digits and limit to 10 characters
     if (name === 'phone') {
       const phoneRegex = /^[0-9]*$/
       if (!phoneRegex.test(value)) {
         return // Don't update if invalid characters
       }
-      if (value.length > 8) {
-        return // Don't update if more than 8 digits
+      if (value.length > 10) {
+        return // Don't update if more than 10 digits
       }
     }
     
@@ -87,8 +116,8 @@ export default function PersonalInfo() {
     }
     
     if (name === 'phone') {
-      if (value && value.length > 0 && value.length < 8) {
-        newErrors.phone = 'Please enter a valid 8-digit phone number'
+      if (value && value.length > 0 && value.length < 10) {
+        newErrors.phone = 'Please enter a valid 10-digit phone number'
       } else {
         newErrors.phone = ''
       }
@@ -154,6 +183,194 @@ export default function PersonalInfo() {
     }
   }
 
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target
+    
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+
+    // Validate passwords
+    const newPasswordErrors = { ...passwordErrors }
+    
+    if (name === 'newPassword') {
+      if (value && value.length < 8) {
+        newPasswordErrors.newPassword = 'Password must be at least 8 characters'
+      } else {
+        newPasswordErrors.newPassword = ''
+      }
+      
+      // Check if confirm password matches
+      if (passwordData.confirmPassword && value !== passwordData.confirmPassword) {
+        newPasswordErrors.confirmPassword = 'Passwords do not match'
+      } else if (passwordData.confirmPassword) {
+        newPasswordErrors.confirmPassword = ''
+      }
+    }
+    
+    if (name === 'confirmPassword') {
+      if (value && value !== passwordData.newPassword) {
+        newPasswordErrors.confirmPassword = 'Passwords do not match'
+      } else {
+        newPasswordErrors.confirmPassword = ''
+      }
+    }
+    
+    setPasswordErrors(newPasswordErrors)
+  }
+
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }))
+  }
+
+  const handleToggleChangePassword = () => {
+    setShowChangePassword(!showChangePassword)
+    // Reset password data when closing
+    if (showChangePassword) {
+      setPasswordData({
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      })
+      setPasswordErrors({
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      })
+      setPasswordSuccess(false)
+      setShowPasswords({
+        oldPassword: false,
+        newPassword: false,
+        confirmPassword: false
+      })
+    }
+  }
+
+  const handleSavePassword = async () => {
+    // Validate all fields
+    const newPasswordErrors = {}
+    
+    if (!passwordData.oldPassword) {
+      newPasswordErrors.oldPassword = 'Please enter your current password'
+    }
+    
+    if (!passwordData.newPassword) {
+      newPasswordErrors.newPassword = 'Please enter a new password'
+    } else if (passwordData.newPassword.length < 8) {
+      newPasswordErrors.newPassword = 'Password must be at least 8 characters'
+    }
+    
+    if (!passwordData.confirmPassword) {
+      newPasswordErrors.confirmPassword = 'Please confirm your new password'
+    } else if (passwordData.confirmPassword !== passwordData.newPassword) {
+      newPasswordErrors.confirmPassword = 'Passwords do not match'
+    }
+    
+    if (Object.keys(newPasswordErrors).length > 0) {
+      setPasswordErrors(newPasswordErrors)
+      return
+    }
+    
+    try {
+      // Get access token and userId from cookies
+      let token = ''
+      let userId = ''
+      
+      if (typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';').map(c => c.trim())
+        
+        // Get access token
+        const tokenCookie = cookies.find(c => c.startsWith('accessToken='))
+        if (tokenCookie) {
+          try {
+            const enc = decodeURIComponent(tokenCookie.split('=')[1] || '')
+            token = await decryptText(enc)
+          } catch (err) {
+            console.error('Error decrypting token:', err)
+          }
+        }
+        
+        // Get userId
+        const userIdCookie = cookies.find(c => c.startsWith('userId='))
+        if (userIdCookie) {
+          try {
+            const enc = decodeURIComponent(userIdCookie.split('=')[1] || '')
+            userId = await decryptText(enc)
+          } catch (err) {
+            console.error('Error decrypting userId:', err)
+          }
+        }
+      }
+
+      if (!token) {
+        throw new Error('Authentication required. Please login again.')
+      }
+
+      const payload = {
+        userId: userId || undefined,
+        oldPassword: passwordData.oldPassword,
+        newPassword: passwordData.newPassword
+      }
+
+      console.log('🔐 Change password payload:', { 
+        userId: payload.userId,
+        hasOldPassword: !!payload.oldPassword,
+        hasNewPassword: !!payload.newPassword
+      })
+
+      // Call change password API
+      const response = await fetch(auth.changePassword, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to change password')
+      }
+
+      // Show success message
+      setPasswordSuccess(true)
+      
+      // Reset form
+      setPasswordData({
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      })
+      setPasswordErrors({
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      })
+      
+      // Close password form and show profile after 1.5 seconds
+      setTimeout(() => {
+        setShowChangePassword(false)
+      }, 1500)
+      
+    } catch (error) {
+      console.error('Change password error:', error)
+      const errorMessage = error.message || 'Failed to change password'
+      
+      // Set error to appropriate field
+      if (errorMessage.toLowerCase().includes('current') || errorMessage.toLowerCase().includes('old')) {
+        setPasswordErrors(prev => ({ ...prev, oldPassword: errorMessage }))
+      } else {
+        setPasswordErrors(prev => ({ ...prev, newPassword: errorMessage }))
+      }
+    }
+  }
+
   const handleLogout = () => {
     // Clear all cookies
     if (typeof document !== 'undefined') {
@@ -193,127 +410,272 @@ export default function PersonalInfo() {
 
   return (
     <form className={styles.profileForm}>
-      <div className={styles.avatarEditRow}>
-        <div className={styles.avatarContainer}>
-          <Image
-            src={imagePreview || "https://api.builder.io/api/v1/image/assets/TEMP/e6affc0737515f664c7d8288ba0b3068f64a0ade?width=80"}
-            alt="Profile"
-            width={80}
-            height={80}
-            className={styles.avatar}
-          />
-          {isEditing && (
-            <div className={styles.avatarActions}>
-              <label htmlFor="profile-image-input" className={styles.uploadBtn}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14.5 4H20.5C21.6 4 22.5 4.9 22.5 6V20C22.5 21.1 21.6 22 20.5 22H3.5C2.4 22 1.5 21.1 1.5 20V6C1.5 4.9 2.4 4 3.5 4H9.5L11.5 2H16.5L14.5 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="12" cy="13" r="3" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-                Upload
-              </label>
-              <input
-                id="profile-image-input"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                style={{ display: 'none' }}
+      {/* Only show profile details when NOT in password change mode */}
+      {!showChangePassword && (
+        <>
+          <div className={styles.avatarEditRow}>
+            <div className={styles.avatarContainer}>
+              <Image
+                src={imagePreview || "https://api.builder.io/api/v1/image/assets/TEMP/e6affc0737515f664c7d8288ba0b3068f64a0ade?width=80"}
+                alt="Profile"
+                width={80}
+                height={80}
+                className={styles.avatar}
               />
-              {(profileImage || imagePreview) && (
-                <button
-                  type="button"
-                  className={styles.removeBtn}
-                  onClick={handleRemoveImage}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Remove
-                </button>
+              {isEditing && (
+                <div className={styles.avatarActions}>
+                  <label htmlFor="profile-image-input" className={styles.uploadBtn}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M14.5 4H20.5C21.6 4 22.5 4.9 22.5 6V20C22.5 21.1 21.6 22 20.5 22H3.5C2.4 22 1.5 21.1 1.5 20V6C1.5 4.9 2.4 4 3.5 4H9.5L11.5 2H16.5L14.5 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="12" cy="13" r="3" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                    Upload
+                  </label>
+                  <input
+                    id="profile-image-input"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                  {(profileImage || imagePreview) && (
+                    <button
+                      type="button"
+                      className={styles.removeBtn}
+                      onClick={handleRemoveImage}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Remove
+                    </button>
+                  )}
+                </div>
               )}
             </div>
-          )}
-        </div>
-        <div className={styles.profileActions}>
-          <button 
-            type="button" 
-            className={styles.updateProfileBtn}
-            onClick={isEditing ? handleSave : handleEdit}
-          >
-            {isEditing ? 'Save' : 'Update Profile'}
-          </button>
-          {isEditing && (
+            <div className={styles.profileActions}>
+              <button 
+                type="button" 
+                className={styles.updateProfileBtn}
+                onClick={isEditing ? handleSave : handleEdit}
+              >
+                {isEditing ? 'Save' : 'Update Profile'}
+              </button>
+              {isEditing && (
+                <button 
+                  type="button" 
+                  className={styles.logoutBtn}
+                  onClick={handleCancel}
+                >
+                  Cancel
+                </button>
+              )}
+              {!isEditing && (
+                <button type="button" className={styles.logoutBtn} onClick={handleLogout}>Log Out</button>
+              )}
+            </div>
+          </div>
+          <div className={styles.inputsGrid}>
+            <div className={styles.inputContainer}>
+              <input 
+                className={styles.inputField} 
+                type="text" 
+                name="firstName"
+                value={formData.firstName} 
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                placeholder="First Name"
+              />
+            </div>
+            <div className={styles.inputContainer}>
+              <input 
+                className={styles.inputField} 
+                type="text" 
+                name="lastName"
+                value={formData.lastName} 
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                placeholder="Last Name"
+              />
+            </div>
+            <div className={styles.inputContainer}>
+              <input 
+                className={styles.inputField} 
+                type="email" 
+                name="email"
+                value={formData.email} 
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                placeholder="Email Address"
+              />
+              {errors.email && <div className={styles.errorMessage}>{errors.email}</div>}
+            </div>
+            <div className={styles.inputContainer}>
+              <input 
+                className={styles.inputField} 
+                type="tel" 
+                name="phone"
+                value={formData.phone} 
+                onChange={handleInputChange}
+                disabled={!isEditing}
+                placeholder="Phone Number"
+              />
+              {errors.phone && <div className={styles.errorMessage}>{errors.phone}</div>}
+            </div>
+          </div>
+        </>
+      )}
+      {/* Change Password Section - Only show when toggled */}
+      {showChangePassword && (
+        <div className={styles.changePasswordSection}>
+          <div className={styles.changePasswordHeader}>
+            <h3 className={styles.changePasswordTitle}>Change Password</h3>
             <button 
               type="button" 
-              className={styles.logoutBtn}
-              onClick={handleCancel}
+              className={styles.closePasswordBtn}
+              onClick={handleToggleChangePassword}
+            >
+              ✕
+            </button>
+          </div>
+          
+          {/* Success Message */}
+          {passwordSuccess && (
+            <div className={styles.successMessage}>
+              ✓ Password changed successfully!
+            </div>
+          )}
+          
+          <div className={styles.passwordInputsGrid}>
+            <div className={styles.inputContainer}>
+              <label className={styles.inputLabel}>Old Password</label>
+              <div className={styles.passwordInputWrapper}>
+                <input 
+                  className={styles.inputField} 
+                  type={showPasswords.oldPassword ? "text" : "password"}
+                  name="oldPassword"
+                  value={passwordData.oldPassword} 
+                  onChange={handlePasswordChange}
+                  placeholder="Enter current password"
+                />
+                <button
+                  type="button"
+                  className={styles.eyeButton}
+                  onClick={() => togglePasswordVisibility('oldPassword')}
+                >
+                  {showPasswords.oldPassword ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {passwordErrors.oldPassword && (
+                <div className={styles.errorMessage}>{passwordErrors.oldPassword}</div>
+              )}
+            </div>
+            <div className={styles.inputContainer}>
+              <label className={styles.inputLabel}>New Password</label>
+              <div className={styles.passwordInputWrapper}>
+                <input 
+                  className={styles.inputField} 
+                  type={showPasswords.newPassword ? "text" : "password"}
+                  name="newPassword"
+                  value={passwordData.newPassword} 
+                  onChange={handlePasswordChange}
+                  placeholder="Enter new password"
+                />
+                <button
+                  type="button"
+                  className={styles.eyeButton}
+                  onClick={() => togglePasswordVisibility('newPassword')}
+                >
+                  {showPasswords.newPassword ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {passwordErrors.newPassword && (
+                <div className={styles.errorMessage}>{passwordErrors.newPassword}</div>
+              )}
+            </div>
+            <div className={styles.inputContainer}>
+              <label className={styles.inputLabel}>Verify New Password</label>
+              <div className={styles.passwordInputWrapper}>
+                <input 
+                  className={styles.inputField} 
+                  type={showPasswords.confirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword} 
+                  onChange={handlePasswordChange}
+                  placeholder="Re-enter new password"
+                />
+                <button
+                  type="button"
+                  className={styles.eyeButton}
+                  onClick={() => togglePasswordVisibility('confirmPassword')}
+                >
+                  {showPasswords.confirmPassword ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {passwordErrors.confirmPassword && (
+                <div className={styles.errorMessage}>{passwordErrors.confirmPassword}</div>
+              )}
+            </div>
+          </div>
+          <div className={styles.passwordActionRow}>
+            <button 
+              type="button" 
+              className={styles.savePasswordBtn}
+              onClick={handleSavePassword}
+            >
+              Save
+            </button>
+            <button 
+              type="button" 
+              className={styles.cancelPasswordBtn}
+              onClick={handleToggleChangePassword}
             >
               Cancel
             </button>
-          )}
-          {!isEditing && (
-            <button type="button" className={styles.logoutBtn} onClick={handleLogout}>Log Out</button>
-          )}
+          </div>
         </div>
-      </div>
-      <div className={styles.inputsGrid}>
-        <div className={styles.inputContainer}>
-          <input 
-            className={styles.inputField} 
-            type="text" 
-            name="firstName"
-            value={formData.firstName} 
-            onChange={handleInputChange}
-            disabled={!isEditing}
-            placeholder="First Name"
-          />
+      )}
+
+      {/* Action buttons - Only show when NOT in password change mode */}
+      {!showChangePassword && (
+        <div className={styles.actionRow}>
+          <button 
+            type="button" 
+            className={styles.changePasswordBtn}
+            onClick={handleToggleChangePassword}
+          >
+            Change Password
+          </button>
+          <button type="button" className={styles.deleteAccountBtn}>Delete Account</button>
         </div>
-        <div className={styles.inputContainer}>
-          <input 
-            className={styles.inputField} 
-            type="text" 
-            name="lastName"
-            value={formData.lastName} 
-            onChange={handleInputChange}
-            disabled={!isEditing}
-            placeholder="Last Name"
-          />
-        </div>
-        <div className={styles.inputContainer}>
-          <input 
-            className={styles.inputField} 
-            type="email" 
-            name="email"
-            value={formData.email} 
-            onChange={handleInputChange}
-            disabled={!isEditing}
-            placeholder="Email Address"
-          />
-          {errors.email && <div className={styles.errorMessage}>{errors.email}</div>}
-        </div>
-        <div className={styles.inputContainer}>
-          <input 
-            className={styles.inputField} 
-            type="tel" 
-            name="phone"
-            value={formData.phone} 
-            onChange={handleInputChange}
-            disabled={!isEditing}
-            placeholder="Phone Number"
-          />
-          {errors.phone && <div className={styles.errorMessage}>{errors.phone}</div>}
-        </div>
-      </div>
-      {/* <div className={styles.loginSection}>
-        <div className={styles.loginTitle}>Login & Security</div>
-        <div className={styles.loginGrid}>
-          <input className={styles.inputField} type="text" placeholder="Username" />
-          <input className={styles.inputField} type="password" placeholder="Password" />
-        </div>
-      </div> */}
-      <div className={styles.actionRow}>
-        <button type="button" className={styles.changePasswordBtn}>Change Password</button>
-        <button type="button" className={styles.deleteAccountBtn}>Delete Account</button>
-      </div>
+      )}
     </form>
   )
 }

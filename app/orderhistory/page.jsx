@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchProfile } from '../../store/slices/profileSlice';
+import { createProductReview, clearReviewState } from '../../store/slices/reviewSlice';
 import Navigation from '@/components/Navigation';
 import styles from './orderHistory.module.css';
 import Image from 'next/image';
@@ -14,13 +15,15 @@ const OrderHistoryPage = () => {
   const productId = searchParams.get('productId');
   const dispatch = useDispatch();
   const { orders, loading, error } = useSelector(state => state.profile);
+  const { loading: reviewLoading, error: reviewError, success: reviewSuccess } = useSelector(state => state.review);
   
-  const [rating, setRating] = useState(3);
+  const [rating, setRating] = useState(0);
   const [reviewData, setReviewData] = useState({
     name: '',
-    photo: '',
     review: ''
   });
+  const [imageFiles, setImageFiles] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [orderData, setOrderData] = useState(null);
 
   // Fetch profile data if not already loaded
@@ -47,6 +50,30 @@ const OrderHistoryPage = () => {
     }
   }, [orders, orderId, productId]);
 
+  // Handle review success
+  useEffect(() => {
+    if (reviewSuccess) {
+      alert('Review submitted successfully!')
+      // Reset form
+      setReviewData({ name: '', review: '' })
+      setRating(0)
+      setImageFiles([])
+      setImagePreviews([])
+      // Clear review state
+      setTimeout(() => {
+        dispatch(clearReviewState())
+      }, 2000)
+    }
+  }, [reviewSuccess, dispatch])
+
+  // Handle review error
+  useEffect(() => {
+    if (reviewError) {
+      alert(`Error: ${reviewError}`)
+      dispatch(clearReviewState())
+    }
+  }, [reviewError, dispatch])
+
   const handleRatingChange = (newRating) => {
     setRating(newRating);
   };
@@ -60,23 +87,74 @@ const OrderHistoryPage = () => {
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setReviewData(prev => ({
-        ...prev,
-        photo: file.name
-      }));
+    const files = Array.from(e.target.files || []);
+    
+    if (files.length + imageFiles.length > 5) {
+      alert('Maximum 5 images allowed per review');
+      return;
     }
+
+    // Validate file types
+    const validFiles = files.filter(file => file.type.startsWith('image/'));
+    if (validFiles.length !== files.length) {
+      alert('Only image files are allowed');
+      return;
+    }
+
+    // Add new files to existing files
+    setImageFiles(prev => [...prev, ...validFiles]);
+
+    // Create previews
+    validFiles.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreviews(prev => [...prev, e.target.result]);
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
-  const handleSubmitReview = () => {
-    console.log('Review submitted:', { rating, ...reviewData });
-    // Handle review submission logic here
+  const handleRemoveImage = (index) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSubmitReview = async () => {
+    // Validate required fields
+    if (rating === 0) {
+      alert('Please select a rating (1-5 stars)');
+      return;
+    }
+
+    if (!reviewData.review || reviewData.review.trim().length === 0) {
+      alert('Please write a review');
+      return;
+    }
+
+    // Get the actual product ID from the order items
+    const actualProductId = orderData?.items?.[0]?.productId || productId;
+    
+    if (!actualProductId) {
+      alert('Product ID not found');
+      return;
+    }
+
+    // Dispatch createProductReview action
+    await dispatch(createProductReview({
+      productId: actualProductId,
+      rating: rating,
+      name: reviewData.name,
+      comment: reviewData.review,
+      imageFiles: imageFiles
+    }));
   };
 
   const handleCancelReview = () => {
-    setReviewData({ name: '', photo: '', review: '' });
-    setRating(3);
+    setReviewData({ name: '', review: '' });
+    setRating(0);
+    setImageFiles([]);
+    setImagePreviews([]);
+    dispatch(clearReviewState());
   };
 
   // Helper functions for formatting
@@ -356,29 +434,31 @@ const OrderHistoryPage = () => {
               <div className={styles.formGroup}>
                 <div 
                   className={styles.uploadInput}
-                  onClick={() => document.getElementById('photo-upload').click()}
-                  style={{ cursor: 'pointer' }}
+                  onClick={() => imageFiles.length < 5 && document.getElementById('photo-upload').click()}
+                  style={{ cursor: imageFiles.length < 5 ? 'pointer' : 'not-allowed' }}
                 >
                   <input
                     type="file"
                     id="photo-upload"
                     name="photo"
                     accept="image/*"
+                    multiple
                     onChange={handleFileChange}
                     style={{ display: 'none' }}
                   />
                   <input
                     type="text"
-                    value={reviewData.photo}
+                    value={imageFiles.length > 0 ? `${imageFiles.length} image(s) selected` : ''}
                     className={styles.formInput}
-                    placeholder="Choose file"
+                    placeholder="Choose file (max 5 images)"
                     readOnly
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: imageFiles.length < 5 ? 'pointer' : 'not-allowed' }}
                   />
                   <button 
                     type="button"
                     className={styles.uploadButton}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: imageFiles.length < 5 ? 'pointer' : 'not-allowed' }}
+                    disabled={imageFiles.length >= 5}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -389,6 +469,27 @@ const OrderHistoryPage = () => {
                     </svg>
                   </button>
                 </div>
+                
+                {/* Image Previews */}
+                {imagePreviews.length > 0 && (
+                  <div className={styles.imagePreviews}>
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className={styles.imagePreviewItem}>
+                        <img src={preview} alt={`Preview ${index + 1}`} className={styles.previewImage} />
+                        <button
+                          type="button"
+                          className={styles.removeImageButton}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveImage(index);
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className={styles.formGroup}>
@@ -400,14 +501,22 @@ const OrderHistoryPage = () => {
                   placeholder="Write your review here..."
                   rows="4"
                 />
-              </div>
+                </div>
 
               <div className={styles.reviewButtons}>
-                <button className={styles.cancelButton} onClick={handleCancelReview}>
+                <button 
+                  className={styles.cancelButton} 
+                  onClick={handleCancelReview}
+                  disabled={reviewLoading}
+                >
                   Cancel
                 </button>
-                <button className={styles.submitButton} onClick={handleSubmitReview}>
-                  Submit
+                <button 
+                  className={styles.submitButton} 
+                  onClick={handleSubmitReview}
+                  disabled={reviewLoading || rating === 0}
+                >
+                  {reviewLoading ? 'Submitting...' : 'Submit'}
                 </button>
               </div>
             </div>
