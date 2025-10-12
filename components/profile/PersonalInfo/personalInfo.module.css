@@ -206,3 +206,144 @@
   margin-top: 4px;
   margin-left: 4px;
 }
+
+/* Change Password Section */
+.changePasswordSection {
+  width: 100%;
+  max-width: 1392px;
+  background: #F8F9FA;
+  border: 1px solid #E5E5E5;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.changePasswordHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.changePasswordTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #000;
+  margin: 0;
+}
+
+.closePasswordBtn {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.closePasswordBtn:hover {
+  color: #000;
+}
+
+.passwordInputsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.inputLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+.passwordActionRow {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
+.savePasswordBtn {
+  background: rgb(0, 130, 255, 0.2);
+  color: #0082FF;
+  border: 1px solid #0082FF;
+  border-radius: 100px;
+  padding: 12px 32px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.savePasswordBtn:hover {
+  background: #0066CC;
+}
+
+.cancelPasswordBtn {
+  background: transparent;
+  color: #0082FF;
+  border: 1px solid #0082FF;
+  border-radius: 100px;
+  padding: 12px 32px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancelPasswordBtn:hover {
+  background: #D0D0D0;
+}
+
+.successMessage {
+  background: #D1FAE5;
+  color: #065F46;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #6EE7B7;
+}
+
+.passwordInputWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.passwordInputWrapper .inputField {
+  padding-right: 48px;
+}
+
+.eyeButton {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: color 0.2s;
+}
+
+.eyeButton:hover {
+  color: #0082FF;
+}
+
+.eyeButton svg {
+  width: 20px;
+  height: 20px;
+}

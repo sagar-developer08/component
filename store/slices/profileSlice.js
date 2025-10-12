@@ -118,7 +118,7 @@ const profileSlice = createSlice({
         const responseData = action.payload.data || action.payload
         state.user = responseData.profile || null
         state.addresses = responseData.addresses?.data || []
-        state.orders = responseData.orders?.orders || []
+        state.orders = responseData.orders?.data || []
         state.error = null
       })
       .addCase(fetchProfile.rejected, (state, action) => {

@@ -108,8 +108,8 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
 
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required'
-    } else if (formData.phone.length !== 8) {
-      newErrors.phone = 'Phone number must be exactly 8 digits'
+    } else if (formData.phone.length !== 10) {
+      newErrors.phone = 'Phone number must be exactly 10 digits'
     }
 
 
