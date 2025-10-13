@@ -178,7 +178,7 @@ const cartSlice = createSlice({
         const cartData = responseData.cart || responseData
         const addedItem = responseData.addedItem || responseData.item || responseData
         
-        console.log('Add to cart response:', action.payload)
+        // console.log('Add to cart response:', action.payload)
         
         if (cartData) {
           // If the API returns the full cart, use that
@@ -241,8 +241,8 @@ const cartSlice = createSlice({
         const responseData = action.payload.data || action.payload
         const cartData = responseData.cart || responseData
         
-        console.log('Update cart response:', action.payload)
-        console.log('Cart data extracted:', cartData)
+        // console.log('Update cart response:', action.payload)
+        // console.log('Cart data extracted:', cartData)
         
         if (cartData) {
           // Update the entire cart state with the fresh data from API
@@ -250,11 +250,11 @@ const cartSlice = createSlice({
           state.itemsCount = cartData.totalItems || 0
           state.total = cartData.totalPrice || 0
           
-          console.log('Updated cart state:', { 
-            items: state.items, 
-            itemsCount: state.itemsCount, 
-            total: state.total 
-          })
+          // console.log('Updated cart state:', { 
+          //   items: state.items, 
+          //   itemsCount: state.itemsCount, 
+          //   total: state.total 
+          // })
         }
       })
       .addCase(updateCartItem.rejected, (state, action) => {

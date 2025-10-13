@@ -114,26 +114,30 @@ export default function CheckoutSuccessPage() {
     handlePaymentSuccess()
   }, [searchParams])
 
-  // After success, remove all items from cart using API then clear local state
+  // After success, clear cart state immediately to prevent repeated updates
   useEffect(() => {
     if (paymentStatus !== 'success') return
-    (async () => {
-      try {
-        const userId = await getUserFromCookies()
-        if (userId && Array.isArray(cartItems) && cartItems.length > 0) {
-          await Promise.all(
-            cartItems.map(item =>
-              dispatch(removeFromCart({ userId, productId: item.productId || item.id })).unwrap().catch(() => {})
-            )
-          )
+    
+    // Clear cart immediately to prevent state update loops
+    dispatch(clearCart())
+    
+    // Optionally remove items from server-side cart (but don't wait for it)
+    if (Array.isArray(cartItems) && cartItems.length > 0) {
+      (async () => {
+        try {
+          const userId = await getUserFromCookies()
+          if (userId) {
+            // Remove items from server without waiting for completion
+            cartItems.forEach(item => {
+              dispatch(removeFromCart({ userId, productId: item.productId || item.id })).catch(() => {})
+            })
+          }
+        } catch (e) {
+          // ignore server-side cleanup errors
         }
-      } catch (e) {
-        // ignore; we'll still clear local cart
-      } finally {
-        dispatch(clearCart())
-      }
-    })()
-  }, [paymentStatus, dispatch, cartItems])
+      })()
+    }
+  }, [paymentStatus, dispatch])
 
   if (paymentStatus === 'loading') {
     return (

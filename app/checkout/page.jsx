@@ -127,21 +127,21 @@ export default function CheckoutPage() {
     }
   }, [showAddressForm, user, dispatch])
 
-  // Debug: Log cart data when it changes
-  useEffect(() => {
-    console.log('Checkout page cart data:', { 
-      cartItems, 
-      cartTotal, 
-      cartLoading, 
-      itemsCount: cartItems.length 
-    })
-    
-    // Log individual cart item structure
-    if (cartItems.length > 0) {
-      console.log('First cart item structure:', cartItems[0])
-      console.log('Cart item keys:', Object.keys(cartItems[0]))
-    }
-  }, [cartItems, cartTotal, cartLoading])
+  // Debug: Log cart data when it changes (commented out to prevent console spam)
+  // useEffect(() => {
+  //   console.log('Checkout page cart data:', { 
+  //     cartItems, 
+  //     cartTotal, 
+  //     cartLoading, 
+  //     itemsCount: cartItems.length 
+  //   })
+  //   
+  //   // Log individual cart item structure
+  //   if (cartItems.length > 0) {
+  //     console.log('First cart item structure:', cartItems[0])
+  //     console.log('Cart item keys:', Object.keys(cartItems[0]))
+  //   }
+  // }, [cartItems, cartTotal, cartLoading])
 
   // Check if cart is empty and show appropriate message
   useEffect(() => {
