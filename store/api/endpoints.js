@@ -8,7 +8,7 @@ export const BASES = {
   cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'https://backendcart.qliq.ae/api',
   payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'https://backendcart.qliq.ae/api',
   upload: process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || 'http://localhost:5005/api',
-  review: process.env.NEXT_PUBLIC_REVIEW_BASE_URL || 'http://localhost:8004/api',
+  review: process.env.NEXT_PUBLIC_REVIEW_BASE_URL || 'http://localhost:8008/api',
 }
 
 // export const BASES = {
