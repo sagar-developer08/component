@@ -58,7 +58,7 @@ const OrderHistoryPage = () => {
         console.log('🔍 Checking for existing review for product:', actualProductId);
 
         // Call the product reviews API to get reviews for this specific product
-        const response = await fetch(`http://localhost:8008/api/product-reviews/product/${actualProductId}`);
+        const response = await fetch(`https://backendreview.qliq.ae/api/product-reviews/product/${actualProductId}`);
         const data = await response.json();
         
         console.log('📝 Product reviews response:', data);
@@ -264,7 +264,7 @@ const OrderHistoryPage = () => {
             formData.append('files', file);
           });
 
-          const uploadResponse = await fetch('http://localhost:5005/api/upload/review-images', {
+          const uploadResponse = await fetch('https://ecomupload.qliq.ae/api/upload/review-images', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -281,7 +281,7 @@ const OrderHistoryPage = () => {
         // Combine existing and new image URLs
         const allImageUrls = [...existingImageUrls, ...newImageUrls];
 
-        const response = await fetch(`http://localhost:8008/api/product-reviews/${existingReview.id || existingReview._id}`, {
+        const response = await fetch(`https://backendreview.qliq.ae/api/product-reviews/${existingReview.id || existingReview._id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
