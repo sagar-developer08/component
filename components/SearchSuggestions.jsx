@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useRef, useState, memo } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchSearchSuggestions, clearSuggestions } from '@/store/slices/productsSlice'
-import { generateProductUrl } from '@/utils/productUtils'
+import { generateProductUrl, getPrimaryImage, formatPrice } from '@/utils/productUtils'
 
 const SearchSuggestions = memo(function SearchSuggestions({ 
   query, 
@@ -141,25 +142,34 @@ const SearchSuggestions = memo(function SearchSuggestions({
                 transition: 'background-color 0.2s ease'
               }}
             >
-              <div className="suggestion-content">
-                <div className="suggestion-header">
-                  <span className="suggestion-title">
-                    {suggestion.title || suggestion.name}
-                  </span>
-                  <span className="suggestion-type">
-                    Product
-                  </span>
+              <div className="suggestion-row">
+                <div className="thumb">
+                  <Image
+                    src={getPrimaryImage(suggestion.images)}
+                    alt={suggestion.title || suggestion.name || 'Product image'}
+                    width={48}
+                    height={48}
+                    style={{ objectFit: 'cover', borderRadius: 8 }}
+                  />
                 </div>
-                {suggestion.description && (
-                  <div className="suggestion-description">
-                    {suggestion.description}
+                <div className="suggestion-content">
+                  <div className="suggestion-header">
+                    <span className="suggestion-title">
+                      {suggestion.title || suggestion.name}
+                    </span>
+                    <span className="suggestion-type">Product</span>
                   </div>
-                )}
-                {suggestion.price && (
-                  <div className="suggestion-price">
-                    AED {suggestion.discount_price || suggestion.price}
+                  <div className="meta">
+                    {typeof (suggestion.discount_price || suggestion.price) !== 'undefined' && (
+                      <span className="suggestion-price">
+                        {formatPrice(Number(suggestion.discount_price || suggestion.price))}
+                      </span>
+                    )}
+                    {suggestion.brand_id?.name && (
+                      <span className="brand">{suggestion.brand_id.name}</span>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           ))}
@@ -186,11 +196,9 @@ const SearchSuggestions = memo(function SearchSuggestions({
           background-color: #F0F9FF !important;
         }
 
-        .suggestion-content {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-        }
+        .suggestion-row { display: flex; align-items: center; gap: 12px; }
+        .thumb { flex: 0 0 48px; height: 48px; border-radius: 8px; overflow: hidden; background: #fff; }
+        .suggestion-content { display: flex; flex-direction: column; gap: 4px; }
 
         .suggestion-header {
           display: flex;
@@ -212,17 +220,14 @@ const SearchSuggestions = memo(function SearchSuggestions({
           border-radius: 4px;
         }
 
-        .suggestion-description {
-          font-size: 12px;
-          color: #6B7280;
-          line-height: 1.4;
-        }
+        .meta { display: flex; gap: 8px; align-items: center; }
 
         .suggestion-price {
           font-size: 12px;
           color: #059669;
           font-weight: 500;
         }
+        .brand { font-size: 12px; color: #6B7280; }
 
         .loading-spinner {
           width: 16px;
