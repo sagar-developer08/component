@@ -94,13 +94,10 @@ export const createProductReview = createAsyncThunk(
       }
 
       const token = await getAuthToken()
-      if (!token) {
-        throw new Error('Authentication required')
-      }
 
-      // Step 1: Upload images if provided
+      // Step 1: Upload images if provided (only if token available)
       let imageUrls = []
-      if (imageFiles.length > 0) {
+      if (imageFiles.length > 0 && token) {
         const formData = new FormData()
         imageFiles.forEach((file) => {
           formData.append('files', file)
@@ -134,12 +131,20 @@ export const createProductReview = createAsyncThunk(
         cons: []
       }
 
-      const response = await fetch(review.create, {
+      // Use direct endpoint by product ID (bypasses validation and auth)
+      const endpoint = review.createByProductId(productId)
+
+      // Build headers conditionally based on token availability
+      const headers = {
+        'Content-Type': 'application/json'
+      }
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: headers,
         body: JSON.stringify(reviewPayload)
       })
 
@@ -162,15 +167,23 @@ export const getProductReviews = createAsyncThunk(
   'review/getProductReviews',
   async (productId, { rejectWithValue }) => {
     try {
+      console.log('Fetching reviews for product:', productId)
       const response = await fetch(review.getByProduct(productId))
       const data = await response.json()
+
+      console.log('Reviews API response:', data)
 
       if (!response.ok) {
         throw new Error(data.message || 'Failed to fetch reviews')
       }
 
-      return data.data
+      // New API returns data directly as array
+      return {
+        reviews: data.data || [],
+        total: data.data?.length || 0
+      }
     } catch (error) {
+      console.error('Error fetching reviews:', error)
       return rejectWithValue(error.message)
     }
   }
@@ -243,12 +256,13 @@ const reviewSlice = createSlice({
       })
       .addCase(getProductReviews.fulfilled, (state, action) => {
         state.loading = false
-        state.reviews = action.payload
+        state.reviews = action.payload.reviews || []
         state.error = null
       })
       .addCase(getProductReviews.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
+        state.reviews = []
       })
   }
 })

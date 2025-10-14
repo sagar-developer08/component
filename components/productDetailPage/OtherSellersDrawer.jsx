@@ -1,19 +1,95 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
 
-export default function OtherSellersDrawer({ open, onClose, sellers }) {
+export default function OtherSellersDrawer({ open, onClose, productId }) {
     const { requireAuth } = useAuth();
+    const [sellers, setSellers] = useState([]);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (open) {
             document.body.style.overflow = 'hidden';
+            if (productId) {
+                fetchOtherSellers();
+            }
         } else {
             document.body.style.overflow = '';
         }
         return () => {
             document.body.style.overflow = '';
         };
-    }, [open]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, productId]);
+
+    const fetchOtherSellers = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`/api/products/${productId}/other-sellers`);
+            const data = response.data.data;
+            
+            // Transform API data to match UI format
+            const transformedSellers = [];
+
+            // Add main product first
+            if (data.mainProduct) {
+                transformedSellers.push(transformProduct(data.mainProduct));
+            }
+
+            // Add other sellers
+            if (data.otherSellers && data.otherSellers.length > 0) {
+                data.otherSellers.forEach(seller => {
+                    transformedSellers.push(transformProduct(seller));
+                });
+            }
+
+            setSellers(transformedSellers);
+        } catch (error) {
+            console.error('Error fetching other sellers:', error);
+            setSellers([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const transformProduct = (product) => {
+        const finalPrice = product.discount_price || product.price;
+        const discount = product.discount_price 
+            ? Math.round(((product.price - product.discount_price) / product.price) * 100)
+            : 0;
+
+        const deliveryDate = getDeliveryDate();
+        const orderTime = '2-3 days';
+        
+        // Calculate positive percentage based on rating
+        const positive = product.average_rating 
+            ? Math.round((product.average_rating / 5) * 100)
+            : 0;
+
+        const warranty = product.warranty_period 
+            ? `${product.warranty_period} ${product.warranty_type || ''}`
+            : 'No warranty';
+
+        return {
+            _id: product._id,
+            price: finalPrice,
+            discount: discount,
+            orderTime: orderTime,
+            rating: product.average_rating || 0,
+            deliveryDate: deliveryDate,
+            positive: positive,
+            sellerName: product.store_id?.name || 'Unknown Store',
+            warranty: warranty,
+            stock: product.stock_quantity || 0,
+            productData: product
+        };
+    };
+
+    const getDeliveryDate = () => {
+        const date = new Date();
+        date.setDate(date.getDate() + 3);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
 
     const handleAddToCart = (seller) => {
         requireAuth(() => {
@@ -37,8 +113,18 @@ export default function OtherSellersDrawer({ open, onClose, sellers }) {
                     </button>
                 </div>
                 <div className="drawer-content">
-                    {sellers.map((seller, idx) => (
-                        <div className="seller-card" key={idx}>
+                    {loading ? (
+                        <div className="loading-container">
+                            <div className="loading-spinner"></div>
+                            <p>Loading other sellers...</p>
+                        </div>
+                    ) : sellers.length === 0 ? (
+                        <div className="empty-state">
+                            <p>No other sellers available for this product</p>
+                        </div>
+                    ) : (
+                        sellers.map((seller, idx) => (
+                            <div className="seller-card" key={idx}>
                             <div className="seller-row">
                                 <span className="seller-price">AED {seller.price}</span>
                                 <span className="seller-discount">{seller.discount}% off</span>
@@ -66,7 +152,8 @@ export default function OtherSellersDrawer({ open, onClose, sellers }) {
                             </div>
                             <button className="seller-add-cart" onClick={() => handleAddToCart(seller)}>Add To Cart</button>
                         </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
             <style jsx>{`
@@ -92,6 +179,41 @@ export default function OtherSellersDrawer({ open, onClose, sellers }) {
         @keyframes slideInRight {
           from { transform: translateX(100%); }
           to { transform: translateX(0); }
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        .loading-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 60px 20px;
+          gap: 16px;
+        }
+        .loading-spinner {
+          width: 40px;
+          height: 40px;
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #0082FF;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        .loading-container p {
+          color: #666;
+          font-size: 16px;
+          font-weight: 500;
+        }
+        .empty-state {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 60px 20px;
+          text-align: center;
+        }
+        .empty-state p {
+          color: #999;
+          font-size: 16px;
         }
         .drawer-header {
           display: flex;

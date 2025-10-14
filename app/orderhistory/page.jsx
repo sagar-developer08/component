@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchProfile } from '../../store/slices/profileSlice';
 import { createProductReview, clearReviewState } from '../../store/slices/reviewSlice';
+import { getAuthToken } from '../../utils/userUtils';
 import Navigation from '@/components/Navigation';
 import styles from './orderHistory.module.css';
 import Image from 'next/image';
@@ -15,7 +16,7 @@ const OrderHistoryPage = () => {
   const productId = searchParams.get('productId');
   const dispatch = useDispatch();
   const { orders, loading, error } = useSelector(state => state.profile);
-  const { loading: reviewLoading, error: reviewError, success: reviewSuccess } = useSelector(state => state.review);
+  const { loading: reviewLoading, error: reviewError, success: reviewSuccess, reviews } = useSelector(state => state.review);
   
   const [rating, setRating] = useState(0);
   const [reviewData, setReviewData] = useState({
@@ -25,6 +26,9 @@ const OrderHistoryPage = () => {
   const [imageFiles, setImageFiles] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [orderData, setOrderData] = useState(null);
+  const [existingReview, setExistingReview] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
 
   // Fetch profile data if not already loaded
   useEffect(() => {
@@ -33,11 +37,93 @@ const OrderHistoryPage = () => {
     }
   }, [dispatch, orders]);
 
+  // Fetch existing review for this product
+  useEffect(() => {
+    const checkExistingReview = async () => {
+      try {
+        // First, get the actual MongoDB product ID
+        const firstItem = orderData?.items?.[0];
+        const actualProductId = firstItem?._id || 
+                               firstItem?.mongoProductId || 
+                               firstItem?.product_id ||
+                               firstItem?.productMongoId ||
+                               (firstItem?.productId && String(firstItem.productId).length === 24 ? firstItem.productId : null) ||
+                               (productId && String(productId).length === 24 ? productId : null);
+        
+        if (!actualProductId) {
+          console.log('⚠️ No valid product ID found');
+          return;
+        }
+
+        console.log('🔍 Checking for existing review for product:', actualProductId);
+
+        // Call the product reviews API to get reviews for this specific product
+        const response = await fetch(`http://localhost:8008/api/product-reviews/product/${actualProductId}`);
+        const data = await response.json();
+        
+        console.log('📝 Product reviews response:', data);
+        
+        if (data.success && data.data && Array.isArray(data.data)) {
+          // Get auth token to identify current user
+          const token = await getAuthToken();
+          
+          if (token) {
+            // Decode token to get user ID
+            const tokenParts = token.split('.');
+            if (tokenParts.length === 3) {
+              const payload = JSON.parse(atob(tokenParts[1]));
+              const currentUserId = payload.sub;
+              
+              // Find review by current user
+              const review = data.data.find(r => r.userId === currentUserId);
+              
+              if (review) {
+                console.log('✅ Found your existing review:', review);
+                setExistingReview(review);
+                setIsEditMode(true);
+                setShowEditForm(false); // Show view mode first
+                
+                // Populate form data (but don't show form yet)
+                setRating(review.rating);
+                setReviewData({
+                  name: review.title || '',
+                  review: review.comment || ''
+                });
+                
+                if (review.images && review.images.length > 0) {
+                  setImagePreviews(review.images);
+                }
+                
+                console.log('📋 Review data loaded');
+              } else {
+                console.log('ℹ️ No existing review found for this product');
+                setShowEditForm(true); // Show form to create new review
+              }
+            }
+          } else {
+            setShowEditForm(true); // No auth, show form
+          }
+        } else {
+          setShowEditForm(true); // No reviews, show form
+        }
+      } catch (err) {
+        console.error('❌ Error checking for existing review:', err);
+        setShowEditForm(true); // On error, show form
+      }
+    };
+
+    if (orderData) {
+      checkExistingReview();
+    }
+  }, [orderData, productId]);
+
   // Find the specific order when orders are loaded
   useEffect(() => {
     if (orders && orders.length > 0 && orderId) {
       const order = orders.find(o => o._id === orderId);
       if (order) {
+        console.log('Found order:', order);
+        console.log('Order items:', order.items);
         if (productId && Array.isArray(order.items)) {
           const filtered = { ...order, items: order.items.filter(it => (it.productId || it.id || '').toString() === productId.toString()) };
           setOrderData(filtered.items.length > 0 ? filtered : order);
@@ -54,11 +140,14 @@ const OrderHistoryPage = () => {
   useEffect(() => {
     if (reviewSuccess) {
       alert('Review submitted successfully!')
-      // Reset form
+      // After successful creation, refresh to check for existing review
       setReviewData({ name: '', review: '' })
       setRating(0)
       setImageFiles([])
       setImagePreviews([])
+      setShowEditForm(false)
+      // Reload the page to fetch the newly created review
+      window.location.reload()
       // Clear review state
       setTimeout(() => {
         dispatch(clearReviewState())
@@ -115,8 +204,18 @@ const OrderHistoryPage = () => {
   };
 
   const handleRemoveImage = (index) => {
-    setImageFiles(prev => prev.filter((_, i) => i !== index));
-    setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    // Check if this is an existing review image (URL) or new upload (File)
+    const isExistingImage = typeof imagePreviews[index] === 'string' && imagePreviews[index].startsWith('http');
+    
+    if (isExistingImage && isEditMode) {
+      // Remove from existing review images
+      setImagePreviews(prev => prev.filter((_, i) => i !== index));
+      // Note: The existing images will be updated when form is submitted
+    } else {
+      // Remove from new uploads
+      setImageFiles(prev => prev.filter((_, i) => i !== index));
+      setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
   const handleSubmitReview = async () => {
@@ -132,30 +231,133 @@ const OrderHistoryPage = () => {
     }
 
     // Get the actual product ID from the order items
-    const actualProductId = orderData?.items?.[0]?.productId || productId;
+    // Try multiple fields to find the MongoDB ObjectId (24-char hex string)
+    const firstItem = orderData?.items?.[0];
+    const actualProductId = firstItem?._id || 
+                           firstItem?.mongoProductId || 
+                           firstItem?.product_id ||
+                           firstItem?.productMongoId ||
+                           (firstItem?.productId && String(firstItem.productId).length === 24 ? firstItem.productId : null) ||
+                           (productId && String(productId).length === 24 ? productId : null);
     
     if (!actualProductId) {
-      alert('Product ID not found');
+      alert('Product MongoDB ID not found. Please contact support.');
+      console.error('Available product data:', firstItem);
       return;
     }
 
-    // Dispatch createProductReview action
-    await dispatch(createProductReview({
-      productId: actualProductId,
-      rating: rating,
-      name: reviewData.name,
-      comment: reviewData.review,
-      imageFiles: imageFiles
-    }));
+    console.log(isEditMode ? 'Updating review' : 'Creating review', 'with product ID:', actualProductId);
+
+    if (isEditMode && existingReview) {
+      // Update existing review
+      try {
+        const token = await getAuthToken();
+        
+        // Get existing image URLs from previews
+        const existingImageUrls = imagePreviews.filter(url => typeof url === 'string' && url.startsWith('http'));
+        
+        // Upload new images if any
+        let newImageUrls = [];
+        if (imageFiles.length > 0 && token) {
+          const formData = new FormData();
+          imageFiles.forEach((file) => {
+            formData.append('files', file);
+          });
+
+          const uploadResponse = await fetch('http://localhost:5005/api/upload/review-images', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
+          });
+
+          const uploadData = await uploadResponse.json();
+          if (uploadResponse.ok) {
+            newImageUrls = uploadData.data.map(result => result.url);
+          }
+        }
+
+        // Combine existing and new image URLs
+        const allImageUrls = [...existingImageUrls, ...newImageUrls];
+
+        const response = await fetch(`http://localhost:8008/api/product-reviews/${existingReview.id || existingReview._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            rating: rating,
+            title: reviewData.name,
+            comment: reviewData.review,
+            images: allImageUrls
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          alert('Review updated successfully!');
+          // Update the existing review state with new data
+          setExistingReview({
+            ...existingReview,
+            rating: rating,
+            title: reviewData.name,
+            comment: reviewData.review,
+            images: allImageUrls,
+            updatedAt: new Date().toISOString()
+          });
+          // Clear new file uploads
+          setImageFiles([]);
+          // Keep the updated image previews
+          setImagePreviews(allImageUrls);
+          // Go back to view mode
+          setShowEditForm(false);
+        } else {
+          throw new Error(data.message || 'Failed to update review');
+        }
+      } catch (err) {
+        alert(`Error updating review: ${err.message}`);
+      }
+    } else {
+      // Create new review
+      await dispatch(createProductReview({
+        productId: actualProductId,
+        rating: rating,
+        name: reviewData.name,
+        comment: reviewData.review,
+        imageFiles: imageFiles
+      }));
+    }
   };
 
-  const handleCancelReview = () => {
-    setReviewData({ name: '', review: '' });
-    setRating(0);
-    setImageFiles([]);
-    setImagePreviews([]);
+  const handleEditClick = () => {
+    setShowEditForm(true);
+  };
+
+  const handleCancelEdit = () => {
+    if (existingReview) {
+      // Cancel edit, go back to view mode
+      setShowEditForm(false);
+      // Restore original review data
+      setRating(existingReview.rating);
+      setReviewData({
+        name: existingReview.title || '',
+        review: existingReview.comment || ''
+      });
+      setImageFiles([]);
+      setImagePreviews(existingReview.images || []);
+    } else {
+      // Clear everything
+      setReviewData({ name: '', review: '' });
+      setRating(0);
+      setImageFiles([]);
+      setImagePreviews([]);
+    }
     dispatch(clearReviewState());
   };
+
+  const handleCancelReview = handleCancelEdit;
 
   // Helper functions for formatting
   const formatDate = (dateString) => {
@@ -399,10 +601,95 @@ const OrderHistoryPage = () => {
 
         {/* Bottom Row - Review and Order Summary */}
         <div className={styles.bottomRow}>
-          {/* Write a Review Card */}
+          {/* Write/Edit a Review Card */}
           <div className={styles.reviewCard}>
-            <h3 className={styles.cardTitle}>Write a review</h3>
-            <div className={styles.reviewForm}>
+            {/* Show Review View if exists and not in edit mode */}
+            {existingReview && !showEditForm ? (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 className={styles.cardTitle}>Your Review</h3>
+                  <button 
+                    className={styles.editButton}
+                    onClick={handleEditClick}
+                    style={{ 
+                      padding: '12px 24px', 
+                      background: ' rgb(0, 130, 255, 0.2)', 
+                      color: 'rgb(0, 130, 255)', 
+                      border: '1px solid rgb(0, 130, 255)', 
+                      borderRadius: '25px', 
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      fontSize: '16px'
+                    }}
+                  >
+                    Edit Review
+                  </button>
+                </div>
+                
+                {/* Display existing review */}
+                <div style={{ padding: '20px', background: '#f8f9fa', borderRadius: '8px' }}>
+                  {/* Rating */}
+                  <div style={{ marginBottom: '15px' }}>
+                    <label style={{ fontSize: '14px', color: '#666', marginBottom: '8px', display: 'block' }}>Rating</label>
+                    <div className={styles.starRating}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <svg key={star} width="24" height="24" viewBox="0 0 24 24" fill={star <= existingReview.rating ? '#FFB800' : '#E0E0E0'}>
+                          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                        </svg>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Name/Title */}
+                  {existingReview.title && (
+                    <div style={{ marginBottom: '15px' }}>
+                      <label style={{ fontSize: '14px', color: '#666', marginBottom: '8px', display: 'block' }}>Name</label>
+                      <div style={{ fontSize: '16px', color: '#1a1a1a', fontWeight: '500' }}>{existingReview.title}</div>
+                    </div>
+                  )}
+
+                  {/* Comment */}
+                  <div style={{ marginBottom: '15px' }}>
+                    <label style={{ fontSize: '14px', color: '#666', marginBottom: '8px', display: 'block' }}>Review</label>
+                    <div style={{ fontSize: '15px', color: '#333', lineHeight: '1.6' }}>{existingReview.comment}</div>
+                  </div>
+
+                  {/* Images */}
+                  {existingReview.images && existingReview.images.length > 0 && (
+                    <div>
+                      <label style={{ fontSize: '14px', color: '#666', marginBottom: '8px', display: 'block' }}>Photos</label>
+                      <div className={styles.imagePreviews}>
+                        {existingReview.images.map((imageUrl, index) => (
+                          <div key={index} className={styles.imagePreviewItem}>
+                            <img src={imageUrl} alt={`Review ${index + 1}`} className={styles.previewImage} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Status */}
+                  <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #dee2e6' }}>
+                    <span style={{ 
+                      fontSize: '12px', 
+                      color: existingReview.status === 'approved' ? '#4CAF50' : existingReview.status === 'pending' ? '#FF9800' : '#F44336',
+                      fontWeight: '600',
+                      textTransform: 'uppercase'
+                    }}>
+                      Status: {existingReview.status}
+                    </span>
+                    <span style={{ fontSize: '12px', color: '#999', marginLeft: '15px' }}>
+                      {formatDate(existingReview.createdAt)}
+                    </span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className={styles.cardTitle}>
+                  {isEditMode ? 'Edit Your Review' : 'Write a review'}
+                </h3>
+                <div className={styles.reviewForm}>
               <div className={styles.ratingSection}>
                 <label className={styles.formLabel}>Rating</label>
                 <div className={styles.starRating}>
@@ -473,21 +760,27 @@ const OrderHistoryPage = () => {
                 {/* Image Previews */}
                 {imagePreviews.length > 0 && (
                   <div className={styles.imagePreviews}>
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className={styles.imagePreviewItem}>
-                        <img src={preview} alt={`Preview ${index + 1}`} className={styles.previewImage} />
-                        <button
-                          type="button"
-                          className={styles.removeImageButton}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveImage(index);
-                          }}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
+                    {imagePreviews.map((preview, index) => {
+                      const isExistingImage = typeof preview === 'string' && preview.startsWith('http');
+                      return (
+                        <div key={index} className={styles.imagePreviewItem}>
+                          <img src={preview} alt={`Preview ${index + 1}`} className={styles.previewImage} />
+                          {isExistingImage && (
+                            <span className={styles.existingImageBadge}>Existing</span>
+                          )}
+                          <button
+                            type="button"
+                            className={styles.removeImageButton}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveImage(index);
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -509,17 +802,19 @@ const OrderHistoryPage = () => {
                   onClick={handleCancelReview}
                   disabled={reviewLoading}
                 >
-                  Cancel
+                  {isEditMode ? 'Back' : 'Cancel'}
                 </button>
                 <button 
                   className={styles.submitButton} 
                   onClick={handleSubmitReview}
                   disabled={reviewLoading || rating === 0}
                 >
-                  {reviewLoading ? 'Submitting...' : 'Submit'}
+                  {reviewLoading ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
                 </button>
               </div>
             </div>
+              </>
+            )}
           </div>
 
           {/* Order Summary Card */}
