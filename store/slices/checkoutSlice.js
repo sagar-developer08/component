@@ -100,11 +100,17 @@ export const createStripePaymentIntent = createAsyncThunk(
   'checkout/createStripePaymentIntent',
   async (orderData, { rejectWithValue }) => {
     try {
+      console.log('🔄 Creating Stripe payment intent...')
+      console.log('📦 Order data:', orderData)
+      
       const token = await getAuthToken()
       
       if (!token) {
+        console.error('❌ No auth token!')
         throw new Error('Authentication required')
       }
+
+      console.log('✅ Auth token obtained')
 
       // Handle Stripe payment
       const stripeCheckoutData = {
@@ -119,6 +125,9 @@ export const createStripePaymentIntent = createAsyncThunk(
         currency: 'usd'
       }
 
+      console.log('📤 Sending payment request:', stripeCheckoutData)
+      console.log('🔗 Endpoint:', payment.stripeCheckout)
+
       const response = await fetch(payment.stripeCheckout, {
         method: 'POST',
         headers: {
@@ -128,20 +137,26 @@ export const createStripePaymentIntent = createAsyncThunk(
         body: JSON.stringify(stripeCheckoutData)
       })
 
+      console.log('📥 Response status:', response.status)
+
       if (!response.ok) {
         // Robust error handling when server returns non-JSON (e.g., HTML error page)
         const raw = await response.text()
+        console.error('❌ API Error Response:', raw)
         try {
           const errorData = JSON.parse(raw)
+          console.error('❌ Error data:', errorData)
           throw new Error(errorData.message || 'Failed to create payment intent')
         } catch (_) {
           // Surface status and a snippet of the body to help debugging
           const snippet = (raw || '').slice(0, 200)
+          console.error('❌ Raw error:', snippet)
           throw new Error(`Payment API error (${response.status}): ${snippet}`)
         }
       }
 
       const responseData = await response.json()
+      console.log('✅ Payment intent created:', responseData)
       
       return {
         type: 'stripe',
@@ -152,6 +167,7 @@ export const createStripePaymentIntent = createAsyncThunk(
         paymentData: responseData.data
       }
     } catch (error) {
+      console.error('❌ Payment intent creation failed:', error)
       return rejectWithValue(error.message)
     }
   }

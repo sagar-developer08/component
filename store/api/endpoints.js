@@ -121,8 +121,9 @@ export const upload = {
 
 export const review = {
   base: `${BASES.review}/reviews`,
-  create: `${BASES.review}/reviews/product`,
-  getByProduct: (productId) => `${BASES.review}/reviews/product/${productId}`,
+  create: `${BASES.review}/product-reviews/product`,
+  createByProductId: (productId) => `${BASES.review}/product-reviews/product/${productId}/review`, // Direct review by product ID (no validation)
+  getByProduct: (productId) => `${BASES.review}/product-reviews/product/${productId}`, // Updated to new endpoint
   getById: (reviewId) => `${BASES.review}/reviews/${reviewId}`,
   update: (reviewId) => `${BASES.review}/reviews/${reviewId}`,
   delete: (reviewId) => `${BASES.review}/reviews/${reviewId}`,

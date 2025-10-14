@@ -1,11 +1,140 @@
 import ProductCard from '@/components/ProductCard'
 import SectionHeader from '@/components/SectionHeader'
 import ProductInformation from '@/components/productDetailPage/ProductInformation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { getProductReviews } from '@/store/slices/reviewSlice'
 
 export default function ProductSections({ relatedProducts, productData }) {
   const [expandedItem, setExpandedItem] = useState(0)
   const [manufacturerImageIndex, setManufacturerImageIndex] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxImage, setLightboxImage] = useState('')
+  const [lightboxReview, setLightboxReview] = useState(null)
+  const [galleryOpen, setGalleryOpen] = useState(false)
+  const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0)
+  const [viewAllOpen, setViewAllOpen] = useState(false)
+  
+  // Redux for reviews
+  const dispatch = useDispatch()
+  const { reviews, loading: reviewsLoading } = useSelector(state => state.review)
+  
+  // Fetch reviews when component mounts
+  useEffect(() => {
+    if (productData?._id) {
+      dispatch(getProductReviews(productData._id))
+    }
+  }, [productData?._id, dispatch])
+
+  // Image lightbox handlers
+  const openLightbox = (imageUrl, review = null) => {
+    setLightboxImage(imageUrl)
+    setLightboxReview(review)
+    setLightboxOpen(true)
+  }
+
+  const closeLightbox = () => {
+    setLightboxOpen(false)
+    setLightboxImage('')
+    setLightboxReview(null)
+  }
+
+  // Gallery handlers
+  const openGallery = (index = 0) => {
+    setCurrentGalleryIndex(index)
+    setGalleryOpen(true)
+    setViewAllOpen(false) // Close view all when opening gallery
+  }
+
+  const closeGallery = () => {
+    setGalleryOpen(false)
+    setCurrentGalleryIndex(0)
+  }
+
+  const nextGalleryImage = () => {
+    setCurrentGalleryIndex((prev) => (prev + 1) % reviewImages.length)
+  }
+
+  const prevGalleryImage = () => {
+    setCurrentGalleryIndex((prev) => (prev - 1 + reviewImages.length) % reviewImages.length)
+  }
+
+  // View All handlers
+  const openViewAll = () => {
+    setViewAllOpen(true)
+  }
+
+  const closeViewAll = () => {
+    setViewAllOpen(false)
+  }
+
+  const openImageFromViewAll = (index) => {
+    setViewAllOpen(false)
+    openGallery(index)
+  }
+
+  // Calculate review statistics
+  const calculateReviewStats = () => {
+    if (!reviews || reviews.length === 0) {
+      return {
+        averageRating: 0,
+        totalReviews: 0,
+        ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+        percentages: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+      }
+    }
+
+    const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    let totalRating = 0
+
+    reviews.forEach(review => {
+      const rating = review.rating || 0
+      if (rating >= 1 && rating <= 5) {
+        distribution[rating]++
+        totalRating += rating
+      }
+    })
+
+    const totalReviews = reviews.length
+    const averageRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : 0
+    
+    const percentages = {}
+    Object.keys(distribution).forEach(rating => {
+      percentages[rating] = totalReviews > 0 
+        ? Math.round((distribution[rating] / totalReviews) * 100) 
+        : 0
+    })
+
+    return { averageRating, totalReviews, ratingDistribution: distribution, percentages }
+  }
+
+  const reviewStats = calculateReviewStats()
+
+  // Get all review images with associated review data
+  const getAllReviewImages = () => {
+    if (!reviews) return []
+    const imagesWithReviews = []
+    reviews.forEach(review => {
+      if (review.images && review.images.length > 0) {
+        review.images.forEach(imageUrl => {
+          imagesWithReviews.push({ imageUrl, review })
+        })
+      }
+    })
+    return imagesWithReviews
+  }
+
+  const reviewImagesData = getAllReviewImages()
+  const reviewImages = reviewImagesData.map(item => item.imageUrl)
+
+  // Format date helper
+  const formatReviewDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })
+  }
 
   // Normalize relatedProducts to always be an array
   const relatedList = Array.isArray(relatedProducts)
@@ -286,47 +415,47 @@ export default function ProductSections({ relatedProducts, productData }) {
             {/* Overall Rating Summary */}
             <div className="overall-rating-box">
               <div className="overall-rating-label">Overall Rating</div>
-              <div className="overall-rating-score">4.0</div>
+              <div className="overall-rating-score">{reviewStats.averageRating}</div>
               <div className="overall-rating-stars">
                 {[1, 2, 3, 4, 5].map(i => (
-                  <svg key={i} width="28" height="28" viewBox="0 0 24 24" fill={i <= 4 ? "#2196F3" : "#E0E0E0"} style={{ marginRight: 2 }}>
+                  <svg key={i} width="28" height="28" viewBox="0 0 24 24" fill={i <= Math.round(reviewStats.averageRating) ? "#2196F3" : "#E0E0E0"} style={{ marginRight: 2 }}>
                     <path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" />
                   </svg>
                 ))}
               </div>
-              <div className="overall-rating-based">Based on 25 ratings</div>
+              <div className="overall-rating-based">Based on {reviewStats.totalReviews} ratings</div>
               <div className="overall-rating-bars">
                 <div className="rating-bar-row">
                   <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#2196F3" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 5</span>
-                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: '79%', background: '#2196F3' }}></div></div>
-                  <span className="rating-bar-percent">79%</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: `${reviewStats.percentages[5]}%`, background: '#2196F3' }}></div></div>
+                  <span className="rating-bar-percent">{String(reviewStats.percentages[5]).padStart(2, '0')}%</span>
                 </div>
                 <div className="rating-bar-row">
                   <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#4CAF50" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 4</span>
-                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: '9%', background: '#4CAF50' }}></div></div>
-                  <span className="rating-bar-percent">09%</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: `${reviewStats.percentages[4]}%`, background: '#4CAF50' }}></div></div>
+                  <span className="rating-bar-percent">{String(reviewStats.percentages[4]).padStart(2, '0')}%</span>
                 </div>
                 <div className="rating-bar-row">
                   <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#FFC107" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 3</span>
-                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: '3%', background: '#FFC107' }}></div></div>
-                  <span className="rating-bar-percent">03%</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: `${reviewStats.percentages[3]}%`, background: '#FFC107' }}></div></div>
+                  <span className="rating-bar-percent">{String(reviewStats.percentages[3]).padStart(2, '0')}%</span>
                 </div>
                 <div className="rating-bar-row">
                   <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#A0522D" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 2</span>
-                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: '2%', background: '#A0522D' }}></div></div>
-                  <span className="rating-bar-percent">02%</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: `${reviewStats.percentages[2]}%`, background: '#A0522D' }}></div></div>
+                  <span className="rating-bar-percent">{String(reviewStats.percentages[2]).padStart(2, '0')}%</span>
                 </div>
                 <div className="rating-bar-row">
                   <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#F44336" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 1</span>
-                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: '8%', background: '#F44336' }}></div></div>
-                  <span className="rating-bar-percent">08%</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: `${reviewStats.percentages[1]}%`, background: '#F44336' }}></div></div>
+                  <span className="rating-bar-percent">{String(reviewStats.percentages[1]).padStart(2, '0')}%</span>
                 </div>
               </div>
             </div>
           </div>
           <div className="reviews-right">
             <div className="reviews-summary">
-              <div className="summary-title">3334 Reviews, summarised</div>
+              <div className="summary-title">{reviewStats.totalReviews} Reviews, summarised</div>
               <ul className="summary-list">
                 <li>Stunning display and powerful performance make it a top-tier phone.</li>
                 <li>The pro-grade camera system captures incredible photos and videos.</li>
@@ -334,34 +463,62 @@ export default function ProductSections({ relatedProducts, productData }) {
                 <li>Some users have reported battery drain and heating issues.</li>
               </ul>
               <div className="customer-photos-row">
-                <span className="customer-photos-title">Customers Photos (1332)</span>
-                <a className="customer-photos-viewall" href="#">View All</a>
+                <span className="customer-photos-title">Customers Photos ({reviewImages.length})</span>
+                <a className="customer-photos-viewall" href="#" onClick={(e) => { e.preventDefault(); openViewAll(); }}>View All</a>
               </div>
               <div className="customer-photos-list">
-                {[...Array(7)].map((_, i) => (
-                  <div className="customer-photo" key={i}></div>
-                ))}
+                {reviewImages.length > 0 ? (
+                  reviewImages.slice(0, 7).map((imageUrl, i) => (
+                    <div 
+                      className="customer-photo" 
+                      key={i} 
+                      style={{ backgroundImage: `url(${imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', cursor: 'pointer' }}
+                      onClick={() => openGallery(i)}
+                    ></div>
+                  ))
+                ) : (
+                  [...Array(7)].map((_, i) => (
+                    <div className="customer-photo" key={i}></div>
+                  ))
+                )}
               </div>
             </div>
             <div className="reviews-list">
-              {[...Array(4)].map((_, i) => (
-                <div className="review-item" key={i}>
-                  <div className="review-photo"></div>
-                  <div className="review-content">
-                    <div className="review-text">
-                      Lorem ipsum dolor sit amet, consectetur adipiscing elit Suspendisse varius enim in eros elementum tristique | orem ipsum dolor sit amet, consectetur adipiscing.
+              {reviewsLoading ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>Loading reviews...</div>
+              ) : reviews && reviews.length > 0 ? (
+                reviews.slice(0, 4).map((review, i) => (
+                  <div className="review-item" key={review._id || review.id || i}>
+                    <div 
+                      className="review-photo" 
+                      style={review.images && review.images[0] ? { 
+                        backgroundImage: `url(${review.images[0]})`, 
+                        backgroundSize: 'cover', 
+                        backgroundPosition: 'center',
+                        cursor: 'pointer'
+                      } : {}}
+                      onClick={() => review.images && review.images[0] && openLightbox(review.images[0], review)}
+                    ></div>
+                    <div className="review-content">
+                      <div className="review-text">
+                        {review.comment}
+                      </div>
+                      <div className="review-meta">
+                        <span className="review-author">{review.title || 'Anonymous'}</span>
+                        {review.isVerified && (
+                          <span className="review-verified">
+                            <svg width="18" height="18" viewBox="0 0 18 18" style={{ verticalAlign: 'middle', marginRight: 4 }}><circle cx="9" cy="9" r="9" fill="#111" /><path d="M13 7l-4 4-2-2" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            Verified Purchase
+                          </span>
+                        )}
+                      </div>
+                      <span className="review-date">{formatReviewDate(review.createdAt)}</span>
                     </div>
-                    <div className="review-meta">
-                      <span className="review-author">Ama Cruize</span>
-                      <span className="review-verified">
-                        <svg width="18" height="18" viewBox="0 0 18 18" style={{ verticalAlign: 'middle', marginRight: 4 }}><circle cx="9" cy="9" r="9" fill="#111" /><path d="M13 7l-4 4-2-2" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                        Verified Purchase
-                      </span>
-                    </div>
-                    <span className="review-date">Nov 12, 2024</span>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>No reviews yet. Be the first to review!</div>
+              )}
             </div>
           </div>
         </div>
@@ -769,6 +926,9 @@ export default function ProductSections({ relatedProducts, productData }) {
           .reviews-left {
           flex: 1;
           max-width: 340px;
+          background: transparent;
+          border: none;
+          box-shadow: none;
         }
         .reviews-title {
           font-size: 32px;
@@ -930,7 +1090,7 @@ export default function ProductSections({ relatedProducts, productData }) {
         }
         .reviews-right {
           flex: 2.2;
-          min-width: 0;
+          min-width: 900px;
         }
         .reviews-summary {
           margin-bottom: 24px;
@@ -1066,6 +1226,553 @@ export default function ProductSections({ relatedProducts, productData }) {
           .review-photo {
             width: 28px;
             height: 28px;
+          }
+        }
+      `}</style>
+
+      {/* View All Images Modal - Grid of 60px Thumbnails */}
+      {viewAllOpen && (
+        <div 
+          className="lightbox-overlay"
+          onClick={closeViewAll}
+        >
+          <div className="viewall-content" onClick={(e) => e.stopPropagation()}>
+            <button className="lightbox-close" onClick={closeViewAll}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            
+            <h2 className="viewall-title">All Customer Photos ({reviewImages.length})</h2>
+            
+            <div className="viewall-grid">
+              {reviewImages.map((imageUrl, index) => (
+                <div
+                  key={index}
+                  className="viewall-thumbnail"
+                  style={{ backgroundImage: `url(${imageUrl})` }}
+                  onClick={() => openImageFromViewAll(index)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Lightbox Modal with Review */}
+      {lightboxOpen && (
+        <div 
+          className="lightbox-overlay"
+          onClick={closeLightbox}
+        >
+          <div className="lightbox-content-wrapper" onClick={(e) => e.stopPropagation()}>
+            <button className="lightbox-close" onClick={closeLightbox}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            <div className="lightbox-content">
+              <div className="lightbox-image-container">
+                <img src={lightboxImage} alt="Review" className="lightbox-image" />
+              </div>
+              {lightboxReview && (
+                <div className="lightbox-review-info">
+                  <div className="lightbox-review-header">
+                    <div className="lightbox-review-stars">
+                      {[1, 2, 3, 4, 5].map(i => (
+                        <span key={i} style={{ color: i <= lightboxReview.rating ? '#FFB800' : '#ddd', fontSize: '18px' }}>★</span>
+                      ))}
+                    </div>
+                    <span className="lightbox-review-author">{lightboxReview.title || 'Anonymous'}</span>
+                  </div>
+                  <p className="lightbox-review-comment">{lightboxReview.comment}</p>
+                  <span className="lightbox-review-date">{formatReviewDate(lightboxReview.createdAt)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Gallery Modal */}
+      {galleryOpen && reviewImages.length > 0 && (
+        <div 
+          className="lightbox-overlay"
+          onClick={closeGallery}
+        >
+          <div className="gallery-content-wrapper" onClick={(e) => e.stopPropagation()}>
+            <button className="lightbox-close" onClick={closeGallery}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+            
+            {/* Navigation Arrows */}
+            {reviewImages.length > 1 && (
+              <>
+                <button className="gallery-nav gallery-prev" onClick={prevGalleryImage}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                </button>
+                <button className="gallery-nav gallery-next" onClick={nextGalleryImage}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </>
+            )}
+
+            <div className="gallery-main">
+              <img src={reviewImages[currentGalleryIndex]} alt={`Gallery ${currentGalleryIndex + 1}`} className="gallery-image" />
+              
+              {/* Review Info for Current Image */}
+              {reviewImagesData[currentGalleryIndex]?.review && (
+                <div className="gallery-review-info">
+                  <div className="gallery-review-header">
+                    <div className="gallery-review-stars">
+                      {[1, 2, 3, 4, 5].map(i => (
+                        <span key={i} style={{ color: i <= reviewImagesData[currentGalleryIndex].review.rating ? '#FFB800' : '#ddd', fontSize: '20px' }}>★</span>
+                      ))}
+                    </div>
+                    <span className="gallery-review-author">{reviewImagesData[currentGalleryIndex].review.title || 'Anonymous'}</span>
+                  </div>
+                  <p className="gallery-review-comment">{reviewImagesData[currentGalleryIndex].review.comment}</p>
+                  <span className="gallery-review-date">{formatReviewDate(reviewImagesData[currentGalleryIndex].review.createdAt)}</span>
+                </div>
+              )}
+            </div>
+            
+            {/* <div className="gallery-counter">
+              {currentGalleryIndex + 1} / {reviewImages.length}
+            </div> */}
+
+            {/* Thumbnail Strip */}
+            {/* <div className="gallery-thumbnails">
+              {reviewImages.map((imageUrl, index) => (
+                <div
+                  key={index}
+                  className={`gallery-thumbnail ${index === currentGalleryIndex ? 'active' : ''}`}
+                  style={{ backgroundImage: `url(${imageUrl})` }}
+                  onClick={() => setCurrentGalleryIndex(index)}
+                />
+              ))}
+            </div> */}
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .lightbox-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.95);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10000;
+          animation: fadeIn 0.3s ease;
+          padding: 20px;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        
+        .lightbox-content-wrapper {
+          position: relative;
+          max-width: 1200px;
+          width: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .lightbox-content {
+          display: flex;
+          gap: 40px;
+          align-items: center;
+          background: #fff;
+          border-radius: 12px;
+          padding: 40px;
+          max-width: 100%;
+          animation: zoomIn 0.3s ease;
+        }
+        
+        .lightbox-image-container {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .lightbox-image {
+          max-width: 600px;
+          max-height: 70vh;
+          object-fit: contain;
+          border-radius: 8px;
+        }
+        
+        .lightbox-review-info {
+          flex: 0 0 300px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        
+        .lightbox-review-header {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        
+        .lightbox-review-stars {
+          display: flex;
+          gap: 2px;
+        }
+        
+        .lightbox-review-author {
+          font-weight: 600;
+          font-size: 16px;
+          color: #1a1a1a;
+        }
+        
+        .lightbox-review-comment {
+          font-size: 14px;
+          line-height: 1.6;
+          color: #333;
+          margin: 8px 0;
+        }
+        
+        .lightbox-review-date {
+          font-size: 12px;
+          color: #666;
+        }
+        
+        @keyframes zoomIn {
+          from {
+            transform: scale(0.9);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+        
+        .lightbox-close {
+          position: absolute;
+          top: 20px;
+          right: 20px;
+          background: rgba(0, 0, 0, 0.6);
+          border: none;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s ease;
+          backdrop-filter: blur(10px);
+          z-index: 10;
+        }
+        
+        .lightbox-close:hover {
+          background: rgba(0, 0, 0, 0.8);
+          transform: rotate(90deg);
+        }
+
+        /* View All Images Modal Styles */
+        .viewall-content {
+          position: relative;
+          background: #fff;
+          border-radius: 16px;
+          padding: 60px;
+          max-width: 95vw;
+          width: 1400px;
+          max-height: 90vh;
+          overflow-y: auto;
+          animation: zoomIn 0.3s ease;
+        }
+        
+        .viewall-title {
+          font-size: 28px;
+          font-weight: 700;
+          color: #1a1a1a;
+          margin-bottom: 40px;
+          text-align: center;
+        }
+        
+        .viewall-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, 120px);
+          gap: 16px;
+          justify-content: center;
+          padding: 10px;
+        }
+        
+        .viewall-thumbnail {
+          width: 120px;
+          height: 120px;
+          background-size: cover;
+          background-position: center;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border: 3px solid transparent;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .viewall-thumbnail:hover {
+          transform: scale(1.1);
+          border-color: #2196F3;
+          box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+          z-index: 1;
+        }
+
+        /* Gallery Styles */
+        .gallery-content-wrapper {
+          position: relative;
+          max-width: 1400px;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 20px;
+        }
+        
+        .gallery-main {
+          display: flex;
+          gap: 40px;
+          align-items: center;
+          background: #fff;
+          border-radius: 12px;
+          padding: 40px;
+          max-width: 100%;
+          animation: zoomIn 0.3s ease;
+        }
+        
+        .gallery-image {
+          max-width: 700px;
+          max-height: 70vh;
+          object-fit: contain;
+          border-radius: 8px;
+        }
+        
+        .gallery-review-info {
+          flex: 0 0 350px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          padding: 20px;
+          background: #f8f9fa;
+          border-radius: 8px;
+        }
+        
+        .gallery-review-header {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        
+        .gallery-review-stars {
+          display: flex;
+          gap: 4px;
+        }
+        
+        .gallery-review-author {
+          font-weight: 600;
+          font-size: 18px;
+          color: #1a1a1a;
+        }
+        
+        .gallery-review-comment {
+          font-size: 15px;
+          line-height: 1.6;
+          color: #333;
+          margin: 8px 0;
+          max-height: 200px;
+          overflow-y: auto;
+        }
+        
+        .gallery-review-date {
+          font-size: 13px;
+          color: #666;
+        }
+        
+        .gallery-nav {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(255, 255, 255, 0.15);
+          border: none;
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s ease;
+          backdrop-filter: blur(10px);
+          z-index: 10;
+        }
+        
+        .gallery-nav:hover {
+          background: rgba(255, 255, 255, 0.25);
+          transform: translateY(-50%) scale(1.1);
+        }
+        
+        .gallery-prev {
+          left: 20px;
+        }
+        
+        .gallery-next {
+          right: 20px;
+        }
+        
+        .gallery-counter {
+          position: absolute;
+          bottom: 140px;
+          background: rgba(0, 0, 0, 0.7);
+          color: white;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 14px;
+          font-weight: 500;
+          backdrop-filter: blur(10px);
+        }
+        
+        .gallery-thumbnails {
+          display: flex;
+          gap: 8px;
+          max-width: 100%;
+          overflow-x: auto;
+          padding: 10px 0;
+          scrollbar-width: thin;
+        }
+        
+        .gallery-thumbnails::-webkit-scrollbar {
+          height: 6px;
+        }
+        
+        .gallery-thumbnails::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.1);
+          border-radius: 3px;
+        }
+        
+        .gallery-thumbnails::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 3px;
+        }
+        
+        .gallery-thumbnail {
+          width: 70px;
+          height: 70px;
+          border-radius: 6px;
+          background-size: cover;
+          background-position: center;
+          cursor: pointer;
+          flex-shrink: 0;
+          border: 2px solid transparent;
+          transition: all 0.3s ease;
+          opacity: 0.6;
+        }
+        
+        .gallery-thumbnail:hover {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+        
+        .gallery-thumbnail.active {
+          border-color: #2196F3;
+          opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+          .viewall-content {
+            padding: 20px;
+            max-width: 95vw;
+          }
+          
+          .viewall-title {
+            font-size: 20px;
+            margin-bottom: 20px;
+          }
+          
+          .viewall-grid {
+            gap: 8px;
+          }
+          
+          .lightbox-content {
+            flex-direction: column;
+            padding: 20px;
+            max-height: 90vh;
+            overflow-y: auto;
+          }
+          
+          .lightbox-image {
+            max-width: 100%;
+            max-height: 50vh;
+          }
+          
+          .lightbox-review-info {
+            flex: 1;
+            width: 100%;
+          }
+          
+          .lightbox-close {
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+          }
+          
+          .gallery-main {
+            flex-direction: column;
+            padding: 20px;
+            max-height: 90vh;
+            overflow-y: auto;
+          }
+          
+          .gallery-image {
+            max-width: 100%;
+            max-height: 50vh;
+          }
+          
+          .gallery-review-info {
+            flex: 1;
+            width: 100%;
+          }
+          
+          .gallery-nav {
+            width: 40px;
+            height: 40px;
+          }
+          
+          .gallery-prev {
+            left: 10px;
+          }
+          
+          .gallery-next {
+            right: 10px;
+          }
+          
+          .gallery-counter {
+            bottom: 120px;
+          }
+          
+          .gallery-thumbnail {
+            width: 50px;
+            height: 50px;
           }
         }
       `}</style>

@@ -310,6 +310,20 @@
   background: rgba(255, 0, 0, 0.8);
 }
 
+.existingImageBadge {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  background: #4CAF50;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  z-index: 2;
+}
+
 .submitButton:disabled,
 .cancelButton:disabled {
   opacity: 0.6;
