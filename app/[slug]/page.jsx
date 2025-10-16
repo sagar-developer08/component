@@ -8,6 +8,7 @@ import Footer from '@/components/Footer'
 import SectionHeader from '@/components/SectionHeader'
 import ProductCard from '@/components/ProductCard'
 import FilterDrawer from '@/components/FilterDrawer'
+import SortDropdown from '@/components/SortDropdown'
 import { fetchProducts } from '@/store/slices/productsSlice'
 import { catalog, search } from '@/store/api/endpoints'
 import { buildFacetsFromCategoryFilters } from '@/utils/categoryFilters'
@@ -48,6 +49,8 @@ export default function BrandPage() {
   const [isCategory, setIsCategory] = useState(false)
   const [filterData, setFilterData] = useState(null)
   const [selectedFilters, setSelectedFilters] = useState({})
+  const [debouncedFilters, setDebouncedFilters] = useState({})
+  const [sortBy, setSortBy] = useState('relevance')
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -65,6 +68,7 @@ export default function BrandPage() {
   // Fetch filter data for category, brand, and store pages
   useEffect(() => {
     const fetchFilterData = async () => {
+      console.log('Fetching filter data for:', { slug, categoryLevel, storeId, selectedFilters })
       if (categoryLevel && slug) {
         // Fetch category filters
         try {
@@ -81,6 +85,7 @@ export default function BrandPage() {
         }
       } else if (storeId) {
         // Fetch store filters with current selected filters for accurate counts
+        console.log('Fetching store filters for storeId:', storeId)
         try {
           // Build filter params for the store filters API
           const filterParams = new URLSearchParams()
@@ -107,7 +112,7 @@ export default function BrandPage() {
             filterParams.append('min_rating', selectedFilters.rating)
           }
           
-          // Brand filter (multiple)
+          // Brand filter (multiple) - send brand names, not IDs
           if (selectedFilters.brand instanceof Set && selectedFilters.brand.size > 0) {
             Array.from(selectedFilters.brand).forEach(b => filterParams.append('brand_id', b))
           }
@@ -134,13 +139,21 @@ export default function BrandPage() {
             ? `${search.storeFilters(storeId)}&${filterParams.toString()}`
             : search.storeFilters(storeId)
           
+          console.log('Fetching store filters with URL:', url)
           const response = await fetch(url)
           if (response.ok) {
             const data = await response.json()
             console.log('Store Filter API Response:', data)
             if (data.success && data.data) {
+              console.log('Setting filter data:', data.data)
               setFilterData(data.data)
+            } else {
+              console.error('Store filter API returned unsuccessful response:', data)
             }
+          } else {
+            console.error('Store filter API error:', response.status, response.statusText)
+            const errorText = await response.text()
+            console.error('Error response body:', errorText)
           }
         } catch (error) {
           console.error('Error fetching store filter data:', error)
@@ -163,15 +176,24 @@ export default function BrandPage() {
     }
 
     fetchFilterData()
-  }, [slug, categoryLevel, storeId, selectedFilters])
+  }, [slug, categoryLevel, storeId, debouncedFilters])
 
-  // Reset pagination when filters change
+  // Debounce filter changes to allow multiple selections
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilters(selectedFilters)
+    }, 300) // 300ms delay for filter changes
+
+    return () => clearTimeout(timer)
+  }, [selectedFilters])
+
+  // Reset pagination when debounced filters change
   useEffect(() => {
     setCurrentPage(1)
     setHasMoreProducts(true)
     setBrandProducts([])
     isFetchingRef.current = false // Reset fetch lock when filters change
-  }, [selectedFilters, slug, storeId, categoryLevel])
+  }, [debouncedFilters, slug, storeId, categoryLevel])
 
   // Fetch brand/store/category info and products by slug
   useEffect(() => {
@@ -201,55 +223,58 @@ export default function BrandPage() {
             params.append('page', currentPage.toString())
             params.append('limit', '10')
             
+            // Add sort parameter
+            params.append('sort', sortBy)
+            
             // Price filter
-            if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
-              params.append('min_price', selectedFilters.price.min)
+            if (debouncedFilters.price?.min !== undefined && debouncedFilters.price?.min !== '') {
+              params.append('min_price', debouncedFilters.price.min)
             }
-            if (selectedFilters.price?.max !== undefined && selectedFilters.price?.max !== '') {
-              params.append('max_price', selectedFilters.price.max)
+            if (debouncedFilters.price?.max !== undefined && debouncedFilters.price?.max !== '') {
+              params.append('max_price', debouncedFilters.price.max)
             }
             
             // Availability filter
-            if (selectedFilters.availability instanceof Set) {
-              if (selectedFilters.availability.has('in') && !selectedFilters.availability.has('out')) {
+            if (debouncedFilters.availability instanceof Set) {
+              if (debouncedFilters.availability.has('in') && !debouncedFilters.availability.has('out')) {
                 params.append('in_stock', 'true')
-              } else if (selectedFilters.availability.has('out') && !selectedFilters.availability.has('in')) {
+              } else if (debouncedFilters.availability.has('out') && !debouncedFilters.availability.has('in')) {
                 params.append('in_stock', 'false')
               }
             }
             
             // Rating filter
-            if (typeof selectedFilters.rating === 'number') {
-              params.append('min_rating', selectedFilters.rating)
+            if (typeof debouncedFilters.rating === 'number') {
+              params.append('min_rating', debouncedFilters.rating)
             }
             
             // Brand filter (multiple)
-            if (selectedFilters.brand instanceof Set && selectedFilters.brand.size > 0) {
-              Array.from(selectedFilters.brand).forEach(b => params.append('brand_id', b))
+            if (debouncedFilters.brand instanceof Set && debouncedFilters.brand.size > 0) {
+              Array.from(debouncedFilters.brand).forEach(b => params.append('brand_id', b))
             }
             
             // Dynamic attribute filters (attr.*)
-            Object.keys(selectedFilters).forEach(key => {
+            Object.keys(debouncedFilters).forEach(key => {
               if (key.startsWith('attr.')) {
                 const attrKey = key.substring(5)
-                const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+                const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
                 values.forEach(v => params.append(`attr_${attrKey}`, v))
               }
             })
             
             // Dynamic specification filters (spec.*)
-            Object.keys(selectedFilters).forEach(key => {
+            Object.keys(debouncedFilters).forEach(key => {
               if (key.startsWith('spec.')) {
                 const specKey = key.substring(5)
-                const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+                const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
                 values.forEach(v => params.append(`spec_${specKey}`, v))
               }
             })
             
-            // Use catalog store API for filtered store products
+            // Use search service API for filtered store products (consistent with filter API)
             const url = params.toString()
-              ? `${catalog.productsByStore(storeId)}?${params.toString()}`
-              : catalog.productsByStore(storeId)
+              ? `${search.storeProducts(storeId, Object.fromEntries(params))}`
+              : search.storeProducts(storeId)
              
             const response = await fetch(url)
 
@@ -290,52 +315,55 @@ export default function BrandPage() {
             params.append('page', currentPage.toString())
             params.append('limit', '10')
             
+            // Add sort parameter
+            params.append('sort', sortBy)
+            
             // Price filter
-            if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
-              params.append('min_price', selectedFilters.price.min)
+            if (debouncedFilters.price?.min !== undefined && debouncedFilters.price?.min !== '') {
+              params.append('min_price', debouncedFilters.price.min)
             }
-            if (selectedFilters.price?.max !== undefined && selectedFilters.price?.max !== '') {
-              params.append('max_price', selectedFilters.price.max)
+            if (debouncedFilters.price?.max !== undefined && debouncedFilters.price?.max !== '') {
+              params.append('max_price', debouncedFilters.price.max)
             }
             
             // Availability filter
-            if (selectedFilters.availability instanceof Set) {
-              if (selectedFilters.availability.has('in') && !selectedFilters.availability.has('out')) {
+            if (debouncedFilters.availability instanceof Set) {
+              if (debouncedFilters.availability.has('in') && !debouncedFilters.availability.has('out')) {
                 params.append('in_stock', 'true')
-              } else if (selectedFilters.availability.has('out') && !selectedFilters.availability.has('in')) {
+              } else if (debouncedFilters.availability.has('out') && !debouncedFilters.availability.has('in')) {
                 params.append('in_stock', 'false')
               }
             }
             
             // Rating filter
-            if (typeof selectedFilters.rating === 'number') {
-              params.append('min_rating', selectedFilters.rating)
+            if (typeof debouncedFilters.rating === 'number') {
+              params.append('min_rating', debouncedFilters.rating)
             }
             
             // Brand filter (multiple)
-            if (selectedFilters.brand instanceof Set && selectedFilters.brand.size > 0) {
-              Array.from(selectedFilters.brand).forEach(b => params.append('brand_id', b))
+            if (debouncedFilters.brand instanceof Set && debouncedFilters.brand.size > 0) {
+              Array.from(debouncedFilters.brand).forEach(b => params.append('brand_id', b))
             }
             
             // Store filter (multiple)
-            if (selectedFilters.store instanceof Set && selectedFilters.store.size > 0) {
-              Array.from(selectedFilters.store).forEach(s => params.append('store_id', s))
+            if (debouncedFilters.store instanceof Set && debouncedFilters.store.size > 0) {
+              Array.from(debouncedFilters.store).forEach(s => params.append('store_id', s))
             }
             
             // Dynamic attribute filters (attr.*)
-            Object.keys(selectedFilters).forEach(key => {
+            Object.keys(debouncedFilters).forEach(key => {
               if (key.startsWith('attr.')) {
                 const attrKey = key.substring(5)
-                const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+                const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
                 values.forEach(v => params.append(`attr_${attrKey}`, v))
               }
             })
             
             // Dynamic specification filters (spec.*)
-            Object.keys(selectedFilters).forEach(key => {
+            Object.keys(debouncedFilters).forEach(key => {
               if (key.startsWith('spec.')) {
                 const specKey = key.substring(5)
-                const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+                const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
                 values.forEach(v => params.append(`spec_${specKey}`, v))
               }
             })
@@ -382,47 +410,50 @@ export default function BrandPage() {
             params.append('page', currentPage.toString())
             params.append('limit', '10')
             
+            // Add sort parameter
+            params.append('sort', sortBy)
+            
             // Price filter
-            if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
-              params.append('min_price', selectedFilters.price.min)
+            if (debouncedFilters.price?.min !== undefined && debouncedFilters.price?.min !== '') {
+              params.append('min_price', debouncedFilters.price.min)
             }
-            if (selectedFilters.price?.max !== undefined && selectedFilters.price?.max !== '') {
-              params.append('max_price', selectedFilters.price.max)
+            if (debouncedFilters.price?.max !== undefined && debouncedFilters.price?.max !== '') {
+              params.append('max_price', debouncedFilters.price.max)
             }
             
             // Availability filter
-            if (selectedFilters.availability instanceof Set) {
-              if (selectedFilters.availability.has('in') && !selectedFilters.availability.has('out')) {
+            if (debouncedFilters.availability instanceof Set) {
+              if (debouncedFilters.availability.has('in') && !debouncedFilters.availability.has('out')) {
                 params.append('in_stock', 'true')
-              } else if (selectedFilters.availability.has('out') && !selectedFilters.availability.has('in')) {
+              } else if (debouncedFilters.availability.has('out') && !debouncedFilters.availability.has('in')) {
                 params.append('in_stock', 'false')
               }
             }
             
             // Rating filter
-            if (typeof selectedFilters.rating === 'number') {
-              params.append('min_rating', selectedFilters.rating)
+            if (typeof debouncedFilters.rating === 'number') {
+              params.append('min_rating', debouncedFilters.rating)
             }
             
             // Store filter (multiple)
-            if (selectedFilters.store instanceof Set && selectedFilters.store.size > 0) {
-              Array.from(selectedFilters.store).forEach(s => params.append('store_id', s))
+            if (debouncedFilters.store instanceof Set && debouncedFilters.store.size > 0) {
+              Array.from(debouncedFilters.store).forEach(s => params.append('store_id', s))
             }
             
             // Dynamic attribute filters (attr.*)
-            Object.keys(selectedFilters).forEach(key => {
+            Object.keys(debouncedFilters).forEach(key => {
               if (key.startsWith('attr.')) {
                 const attrKey = key.substring(5)
-                const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+                const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
                 values.forEach(v => params.append(`attr_${attrKey}`, v))
               }
             })
             
             // Dynamic specification filters (spec.*)
-            Object.keys(selectedFilters).forEach(key => {
+            Object.keys(debouncedFilters).forEach(key => {
               if (key.startsWith('spec.')) {
                 const specKey = key.substring(5)
-                const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+                const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
                 values.forEach(v => params.append(`spec_${specKey}`, v))
               }
             })
@@ -468,30 +499,48 @@ export default function BrandPage() {
     }
 
     fetchData()
-  }, [slug, storeId, categoryLevel, selectedFilters, currentPage])
+  }, [slug, storeId, categoryLevel, debouncedFilters, currentPage, sortBy])
 
   // Transform API data
   const transformedProducts = brandProducts.map(transformProductData)
 
   // Build facets from filter API response for category, brand, or store pages
   const facets = useMemo(() => {
+    console.log('Building facets with filterData:', filterData, 'isStore:', isStore, 'isCategory:', isCategory)
     if (isCategory && filterData) {
-      return buildFacetsFromCategoryFilters(filterData)
+      const result = buildFacetsFromCategoryFilters(filterData)
+      console.log('Category facets result:', result)
+      return result
     } else if (isStore && filterData) {
-      return buildFacetsFromStoreFilters(filterData)
+      const result = buildFacetsFromStoreFilters(filterData)
+      console.log('Store facets result:', result)
+      return result
     } else if (!isStore && !isCategory && filterData) {
       // It's a brand page
-      return buildFacetsFromBrandFilters(filterData)
+      const result = buildFacetsFromBrandFilters(filterData)
+      console.log('Brand facets result:', result)
+      return result
     }
+    console.log('No filter data, returning empty facets')
     return []
   }, [isCategory, isStore, filterData])
 
   const handleFilterChange = (key, value) => {
-    setSelectedFilters(prev => ({ ...prev, [key]: value }))
+    console.log('Filter changed:', key, value)
+    setSelectedFilters(prev => {
+      const newFilters = { ...prev, [key]: value }
+      console.log('New selected filters:', newFilters)
+      return newFilters
+    })
   }
 
   const handleClearFilters = () => {
     setSelectedFilters({})
+  }
+
+  const handleSortChange = (newSort) => {
+    setSortBy(newSort)
+    setCurrentPage(1) // Reset to first page when sorting changes
   }
 
   const handleBack = () => {
@@ -550,13 +599,17 @@ export default function BrandPage() {
 
             {/* Main Content Area with Scrollable Products */}
             <div className="content-area">
-              <SectionHeader
-                title={`${brandInfo?.name || (isStore ? 'Store' : isCategory ? 'Category' : 'Brand')} Products`}
-                showNavigation={false}
-                showButton={true}
-                buttonText="Sort By"
-                onButtonClick={() => { }}
-              />
+              <div className="section-header">
+                <h2 className="section-title">
+                  {`${brandInfo?.name || (isStore ? 'Store' : isCategory ? 'Category' : 'Brand')} Products`}
+                </h2>
+                <div className="section-actions">
+                  <SortDropdown 
+                    currentSort={sortBy}
+                    onSortChange={handleSortChange}
+                  />
+                </div>
+              </div>
 
               {loadingProducts ? (
                 <div className="loading-container">
@@ -718,6 +771,44 @@ export default function BrandPage() {
           .grid-3 { 
             grid-template-columns: 1fr; 
             gap: 16px;
+          }
+        }
+
+        .section-header {
+          display: flex;
+          width: 100%;
+          max-width: 1392px;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 24px;
+          padding-right: 24px;
+          padding-left: 24px;
+        }
+
+        .section-title {
+          color: #000;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 40px;
+          font-weight: 700;
+          line-height: 120%;
+          margin: 0;
+        }
+
+        .section-actions {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+          .section-header {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+          }
+
+          .section-title {
+            font-size: 28px;
           }
         }
       `}</style>

@@ -12,8 +12,9 @@ import FAQ from '@/components/FAQ'
 import Footer from '@/components/Footer'
 import QuickNav from '@/components/QuickNav'
 import StoreCard from '@/components/StoreCard'
+import FilterDrawer from '@/components/FilterDrawer'
 import Image from 'next/image'
-import { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation as SwiperNavigation } from 'swiper/modules'
@@ -24,6 +25,7 @@ import { fetchProducts } from '@/store/slices/productsSlice'
 import { fetchBrands } from '@/store/slices/brandsSlice'
 import { fetchEshopStores } from '@/store/slices/storesSlice'
 import { fetchEcommerceCategories, fetchEcommerceLevel3Categories } from '@/store/slices/categoriesSlice'
+import { buildFacetsFromProducts, applyFiltersToProducts } from '@/utils/facets'
 
 // Helper function to transform API product data to match ProductCard component format
 const transformProductData = (apiProduct) => {
@@ -103,6 +105,32 @@ export default function Home() {
   const categoriesSwiperRef = useRef(null);
   const level3CategoriesSwiperRef = useRef(null);
   const [activeStoreFilter, setActiveStoreFilter] = useState('all');
+  const [selectedFilters, setSelectedFilters] = useState({});
+
+  // Build facets from products for proper filter display
+  const facets = useMemo(() => {
+    if (!Array.isArray(products) || products.length === 0) {
+      return []
+    }
+    return buildFacetsFromProducts(products)
+  }, [products])
+
+  // Apply filters to products
+  const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products) || products.length === 0) {
+      return []
+    }
+    const filtered = applyFiltersToProducts(products, selectedFilters)
+    return filtered.map(transformProductData)
+  }, [products, selectedFilters])
+
+  const handleFilterChange = (key, value) => {
+    setSelectedFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const handleClearFilters = () => {
+    setSelectedFilters({})
+  }
 
   // Fetch products, brands, e-shop stores, and categories on component mount
   useEffect(() => {
@@ -124,6 +152,9 @@ export default function Home() {
   const transformedNewStores = eshopNewStores.map(transformStoreData);
   const transformedCategories = ecommerceCategories.map(transformCategoryData);
   const transformedLevel3Categories = ecommerceLevel3Categories.map(transformCategoryData);
+
+  // Use filtered products for bestsellers section if filters are applied
+  const displayBestsellers = Object.keys(selectedFilters).length > 0 ? filteredProducts : transformedBestsellers;
 
   const handlePrev = () => {
     if (swiperRef.current && swiperRef.current.swiper) {
@@ -281,6 +312,7 @@ export default function Home() {
         {/* <QuickNav /> */}
 
         <Categories />
+
         <section className="section">
           <div className="container">
             <ImageSlider />
@@ -314,7 +346,7 @@ export default function Home() {
                 freeMode={true}
                 style={{ width: '1360px' }}
               >
-                {transformedBestsellers.map((product, index) => (
+                {displayBestsellers.map((product, index) => (
                   <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
                     <ProductCard {...product} />
                   </SwiperSlide>

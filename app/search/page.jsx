@@ -5,11 +5,14 @@ import ProductCard from '@/components/ProductCard'
 import SectionHeader from '@/components/SectionHeader'
 import Footer from '@/components/Footer'
 import FilterDrawer from '@/components/FilterDrawer'
+import SortDropdown from '@/components/SortDropdown'
 import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'next/navigation'
 import { searchProducts } from '@/store/slices/productsSlice'
 import { buildFacetsFromProducts } from '@/utils/facets'
+import { buildFacetsFromSearchFilters } from '@/utils/searchFilters'
+import { search } from '@/store/api/endpoints'
 
 // Helper function to transform API product data to match ProductCard component format
 const transformProductData = (apiProduct) => {
@@ -38,24 +41,127 @@ const transformProductData = (apiProduct) => {
 export default function SearchPage() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [selectedFilters, setSelectedFilters] = useState({})
+  const [debouncedFilters, setDebouncedFilters] = useState({})
+  const [sortBy, setSortBy] = useState('relevance')
+  const [filterData, setFilterData] = useState(null)
+  const [loadingFilters, setLoadingFilters] = useState(false)
   const searchParams = useSearchParams()
   const query = useMemo(() => searchParams.get('q'), [searchParams])
   const dispatch = useDispatch()
   
   const { searchResults, searchQuery, searchLoading, searchError, searchPagination } = useSelector(state => state.products)
 
+  // Debounce filter changes to allow multiple selections
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedFilters(selectedFilters)
+    }, 300) // 300ms delay for filter changes
+
+    return () => clearTimeout(timer)
+  }, [selectedFilters])
+
+  // Fetch filter data when query or debounced filters change
+  useEffect(() => {
+    const fetchFilterData = async () => {
+      if (!query) return
+
+      try {
+        setLoadingFilters(true)
+        
+        // Build filter params
+        const params = new URLSearchParams()
+        
+        // Price filter
+        if (debouncedFilters.price?.min !== undefined && debouncedFilters.price?.min !== '') {
+          params.append('min_price', debouncedFilters.price.min)
+        }
+        if (debouncedFilters.price?.max !== undefined && debouncedFilters.price?.max !== '') {
+          params.append('max_price', debouncedFilters.price.max)
+        }
+        
+        // Availability filter
+        if (debouncedFilters.availability instanceof Set) {
+          if (debouncedFilters.availability.has('in') && !debouncedFilters.availability.has('out')) {
+            params.append('in_stock', 'true')
+          } else if (debouncedFilters.availability.has('out') && !debouncedFilters.availability.has('in')) {
+            params.append('in_stock', 'false')
+          }
+        }
+        
+        // Rating filter
+        if (typeof debouncedFilters.rating === 'number') {
+          params.append('min_rating', debouncedFilters.rating)
+        }
+        
+        // Brand filter (multiple)
+        if (debouncedFilters.brand instanceof Set && debouncedFilters.brand.size > 0) {
+          Array.from(debouncedFilters.brand).forEach(b => params.append('brand_id', b))
+        }
+        
+        // Store filter (multiple)
+        if (debouncedFilters.store instanceof Set && debouncedFilters.store.size > 0) {
+          Array.from(debouncedFilters.store).forEach(s => params.append('store_id', s))
+        }
+        
+        // Dynamic attribute filters (attr.*)
+        Object.keys(debouncedFilters).forEach(key => {
+          if (key.startsWith('attr.')) {
+            const attrKey = key.substring(5)
+            const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
+            values.forEach(v => params.append(`attr_${attrKey}`, v))
+          }
+        })
+        
+        // Dynamic specification filters (spec.*)
+        Object.keys(debouncedFilters).forEach(key => {
+          if (key.startsWith('spec.')) {
+            const specKey = key.substring(5)
+            const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
+            values.forEach(v => params.append(`spec_${specKey}`, v))
+          }
+        })
+
+        const url = search.searchFilters(query, Object.fromEntries(params))
+        const response = await fetch(url)
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.data) {
+            setFilterData(data.data)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch search filters:', error)
+      } finally {
+        setLoadingFilters(false)
+      }
+    }
+
+    fetchFilterData()
+  }, [query, debouncedFilters])
+
   // Debounce search query and filters to prevent too many API calls
   useEffect(() => {
     if (query) {
       const timer = setTimeout(() => {
-        dispatch(searchProducts({ query, filters: selectedFilters }))
+        dispatch(searchProducts({ query, filters: debouncedFilters, sort: sortBy }))
       }, 300) // 300ms delay for search page
 
       return () => clearTimeout(timer)
     }
-  }, [dispatch, query, selectedFilters])
+  }, [dispatch, query, debouncedFilters, sortBy])
 
-  const facets = useMemo(() => buildFacetsFromProducts(Array.isArray(searchResults) ? searchResults : []), [searchResults])
+  // Build facets from filter API response for proper filter display
+  const facets = useMemo(() => {
+    if (filterData) {
+      return buildFacetsFromSearchFilters(filterData)
+    }
+    // Fallback to search results if no filter data available
+    if (!Array.isArray(searchResults) || searchResults.length === 0) {
+      return []
+    }
+    return buildFacetsFromProducts(searchResults)
+  }, [filterData, searchResults])
 
   const handleFilterChange = (key, value) => {
     setSelectedFilters(prev => ({ ...prev, [key]: value }))
@@ -63,6 +169,10 @@ export default function SearchPage() {
 
   const handleClearFilters = () => {
     setSelectedFilters({})
+  }
+
+  const handleSortChange = (newSort) => {
+    setSortBy(newSort)
   }
 
   return (
@@ -89,13 +199,17 @@ export default function SearchPage() {
 
             {/* Main Content Area with Scrollable Products */}
             <div className="content-area">
-              <SectionHeader
-                title={query ? `Search Results for "${query}"` : "Search Results"}
-                showNavigation={false}
-                showButton={true}
-                buttonText="Sort By"
-                onButtonClick={() => {}}
-              />
+              <div className="section-header">
+                <h2 className="section-title">
+                  {query ? `Search Results for "${query}"` : "Search Results"}
+                </h2>
+                <div className="section-actions">
+                  <SortDropdown 
+                    currentSort={sortBy}
+                    onSortChange={handleSortChange}
+                  />
+                </div>
+              </div>
 
               <div className="products-scroll-container">
                 <div className="grid-3">
@@ -224,6 +338,44 @@ export default function SearchPage() {
           .grid-3 { 
             grid-template-columns: 1fr; 
             gap: 16px;
+          }
+        }
+
+        .section-header {
+          display: flex;
+          width: 100%;
+          max-width: 1392px;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 24px;
+          padding-right: 24px;
+          padding-left: 24px;
+        }
+
+        .section-title {
+          color: #000;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 40px;
+          font-weight: 700;
+          line-height: 120%;
+          margin: 0;
+        }
+
+        .section-actions {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+          .section-header {
+            flex-direction: column;
+            gap: 16px;
+            align-items: flex-start;
+          }
+
+          .section-title {
+            font-size: 28px;
           }
         }
       `}</style>

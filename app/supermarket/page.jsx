@@ -14,10 +14,12 @@ import Footer from '@/components/Footer'
 import QuickNav from '@/components/QuickNav'
 import FilterDrawer from '@/components/FilterDrawer'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchSupermarketStores } from '@/store/slices/storesSlice'
+import { fetchProducts } from '@/store/slices/productsSlice'
 import { useRouter } from 'next/navigation'
+import { buildFacetsFromProducts, applyFiltersToProducts } from '@/utils/facets'
 
 const productData = [
   {
@@ -56,13 +58,60 @@ const productData = [
 
 export default function Home() {
   const [filterOpen, setFilterOpen] = useState(false)
+  const [selectedFilters, setSelectedFilters] = useState({})
   const dispatch = useDispatch()
   const router = useRouter()
   const { supermarketStores, loading, error } = useSelector(state => state.stores)
+  const { products } = useSelector(state => state.products)
 
   useEffect(() => {
     dispatch(fetchSupermarketStores())
+    dispatch(fetchProducts())
   }, [dispatch])
+
+  // Build facets from products for proper filter display
+  const facets = useMemo(() => {
+    if (!Array.isArray(products) || products.length === 0) {
+      return []
+    }
+    return buildFacetsFromProducts(products)
+  }, [products])
+
+  // Apply filters to products
+  const filteredProducts = useMemo(() => {
+    if (!Array.isArray(products) || products.length === 0) {
+      return productData // fallback to static data
+    }
+    const filtered = applyFiltersToProducts(products, selectedFilters)
+    return filtered.length > 0 ? filtered.map(transformProductData) : productData
+  }, [products, selectedFilters])
+
+  const handleFilterChange = (key, value) => {
+    setSelectedFilters(prev => ({ ...prev, [key]: value }))
+  }
+
+  const handleClearFilters = () => {
+    setSelectedFilters({})
+  }
+
+  // Transform product data helper function
+  const transformProductData = (apiProduct) => {
+    const primaryImage = apiProduct.images?.find(img => img.is_primary) || apiProduct.images?.[0];
+    const imageUrl = primaryImage?.url || 'https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644';
+    const savings = apiProduct.is_offer && apiProduct.price && apiProduct.discount_price
+      ? apiProduct.price - apiProduct.discount_price
+      : 0;
+
+    return {
+      id: apiProduct._id || apiProduct.slug,
+      title: apiProduct.title || 'Product Title',
+      price: `AED ${apiProduct.discount_price || apiProduct.price || '0'}`,
+      rating: apiProduct.average_rating?.toString() || '0',
+      deliveryTime: '30 Min',
+      image: imageUrl,
+      badge: apiProduct.is_offer && savings > 0 ? `Save AED ${savings}` : null
+    }
+  }
   return (
     <main className="home-page">
       <Navigation />
@@ -123,7 +172,14 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <FilterDrawer open={filterOpen} onClose={() => setFilterOpen(false)} />
+      <FilterDrawer 
+        open={filterOpen} 
+        onClose={() => setFilterOpen(false)}
+        facets={facets}
+        selected={selectedFilters}
+        onChange={handleFilterChange}
+        onClear={handleClearFilters}
+      />
       <Footer />
     </main>
   )

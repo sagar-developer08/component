@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export default function FilterDrawer({ open, onClose, inline = false, sticky = false, stickyTop = 112, facets = [], selected = {}, onChange, onClear }) {
   // Initialize with all facets expanded by default
   const [expandedFacets, setExpandedFacets] = useState(() => {
     return new Set(facets.map(facet => facet.key));
   });
+
+  // Local state for price range to avoid constant API calls
+  const [localPriceRange, setLocalPriceRange] = useState({});
+  const [priceDebounceTimer, setPriceDebounceTimer] = useState(null);
 
   useEffect(() => {
     if (inline) return; // Do not alter body scroll in inline mode
@@ -44,13 +48,52 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
     onChange(facetKey, current)
   }
 
+  // Debounced price range handler
+  const debouncedPriceChange = useCallback((facetKey, newRange) => {
+    if (priceDebounceTimer) {
+      clearTimeout(priceDebounceTimer);
+    }
+    
+    const timer = setTimeout(() => {
+      if (onChange) {
+        onChange(facetKey, newRange);
+      }
+    }, 500); // 500ms delay
+    
+    setPriceDebounceTimer(timer);
+  }, [onChange, priceDebounceTimer]);
+
   const handleRangeChange = (facetKey, field, value) => {
     if (!onChange) return
-    const next = { ...(selected[facetKey] || {}) }
-    const num = value === '' ? undefined : Number(value)
-    next[field] = isNaN(num) ? undefined : num
-    onChange(facetKey, next)
+    
+    // Update local state immediately for smooth UI
+    const currentRange = localPriceRange[facetKey] || selected[facetKey] || {};
+    const newRange = { ...currentRange };
+    const num = value === '' ? undefined : Number(value);
+    newRange[field] = isNaN(num) ? undefined : num;
+    
+    // Update local state
+    setLocalPriceRange(prev => ({
+      ...prev,
+      [facetKey]: newRange
+    }));
+    
+    // Debounce the actual API call
+    debouncedPriceChange(facetKey, newRange);
   }
+
+  // Sync local price range with selected filters when they change externally
+  useEffect(() => {
+    setLocalPriceRange(prev => {
+      const newLocal = { ...prev };
+      Object.keys(selected).forEach(key => {
+        if (selected[key] && typeof selected[key] === 'object' && (selected[key].min !== undefined || selected[key].max !== undefined)) {
+          newLocal[key] = selected[key];
+        }
+      });
+      return newLocal;
+    });
+  }, [selected]);
 
   const handleMinSelect = (facetKey, value) => {
     if (!onChange) return
@@ -114,24 +157,38 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                 )}
                 {facet.type === 'range' && (
                   <div className="filter-range">
-                    <div className="range-inputs">
-                      <input
-                        type="number"
-                        placeholder={facet.min !== undefined ? String(facet.min) : 'Min'}
-                        value={selected[facet.key]?.min ?? ''}
-                        min={facet.min}
-                        max={facet.max}
-                        onChange={(e) => handleRangeChange(facet.key, 'min', e.target.value)}
-                      />
-                      <span className="range-sep">—</span>
-                      <input
-                        type="number"
-                        placeholder={facet.max !== undefined ? String(facet.max) : 'Max'}
-                        value={selected[facet.key]?.max ?? ''}
-                        min={facet.min}
-                        max={facet.max}
-                        onChange={(e) => handleRangeChange(facet.key, 'max', e.target.value)}
-                      />
+                    <div className="range-slider-container">
+                      <div className="range-values">
+                        <span className="range-min">AED {localPriceRange[facet.key]?.min ?? selected[facet.key]?.min ?? facet.min ?? 0}</span>
+                        <span className="range-max">AED {localPriceRange[facet.key]?.max ?? selected[facet.key]?.max ?? facet.max ?? 1000}</span>
+                      </div>
+                      <div className="range-slider-wrapper">
+                        <div className="range-track">
+                          <div 
+                            className="range-progress" 
+                            style={{
+                              left: `${((localPriceRange[facet.key]?.min ?? selected[facet.key]?.min ?? facet.min ?? 0) - (facet.min ?? 0)) / ((facet.max ?? 1000) - (facet.min ?? 0)) * 100}%`,
+                              width: `${((localPriceRange[facet.key]?.max ?? selected[facet.key]?.max ?? facet.max ?? 1000) - (localPriceRange[facet.key]?.min ?? selected[facet.key]?.min ?? facet.min ?? 0)) / ((facet.max ?? 1000) - (facet.min ?? 0)) * 100}%`
+                            }}
+                          ></div>
+                        </div>
+                        <input
+                          type="range"
+                          min={facet.min ?? 0}
+                          max={facet.max ?? 1000}
+                          value={localPriceRange[facet.key]?.min ?? selected[facet.key]?.min ?? facet.min ?? 0}
+                          onChange={(e) => handleRangeChange(facet.key, 'min', e.target.value)}
+                          className="range-slider min-slider"
+                        />
+                        <input
+                          type="range"
+                          min={facet.min ?? 0}
+                          max={facet.max ?? 1000}
+                          value={localPriceRange[facet.key]?.max ?? selected[facet.key]?.max ?? facet.max ?? 1000}
+                          onChange={(e) => handleRangeChange(facet.key, 'max', e.target.value)}
+                          className="range-slider max-slider"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -255,9 +312,79 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
         .option-text { flex: 1; }
         .option-count { color: #666; font-size: 12px; }
         .filter-range { padding-top: 8px; }
-        .range-inputs { display: flex; align-items: center; gap: 8px; }
-        .range-inputs input { width: 120px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
-        .range-sep { color: #999; }
+        .range-slider-container { display: flex; flex-direction: column; gap: 12px; }
+        .range-values { display: flex; justify-content: space-between; font-size: 14px; color: #666; }
+        .range-slider-wrapper { position: relative; height: 20px; }
+        .range-track {
+          position: absolute;
+          top: 50%;
+          left: 0;
+          right: 0;
+          height: 6px;
+          background: #e0e0e0;
+          border-radius: 3px;
+          transform: translateY(-50%);
+        }
+        .range-progress {
+          position: absolute;
+          top: 0;
+          height: 100%;
+          background: #0082FF;
+          border-radius: 3px;
+          transition: all 0.1s ease;
+        }
+        .range-slider { 
+          position: absolute; 
+          width: 100%; 
+          height: 6px; 
+          background: transparent; 
+          outline: none; 
+          -webkit-appearance: none; 
+          appearance: none;
+          top: 50%;
+          transform: translateY(-50%);
+        }
+        .range-slider::-webkit-slider-track { 
+          height: 6px; 
+          background: transparent; 
+          border-radius: 3px; 
+        }
+        .range-slider::-webkit-slider-thumb { 
+          -webkit-appearance: none; 
+          appearance: none; 
+          height: 18px; 
+          width: 18px; 
+          background: #0082FF; 
+          border-radius: 50%; 
+          cursor: pointer; 
+          border: 2px solid #fff; 
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          transition: transform 0.1s ease;
+        }
+        .range-slider::-webkit-slider-thumb:hover {
+          transform: scale(1.1);
+        }
+        .range-slider::-moz-range-track { 
+          height: 6px; 
+          background: transparent; 
+          border-radius: 3px; 
+          border: none; 
+        }
+        .range-slider::-moz-range-thumb { 
+          height: 18px; 
+          width: 18px; 
+          background: #0082FF; 
+          border-radius: 50%; 
+          cursor: pointer; 
+          border: 2px solid #fff; 
+          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          transition: transform 0.1s ease;
+        }
+        .range-slider::-moz-range-thumb:hover {
+          transform: scale(1.1);
+        }
+        .min-slider { z-index: 2; }
+        .max-slider { z-index: 1; }
         .filter-actions {
           display: flex;
           gap: 18px;

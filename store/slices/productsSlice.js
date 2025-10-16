@@ -51,12 +51,12 @@ export const fetchStoreProducts = createAsyncThunk(
 // Async thunk for searching products with filters
 export const searchProducts = createAsyncThunk(
   'products/searchProducts',
-  async ({ query, filters = {} }, { rejectWithValue }) => {
+  async ({ query, filters = {}, sort = 'relevance' }, { rejectWithValue }) => {
     try {
       console.log('Searching for:', query, 'with filters:', filters)
       
       // Build query params from filters
-      const params = new URLSearchParams({ q: query })
+      const params = new URLSearchParams({ q: query, sort })
       
       // Price filter
       if (filters.price?.min !== undefined && filters.price?.min !== '') {

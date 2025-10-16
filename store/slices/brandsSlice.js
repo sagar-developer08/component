@@ -48,8 +48,8 @@ const brandsSlice = createSlice({
       .addCase(fetchBrands.fulfilled, (state, action) => {
         state.loading = false
         state.success = true
-        // Handle the API response structure: { success, message, data: { brands: [...], pagination: {...} } }
-        const responseData = action.payload?.data || action.payload
+        // Handle the API response structure: { success, message, data: { data: { brands: [...], pagination: {...} } } }
+        const responseData = action.payload?.data?.data || action.payload?.data || action.payload
         if (responseData && responseData.brands) {
           state.brands = responseData.brands || []
           state.pagination = responseData.pagination || {}

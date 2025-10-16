@@ -17,6 +17,7 @@ import SearchSuggestions from './SearchSuggestions'
 import { useAuth } from '../contexts/AuthContext'
 import { fetchCart } from '@/store/slices/cartSlice'
 import { fetchWishlist } from '@/store/slices/wishlistSlice'
+import { fetchProfile } from '@/store/slices/profileSlice'
 import { getUserFromCookies } from '@/utils/userUtils'
 
 const Navigation = memo(function Navigation() {
@@ -55,6 +56,7 @@ const Navigation = memo(function Navigation() {
   const activeNav = getActiveNav()
   const wishlistCount = useSelector(state => state.wishlist.items?.length || 0)
   const cartCount = useSelector(state => state.cart.itemsCount || 0)
+  const profileUser = useSelector(state => state.profile?.user)
   const displayCartCount = isAuthenticated ? cartCount : 0
   const displayWishlistCount = isAuthenticated ? wishlistCount : 0
 
@@ -117,7 +119,7 @@ const Navigation = memo(function Navigation() {
     }
   }, [])
 
-  // When authenticated, fetch cart and wishlist to populate counts
+  // When authenticated, fetch cart, wishlist, and profile to populate counts
   useEffect(() => {
     if (!isAuthenticated) return
     (async () => {
@@ -130,6 +132,7 @@ const Navigation = memo(function Navigation() {
         console.error('Nav: failed to fetch cart after login', e)
       }
       dispatch(fetchWishlist())
+      dispatch(fetchProfile())
     })()
   }, [isAuthenticated, dispatch])
 
@@ -166,6 +169,18 @@ const Navigation = memo(function Navigation() {
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [searchOpen])
+
+  // Helper function to get initials from name
+  const getInitials = (name) => {
+    if (!name) return 'U'
+    const nameParts = name.trim().split(' ')
+    if (nameParts.length === 1) {
+      return nameParts[0].charAt(0).toUpperCase()
+    }
+    const firstName = nameParts[0]
+    const lastName = nameParts[nameParts.length - 1]
+    return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase()
+  }
 
   const navItems = [
     {
@@ -341,13 +356,19 @@ const Navigation = memo(function Navigation() {
 
                 {isAuthenticated ? (
                   <div className="profile-btn" onClick={() => router.push('/profile')}>
-                    <Image
-                      src="https://api.builder.io/api/v1/image/assets/TEMP/e6affc0737515f664c7d8288ba0b3068f64a0ade?width=80"
-                      alt="Profile"
-                      width={40}
-                      height={40}
-                      style={{ borderRadius: '50%' }}
-                    />
+                    {profileUser?.profileImage ? (
+                      <Image
+                        src={profileUser.profileImage}
+                        alt="Profile"
+                        width={40}
+                        height={40}
+                        style={{ borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div className="profile-avatar">
+                        <span className="profile-initials">{getInitials(profileUser?.name)}</span>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="action-btn" onClick={() => requireAuth(() => router.push('/profile'))}>
@@ -498,10 +519,35 @@ const Navigation = memo(function Navigation() {
         .profile-btn {
           cursor: pointer;
           transition: all 0.2s ease;
+          width: 40px;
+          height: 40px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .profile-btn:hover {
           transform: scale(1.05);
+        }
+
+        .profile-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #0082FF 0%, #0066CC 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid #0082FF;
+        }
+
+        .profile-initials {
+          color: #FFFFFF;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 14px;
+          font-weight: 700;
+          text-transform: uppercase;
+          user-select: none;
         }
 
         .search-container {

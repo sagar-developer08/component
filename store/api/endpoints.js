@@ -63,6 +63,11 @@ export const search = {
     const usp = new URLSearchParams(Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null)));
     return `${BASES.search}/search/store/${encodeURIComponent(storeId)}/products?${usp.toString()}`;
   },
+  // Search filters endpoint
+  searchFilters: (query, params = {}) => {
+    const usp = new URLSearchParams({ q: query, ...Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null)) });
+    return `${BASES.search}/search/filters/search?${usp.toString()}`;
+  },
 }
 
 // Auth endpoints (auth base is explicitly namespaced with /auth as requested)
