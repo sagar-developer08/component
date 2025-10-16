@@ -75,7 +75,7 @@ export default function ProductSections({ relatedProducts, productData }) {
 
   // Calculate review statistics
   const calculateReviewStats = () => {
-    if (!reviews || reviews.length === 0) {
+    if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
       return {
         averageRating: 0,
         totalReviews: 0,
@@ -112,7 +112,7 @@ export default function ProductSections({ relatedProducts, productData }) {
 
   // Get all review images with associated review data
   const getAllReviewImages = () => {
-    if (!reviews) return []
+    if (!reviews || !Array.isArray(reviews)) return []
     const imagesWithReviews = []
     reviews.forEach(review => {
       if (review.images && review.images.length > 0) {
@@ -486,7 +486,7 @@ export default function ProductSections({ relatedProducts, productData }) {
             <div className="reviews-list">
               {reviewsLoading ? (
                 <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>Loading reviews...</div>
-              ) : reviews && reviews.length > 0 ? (
+              ) : reviews && Array.isArray(reviews) && reviews.length > 0 ? (
                 reviews.slice(0, 4).map((review, i) => (
                   <div className="review-item" key={review._id || review.id || i}>
                     <div 

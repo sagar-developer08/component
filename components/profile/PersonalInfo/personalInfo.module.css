@@ -5,6 +5,8 @@
   justify-content: center;
   gap: 32px;
   margin-top: 24px;
+  width: 100%;
+  max-width: 1360px;
 }
 
 .avatarEditRow {
@@ -168,7 +170,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   width: 100%;
-  max-width: 1392px;
+  max-width: 1360px;
   margin-bottom: 0px;
 }
 
@@ -253,13 +255,11 @@
   margin-top: 4px;
   margin-left: 4px;
 }
-<<<<<<< Updated upstream
-=======
 
 /* Change Password Section */
-.changePasswordSection {
+.passwordChangeSection {
   width: 100%;
-  max-width: 1392px;
+  max-width: 1360px;
   background: #F8F9FA;
   border: 1px solid #E5E5E5;
   border-radius: 16px;
@@ -275,11 +275,11 @@
   margin-bottom: 24px;
 }
 
-.changePasswordTitle {
+.passwordTitle {
   font-size: 20px;
   font-weight: 600;
   color: #000;
-  margin: 0;
+  margin: 0 0 24px 0;
 }
 
 .closePasswordBtn {
@@ -297,7 +297,7 @@
   color: #000;
 }
 
-.passwordInputsGrid {
+.passwordGrid {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -311,7 +311,7 @@
   margin-bottom: 8px;
 }
 
-.passwordActionRow {
+.passwordActions {
   display: flex;
   gap: 16px;
   justify-content: flex-end;
@@ -363,16 +363,18 @@
   border: 1px solid #6EE7B7;
 }
 
-.passwordInputWrapper {
+/* Password input with eye icon */
+.passwordInputContainer {
   position: relative;
   width: 100%;
 }
 
-.passwordInputWrapper .inputField {
+.passwordInputContainer .inputField {
   padding-right: 48px;
+  width: 100%;
 }
 
-.eyeButton {
+.passwordToggle {
   position: absolute;
   right: 12px;
   top: 50%;
@@ -386,15 +388,12 @@
   justify-content: center;
   color: #666;
   transition: color 0.2s;
+  font-size: 16px;
+  z-index: 2;
 }
 
-.eyeButton:hover {
+.passwordToggle:hover {
   color: #0082FF;
-}
-
-.eyeButton svg {
-  width: 20px;
-  height: 20px;
 }
 
 .uploadingOverlay {
@@ -433,4 +432,3 @@
     transform: rotate(360deg);
   }
 }
->>>>>>> Stashed changes

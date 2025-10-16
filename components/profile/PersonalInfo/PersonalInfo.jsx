@@ -133,11 +133,6 @@ export default function PersonalInfo() {
     setIsEditing(true)
   }
 
-<<<<<<< Updated upstream
-  const handleSave = () => {
-    // TODO: Implement save functionality
-    setIsEditing(false)
-=======
   const handleSave = async () => {
     // Validate before saving
     if (errors.email || errors.phone) {
@@ -228,7 +223,6 @@ export default function PersonalInfo() {
       console.error('Save profile error:', error)
       alert(`Failed to save profile: ${error.message}`)
     }
->>>>>>> Stashed changes
   }
 
   const handleCancel = () => {
@@ -266,54 +260,70 @@ export default function PersonalInfo() {
       reader.onload = (e) => {
         setImagePreview(e.target.result)
       }
-<<<<<<< Updated upstream
       reader.readAsDataURL(file)
-=======
+
+      // Get access token from cookie
+      let token = ''
+      if (typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';').map(c => c.trim())
+        const tokenCookie = cookies.find(c => c.startsWith('accessToken='))
+        if (tokenCookie) {
+          try {
+            const enc = decodeURIComponent(tokenCookie.split('=')[1] || '')
+            token = await decryptText(enc)
+          } catch (err) {
+            console.error('Error decrypting token:', err)
+          }
+        }
+      }
 
       if (!token) {
         throw new Error('Authentication required. Please login again.')
       }
 
-      // Prepare form data
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('folder', 'profiles/avatars')
-      formData.append('optimize', 'true')
-      formData.append('maxWidth', '400')
-      formData.append('maxHeight', '400')
+      setIsUploadingImage(true)
 
-      // Upload to media service
-      const response = await fetch(upload.image, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      })
+      try {
+        // Prepare form data
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('folder', 'profiles/avatars')
+        formData.append('optimize', 'true')
+        formData.append('maxWidth', '400')
+        formData.append('maxHeight', '400')
 
-      const data = await response.json()
+        // Upload to media service
+        const response = await fetch(upload.image, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        })
 
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to upload image')
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to upload image')
+        }
+
+        // Store the uploaded image URL (will be saved when user clicks Save)
+        setUploadedImageUrl(data.data.url)
+        console.log('✅ Image uploaded successfully:', data.data.url)
+      } catch (error) {
+        console.error('Image upload error:', error)
+        alert(`Failed to upload image: ${error.message}`)
+        // Reset image on error
+        setProfileImage(null)
+        setImagePreview(null)
+        setUploadedImageUrl(null)
+        const fileInput = document.getElementById('profile-image-input')
+        if (fileInput) {
+          fileInput.value = ''
+        }
+      } finally {
+        setIsUploadingImage(false)
       }
-
-      // Store the uploaded image URL (will be saved when user clicks Save)
-      setUploadedImageUrl(data.data.url)
-      console.log('✅ Image uploaded successfully:', data.data.url)
-    } catch (error) {
-      console.error('Image upload error:', error)
-      alert(`Failed to upload image: ${error.message}`)
-      // Reset image on error
-      setProfileImage(null)
-      setImagePreview(null)
-      setUploadedImageUrl(null)
-      const fileInput = document.getElementById('profile-image-input')
-      if (fileInput) {
-        fileInput.value = ''
-      }
-    } finally {
-      setIsUploadingImage(false)
->>>>>>> Stashed changes
     }
   }
 
@@ -321,11 +331,8 @@ export default function PersonalInfo() {
     // Clear local states (will be saved when user clicks Save)
     setProfileImage(null)
     setImagePreview(null)
-<<<<<<< Updated upstream
-=======
     setUploadedImageUrl('REMOVE') // Special marker to indicate image should be removed
     
->>>>>>> Stashed changes
     // Reset file input
     const fileInput = document.getElementById('profile-image-input')
     if (fileInput) {
@@ -333,8 +340,6 @@ export default function PersonalInfo() {
     }
   }
 
-<<<<<<< Updated upstream
-=======
   // Helper function to get initials from name
   const getInitials = (name) => {
     if (!name) return 'U'
@@ -535,7 +540,6 @@ export default function PersonalInfo() {
     }
   }
 
->>>>>>> Stashed changes
   const handleLogout = () => {
     // Clear all cookies
     if (typeof document !== 'undefined') {
@@ -575,38 +579,6 @@ export default function PersonalInfo() {
 
   return (
     <form className={styles.profileForm}>
-<<<<<<< Updated upstream
-      <div className={styles.avatarEditRow}>
-        <div className={styles.avatarContainer}>
-          <Image
-            src={imagePreview || "https://api.builder.io/api/v1/image/assets/TEMP/e6affc0737515f664c7d8288ba0b3068f64a0ade?width=80"}
-            alt="Profile"
-            width={80}
-            height={80}
-            className={styles.avatar}
-          />
-          {isEditing && (
-            <div className={styles.avatarActions}>
-              <label htmlFor="profile-image-input" className={styles.uploadBtn}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14.5 4H20.5C21.6 4 22.5 4.9 22.5 6V20C22.5 21.1 21.6 22 20.5 22H3.5C2.4 22 1.5 21.1 1.5 20V6C1.5 4.9 2.4 4 3.5 4H9.5L11.5 2H16.5L14.5 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <circle cx="12" cy="13" r="3" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-                Upload
-              </label>
-              <input
-                id="profile-image-input"
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                style={{ display: 'none' }}
-              />
-              {(profileImage || imagePreview) && (
-                <button
-                  type="button"
-                  className={styles.removeBtn}
-                  onClick={handleRemoveImage}
-=======
       {/* Success message for profile save */}
       {saveSuccess && !showChangePassword && (
         <div className={styles.successMessage}>
@@ -692,40 +664,16 @@ export default function PersonalInfo() {
                   type="button" 
                   className={styles.logoutBtn}
                   onClick={handleCancel}
->>>>>>> Stashed changes
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Remove
+                  Cancel
                 </button>
               )}
+              {!isEditing && (
+                <button type="button" className={styles.logoutBtn} onClick={handleLogout}>Log Out</button>
+              )}
             </div>
-          )}
-        </div>
-        <div className={styles.profileActions}>
-          <button 
-            type="button" 
-            className={styles.updateProfileBtn}
-            onClick={isEditing ? handleSave : handleEdit}
-          >
-            {isEditing ? 'Save' : 'Update Profile'}
-          </button>
-          {isEditing && (
-            <button 
-              type="button" 
-              className={styles.logoutBtn}
-              onClick={handleCancel}
-            >
-              Cancel
-            </button>
-          )}
-          {!isEditing && (
-            <button type="button" className={styles.logoutBtn} onClick={handleLogout}>Log Out</button>
-          )}
-        </div>
-      </div>
-      <div className={styles.inputsGrid}>
+          </div>
+          <div className={styles.inputsGrid}>
         <div className={styles.inputContainer}>
           <input 
             className={styles.inputField} 
@@ -773,12 +721,7 @@ export default function PersonalInfo() {
           {errors.phone && <div className={styles.errorMessage}>{errors.phone}</div>}
         </div>
       </div>
-      {/* <div className={styles.loginSection}>
-        <div className={styles.loginTitle}>Login & Security</div>
-        <div className={styles.loginGrid}>
-          <input className={styles.inputField} type="text" placeholder="Username" />
-          <input className={styles.inputField} type="password" placeholder="Password" />
-        </div>
+        </>
       )}
 
       {/* Action buttons - Only show when NOT in password change mode */}
@@ -792,6 +735,102 @@ export default function PersonalInfo() {
             Change Password
           </button>
           <button type="button" className={styles.deleteAccountBtn}>Delete Account</button>
+        </div>
+      )}
+
+      {/* Password Change Form */}
+      {showChangePassword && (
+        <div className={styles.passwordChangeSection}>
+          <div className={styles.passwordTitle}>Change Password</div>
+          
+          {/* Success message for password change */}
+          {passwordSuccess && (
+            <div className={styles.successMessage}>
+              ✓ Password changed successfully!
+            </div>
+          )}
+
+          <div className={styles.passwordGrid}>
+            <div className={styles.inputContainer}>
+              <div className={styles.passwordInputContainer}>
+                <input 
+                  className={styles.inputField} 
+                  type={showPasswords.oldPassword ? "text" : "password"}
+                  name="oldPassword"
+                  value={passwordData.oldPassword} 
+                  onChange={handlePasswordChange}
+                  placeholder="Current Password"
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => togglePasswordVisibility('oldPassword')}
+                >
+                  {showPasswords.oldPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+              {passwordErrors.oldPassword && <div className={styles.errorMessage}>{passwordErrors.oldPassword}</div>}
+            </div>
+
+            <div className={styles.inputContainer}>
+              <div className={styles.passwordInputContainer}>
+                <input 
+                  className={styles.inputField} 
+                  type={showPasswords.newPassword ? "text" : "password"}
+                  name="newPassword"
+                  value={passwordData.newPassword} 
+                  onChange={handlePasswordChange}
+                  placeholder="New Password"
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => togglePasswordVisibility('newPassword')}
+                >
+                  {showPasswords.newPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+              {passwordErrors.newPassword && <div className={styles.errorMessage}>{passwordErrors.newPassword}</div>}
+            </div>
+
+            <div className={styles.inputContainer}>
+              <div className={styles.passwordInputContainer}>
+                <input 
+                  className={styles.inputField} 
+                  type={showPasswords.confirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword} 
+                  onChange={handlePasswordChange}
+                  placeholder="Confirm New Password"
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => togglePasswordVisibility('confirmPassword')}
+                >
+                  {showPasswords.confirmPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
+              {passwordErrors.confirmPassword && <div className={styles.errorMessage}>{passwordErrors.confirmPassword}</div>}
+            </div>
+          </div>
+
+          <div className={styles.passwordActions}>
+            <button 
+              type="button" 
+              className={styles.savePasswordBtn}
+              onClick={handleSavePassword}
+            >
+              Save Password
+            </button>
+            <button 
+              type="button" 
+              className={styles.cancelPasswordBtn}
+              onClick={handleToggleChangePassword}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
     </form>
