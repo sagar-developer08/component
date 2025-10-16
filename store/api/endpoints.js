@@ -2,12 +2,15 @@
 // Configure base URLs via environment variables if available
 
 export const BASES = {
-  catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'https://backendcatalog.qliq.ae/api',
+  catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'http://localhost:8001/api',
   search: process.env.NEXT_PUBLIC_SEARCH_BASE_URL || 'https://search.qliq.ae/api',
   auth: process.env.NEXT_PUBLIC_AUTH_BASE_URL || 'https://backendauth.qliq.ae/api',
   cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'https://backendcart.qliq.ae/api',
   payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'https://backendcart.qliq.ae/api',
+  upload: process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || 'http://localhost:5005/api',
+  review: process.env.NEXT_PUBLIC_REVIEW_BASE_URL || 'http://localhost:8008/api',
 }
+
 
 // export const BASES = {
 //   catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || (process.env.NEXT_PUBLIC_ENVIRONMENT === 'development' ? 'http://localhost:8003/api' : 'https://backendcatalog.qliq.ae/api'),
@@ -77,6 +80,8 @@ export const auth = {
   register: `${BASES.auth}/auth/signup`,
   me: `${BASES.auth}/auth/me`,
   profile: `${BASES.auth}/auth/profile`,
+  updateProfile: `${BASES.auth}/auth/profile`,
+  changePassword: `${BASES.auth}/auth/change-password`,
 }
 
 export const cart = {
@@ -107,6 +112,32 @@ export const addresses = {
   setDefault: `${BASES.auth}/addresses/default`,
 }
 
-export default { catalog, search, auth, cart, addresses }
+export const upload = {
+  base: `${BASES.upload}/upload`,
+  single: `${BASES.upload}/upload/single`,
+  image: `${BASES.upload}/upload/image`,
+  multiple: `${BASES.upload}/upload/multiple`,
+  images: `${BASES.upload}/upload/images`,
+  reviewImages: `${BASES.upload}/upload/review-images`,
+  productImages: `${BASES.upload}/upload/product-images`,
+  categoryIcon: `${BASES.upload}/upload/category-icon`,
+  delete: `${BASES.upload}/upload`,
+  deleteMultiple: `${BASES.upload}/upload/multiple`,
+}
+
+export const review = {
+  base: `${BASES.review}/reviews`,
+  create: `${BASES.review}/product-reviews/product`,
+  createByProductId: (productId) => `${BASES.review}/product-reviews/product/${productId}/review`, // Direct review by product ID (no validation)
+  getByProduct: (productId) => `${BASES.review}/product-reviews/product/${productId}`, // Updated to new endpoint
+  getById: (reviewId) => `${BASES.review}/reviews/${reviewId}`,
+  update: (reviewId) => `${BASES.review}/reviews/${reviewId}`,
+  delete: (reviewId) => `${BASES.review}/reviews/${reviewId}`,
+  markHelpful: (reviewId) => `${BASES.review}/reviews/${reviewId}/helpful`,
+  statistics: (productId) => `${BASES.review}/reviews/statistics/product/${productId}`,
+  userReviews: `${BASES.review}/reviews/user/product-reviews`,
+}
+
+export default { catalog, search, auth, cart, addresses, upload, review }
 
 

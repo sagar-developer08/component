@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { getAuthToken } from '../../utils/userUtils'
+import { cart } from '../api/endpoints'
 
 // Async thunks for API calls
 export const addToCart = createAsyncThunk(
@@ -8,7 +9,7 @@ export const addToCart = createAsyncThunk(
     try {
       const token = await getAuthToken()
       
-      const response = await fetch('https://backendcart.qliq.ae/api/cart/add', {
+      const response = await fetch(cart.add, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,7 +37,7 @@ export const fetchCart = createAsyncThunk(
     try {
       const token = await getAuthToken()
       
-      const response = await fetch(`https://backendcart.qliq.ae/api/cart?userId=${userId}`, {
+      const response = await fetch(`${cart.get}?userId=${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -63,7 +64,7 @@ export const updateCartItem = createAsyncThunk(
     try {
       const token = await getAuthToken()
       
-      const response = await fetch('https://backendcart.qliq.ae/api/cart/update', {
+      const response = await fetch(cart.update, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -91,7 +92,7 @@ export const removeFromCart = createAsyncThunk(
     try {
       const token = await getAuthToken()
       
-      const response = await fetch('https://backendcart.qliq.ae/api/cart/remove', {
+      const response = await fetch(cart.remove, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +120,7 @@ export const moveToWishlist = createAsyncThunk(
     try {
       const token = await getAuthToken()
       
-      const response = await fetch('https://backendcart.qliq.ae/api/cart/move-to-wishlist', {
+      const response = await fetch(cart.moveToWishlist, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -177,7 +178,7 @@ const cartSlice = createSlice({
         const cartData = responseData.cart || responseData
         const addedItem = responseData.addedItem || responseData.item || responseData
         
-        console.log('Add to cart response:', action.payload)
+        // console.log('Add to cart response:', action.payload)
         
         if (cartData) {
           // If the API returns the full cart, use that
@@ -240,8 +241,8 @@ const cartSlice = createSlice({
         const responseData = action.payload.data || action.payload
         const cartData = responseData.cart || responseData
         
-        console.log('Update cart response:', action.payload)
-        console.log('Cart data extracted:', cartData)
+        // console.log('Update cart response:', action.payload)
+        // console.log('Cart data extracted:', cartData)
         
         if (cartData) {
           // Update the entire cart state with the fresh data from API
@@ -249,11 +250,11 @@ const cartSlice = createSlice({
           state.itemsCount = cartData.totalItems || 0
           state.total = cartData.totalPrice || 0
           
-          console.log('Updated cart state:', { 
-            items: state.items, 
-            itemsCount: state.itemsCount, 
-            total: state.total 
-          })
+          // console.log('Updated cart state:', { 
+          //   items: state.items, 
+          //   itemsCount: state.itemsCount, 
+          //   total: state.total 
+          // })
         }
       })
       .addCase(updateCartItem.rejected, (state, action) => {

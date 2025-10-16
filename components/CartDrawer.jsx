@@ -27,10 +27,10 @@ export default function CartDrawer({ open, onClose }) {
     }
   }, [open, user?.id, dispatch])
 
-  // Debug: Log cart data when it changes
-  useEffect(() => {
-    console.log('Cart data updated:', { items, total, itemsCount, loading, error })
-  }, [items, total, itemsCount, loading, error])
+  // Debug: Log cart data when it changes (commented out to prevent console spam)
+  // useEffect(() => {
+  //   console.log('Cart data updated:', { items, total, itemsCount, loading, error })
+  // }, [items, total, itemsCount, loading, error])
 
   const handleQuantityChange = (productId, newQuantity) => {
     requireAuth(() => {

@@ -170,6 +170,29 @@ export default function ProductCard({
     })
   }
 
+  const handleDecreaseQuantity = async (e) => {
+    e.stopPropagation()
+    requireAuth(() => {
+      ; (async () => {
+        const userId = await getUserFromCookies()
+        if (cartQuantity > 1) {
+          const result = await dispatch(updateCartItem({
+            userId,
+            productId: id,
+            quantity: cartQuantity - 1
+          }))
+          if (updateCartItem.fulfilled.match(result)) {
+            show('Quantity updated')
+            // Refresh cart data to update counts
+            dispatch(fetchCart(userId))
+          } else if (updateCartItem.rejected.match(result)) {
+            show('Failed to update quantity', 'error')
+          }
+        }
+      })()
+    })
+  }
+
   const handleImageError = () => {
     setImageError(true)
   }
@@ -221,10 +244,22 @@ export default function ProductCard({
               >
                 {isInCart && isCartHover ? (
                   <div className="cart-quantity-control">
-                    <button className="delete-icon" aria-label="Remove from cart" onClick={handleRemoveFromCart}>
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M5 5L15 15M15 5L5 15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                    <button 
+                      className={cartQuantity === 1 ? "delete-icon" : "minus-icon"} 
+                      aria-label={cartQuantity === 1 ? "Remove from cart" : "Decrease quantity"} 
+                      onClick={cartQuantity === 1 ? handleRemoveFromCart : handleDecreaseQuantity}
+                    >
+                      {cartQuantity === 1 ? (
+                        // Cross icon for removing when quantity is 1
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                          <path d="M5 5L15 15M15 5L5 15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      ) : (
+                        // Minus icon for decreasing when quantity > 1
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                          <path d="M4 10H16" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
                     </button>
                     <div className="quantity-display">
                       <span>{cartQuantity}</span>
@@ -380,7 +415,7 @@ export default function ProductCard({
           height: 40px;
         }
         
-        .delete-icon, .plus-icon {
+        .delete-icon, .plus-icon, .minus-icon {
           display: flex;
           align-items: center;
           justify-content: center;
@@ -393,7 +428,7 @@ export default function ProductCard({
           transition: all 0.2s ease;
         }
         
-        .delete-icon:hover, .plus-icon:hover {
+        .delete-icon:hover, .plus-icon:hover, .minus-icon:hover {
           background: rgba(255, 255, 255, 0.3);
         }
         

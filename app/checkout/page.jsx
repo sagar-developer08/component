@@ -127,21 +127,21 @@ export default function CheckoutPage() {
     }
   }, [showAddressForm, user, dispatch])
 
-  // Debug: Log cart data when it changes
-  useEffect(() => {
-    console.log('Checkout page cart data:', { 
-      cartItems, 
-      cartTotal, 
-      cartLoading, 
-      itemsCount: cartItems.length 
-    })
-    
-    // Log individual cart item structure
-    if (cartItems.length > 0) {
-      console.log('First cart item structure:', cartItems[0])
-      console.log('Cart item keys:', Object.keys(cartItems[0]))
-    }
-  }, [cartItems, cartTotal, cartLoading])
+  // Debug: Log cart data when it changes (commented out to prevent console spam)
+  // useEffect(() => {
+  //   console.log('Checkout page cart data:', { 
+  //     cartItems, 
+  //     cartTotal, 
+  //     cartLoading, 
+  //     itemsCount: cartItems.length 
+  //   })
+  //   
+  //   // Log individual cart item structure
+  //   if (cartItems.length > 0) {
+  //     console.log('First cart item structure:', cartItems[0])
+  //     console.log('Cart item keys:', Object.keys(cartItems[0]))
+  //   }
+  // }, [cartItems, cartTotal, cartLoading])
 
   // Check if cart is empty and show appropriate message
   useEffect(() => {
@@ -241,20 +241,52 @@ export default function CheckoutPage() {
 
   const handleHostedCheckout = async () => {
     try {
-      const key = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY : undefined
-      const publishableKey = (typeof key === 'string' && key.trim()) ? key : ''
-      if (!publishableKey) {
-        console.error('Stripe publishable key is missing. Set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY')
-        return
-      }
-      const stripe = await loadStripe(publishableKey)
-      if (!stripe) {
-        console.error('Stripe failed to initialize')
+      console.log('🚀 Checkout button clicked!')
+      console.log('📦 Cart items:', cartItems)
+      console.log('📍 Selected address:', selectedAddress)
+      
+      // Validation checks
+      if (cartItems.length === 0) {
+        alert('Your cart is empty. Please add items before checkout.')
         return
       }
 
+      if (!selectedAddress) {
+        alert('Please select a delivery address.')
+        return
+      }
+
+      const key = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY : undefined
+      const publishableKey = (typeof key === 'string' && key.trim()) ? key : ''
+      
+      console.log('🔑 Checking Stripe key...')
+      if (!publishableKey) {
+        console.error('❌ Stripe publishable key is missing!')
+        alert('Payment system not configured. Please contact support.')
+        return
+      }
+
+      console.log('✅ Stripe key found')
+      console.log('🔄 Loading Stripe...')
+      
+      const stripe = await loadStripe(publishableKey)
+      if (!stripe) {
+        console.error('❌ Stripe failed to initialize')
+        alert('Failed to load payment system. Please refresh and try again.')
+        return
+      }
+
+      console.log('✅ Stripe loaded successfully')
+      console.log('🔑 Getting auth token...')
+      
       const token = await getAuthToken()
-      if (!token) return
+      if (!token) {
+        console.error('❌ No auth token')
+        alert('Please log in to continue with checkout.')
+        return
+      }
+
+      console.log('✅ Auth token obtained')
 
       const body = {
         items: cartItems.map(item => ({
@@ -270,6 +302,10 @@ export default function CheckoutPage() {
         cancelUrl: `${window.location.origin}/checkout`
       }
 
+      console.log('📤 Creating checkout session...')
+      console.log('🔗 Endpoint:', paymentEndpoints.stripeHostedCheckout)
+      console.log('📦 Payload:', body)
+
       const res = await fetch(paymentEndpoints.stripeHostedCheckout, {
         method: 'POST',
         headers: {
@@ -278,14 +314,36 @@ export default function CheckoutPage() {
         },
         body: JSON.stringify(body)
       })
+      
+      console.log('📥 Response status:', res.status)
+      
       if (!res.ok) {
         const text = await res.text()
+        console.error('❌ API Error:', text)
+        alert(`Checkout failed: ${text.substring(0, 100)}`)
         throw new Error(text)
       }
+      
       const { data } = await res.json()
-      await stripe.redirectToCheckout({ sessionId: data.sessionId })
+      console.log('✅ Session created:', data)
+      
+      if (!data.sessionId) {
+        console.error('❌ No session ID in response')
+        alert('Checkout session creation failed. Please try again.')
+        return
+      }
+
+      console.log('🔄 Redirecting to Stripe checkout...')
+      const result = await stripe.redirectToCheckout({ sessionId: data.sessionId })
+      
+      if (result.error) {
+        console.error('❌ Redirect error:', result.error)
+        alert(`Checkout failed: ${result.error.message}`)
+      }
+      
     } catch (e) {
-      console.error('Hosted checkout error:', e)
+      console.error('❌ Hosted checkout error:', e)
+      alert(`Checkout error: ${e.message || 'Unknown error'}`)
     }
   }
 

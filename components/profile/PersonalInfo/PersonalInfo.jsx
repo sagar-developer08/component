@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useRouter } from 'next/navigation'
 import { fetchProfile } from '@/store/slices/profileSlice'
 import { useAuth } from '../../../contexts/AuthContext'
+import { auth, upload } from '@/store/api/endpoints'
+import { decryptText } from '@/utils/crypto'
 import styles from './personalInfo.module.css'
 
 export default function PersonalInfo() {
@@ -12,17 +14,37 @@ export default function PersonalInfo() {
   const { logout } = useAuth()
   const { user, loading, error } = useSelector(state => state.profile)
   const [isEditing, setIsEditing] = useState(false)
+  const [showChangePassword, setShowChangePassword] = useState(false)
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     phone: '',
     email: ''
   })
+  const [passwordData, setPasswordData] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
   const [profileImage, setProfileImage] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null)
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
   const [errors, setErrors] = useState({
     email: '',
     phone: ''
+  })
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const [passwordErrors, setPasswordErrors] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
+  const [showPasswords, setShowPasswords] = useState({
+    oldPassword: false,
+    newPassword: false,
+    confirmPassword: false
   })
 
   useEffect(() => {
@@ -47,26 +69,36 @@ export default function PersonalInfo() {
     }
   }, [user, isEditing])
 
+  // Auto-hide success message after 3 seconds
+  useEffect(() => {
+    if (passwordSuccess) {
+      const timer = setTimeout(() => {
+        setPasswordSuccess(false)
+      }, 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [passwordSuccess])
+
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return emailRegex.test(email)
   }
 
   const validatePhone = (phone) => {
-    return phone.length === 8
+    return phone.length === 10
   }
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
     
-    // For phone field, only allow digits and limit to 8 characters
+    // For phone field, only allow digits and limit to 10 characters
     if (name === 'phone') {
       const phoneRegex = /^[0-9]*$/
       if (!phoneRegex.test(value)) {
         return // Don't update if invalid characters
       }
-      if (value.length > 8) {
-        return // Don't update if more than 8 digits
+      if (value.length > 10) {
+        return // Don't update if more than 10 digits
       }
     }
     
@@ -87,8 +119,8 @@ export default function PersonalInfo() {
     }
     
     if (name === 'phone') {
-      if (value && value.length > 0 && value.length < 8) {
-        newErrors.phone = 'Please enter a valid 8-digit phone number'
+      if (value && value.length > 0 && value.length < 10) {
+        newErrors.phone = 'Please enter a valid 10-digit phone number'
       } else {
         newErrors.phone = ''
       }
@@ -218,6 +250,7 @@ export default function PersonalInfo() {
     // Clear image changes
     setProfileImage(null)
     setImagePreview(null)
+    setUploadedImageUrl(null)
     const fileInput = document.getElementById('profile-image-input')
     if (fileInput) {
       fileInput.value = ''
@@ -225,7 +258,7 @@ export default function PersonalInfo() {
     setIsEditing(false)
   }
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0]
     if (file) {
       setProfileImage(file)
@@ -746,11 +779,21 @@ export default function PersonalInfo() {
           <input className={styles.inputField} type="text" placeholder="Username" />
           <input className={styles.inputField} type="password" placeholder="Password" />
         </div>
-      </div> */}
-      <div className={styles.actionRow}>
-        <button type="button" className={styles.changePasswordBtn}>Change Password</button>
-        <button type="button" className={styles.deleteAccountBtn}>Delete Account</button>
-      </div>
+      )}
+
+      {/* Action buttons - Only show when NOT in password change mode */}
+      {!showChangePassword && (
+        <div className={styles.actionRow}>
+          <button 
+            type="button" 
+            className={styles.changePasswordBtn}
+            onClick={handleToggleChangePassword}
+          >
+            Change Password
+          </button>
+          <button type="button" className={styles.deleteAccountBtn}>Delete Account</button>
+        </div>
+      )}
     </form>
   )
 }
