@@ -305,7 +305,8 @@ export default function CheckoutPage() {
         userId: mongoUserId, // MongoDB user ID
         cognitoUserId: cognitoUserId, // Cognito user ID
         successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancelUrl: `${window.location.origin}/checkout`
+        cancelUrl: `${window.location.origin}/checkout`,
+        ...(mongoUserId && { mongoUserId }) // Include MongoDB userId if available
       }
 
       console.log('📤 Creating checkout session...')

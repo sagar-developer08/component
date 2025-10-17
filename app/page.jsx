@@ -280,6 +280,23 @@ export default function Home() {
   const popularCategoriesSwiperRef = useRef(null);
   const otherCategoriesSwiperRef = useRef(null);
   const [activeStoreFilter, setActiveStoreFilter] = useState('all');
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check screen size for mobile detection
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Initial check
+    checkScreenSize();
+
+    // Add event listener
+    window.addEventListener('resize', checkScreenSize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   // Fetch products, brands, stores, and categories on component mount
   useEffect(() => {
@@ -509,17 +526,17 @@ export default function Home() {
                 Error loading products: {error}
               </div>
             ) : (
-              <Swiper
-                ref={bestsellersSwiperRef}
-                modules={[SwiperNavigation]}
-                slidesPerView="auto"
-                spaceBetween={24}
-                grabCursor={true}
-                freeMode={true}
-                style={{ width: '1360px' }}
-              >
+               <Swiper
+                 ref={bestsellersSwiperRef}
+                 modules={[SwiperNavigation]}
+                 slidesPerView={isMobile ? 1.2 : 'auto'}
+                 spaceBetween={isMobile ? 16 : 24}
+                 grabCursor={true}
+                 freeMode={true}
+                 className="bestsellers-swiper"
+               >
                 {transformedBestsellers.map((product, index) => (
-                  <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
+                  <SwiperSlide key={product.id || index} className="bestseller-slide">
                     <ProductCard {...product} />
                   </SwiperSlide>
                 ))}
@@ -551,11 +568,11 @@ export default function Home() {
               <Swiper
                 ref={otherCategoriesSwiperRef}
                 modules={[SwiperNavigation]}
-                slidesPerView="auto"
-                spaceBetween={24}
+                slidesPerView={isMobile ? 2.08 : 'auto'}
+                spaceBetween={isMobile ? 12 : 24}
                 grabCursor={true}
                 freeMode={true}
-                style={{ width: '1360px' }}
+                className="other-categories-swiper"
               >
                 {(transformedLevel2Categories.length > 0 ? transformedLevel2Categories : categoryData).map((category, index) => (
                   <SwiperSlide key={category.name || index} style={{ width: 'auto' }}>
@@ -588,17 +605,17 @@ export default function Home() {
               onPrev={handleOffersPrev}
               onNext={handleOffersNext}
             />
-            <Swiper
-              ref={offersSwiperRef}
-              modules={[SwiperNavigation]}
-              slidesPerView="auto"
-              spaceBetween={24}
-              grabCursor={true}
-              freeMode={true}
-              style={{ width: '1360px' }}
-            >
+             <Swiper
+               ref={offersSwiperRef}
+               modules={[SwiperNavigation]}
+               slidesPerView={isMobile ? 1.2 : 'auto'}
+               spaceBetween={isMobile ? 16 : 24}
+               grabCursor={true}
+               freeMode={true}
+               className="bestsellers-swiper"
+             >
               {transformedOffers.map((product, index) => (
-                <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
+                <SwiperSlide key={product.id || index} className="bestseller-slide">
                   <ProductCard {...product} />
                 </SwiperSlide>
               ))}
@@ -626,15 +643,15 @@ export default function Home() {
                 Error loading brands: {brandsError}
               </div>
             ) : (
-              <Swiper
-                ref={topBrandsSwiperRef}
-                modules={[SwiperNavigation]}
-                slidesPerView="auto"
-                spaceBetween={24}
-                grabCursor={true}
-                freeMode={true}
-                style={{ width: '1360px' }}
-              >
+               <Swiper
+                 ref={topBrandsSwiperRef}
+                 modules={[SwiperNavigation]}
+                 slidesPerView={isMobile ? 2.08 : 'auto'}
+                 spaceBetween={isMobile ? 12 : 24}
+                 grabCursor={true}
+                 freeMode={true}
+                 className="other-categories-swiper"
+               >
                 {transformedBrands.map((brand, index) => (
                   <SwiperSlide key={brand.name || index} style={{ width: 'auto' }}>
                     <CategoryCard {...brand} onClick={() => handleBrandClick(brand)} />
@@ -656,17 +673,17 @@ export default function Home() {
               onPrev={handleSpecialDealsPrev}
               onNext={handleSpecialDealsNext}
             />
-            <Swiper
-              ref={specialDealsSwiperRef}
-              modules={[SwiperNavigation]}
-              slidesPerView="auto"
-              spaceBetween={24}
-              grabCursor={true}
-              freeMode={true}
-              style={{ width: '1360px' }}
-            >
+             <Swiper
+               ref={specialDealsSwiperRef}
+               modules={[SwiperNavigation]}
+               slidesPerView={isMobile ? 1.2 : 'auto'}
+               spaceBetween={isMobile ? 16 : 24}
+               grabCursor={true}
+               freeMode={true}
+               className="bestsellers-swiper"
+             >
               {transformedSpecialDeals.map((product, index) => (
-                <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
+                <SwiperSlide key={product.id || index} className="bestseller-slide">
                   <ProductCard {...product} />
                 </SwiperSlide>
               ))}
@@ -705,15 +722,15 @@ export default function Home() {
                 Error loading stores: {storesError}
               </div>
             ) : (
-              <Swiper
-                ref={topStoresSwiperRef}
-                modules={[SwiperNavigation]}
-                slidesPerView="auto"
-                spaceBetween={24}
-                grabCursor={true}
-                freeMode={true}
-                style={{ width: '1360px' }}
-              >
+               <Swiper
+                 ref={topStoresSwiperRef}
+                 modules={[SwiperNavigation]}
+                 slidesPerView={isMobile ? 2.08 : 'auto'}
+                 spaceBetween={isMobile ? 12 : 24}
+                 grabCursor={true}
+                 freeMode={true}
+                 className="other-categories-swiper"
+               >
                 {transformedTopStores.map((store, index) => (
                   <SwiperSlide key={store.name || index} style={{ width: 'auto' }}>
                     <CategoryCard name={store.name} image={store.image} onClick={() => handleStoreClick(store)} />
@@ -736,17 +753,17 @@ export default function Home() {
               onPrev={handleFeaturedOffersPrev}
               onNext={handleFeaturedOffersNext}
             />
-            <Swiper
-              ref={featuredOffersSwiperRef}
-              modules={[SwiperNavigation]}
-              slidesPerView="auto"
-              spaceBetween={24}
-              grabCursor={true}
-              freeMode={true}
-              style={{ width: '1360px' }}
-            >
+             <Swiper
+               ref={featuredOffersSwiperRef}
+               modules={[SwiperNavigation]}
+               slidesPerView={isMobile ? 1.2 : 'auto'}
+               spaceBetween={isMobile ? 16 : 24}
+               grabCursor={true}
+               freeMode={true}
+               className="bestsellers-swiper"
+             >
               {transformedFeaturedOffers.map((product, index) => (
-                <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
+                <SwiperSlide key={product.id || index} className="bestseller-slide">
                   <ProductCard {...product} />
                 </SwiperSlide>
               ))}
@@ -774,15 +791,15 @@ export default function Home() {
                 Error loading popular categories: {popularCategoriesError}
               </div>
             ) : (transformedPopularCategories.length > 0 || testCategories.length > 0) ? (
-              <Swiper
-                ref={popularCategoriesSwiperRef}
-                modules={[SwiperNavigation]}
-                slidesPerView="auto"
-                spaceBetween={24}
-                grabCursor={true}
-                freeMode={true}
-                style={{ width: '1360px' }}
-              >
+               <Swiper
+                 ref={popularCategoriesSwiperRef}
+                 modules={[SwiperNavigation]}
+                 slidesPerView={isMobile ? 2.08 : 'auto'}
+                 spaceBetween={isMobile ? 12 : 24}
+                 grabCursor={true}
+                 freeMode={true}
+                 className="other-categories-swiper"
+               >
                 {(transformedPopularCategories.length > 0 ? transformedPopularCategories : testCategories).map((category, index) => (
                   <SwiperSlide key={category.name || index} style={{ width: 'auto' }}>
                     <CategoryCard {...category} onClick={() => handleCategoryClick(category)} />
@@ -828,15 +845,15 @@ export default function Home() {
                 Error loading stores: {storesError}
               </div>
             ) : (
-              <Swiper
-                ref={swiperRef}
-                modules={[SwiperNavigation]}
-                slidesPerView="auto"
-                spaceBetween={24}
-                grabCursor={true}
-                freeMode={true}
-                style={{ width: '1360px' }}
-              >
+               <Swiper
+                 ref={swiperRef}
+                 modules={[SwiperNavigation]}
+                 slidesPerView={isMobile ? 2.08 : 'auto'}
+                 spaceBetween={isMobile ? 12 : 24}
+                 grabCursor={true}
+                 freeMode={true}
+                 className="other-categories-swiper"
+               >
                 {transformedNewStores.reverse().map((store, index) => (
                   <SwiperSlide key={store.name || index} style={{ width: 'auto' }}>
                     <CategoryCard name={store.name} image={store.image} onClick={() => handleStoreClick(store)} />

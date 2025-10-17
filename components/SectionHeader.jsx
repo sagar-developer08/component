@@ -114,8 +114,9 @@ export default function SectionHeader({
         @media (max-width: 768px) {
           .section-header {
             flex-direction: column;
-            gap: 16px;
+            gap: 8px;
             align-items: flex-start;
+            padding: 0 0;
           }
 
           .section-title {
@@ -123,9 +124,11 @@ export default function SectionHeader({
           }
 
           .section-button {
-            padding: 10px 24px;
-            font-size: 12px;
+            display: none;
           }
+             .navigation-buttons {
+          display: none;
+        }
         }
       `}</style>
     </div>
