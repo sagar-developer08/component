@@ -35,3 +35,40 @@ export const getAuthToken = async () => {
   
   return null
 }
+
+export const getCognitoUserIdFromToken = async () => {
+  if (typeof document === 'undefined') return null
+  
+  try {
+    const token = await getAuthToken()
+    if (!token) return null
+    
+    // Decode JWT token to get Cognito user ID
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.sub || null
+  } catch (error) {
+    console.error('Error getting Cognito user ID from token:', error)
+  }
+  
+  return null
+}
+
+export const getUserIds = async () => {
+  try {
+    const [mongoUserId, cognitoUserId] = await Promise.all([
+      getUserFromCookies(),
+      getCognitoUserIdFromToken()
+    ])
+    
+    return {
+      mongoUserId,
+      cognitoUserId
+    }
+  } catch (error) {
+    console.error('Error getting user IDs:', error)
+    return {
+      mongoUserId: null,
+      cognitoUserId: null
+    }
+  }
+}

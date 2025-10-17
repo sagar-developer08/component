@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { getAuthToken } from '../../utils/userUtils'
+import { getAuthToken, getUserIds } from '../../utils/userUtils'
 import { addresses, payment } from '../api/endpoints'
 
 // Async thunks for checkout operations
@@ -112,6 +112,10 @@ export const createStripePaymentIntent = createAsyncThunk(
 
       console.log('✅ Auth token obtained')
 
+      // Get both user IDs
+      const { mongoUserId, cognitoUserId } = await getUserIds()
+      console.log('👤 User IDs:', { mongoUserId, cognitoUserId })
+
       // Handle Stripe payment
       const stripeCheckoutData = {
         items: orderData.items.map(item => ({
@@ -122,7 +126,9 @@ export const createStripePaymentIntent = createAsyncThunk(
           image: item.image || 'https://example.com/image.jpg'
         })),
         total: orderData.total,
-        currency: 'usd'
+        currency: 'usd',
+        userId: mongoUserId, // MongoDB user ID
+        cognitoUserId: cognitoUserId // Cognito user ID
       }
 
       console.log('📤 Sending payment request:', stripeCheckoutData)

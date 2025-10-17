@@ -5,7 +5,7 @@ import Footer from '@/components/Footer'
 import Image from 'next/image'
 import { useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { getAuthToken, getUserFromCookies } from '@/utils/userUtils'
+import { getAuthToken, getUserFromCookies, getUserIds } from '@/utils/userUtils'
 import { fetchCart } from '@/store/slices/cartSlice'
 import { 
   fetchUserAddresses, 
@@ -288,6 +288,10 @@ export default function CheckoutPage() {
 
       console.log('✅ Auth token obtained')
 
+      // Get both user IDs
+      const { mongoUserId, cognitoUserId } = await getUserIds()
+      console.log('👤 User IDs:', { mongoUserId, cognitoUserId })
+
       const body = {
         items: cartItems.map(item => ({
           productId: item.productId || item.id || `product_${Math.random().toString(36).slice(2)}`,
@@ -298,6 +302,8 @@ export default function CheckoutPage() {
         })),
         total: finalTotal,
         currency: 'usd',
+        userId: mongoUserId, // MongoDB user ID
+        cognitoUserId: cognitoUserId, // Cognito user ID
         successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/checkout`
       }
