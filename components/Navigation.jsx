@@ -42,6 +42,7 @@ const Navigation = memo(function Navigation() {
   const [locationModalOpen, setLocationModalOpen] = useState(false)
   const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false)
   const [currentLocation, setCurrentLocation] = useState('')
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   
   // Determine active nav based on current path
   const getActiveNav = () => {
@@ -62,6 +63,7 @@ const Navigation = memo(function Navigation() {
 
   const handleSearchClick = () => {
     setSearchOpen(!searchOpen)
+    setMobileMenuOpen(false) // Close mobile menu when search is opened
     if (!searchOpen) {
       // Focus the input when opening
       setTimeout(() => {
@@ -97,6 +99,15 @@ const Navigation = memo(function Navigation() {
     setIsDebouncing(false)
   }
 
+  const handleMobileMenuToggle = () => {
+    setMobileMenuOpen(!mobileMenuOpen)
+  }
+
+  const handleNavItemClick = (path) => {
+    router.push(path)
+    setMobileMenuOpen(false)
+  }
+
   useEffect(() => {
     const updateHeight = () => {
       if (navRef.current) {
@@ -107,6 +118,17 @@ const Navigation = memo(function Navigation() {
     window.addEventListener('resize', updateHeight)
     return () => window.removeEventListener('resize', updateHeight)
   }, [])
+
+  // Close mobile menu when window is resized to desktop size
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768 && mobileMenuOpen) {
+        setMobileMenuOpen(false)
+      }
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [mobileMenuOpen])
 
   // Reset local badge counts when logged out (defensive; actual state remains in Redux)
   useEffect(() => {
@@ -271,12 +293,12 @@ const Navigation = memo(function Navigation() {
               </div>
 
               {/* nav-menu */}
-              <div className="nav-menu">
+              <div className={`nav-menu ${mobileMenuOpen ? 'mobile-open' : ''}`}>
                 {!searchOpen && navItems.map(item => (
                   <div
                     key={item.key}
                     className={`nav-item${activeNav === item.key ? ' active' : ''}`}
-                    onClick={() => router.push(item.path)}
+                    onClick={() => handleNavItemClick(item.path)}
                   >
                     {item.icon}
                     <span>{item.label}</span>
@@ -354,35 +376,149 @@ const Navigation = memo(function Navigation() {
                   {displayWishlistCount > 0 && <span className="badge-count">{displayWishlistCount}</span>}
                 </div>
 
-                {isAuthenticated ? (
-                  <div className="profile-btn" onClick={() => router.push('/profile')}>
-                    {profileUser?.profileImage ? (
-                      <Image
-                        src={profileUser.profileImage}
-                        alt="Profile"
-                        width={40}
-                        height={40}
-                        style={{ borderRadius: '50%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <div className="profile-avatar">
-                        <span className="profile-initials">{getInitials(profileUser?.name)}</span>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="action-btn" onClick={() => requireAuth(() => router.push('/profile'))}>
-                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                      <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
-                      <path d="M20 12C18.3431 12 17 13.3431 17 15C17 16.6569 18.3431 18 20 18C21.6569 18 23 16.6569 23 15C23 13.3431 21.6569 12 20 12ZM15 15C15 12.2386 17.2386 10 20 10C22.7614 10 25 12.2386 25 15C25 17.7614 22.7614 20 20 20C17.2386 20 15 17.7614 15 15ZM14 23C12.8954 23 12 23.8954 12 25V27C12 27.5523 12.4477 28 13 28C13.5523 28 14 27.5523 14 27V25C14 24.7239 14.2239 24.5 14.5 24.5H25.5C25.7761 24.5 26 24.7239 26 25V27C26 27.5523 26.4477 28 27 28C27.5523 28 28 27.5523 28 27V25C28 23.8954 27.1046 23 26 23H14Z" fill="black" />
-                    </svg>
-                  </div>
-                )}
+                {/* Mobile hamburger menu button - always show */}
+                <div className="mobile-menu-toggle" onClick={handleMobileMenuToggle}>
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
+                    <path d="M12 16H28M12 20H28M12 24H28" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+
+                {/* Desktop profile button - hidden on mobile */}
+                <div className="desktop-profile-btn">
+                  {isAuthenticated ? (
+                    <div className="profile-btn" onClick={() => router.push('/profile')}>
+                      {profileUser?.profileImage ? (
+                        <Image
+                          src={profileUser.profileImage}
+                          alt="Profile"
+                          width={40}
+                          height={40}
+                          style={{ borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div className="profile-avatar">
+                          <span className="profile-initials">{getInitials(profileUser?.name)}</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="action-btn" onClick={() => requireAuth(() => router.push('/profile'))}>
+                      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
+                        <path d="M20 12C18.3431 12 17 13.3431 17 15C17 16.6569 18.3431 18 20 18C21.6569 18 23 16.6569 23 15C23 13.3431 21.6569 12 20 12ZM15 15C15 12.2386 17.2386 10 20 10C22.7614 10 25 12.2386 25 15C25 17.7614 22.7614 20 20 20C17.2386 20 15 17.7614 15 15ZM14 23C12.8954 23 12 23.8954 12 25V27C12 27.5523 12.4477 28 13 28C13.5523 28 14 27.5523 14 27V25C14 24.7239 14.2239 24.5 14.5 24.5H25.5C25.7761 24.5 26 24.7239 26 25V27C26 27.5523 26.4477 28 27 28C27.5523 28 28 27.5523 28 27V25C28 23.8954 27.1046 23 26 23H14Z" fill="black" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Search Input moved inline into nav-menu when open */}
+          {/* Mobile Navigation Overlay */}
+          {mobileMenuOpen && (
+            <div className="mobile-nav-overlay" onClick={() => setMobileMenuOpen(false)}>
+              <div className="mobile-nav-content" onClick={(e) => e.stopPropagation()}>
+                <div className="mobile-nav-header">
+                  <div className="logo">
+                    <Image
+                      src="/logo.png"
+                      alt="QLIQ Logo"
+                      width={100}
+                      height={44}
+                      style={{ aspectRatio: '49/22' }}
+                    />
+                  </div>
+                  <button className="mobile-nav-close" onClick={() => setMobileMenuOpen(false)}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M18 6L6 18M6 6L18 18" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+                <div className="mobile-nav-items">
+                  {navItems.map(item => (
+                    <div
+                      key={item.key}
+                      className={`mobile-nav-item${activeNav === item.key ? ' active' : ''}`}
+                      onClick={() => handleNavItemClick(item.path)}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mobile-nav-actions">
+                  <div className="mobile-action-btn" onClick={() => {
+                    requireAuth(() => setCartOpen(true))
+                    setMobileMenuOpen(false)
+                  }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M9 22C9.55228 22 10 21.5523 10 21C10 20.4477 9.55228 20 9 20C8.44772 20 8 20.4477 8 21C8 21.5523 8.44772 22 9 22Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span>Cart {displayCartCount > 0 && `(${displayCartCount})`}</span>
+                  </div>
+                  <div className="mobile-action-btn" onClick={() => {
+                    requireAuth(() => setWishlistOpen(true))
+                    setMobileMenuOpen(false)
+                  }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                      <path d="M20.84 4.61C20.3292 4.099 19.7228 3.69364 19.0554 3.41708C18.3879 3.14052 17.6725 2.99817 16.95 2.99817C16.2275 2.99817 15.5121 3.14052 14.8446 3.41708C14.1772 3.69364 13.5708 4.099 13.06 4.61L12 5.67L10.94 4.61C9.9083 3.5783 8.50903 2.9987 7.05 2.9987C5.59096 2.9987 4.19169 3.5783 3.16 4.61C2.1283 5.6417 1.5487 7.04097 1.5487 8.5C1.5487 9.95903 2.1283 11.3583 3.16 12.39L12 21.23L20.84 12.39C21.351 11.8792 21.7563 11.2728 22.0329 10.6053C22.3095 9.93789 22.4518 9.22248 22.4518 8.5C22.4518 7.77752 22.3095 7.06211 22.0329 6.39467C21.7563 5.72723 21.351 5.1208 20.84 4.61Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span>Wishlist {displayWishlistCount > 0 && `(${displayWishlistCount})`}</span>
+                  </div>
+                  
+                  {isAuthenticated ? (
+                    <div className="mobile-action-btn" onClick={() => {
+                      router.push('/profile')
+                      setMobileMenuOpen(false)
+                    }}>
+                      {profileUser?.profileImage ? (
+                        <Image
+                          src={profileUser.profileImage}
+                          alt="Profile"
+                          width={24}
+                          height={24}
+                          style={{ borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div className="mobile-profile-avatar">
+                          <span className="mobile-profile-initials">{getInitials(profileUser?.name)}</span>
+                        </div>
+                      )}
+                      <span>Profile</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mobile-action-btn" onClick={() => {
+                        openLoginModal()
+                        setMobileMenuOpen(false)
+                      }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <circle cx="12" cy="7" r="4" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span>Login</span>
+                      </div>
+                      <div className="mobile-action-btn" onClick={() => {
+                        setRegisterModalOpen(true)
+                        setMobileMenuOpen(false)
+                      }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                          <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <circle cx="8.5" cy="7" r="4" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <line x1="20" y1="8" x2="20" y2="14" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <line x1="23" y1="11" x2="17" y2="11" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span>Sign Up</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           <style jsx>{`
         .navbar {
@@ -426,6 +562,24 @@ const Navigation = memo(function Navigation() {
           gap: 8px;
           flex-shrink: 0;
         }
+
+        .mobile-menu-toggle {
+          display: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          width: 40px;
+          height: 40px;
+          position: relative;
+        }
+
+        .mobile-menu-toggle:hover {
+          transform: scale(1.05);
+        }
+
+        .desktop-profile-btn {
+          display: block;
+        }
+
 
         .nav-item {
           display: flex;
@@ -650,6 +804,293 @@ const Navigation = memo(function Navigation() {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile Navigation Overlay */
+        .mobile-nav-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100vh;
+          background: rgba(0, 0, 0, 0.5);
+          z-index: 1001;
+          display: flex;
+          justify-content: flex-end;
+          animation: fadeIn 0.3s ease;
+        }
+
+        .mobile-nav-content {
+          width: 320px;
+          height: 100%;
+          background: #FFF;
+          display: flex;
+          flex-direction: column;
+          animation: slideIn 0.3s ease;
+          box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .mobile-nav-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 20px 24px;
+          border-bottom: 1px solid #E5E7EB;
+        }
+
+        .mobile-nav-close {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 8px;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+        }
+
+        .mobile-nav-close:hover {
+          background: rgba(0, 130, 255, 0.1);
+        }
+
+        .mobile-nav-items {
+          flex: 1;
+          padding: 24px 0;
+          overflow-y: auto;
+        }
+
+        .mobile-nav-item {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 16px 24px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border-left: 4px solid transparent;
+        }
+
+        .mobile-nav-item:hover {
+          background: rgba(0, 130, 255, 0.05);
+        }
+
+        .mobile-nav-item.active {
+          background: rgba(0, 130, 255, 0.1);
+          border-left-color: #0082FF;
+        }
+
+        .mobile-nav-item.active span {
+          color: #0082FF;
+          font-weight: 700;
+        }
+
+        .mobile-nav-item span {
+          color: #000;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 16px;
+          font-weight: 500;
+          line-height: 150%;
+        }
+
+        .mobile-nav-actions {
+          padding: 24px;
+          border-top: 1px solid #E5E7EB;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .mobile-action-btn {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 16px;
+          cursor: pointer;
+          border-radius: 12px;
+          transition: all 0.2s ease;
+          background: rgba(0, 130, 255, 0.05);
+        }
+
+        .mobile-action-btn:hover {
+          background: rgba(0, 130, 255, 0.1);
+          transform: translateX(4px);
+        }
+
+        .mobile-action-btn span {
+          color: #000;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 16px;
+          font-weight: 500;
+          line-height: 150%;
+        }
+
+        .mobile-profile-avatar {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #0082FF 0%, #0066CC 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid #0082FF;
+        }
+
+        .mobile-profile-initials {
+          color: #FFFFFF;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 12px;
+          font-weight: 700;
+          text-transform: uppercase;
+          user-select: none;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+          from { transform: translateX(100%); }
+          to { transform: translateX(0); }
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1024px) {
+          .nav-menu {
+            width: 600px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .navbar {
+            padding: 16px 0;
+          }
+
+          .container {
+            padding: 0 16px;
+          }
+
+          .nav-menu {
+            display: none;
+          }
+
+          .mobile-menu-toggle {
+            display: block;
+          }
+
+          .desktop-profile-btn {
+            display: none;
+          }
+
+          /* Hide cart and wishlist on mobile - they're in hamburger menu */
+          .nav-actions .action-btn:nth-child(3),
+          .nav-actions .action-btn:nth-child(4) {
+            display: none;
+          }
+
+          .nav-actions {
+            gap: 12px;
+          }
+
+          .action-btn {
+            width: 36px;
+            height: 36px;
+          }
+
+          .action-btn svg {
+            width: 36px;
+            height: 36px;
+          }
+
+          .mobile-menu-toggle svg {
+            width: 36px;
+            height: 36px;
+          }
+
+          .profile-btn {
+            width: 36px;
+            height: 36px;
+          }
+
+          .profile-avatar {
+            width: 36px;
+            height: 36px;
+          }
+
+          .logo {
+            width: 80px;
+          }
+
+          .search-input {
+            height: 44px;
+            font-size: 14px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .navbar {
+            padding: 12px 0;
+          }
+
+          .container {
+            padding: 0 12px;
+          }
+
+          /* Hide cart and wishlist on mobile - they're in hamburger menu */
+          .nav-actions .action-btn:nth-child(3),
+          .nav-actions .action-btn:nth-child(4) {
+            display: none;
+          }
+
+          .nav-actions {
+            gap: 8px;
+          }
+
+          .action-btn {
+            width: 32px;
+            height: 32px;
+          }
+
+          .action-btn svg {
+            width: 32px;
+            height: 32px;
+          }
+
+          .mobile-menu-toggle svg {
+            width: 32px;
+            height: 32px;
+          }
+
+          .profile-btn {
+            width: 32px;
+            height: 32px;
+          }
+
+          .profile-avatar {
+            width: 32px;
+            height: 32px;
+          }
+
+          .logo {
+            width: 70px;
+          }
+
+          .mobile-nav-content {
+            width: 280px;
+          }
+
+          .mobile-nav-header {
+            padding: 16px 20px;
+          }
+
+          .mobile-nav-item {
+            padding: 14px 20px;
+          }
+
+          .mobile-nav-actions {
+            padding: 20px;
+          }
+
+          .mobile-action-btn {
+            padding: 14px;
+          }
         }
       `}</style>
         </div>
