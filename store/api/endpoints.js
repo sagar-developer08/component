@@ -112,6 +112,7 @@ export const addresses = {
   setDefault: `${BASES.auth}/addresses/default`,
 }
 
+
 export const upload = {
   base: `${BASES.upload}/upload`,
   single: `${BASES.upload}/upload/single`,
