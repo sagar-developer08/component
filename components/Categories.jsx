@@ -1,4 +1,9 @@
 import Image from 'next/image'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Navigation as SwiperNavigation } from 'swiper/modules'
+import 'swiper/css'
+import 'swiper/css/navigation'
+import { useRef } from 'react'
 
 const categories = [
   {
@@ -40,10 +45,25 @@ const categories = [
 ]
 
 export default function Categories() {
+  const swiperRef = useRef(null);
+
+  const handlePrev = () => {
+    if (swiperRef.current) {
+      swiperRef.current.slidePrev();
+    }
+  };
+
+  const handleNext = () => {
+    if (swiperRef.current) {
+      swiperRef.current.slideNext();
+    }
+  };
+
   return (
     <div className="categories-section">
       <div className="container">
-        <div className="categories-content">
+        {/* Desktop View */}
+        <div className="categories-content desktop">
           {categories.map((category, index) => (
             <div key={index} className="category-item">
               <div
@@ -62,6 +82,40 @@ export default function Categories() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Mobile View with Swiper */}
+        <div className="categories-swiper mobile">
+          <Swiper
+            ref={swiperRef}
+            modules={[SwiperNavigation]}
+            slidesPerView={2.7}
+            spaceBetween={10}
+            grabCursor={true}
+            freeMode={true}
+            className="categories-swiper-container"
+          >
+            {categories.map((category, index) => (
+              <SwiperSlide key={index} className="category-slide">
+                <div className="category-item">
+                  <div
+                    className="category-icon"
+                    style={{ background: category.bgColor }}
+                  >
+                    <Image
+                      src={category.icon}
+                      alt={category.name}
+                      width={60}
+                      height={60}
+                    />
+                  </div>
+                  <div className="category-text">
+                    <h3>{category.name}</h3>
+                  </div>
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
         </div>
       </div>
 
@@ -82,6 +136,19 @@ export default function Categories() {
           align-items: center;
           gap: 24px;
           flex-wrap: wrap;
+        }
+
+        .categories-swiper {
+          display: none;
+        }
+
+        .categories-swiper-container {
+          width: 100%;
+          padding: 0 20px;
+        }
+
+        .category-slide {
+          width: 100%;
         }
 
         .category-item {
@@ -126,17 +193,25 @@ export default function Categories() {
         }
 
         @media (max-width: 768px) {
-          .categories-content {
-            gap: 16px;
+          .categories-content.desktop {
+            display: none;
+          }
+
+          .categories-swiper.mobile {
+            display: block;
           }
           
           .category-icon {
             width: 120px;
-            height: 60px;
+            height: 80px;
           }
           
           .category-text h3 {
             font-size: 14px;
+          }
+
+          .categories-swiper-container {
+            padding: 0 10px;
           }
         }
       `}</style>

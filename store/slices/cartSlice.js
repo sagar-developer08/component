@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { getAuthToken } from '../../utils/userUtils'
+import { getAuthToken, getUserFromCookies } from '../../utils/userUtils'
 import { cart } from '../api/endpoints'
 
 // Async thunks for API calls
@@ -8,6 +8,12 @@ export const addToCart = createAsyncThunk(
   async (cartItem, { rejectWithValue }) => {
     try {
       const token = await getAuthToken()
+      const mongoUserId = await getUserFromCookies()
+      
+      const payload = {
+        ...cartItem,
+        ...(mongoUserId && { mongoUserId }) // Include MongoDB userId if available
+      }
       
       const response = await fetch(cart.add, {
         method: 'POST',
@@ -15,7 +21,7 @@ export const addToCart = createAsyncThunk(
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(cartItem),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {

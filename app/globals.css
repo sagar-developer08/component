@@ -267,8 +267,74 @@ button {
   }
   
   .section-title {
-    font-size: 28px;
+    font-size: 36px;
   }
+  .bestsellers-swiper {
+    width: 100%;
+    min-width: 340px;
+    display: flex;
+    justify-content: flex-start;
+  }
+  .bestseller-slide {
+    width: auto !important;
+    display: flex;
+    justify-content: flex-start;
+  }
+}
+
+/* Product Card Swiper Styles */
+.offers-swiper,
+.special-deals-swiper,
+.featured-offers-swiper {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media (max-width: 768px) {
+  .offers-swiper,
+  .special-deals-swiper,
+  .featured-offers-swiper {
+    padding: 0 0;
+  }
+}
+
+/* Category Card Swiper Styles */
+.other-categories-swiper,
+.top-brands-swiper,
+.top-stores-swiper,
+.popular-categories-swiper,
+.new-stores-swiper {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media (max-width: 768px) {
+  .other-categories-swiper,
+  .top-brands-swiper,
+  .top-stores-swiper,
+  .popular-categories-swiper,
+  .new-stores-swiper {
+    padding: 0 0;
+  }
+}
+
+/* Bestsellers Swiper Styles */
+.bestsellers-swiper {
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.bestseller-slide {
+  width: auto !important;
+  display: flex;
+  justify-content: flex-start;
 }
 
 /* Page-level layout classes moved from app/page.tsx */

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation } from 'swiper/modules'
@@ -36,6 +36,22 @@ const slides = [
 
 export default function ImageSlider() {
   const swiperRef = useRef(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    // Initial check
+    checkScreenSize()
+
+    // Add event listener
+    window.addEventListener('resize', checkScreenSize)
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
 
   const nextSlide = () => {
     if (swiperRef.current && swiperRef.current.swiper) {
@@ -51,62 +67,64 @@ export default function ImageSlider() {
 
   return (
     <div className="slider-container">
-      <div className="slider-section">
-        <Swiper
-          ref={swiperRef}
-          modules={[Navigation]}
-          spaceBetween={24}
-          slidesPerView={2}
-          centeredSlides={false}
-          loop={true}
-          style={{
-            maxWidth: '1392px',
-            height: '380px',
-            margin: '0 auto'
-          }}
-        >
-          {slides.map((slide, index) => (
-            <SwiperSlide key={slide.id}>
-              <div className="slide-container">
-                <Image
-                  src={slide.image}
-                  alt={`Slide ${index + 1}`}
-                  width={slide.width}
-                  height={slide.height}
-                  style={{ 
-                    borderRadius: '16px',
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover'
-                  }}
-                />
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
-
-        <div className="slider-controls">
-          <button
-            className="nav-button prev"
-            onClick={prevSlide}
-            aria-label="Previous slide"
+      <div className="container">
+        <div className="slider-section">
+          <Swiper
+            ref={swiperRef}
+            modules={[Navigation]}
+            spaceBetween={isMobile ? 16 : 24}
+            slidesPerView={isMobile ? 1.2 : 2}
+            centeredSlides={isMobile}
+            loop={true}
+            style={{
+              maxWidth: '1392px',
+              height: isMobile ? '200px' : '380px',
+            }}
           >
-            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-              <rect y="44" width="44" height="44" rx="22" transform="rotate(-90 0 44)" fill="white"/>
-              <path d="M32 22L11 22M11 22L18.875 14.125M11 22L18.875 29.875" stroke="#0082FF" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+            {slides.map((slide, index) => (
+              <SwiperSlide key={slide.id}>
+                <div className="slide-container">
+                  <Image
+                    src={slide.image}
+                    alt={`Slide ${index + 1}`}
+                    width={slide.width}
+                    height={slide.height}
+                    style={{
+                      borderRadius: isMobile ? '12px' : '16px',
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover'
+                    }}
+                    className="slider-image"
+                  />
+                </div>
+              </SwiperSlide>
+            ))}
+          </Swiper>
 
-          <button
-            className="nav-button next"
-            onClick={nextSlide}
-            aria-label="Next slide"
-          >
-            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-              <rect x="44" width="44" height="44" rx="22" transform="rotate(90 44 0)" fill="white"/>
-              <path d="M11 22L32 22M32 22L24.125 29.875M32 22L24.125 14.125" stroke="#0082FF" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+          <div className="slider-controls">
+            <button
+              className="nav-button prev"
+              onClick={prevSlide}
+              aria-label="Previous slide"
+            >
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+                <rect y="44" width="44" height="44" rx="22" transform="rotate(-90 0 44)" fill="white" />
+                <path d="M32 22L11 22M11 22L18.875 14.125M11 22L18.875 29.875" stroke="#0082FF" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+
+            <button
+              className="nav-button next"
+              onClick={nextSlide}
+              aria-label="Next slide"
+            >
+              <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
+                <rect x="44" width="44" height="44" rx="22" transform="rotate(90 44 0)" fill="white" />
+                <path d="M11 22L32 22M32 22L24.125 29.875M32 22L24.125 14.125" stroke="#0082FF" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -116,17 +134,23 @@ export default function ImageSlider() {
           display: flex;
           justify-content: center;
         }
+
+        .container {
+          width: 100%;
+          max-width: 1360px;
+          margin: 0 auto;
+          padding: 0 20px;
+        }
         
         .slider-section {
           width: 100%;
-          max-width: 1360px;
           position: relative;
           overflow: hidden;
         }
 
         .slide-container {
           width: 100%;
-          height: 380px;
+          height: 100%;
           display: flex;
           justify-content: center;
           align-items: center;
@@ -169,24 +193,22 @@ export default function ImageSlider() {
           transform: scale(0.95);
         }
 
-        @media (max-width: 1392px) {
+        @media (max-width: 768px) {
+          .container {
+            padding: 0 0;
+            min-width: 340px;
+          }
+          
           .slider-section {
-            padding: 0 20px;
+            min-width: 340px;
           }
           
           .slider-controls {
-            padding: 0 40px;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .slider-controls {
-            padding: 0 16px;
+            padding: 0 0;
           }
           
           .nav-button {
-            width: 40px;
-            height: 40px;
+            display: none;
           }
         }
       `}</style>

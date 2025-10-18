@@ -21,6 +21,30 @@ import { fetchProducts } from '@/store/slices/productsSlice'
 import { useRouter } from 'next/navigation'
 import { buildFacetsFromProducts, applyFiltersToProducts } from '@/utils/facets'
 
+// Helper function to transform API product data to match ProductCard component format
+const transformProductData = (apiProduct) => {
+  // Get the primary image or first available image
+  const primaryImage = apiProduct.images?.find(img => img.is_primary) || apiProduct.images?.[0];
+
+  // Use placeholder image if no valid image URL
+  const imageUrl = primaryImage?.url || 'https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644';
+
+  // Calculate savings for offer badge
+  const savings = apiProduct.is_offer && apiProduct.price && apiProduct.discount_price
+    ? apiProduct.price - apiProduct.discount_price
+    : 0;
+
+  return {
+    id: apiProduct._id || apiProduct.slug,
+    title: apiProduct.title || 'Product Title',
+    price: `AED ${apiProduct.discount_price || apiProduct.price || '0'}`,
+    rating: apiProduct.average_rating?.toString() || '0',
+    deliveryTime: '30 Min', // Default delivery time since it's not in API
+    image: imageUrl,
+    badge: apiProduct.is_offer && savings > 0 ? `Save AED ${savings}` : null
+  }
+}
+
 const productData = [
   {
     id: "nike-airforce-01",
@@ -92,25 +116,6 @@ export default function Home() {
 
   const handleClearFilters = () => {
     setSelectedFilters({})
-  }
-
-  // Transform product data helper function
-  const transformProductData = (apiProduct) => {
-    const primaryImage = apiProduct.images?.find(img => img.is_primary) || apiProduct.images?.[0];
-    const imageUrl = primaryImage?.url || 'https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644';
-    const savings = apiProduct.is_offer && apiProduct.price && apiProduct.discount_price
-      ? apiProduct.price - apiProduct.discount_price
-      : 0;
-
-    return {
-      id: apiProduct._id || apiProduct.slug,
-      title: apiProduct.title || 'Product Title',
-      price: `AED ${apiProduct.discount_price || apiProduct.price || '0'}`,
-      rating: apiProduct.average_rating?.toString() || '0',
-      deliveryTime: '30 Min',
-      image: imageUrl,
-      badge: apiProduct.is_offer && savings > 0 ? `Save AED ${savings}` : null
-    }
   }
   return (
     <main className="home-page">

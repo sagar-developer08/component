@@ -210,6 +210,9 @@ export default function FAQ() {
           .answer-text {
             font-size: 14px;
           }
+            .faq-image {
+            display: none;
+          }
         }
       `}</style>
     </div>

@@ -1,15 +1,28 @@
 'use client'
 
 import Image from 'next/image'
+import { useState, useEffect } from 'react'
 
 export default function CategoryCard({ name, image, onClick }) {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
   return (
     <div className="category-card" onClick={onClick}>
       <Image
         src="https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412"
         alt={name}
-        width={206}
-        height={206}
+        width={isMobile ? 160 : 206}
+        height={isMobile ? 160 : 206}
         style={{ borderRadius: '16px' }}
       />
       <div className="category-name">

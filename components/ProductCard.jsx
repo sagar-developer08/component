@@ -29,10 +29,10 @@ export default function ProductCard({
   const { show } = useToast()
   const { items: wishlistItems } = useSelector(state => state.wishlist)
   const { items: cartItems } = useSelector(state => state.cart)
-  
+
   // Check if product is in wishlist
   const isInWishlist = wishlistItems.some(item => item.productId === id)
-  
+
   // Check cart state for this product
   const cartItem = cartItems.find(item => item.productId === id)
   const cartQuantity = cartItem?.quantity || 0
@@ -109,7 +109,7 @@ export default function ProductCard({
     requireAuth(() => {
       ; (async () => {
         const userId = await getUserFromCookies()
-        
+
         const cartItem = {
           userId,
           productId: id,
@@ -118,11 +118,11 @@ export default function ProductCard({
           quantity: 1,
           image: image
         }
-        
+
         const result = await dispatch(addToCart(cartItem))
         if (addToCart.fulfilled.match(result)) {
           show('Added to cart')
-          
+
           // After successful add, fetch the updated cart to refresh counts
           dispatch(fetchCart(userId))
         } else if (addToCart.rejected.match(result)) {
@@ -131,7 +131,7 @@ export default function ProductCard({
       })()
     })
   }
-  
+
   const handleRemoveFromCart = async (e) => {
     e.stopPropagation()
     requireAuth(() => {
@@ -148,7 +148,7 @@ export default function ProductCard({
       })()
     })
   }
-  
+
   const handleIncreaseQuantity = async (e) => {
     e.stopPropagation()
     requireAuth(() => {
@@ -244,9 +244,9 @@ export default function ProductCard({
               >
                 {isInCart && isCartHover ? (
                   <div className="cart-quantity-control">
-                    <button 
-                      className={cartQuantity === 1 ? "delete-icon" : "minus-icon"} 
-                      aria-label={cartQuantity === 1 ? "Remove from cart" : "Decrease quantity"} 
+                    <button
+                      className={cartQuantity === 1 ? "delete-icon" : "minus-icon"}
+                      aria-label={cartQuantity === 1 ? "Remove from cart" : "Decrease quantity"}
                       onClick={cartQuantity === 1 ? handleRemoveFromCart : handleDecreaseQuantity}
                     >
                       {cartQuantity === 1 ? (
@@ -370,12 +370,13 @@ export default function ProductCard({
 
         .wishlist-icon {
           position: absolute;
-          left: 16px;
-          bottom: 16px;
+          left: 12px;
+          bottom: 12px;
           border: none;
           background: none;
           cursor: pointer;
           transition: all 0.2s ease;
+          z-index: 10;
         }
 
         .cart-icon {
@@ -393,9 +394,9 @@ export default function ProductCard({
         
         .cart-control-container {
           position: absolute;
-          right: 16px;
-          bottom: 16px;
-          z-index: 5;
+          right: 12px;
+          bottom: 12px;
+          z-index: 10;
         }
         
         .cart-control {
@@ -534,23 +535,219 @@ export default function ProductCard({
         }
 
         @media (max-width: 768px) {
-          .product-image {
-            width: 280px;
-            height: 200px;
-          }
+        .product-card {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
 
-          .product-info {
-            width: 280px;
-          }
+        .product-badge {
+          display: flex;
+          padding: 4px 16px;
+          justify-content: center;
+          align-items: center;
+          gap: 10px;
+          position: absolute;
+          left: 16px;
+          top: 16px;
+          border-radius: 100px;
+          background: #0082FF;
+          color: #FFF;
+          text-align: center;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 12px;
+          font-weight: 400;
+          line-height: 150%;
+        }
 
-          .product-title {
-            font-size: 14px;
-          }
+        .product-dots {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          position: absolute;
+          left: 147px;
+          top: 204px;
+          width: 28px;
+          height: 4px;
+        }
 
-          .delivery-time {
-            font-size: 12px;
-            padding: 6px;
-          }
+        .dot {
+          width: 4px;
+          height: 4px;
+          border-radius: 2px;
+          background: rgba(0, 130, 255, 0.24);
+        }
+
+        .dot.active {
+          background: #0082FF;
+        }
+
+        .wishlist-icon {
+          position: absolute;
+          left: 12px;
+          bottom: 12px;
+          border: none;
+          background: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          z-index: 10;
+        }
+
+        .cart-icon {
+          position: relative;
+          border: none;
+          background: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .wishlist-icon:hover,
+        .cart-icon:hover {
+          transform: scale(1.05);
+        }
+        
+        .cart-control-container {
+          position: absolute;
+          right: 12px;
+          bottom: 12px;
+          z-index: 10;
+        }
+        
+        .cart-control {
+          position: relative;
+          display: flex;
+          align-items: center;
+        }
+        
+        .cart-quantity-control {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: #0082FF;
+          border-radius: 20px;
+          padding: 4px;
+          width: 120px;
+          height: 40px;
+        }
+        
+        .delete-icon, .plus-icon, .minus-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.2);
+          border: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        
+        .delete-icon:hover, .plus-icon:hover, .minus-icon:hover {
+          background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .quantity-display {
+          color: white;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 16px;
+          font-weight: 700;
+          min-width: 24px;
+          text-align: center;
+        }
+        
+        .cart-badge {
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          background: white;
+          color: #0082FF;
+          border: 2px solid #0082FF;
+          border-radius: 50%;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 12px;
+          font-weight: 700;
+        }
+
+        .product-info {
+          display: flex;
+          width: 322px;
+          padding: 0 8px 8px 8px;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .product-title-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          align-self: stretch;
+        }
+
+        .product-title {
+          flex: 1 0 0;
+          color: #000;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 150%;
+          margin: 0;
+        }
+
+        .delivery-time {
+          display: flex;
+          padding: 8px;
+          justify-content: center;
+          align-items: center;
+          gap: 10px;
+          border-radius: 8px;
+          background: rgba(0, 130, 255, 0.24);
+          color: #0082FF;
+          text-align: center;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 14px;
+          font-weight: 700;
+          line-height: 150%;
+        }
+
+        .product-bottom {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          align-self: stretch;
+        }
+
+        .product-price {
+          color: #000;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 16px;
+          font-weight: 700;
+          line-height: 150%;
+        }
+
+        .product-rating {
+          display: flex;
+          padding: 4px 16px;
+          justify-content: center;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .product-rating span {
+          color: #0082FF;
+          text-align: center;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 12px;
+          font-weight: 400;
+          line-height: 150%;
+        }
         }
       `}</style>
     </div>

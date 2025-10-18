@@ -111,12 +111,12 @@ export default function Banner({
           
           .banner-content {
             padding: 24px;
-            align-items: center;
-            text-align: center;
+            align-items: flex-start;
+            text-align: flex-start;
           }
 
           .banner-info {
-            align-items: center;
+            align-items: flex-start;
           }
 
           .banner-title {
