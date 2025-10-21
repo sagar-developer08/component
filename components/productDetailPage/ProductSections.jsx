@@ -291,659 +291,941 @@ export default function ProductSections({ relatedProducts, productData }) {
   const attributes = createAttributes()
 
   return (
-    <div className="product-sections">
+    <div>
       {/* Related Products Section */}
-      <section className="related-products-section">
-        <div className="section-header">
-          <h2 className="section-title">Related Products</h2>
-          <a href="#" className="see-all-link">See All</a>
-        </div>
-        <div className="products-carousel">
-          {Array.isArray(relatedList) && relatedList.length > 0 ? relatedList.slice(0, 4).map((product, index) => (
-            <div key={product.id || `product-${index}`} className="product-card">
-              <div className="product-badge">QLIQ's Choice</div>
-              <div className="product-image-container">
-                <img src={product.image || '/shoes.jpg'} alt={product.title} className="product-image" />
-                <div className="product-actions">
-                  <button className="action-btn heart-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#0082FF"/>
-                    </svg>
-                  </button>
-                  <button className="action-btn cart-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M7 4V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V4H20C20.55 4 21 4.45 21 5S20.55 6 20 6H19V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V6H4C3.45 6 3 5.55 3 5S3.45 4 4 4H7ZM9 3V4H15V3H9ZM7 6V19H17V6H7Z" fill="#0082FF"/>
-                    </svg>
-                  </button>
-                </div>
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="Related Products"
+            showNavigation={true}
+            showButton={true}
+            buttonText="Upgrade"
+          />
+          <div className="products-grid">
+            {Array.isArray(relatedList) && relatedList.length > 0 ? relatedList.slice(0, 4).map((product, index) => (
+              <ProductCard key={product.id || `product-${index}`} {...product} />
+            )) : (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                No related products available
               </div>
-              <div className="product-info">
-                <h3 className="product-title">{product.title}</h3>
-                <div className="product-price">{product.price}</div>
-              </div>
-            </div>
-          )) : (
-            <div className="no-products">No related products available</div>
-          )}
+            )}
+          </div>
         </div>
       </section>
 
       {/* Product Information Section */}
       {/* <ProductInformation /> */}
 
-      {/* Product Overview Section */}
-      <section className="product-overview-section">
-        <h2 className="section-title">Product Overview</h2>
-        <div className="overview-content">
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-          <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt.</p>
+      {/* Product Description Section */}
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="Product Overview"
+            showNavigation={false}
+            showButton={false}
+            buttonText="Upgrade"
+          />
+          <div className="description-content">
+            <p>{productData?.description || productData?.short_description || "Product description not available."}</p>
+            {productData?.description && productData?.short_description && productData.description !== productData.short_description && (
+              <>
+                <br />
+                <p>{productData.short_description}</p>
+              </>
+            )}
+          </div>
         </div>
       </section>
 
       {/* Product Specifications Section */}
-      <section className="product-specifications-section">
-        <h2 className="section-title">Product Specifications</h2>
-        <div className="specifications-list">
-          <div className="spec-item">
-            <span className="spec-label">Heading</span>
-            <span className="spec-value">Lorem Ipsum</span>
-          </div>
-          <div className="spec-item">
-            <span className="spec-label">Heading</span>
-            <span className="spec-value">Lorem Ipsum</span>
-          </div>
-          <div className="spec-item">
-            <span className="spec-label">Heading</span>
-            <span className="spec-value">Lorem Ipsum</span>
-          </div>
-          <div className="spec-item">
-            <span className="spec-label">Heading</span>
-            <span className="spec-value">Lorem Ipsum</span>
+      <section className="section">
+        <div className="container specifications-container">
+          <SectionHeader
+            title="Product Specifications"
+            showNavigation={false}
+            showButton={false}
+            buttonText="Upgrade"
+          />
+          <div className="specifications-wrapper">
+            <div className="spec-table spec-table-left">
+              <table>
+                <tbody>
+                  {specifications.slice(0, Math.ceil(specifications.length / 2)).map((spec, index) => (
+                    <tr key={index}>
+                      <th>{spec.label}</th>
+                      <td>{String(spec.value || '')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="spec-table spec-table-right">
+              <table>
+                <tbody>
+                  {attributes.slice(0, Math.ceil(attributes.length / 2)).map((attr, index) => (
+                    <tr key={index}>
+                      <th>{attr.label}</th>
+                      <td>{String(attr.value || '')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Product Features Section */}
-      <section className="product-features-section">
-        <h2 className="section-title">Product Features</h2>
-        <div className="features-image-container">
-          <button className="carousel-arrow left" onClick={prevImage}>‹</button>
-          <div className="features-image">
-            <img
-              src={manufacturerImages[manufacturerImageIndex]}
-              alt="Product features"
-              className="features-img"
-            />
+      {/* From The Manufacturer Section */}
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="From The Manufacturer"
+            showNavigation={false}
+            showButton={false}
+          />
+        </div>
+
+        {/* Full-width image container */}
+        <div className="manufacturer-full-width">
+          <div className="manufacturer-carousel">
+            <button className="carousel-arrow left" onClick={prevImage}>‹</button>
+            <div className="manufacturer-image">
+              <img
+                src={manufacturerImages[manufacturerImageIndex]}
+                alt="Product from manufacturer"
+                className="manufacturer-img"
+              />
+            </div>
+            <button className="carousel-arrow right" onClick={nextImage}>›</button>
           </div>
-          <button className="carousel-arrow right" onClick={nextImage}>›</button>
         </div>
       </section>
 
       {/* Reviews & Ratings Section */}
-      <section className="reviews-ratings-section">
-        <h2 className="section-title">Reviews & Ratings</h2>
-        
-        <div className="reviews-container">
-          <div className="overall-rating">
-            <div className="rating-label">Overall Rating</div>
-            <div className="rating-score">4.0</div>
-            <div className="rating-stars">
-              {[1, 2, 3, 4, 5].map(i => (
-                <svg key={i} width="20" height="20" viewBox="0 0 24 24" fill={i <= 4 ? "#0082FF" : "#E0E0E0"}>
-                  <path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" />
-                </svg>
-              ))}
-            </div>
-            <div className="rating-based">Based on 25 ratings</div>
-          </div>
-
-          <div className="rating-bars">
-            <div className="rating-bar">
-              <div className="bar-fill" style={{ width: '60%', background: '#0082FF' }}></div>
-            </div>
-            <div className="rating-bar">
-              <div className="bar-fill" style={{ width: '30%', background: '#4CAF50' }}></div>
-            </div>
-            <div className="rating-bar">
-              <div className="bar-fill" style={{ width: '10%', background: '#FFC107' }}></div>
-            </div>
-            <div className="rating-bar">
-              <div className="bar-fill" style={{ width: '0%', background: '#A0522D' }}></div>
-            </div>
-            <div className="rating-bar">
-              <div className="bar-fill" style={{ width: '0%', background: '#F44336' }}></div>
-            </div>
-          </div>
-
-          <div className="reviews-summary">
-            <div className="summary-title">3334 Reviews, summarised</div>
-            <ul className="summary-list">
-              <li>Stunning display and powerful performance make it a top-tier phone.</li>
-              <li>The pro-grade camera system captures incredible photos and videos.</li>
-              <li>Innovative AI features enhance productivity and user experience.</li>
-              <li>Some users have reported battery drain and heating issues.</li>
-            </ul>
-          </div>
-
-          <div className="customer-photos">
-            <div className="photos-header">
-              <span className="photos-title">Customers Photos (1332)</span>
-              <a href="#" className="view-all-link">View All</a>
-            </div>
-            <div className="photos-grid">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="photo-placeholder"></div>
-              ))}
-            </div>
-          </div>
-
-          <div className="individual-reviews">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="review-item">
-                <div className="review-avatar"></div>
-                <div className="review-content">
-                  <p className="review-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
-                  <div className="review-meta">
-                    <span className="review-author">Ama Cruize</span>
-                    <span className="verified-badge">
-                      <svg width="12" height="12" viewBox="0 0 18 18" fill="none">
-                        <circle cx="9" cy="9" r="9" fill="#111" />
-                        <path d="M13 7l-4 4-2-2" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      Verified Purchase
-                    </span>
-                  </div>
-                  <span className="review-date">Nov 12, 2024</span>
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="Reviews & Ratings"
+            showNavigation={false}
+            showButton={false}
+          />
+        </div>
+        <div className="reviews-ratings-container">
+          <div className="reviews-left">
+            {/* Overall Rating Summary */}
+            <div className="overall-rating-box">
+              <div className="overall-rating-label">Overall Rating</div>
+              <div className="overall-rating-score">{reviewStats.averageRating}</div>
+              <div className="overall-rating-stars">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <svg key={i} width="28" height="28" viewBox="0 0 24 24" fill={i <= Math.round(reviewStats.averageRating) ? "#2196F3" : "#E0E0E0"} style={{ marginRight: 2 }}>
+                    <path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" />
+                  </svg>
+                ))}
+              </div>
+              <div className="overall-rating-based">Based on {reviewStats.totalReviews} ratings</div>
+              <div className="overall-rating-bars">
+                <div className="rating-bar-row">
+                  <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#2196F3" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 5</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: `${reviewStats.percentages[5]}%`, background: '#2196F3' }}></div></div>
+                  <span className="rating-bar-percent">{String(reviewStats.percentages[5]).padStart(2, '0')}%</span>
+                </div>
+                <div className="rating-bar-row">
+                  <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#4CAF50" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 4</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: `${reviewStats.percentages[4]}%`, background: '#4CAF50' }}></div></div>
+                  <span className="rating-bar-percent">{String(reviewStats.percentages[4]).padStart(2, '0')}%</span>
+                </div>
+                <div className="rating-bar-row">
+                  <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#FFC107" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 3</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: `${reviewStats.percentages[3]}%`, background: '#FFC107' }}></div></div>
+                  <span className="rating-bar-percent">{String(reviewStats.percentages[3]).padStart(2, '0')}%</span>
+                </div>
+                <div className="rating-bar-row">
+                  <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#A0522D" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 2</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: `${reviewStats.percentages[2]}%`, background: '#A0522D' }}></div></div>
+                  <span className="rating-bar-percent">{String(reviewStats.percentages[2]).padStart(2, '0')}%</span>
+                </div>
+                <div className="rating-bar-row">
+                  <span className="rating-bar-label"><svg width="18" height="18" viewBox="0 0 24 24" fill="#F44336" style={{ verticalAlign: 'middle' }}><path d="M12 17.27L18.18 21L16.54 13.97L22 9.24L14.81 8.63L12 2L9.19 8.63L2 9.24L7.46 13.97L5.82 21L12 17.27Z" /></svg> 1</span>
+                  <div className="rating-bar-track"><div className="rating-bar-fill" style={{ width: `${reviewStats.percentages[1]}%`, background: '#F44336' }}></div></div>
+                  <span className="rating-bar-percent">{String(reviewStats.percentages[1]).padStart(2, '0')}%</span>
                 </div>
               </div>
-            ))}
+            </div>
+          </div>
+          <div className="reviews-right">
+            <div className="reviews-summary">
+              <div className="summary-title">{reviewStats.totalReviews} Reviews, summarised</div>
+              <ul className="summary-list">
+                <li>Stunning display and powerful performance make it a top-tier phone.</li>
+                <li>The pro-grade camera system captures incredible photos and videos.</li>
+                <li>Innovative AI features enhance productivity and user experience.</li>
+                <li>Some users have reported battery drain and heating issues.</li>
+              </ul>
+              <div className="customer-photos-row">
+                <span className="customer-photos-title">Customers Photos ({reviewImages.length})</span>
+                <a className="customer-photos-viewall" href="#" onClick={(e) => { e.preventDefault(); openViewAll(); }}>View All</a>
+              </div>
+              <div className="customer-photos-list">
+                {reviewImages.length > 0 ? (
+                  reviewImages.slice(0, 7).map((imageUrl, i) => (
+                    <div 
+                      className="customer-photo" 
+                      key={i} 
+                      style={{ backgroundImage: `url(${imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', cursor: 'pointer' }}
+                      onClick={() => openGallery(i)}
+                    ></div>
+                  ))
+                ) : (
+                  [...Array(7)].map((_, i) => (
+                    <div className="customer-photo" key={i}></div>
+                  ))
+                )}
+              </div>
+            </div>
+            <div className="reviews-list">
+              {reviewsLoading ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>Loading reviews...</div>
+              ) : reviews && Array.isArray(reviews) && reviews.length > 0 ? (
+                reviews.slice(0, 4).map((review, i) => (
+                  <div className="review-item" key={review._id || review.id || i}>
+                    <div 
+                      className="review-photo" 
+                      style={review.images && review.images[0] ? { 
+                        backgroundImage: `url(${review.images[0]})`, 
+                        backgroundSize: 'cover', 
+                        backgroundPosition: 'center',
+                        cursor: 'pointer'
+                      } : {}}
+                      onClick={() => review.images && review.images[0] && openLightbox(review.images[0], review)}
+                    ></div>
+                    <div className="review-content">
+                      <div className="review-text">
+                        {review.comment}
+                      </div>
+                      <div className="review-meta">
+                        <span className="review-author">{review.title || 'Anonymous'}</span>
+                        {review.isVerified && (
+                          <span className="review-verified">
+                            <svg width="18" height="18" viewBox="0 0 18 18" style={{ verticalAlign: 'middle', marginRight: 4 }}><circle cx="9" cy="9" r="9" fill="#111" /><path d="M13 7l-4 4-2-2" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                            Verified Purchase
+                          </span>
+                        )}
+                      </div>
+                      <span className="review-date">{formatReviewDate(review.createdAt)}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>No reviews yet. Be the first to review!</div>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Customer Also Liked Section */}
-      <section className="customer-also-liked-section">
-        <div className="section-header">
-          <h2 className="section-title">Customer Also Liked These Products</h2>
-          <a href="#" className="see-all-link">See All</a>
-        </div>
-        <div className="products-carousel">
-          {Array.isArray(relatedList) && relatedList.length > 0 ? relatedList.slice(0, 4).map((product, index) => (
-            <div key={product.id || `product-${index}`} className="product-card">
-              <div className="product-badge">QLIQ's Choice</div>
-              <div className="product-image-container">
-                <img src={product.image || '/shoes.jpg'} alt={product.title} className="product-image" />
-                <div className="product-actions">
-                  <button className="action-btn heart-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#0082FF"/>
-                    </svg>
-                  </button>
-                  <button className="action-btn cart-btn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                      <path d="M7 4V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V4H20C20.55 4 21 4.45 21 5S20.55 6 20 6H19V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V6H4C3.45 6 3 5.55 3 5S3.45 4 4 4H7ZM9 3V4H15V3H9ZM7 6V19H17V6H7Z" fill="#0082FF"/>
-                    </svg>
-                  </button>
-                </div>
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="Customer Also Liked These Products"
+            showNavigation={true}
+            showButton={false}
+            buttonText="Upgrade"
+          />
+          <div className="products-grid">
+            {Array.isArray(relatedList) && relatedList.length > 0 ? relatedList.slice(0, 4).map((product, index) => (
+              <ProductCard key={product.id || `product-${index}`} {...product} />
+            )) : (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+                No related products available
               </div>
-              <div className="product-info">
-                <h3 className="product-title">{product.title}</h3>
-                <div className="product-price">{product.price}</div>
-              </div>
-            </div>
-          )) : (
-            <div className="no-products">No related products available</div>
-          )}
+            )}
+          </div>
         </div>
       </section>
 
       <style jsx>{`
         .product-sections {
-          background: white;
-          padding: 20px 16px;
+          max-width: 1360px;
+          margin: auto;
         }
 
         .section-title {
-          font-size: 20px;
+          font-size: 32px;
           font-weight: 700;
           color: #000000;
-          margin: 0 0 16px 0;
+          margin: 0 0 48px 0;
+          text-align: center;
           line-height: 1.2;
           font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
         }
 
-        .section-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 16px;
-        }
-
-        .see-all-link {
-          color: #0082FF;
-          font-size: 14px;
-          font-weight: 600;
-          text-decoration: none;
-        }
-
-        /* Related Products Section */
-        .related-products-section {
-          margin-bottom: 32px;
-        }
-
         .products-carousel {
-          display: flex;
-          gap: 16px;
-          overflow-x: auto;
-          padding-bottom: 8px;
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-
-        .products-carousel::-webkit-scrollbar {
-          display: none;
-        }
-
-        .product-card {
-          flex: 0 0 160px;
-          background: white;
-          border-radius: 12px;
-          overflow: hidden;
           position: relative;
-        }
-
-        .product-badge {
-          position: absolute;
-          top: 8px;
-          left: 8px;
-          background: #0082FF;
-          color: white;
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-size: 10px;
-          font-weight: 600;
-          z-index: 2;
-        }
-
-        .product-image-container {
-          position: relative;
-          width: 100%;
-          height: 120px;
-          overflow: hidden;
-        }
-
-        .product-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .product-actions {
-          position: absolute;
-          top: 8px;
-          right: 8px;
           display: flex;
-          gap: 4px;
-          z-index: 2;
+          align-items: center;
+          gap: 20px;
         }
 
-        .action-btn {
-          width: 24px;
-          height: 24px;
-          background: rgba(255, 255, 255, 0.9);
-          border: none;
-          border-radius: 50%;
+        .manufacturer-full-width {
+          width: 100%;
+          margin-top: 24px;
+        }
+
+        .manufacturer-carousel {
+          position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: pointer;
-        }
-
-        .product-info {
-          padding: 12px;
-        }
-
-        .product-title {
-          font-size: 14px;
-          font-weight: 600;
-          color: #000;
-          margin: 0 0 4px 0;
-          line-height: 1.3;
-        }
-
-        .product-price {
-          font-size: 14px;
-          font-weight: 700;
-          color: #000;
-          margin-bottom: 4px;
-        }
-
-
-        /* Product Overview Section */
-        .product-overview-section {
-          margin-bottom: 32px;
-        }
-
-        .overview-content {
-          color: #666;
-          line-height: 1.6;
-          font-size: 14px;
-        }
-
-        .overview-content p {
-          margin: 0 0 16px 0;
-        }
-
-        /* Product Specifications Section */
-        .product-specifications-section {
-          margin-bottom: 32px;
-        }
-
-        .specifications-list {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .spec-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 8px 0;
-          border-bottom: 1px solid #f0f0f0;
-        }
-
-        .spec-label {
-          font-weight: 600;
-          color: #000;
-          font-size: 14px;
-        }
-
-        .spec-value {
-          color: #666;
-          font-size: 14px;
-        }
-
-        /* Product Features Section */
-        .product-features-section {
-          margin-bottom: 32px;
-        }
-
-        .features-image-container {
-          position: relative;
           width: 100%;
-          height: 200px;
-          overflow: hidden;
-          border-radius: 12px;
-        }
-
-        .features-image {
-          width: 100%;
-          height: 100%;
-          position: relative;
-        }
-
-        .features-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
         }
 
         .carousel-arrow {
           position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          background: rgba(0, 0, 0, 0.5);
-          color: white;
-          border: none;
-          width: 32px;
-          height: 32px;
+          width: 48px;
+          height: 48px;
           border-radius: 50%;
+          background: transparent;
+          color: #000;
+          font-size: 24px;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 18px;
-          z-index: 2;
+          transition: all 0.2s ease;
+          z-index: 10;
         }
 
         .carousel-arrow.left {
-          left: 8px;
+          left: 60px;
         }
 
         .carousel-arrow.right {
-          right: 8px;
+          right: 60px;
         }
 
-        /* Reviews & Ratings Section */
-        .reviews-ratings-section {
-          margin-bottom: 32px;
-        }
-
-        .reviews-container {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-
-        .overall-rating {
-          text-align: center;
-          padding: 20px;
-          background: #f8f9fa;
-          border-radius: 12px;
-        }
-
-        .rating-label {
-          font-size: 16px;
-          font-weight: 600;
-          color: #000;
-          margin-bottom: 8px;
-        }
-
-        .rating-score {
-          font-size: 32px;
-          font-weight: 700;
-          color: #000;
-          margin-bottom: 8px;
-        }
-
-        .rating-stars {
-          display: flex;
-          justify-content: center;
-          gap: 4px;
-          margin-bottom: 8px;
-        }
-
-        .rating-based {
-          font-size: 14px;
-          color: #666;
-        }
-
-        .rating-bars {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .rating-bar {
-          height: 8px;
-          background: #f0f0f0;
-          border-radius: 4px;
+        .accordion-container {
+          max-width: 900px;
+          margin: 0 auto;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          background: white;
           overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         }
 
-        .bar-fill {
-          height: 100%;
-          border-radius: 4px;
-        }
-
-        .reviews-summary {
-          background: white;
-          padding: 16px;
-          border-radius: 12px;
-          border: 1px solid #e5e7eb;
-        }
-
-        .summary-title {
-          font-size: 16px;
-          font-weight: 700;
-          color: #000;
-          margin-bottom: 12px;
-        }
-
-        .summary-list {
-          margin: 0;
-          padding-left: 16px;
-          color: #666;
-          font-size: 14px;
-          line-height: 1.5;
-        }
-
-        .summary-list li {
-          margin-bottom: 8px;
-        }
-
-        .customer-photos {
-          background: white;
-          padding: 16px;
-          border-radius: 12px;
-          border: 1px solid #e5e7eb;
-        }
-
-        .photos-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 12px;
-        }
-
-        .photos-title {
-          font-size: 15px;
-          font-weight: 700;
-          color: #000;
-        }
-
-        .view-all-link {
-          color: #0082FF;
-          font-size: 15px;
-          font-weight: 500;
-          text-decoration: none;
-        }
-
-        .photos-grid {
-          display: flex;
-          gap: 8px;
-        }
-
-        .photo-placeholder {
-          width: 60px;
-          height: 60px;
-          background: #111;
-          border-radius: 8px;
-          flex-shrink: 0;
-        }
-
-        .individual-reviews {
+        .accordion {
           display: flex;
           flex-direction: column;
-          gap: 16px;
         }
 
-        .review-item {
-          display: flex;
-          gap: 12px;
-          align-items: flex-start;
+        .accordion-item {
+          border: none;
+          border-bottom: 1px solid #e5e7eb;
+          border-radius: 0;
+          overflow: hidden;
+          margin-bottom: 0;
+          background: white;
+          box-shadow: none;
+          transition: all 0.2s ease;
         }
 
-        .review-avatar {
-          width: 40px;
-          height: 40px;
-          background: #111;
-          border-radius: 50%;
-          flex-shrink: 0;
+        .accordion-item:last-child {
+          border-bottom: none;
         }
 
-        .review-content {
-          flex: 1;
+        .accordion-item.expanded {
+          border-color: #e5e7eb;
+          box-shadow: none;
         }
 
-        .review-text {
-          font-size: 14px;
-          color: #666;
-          line-height: 1.5;
-          margin: 0 0 8px 0;
-        }
-
-        .review-meta {
+        .accordion-header {
           display: flex;
           align-items: center;
-          gap: 8px;
-          margin-bottom: 4px;
+          justify-content: space-between;
+          padding: 24px 32px;
+          background: #ffffff;
+          cursor: pointer;
+          transition: background 0.2s ease;
+          border: none;
+          width: 100%;
+          text-align: left;
         }
 
-        .review-author {
-          font-size: 14px;
-          font-weight: 600;
+        .accordion-item.expanded .accordion-header {
+          background: #ffffff;
+          border-bottom: 1px solid #e5e7eb;
+        }
+
+        .accordion-header:hover {
+          background: #f9f9f9;
+        }
+
+        .accordion-title {
+          font-size: 16px;
+          font-weight: 500;
+          color: #000000;
+          margin: 0;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+
+        .accordion-toggle {
+          background: none;
+          border: none;
+          font-size: 24px;
+          color: #666666;
+          cursor: pointer;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0;
+          margin: 0;
+          transition: all 0.2s ease;
+        }
+
+        .accordion-content {
+          padding: 24px 32px;
+          background: white;
+          line-height: 1.6;
+        }
+
+        .accordion-content p {
+          margin: 0;
+          line-height: 1.6;
+          color: #666666;
+          font-size: 15px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+
+        .description-container {
+          max-width: 900px;
+          margin: 0 auto;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .description-content {
+          max-width: 1392px;
+          width: 100%;
+          background: white;
+          padding-left: 24px;
+          padding-right: 24px;
+          border: none;
+          border-radius: 0;
+          box-shadow: none;
+        }
+
+        .description-content p {
+          line-height: 150%;
           color: #000;
+          font-size: 16px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-weight: 600;
         }
 
-        .verified-badge {
+        .description-content p:last-child {
+          margin-bottom: 0;
+        }
+
+        .manufacturer-image {
+          width: 100%;
+          height: 500px;
+          overflow: hidden;
+          background: #f0f8ff;
           display: flex;
           align-items: center;
-          gap: 4px;
-          font-size: 12px;
-          color: #666;
+          justify-content: center;
+          position: relative;
         }
 
-        .review-date {
-          font-size: 12px;
-          color: #666;
+        .manufacturer-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
-        /* Customer Also Liked Section */
-        .customer-also-liked-section {
-          margin-bottom: 100px; /* Account for bottom action bar */
+        .specifications-container {
+          max-width: 1392px;
+          padding-left: 0;
+          padding-right: 0;
         }
-
-        .no-products {
-          text-align: center;
-          color: #666;
-          padding: 20px;
-          font-size: 14px;
+        .specifications-wrapper {
+          display: flex;
+          gap: 0;
+          justify-content: center;
+          align-items: flex-start;
+          margin-top: 24px;
+          width: 100%;
+          max-width: 1392px;
+          padding: 0 12px;
         }
-
-        /* Desktop Styles */
-        @media (min-width: 769px) {
-          .product-sections {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
+        .spec-table {
+          flex: 1;
+          min-width: 0;
+          max-width: 50%;
+        }
+        .spec-table table {
+          width: 100%;
+          max-width: 1392px;
+          border-collapse: collapse;
+        }
+        .spec-table th,
+        .spec-table td {
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 16px;
+          font-weight: 600;
+          text-align: left;
+          padding: 12px 16px;
+        }
+        .spec-table th {
+          color: #111;
+          background: transparent;
+          width: 160px;
+        }
+        .spec-table td {
+          color: #222;
+        }
+        /* Right table: normal coloring */
+        .spec-table-right tr:nth-child(even) td,
+        .spec-table-right tr:nth-child(even) th {
+          background: #f7f7f7;
+        }
+        .spec-table-right tr:nth-child(odd) td,
+        .spec-table-right tr:nth-child(odd) th {
+          background: #fff;
+        }
+        /* Left table: inverted coloring */
+        .spec-table-left tr:nth-child(odd) td,
+        .spec-table-left tr:nth-child(odd) th {
+          background: #f7f7f7;
+        }
+        .spec-table-left tr:nth-child(even) td,
+        .spec-table-left tr:nth-child(even) th {
+          background: #fff;
+        }
+        @media (max-width: 900px) {
+          .specifications-wrapper {
+            flex-direction: column;
+            gap: 0;
           }
+          .spec-table {
+            max-width: 100%;
+          }
+        }
 
+        @media (max-width: 768px) {
           .section-title {
             font-size: 28px;
+            margin-bottom: 32px;
+          }
+
+          .section {
+            margin-bottom: 60px;
+          }
+
+          .accordion-container {
+            max-width: 100%;
+            border-radius: 12px;
+          }
+
+          .accordion-header {
+            padding: 20px 24px;
+          }
+
+          .accordion-title {
+            font-size: 15px;
+          }
+
+          .accordion-toggle {
+            font-size: 22px;
+            width: 24px;
+            height: 24px;
+          }
+
+          .accordion-content {
+            padding: 20px 24px;
+          }
+
+          .accordion-content p {
+            font-size: 14px;
+          }
+
+          .description-container {
+            max-width: 100%;
+            border-radius: 12px;
+          }
+
+          .description-content {
+            padding: 24px;
+          }
+
+          .description-content p {
+            font-size: 14px;
+            margin-bottom: 16px;
+          }
+
+          .carousel-arrow {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+          }
+
+          .carousel-arrow.left {
+            left: 10px;
+          }
+
+          .carousel-arrow.right {
+            right: 10px;
+          }
+
+          .manufacturer-image {
+            height: 300px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .section-title {
+            font-size: 24px;
             margin-bottom: 24px;
           }
 
-          .products-carousel {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            overflow-x: visible;
+          .accordion-header {
+            padding: 16px 20px;
           }
 
-          .product-card {
-            flex: none;
+          .accordion-content {
+            padding: 16px 20px;
           }
 
-          .reviews-container {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 40px;
+          .description-content {
+            padding: 20px;
           }
 
-          .customer-also-liked-section {
-            margin-bottom: 40px;
+          .manufacturer-image {
+            height: 200px;
+          }
+
+          .carousel-arrow {
+            width: 36px;
+            height: 36px;
+            font-size: 18px;
+          }
+        }
+
+        .reviews-ratings-container {
+          display: flex;
+          gap: 48px;
+          max-width: 1392px;
+          margin: 0 auto;
+          padding: 0 24px;
+        }
+          .reviews-left {
+          flex: 1;
+          max-width: 340px;
+          background: transparent;
+          border: none;
+          box-shadow: none;
+        }
+        .reviews-title {
+          font-size: 32px;
+          font-weight: 600;
+          margin-bottom: 8px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+          .reviews-title-2 {
+          font-size: 24px;
+          font-weight: 600;
+          margin-bottom: 16px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+        .overall-rating-box {
+          background: #fff;
+          border-radius: 16px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          margin-bottom: 32px;
+          min-width: 320px;
+          max-width: 340px;
+        }
+        .overall-rating-label {
+          font-size: 24px;
+          font-weight: 600;
+          color: #000;
+          margin-bottom: 0;
+        }
+        .overall-rating-score {
+          font-size: 48px;
+          font-weight: 700;
+          color: #111;
+          margin-bottom: 4px;
+        }
+        .overall-rating-stars {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+        .overall-rating-based {
+          font-size: 15px;
+          color: #222;
+          margin-bottom: 18px;
+        }
+        .overall-rating-bars {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .rating-bar-row {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 15px;
+        }
+        .rating-bar-label {
+          width: 48px;
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          font-weight: 600;
+        }
+        .rating-bar-track {
+          flex: 1;
+          height: 8px;
+          background: #eee;
+          border-radius: 8px;
+          overflow: hidden;
+          margin: 0 8px;
+        }
+        .rating-bar-fill {
+          height: 100%;
+          border-radius: 8px;
+        }
+        .rating-bar-percent {
+          width: 38px;
+          text-align: right;
+          font-weight: 600;
+        }
+        .reviews-left {
+          flex: 1;
+          max-width: 340px;
+        }
+        .reviews-title {
+          font-size: 2rem;
+          font-weight: 700;
+          margin-bottom: 32px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+          .reviews-title-2 {
+          font-size: 24px;
+          font-weight: 600;
+          margin-bottom: 16px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+        .review-form {
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+        }
+        .form-input, .form-textarea {
+          width: 100%;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          padding: 10px 14px;
+          font-size: 16px;
+          font-family: inherit;
+          background: #fff;
+          margin-bottom: 0;
+        }
+        .form-input::placeholder,
+        .form-textarea::placeholder {
+          color: #000; /* Black placeholder text */
+        }
+        .form-upload-container {
+          width: 100%;
+        }
+        .form-upload-label {
+          display: block;
+          width: 100%;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          padding: 10px 14px;
+          font-size: 16px;
+          font-family: inherit;
+          background: #fff;
+          color: #000; /* Black text for upload label */
+          cursor: pointer;
+          text-align: left;
+        }
+        .upload-input {
+          display: none;
+        }
+        .form-actions {
+          display: flex;
+          gap: 16px;
+          margin-top: 8px;
+        }
+        .form-cancel {
+          flex: 1;
+          background: #fff;
+          border: 1px solid #111;
+          color: #111;
+          border-radius: 24px;
+          font-size: 16px;
+          font-weight: 500;
+          padding: 8px 0;
+          cursor: pointer;
+        }
+        .form-submit {
+          flex: 1;
+          background: #cbe6ff;
+          border: none;
+          color: #111;
+          border-radius: 24px;
+          font-size: 16px;
+          font-weight: 500;
+          padding: 8px 0;
+          cursor: pointer;
+        }
+        .reviews-right {
+          flex: 2.2;
+          min-width: 900px;
+        }
+        .reviews-summary {
+          margin-bottom: 24px;
+        }
+        .summary-title {
+          font-size: 24px;
+          font-weight: 600;
+          margin-bottom: 12px;
+        }
+        .summary-list {
+          margin: 0 0 18px 0;
+          padding-left: 18px;
+          font-size: 16px;
+          color: #222;
+          font-weight: 600;
+        }
+        .customer-photos-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 8px;
+        }
+        .customer-photos-title {
+          font-size: 15px;
+          font-weight: 600;
+          color: #222;
+        }
+        .customer-photos-viewall {
+          font-size: 15px;
+          color: #007aff;
+          font-weight: 500;
+          text-decoration: none;
+        }
+        .customer-photos-list {
+          display: flex;
+          gap: 16px;
+          margin-bottom: 18px;
+        }
+        .customer-photo {
+          width: 108px;
+          height: 108px;
+          border-radius: 12px;
+          background: #111;
+          display: inline-block;
+        }
+        .reviews-list {
+          display: flex;
+          flex-direction: column;
+          gap: 32px;
+        }
+        .review-item {
+          display: flex;
+          gap: 18px;
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .review-photo {
+          width: 60px;
+          height: 60px;
+          border-radius: 8px;
+          background: #111;
+          flex-shrink: 0;
+        }
+        .review-content {
+          flex: 1;
+        }
+        .review-text {
+          font-size: 16px;
+          color: #222;
+          font-weight: 500;
+          margin-bottom: 8px;
+        }
+        .review-meta {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          color: #222;
+          margin-bottom: 4px;
+        }
+        .review-author {
+          font-weight: 600;
+          font-size: 16px;
+          color: #000;
+        }
+        .review-verified {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+          font-weight: 600;
+          font-size: 16px;
+          color: #000;
+        }
+        .review-date {
+          color: #000;
+          font-size: 14px;
+          font-weight: 600;
+        }
+        @media (max-width: 1100px) {
+          .reviews-ratings-container {
+            flex-direction: column;
+            gap: 32px;
+            padding: 0 12px;
+          }
+          .reviews-left, .reviews-right {
+            max-width: 100%;
+          }
+        }
+        @media (max-width: 768px) {
+          .reviews-title {
+            font-size: 1.3rem;
+            margin-bottom: 18px;
+          }
+          .reviews-ratings-container {
+            padding: 0 4px;
+          }
+          .customer-photo {
+            width: 54px;
+            height: 54px;
+          }
+          .review-photo {
+            width: 36px;
+            height: 36px;
+          }
+        }
+        @media (max-width: 480px) {
+          .reviews-title {
+            font-size: 1.1rem;
+          }
+          .customer-photo {
+            width: 38px;
+            height: 38px;
+          }
+          .review-photo {
+            width: 28px;
+            height: 28px;
           }
         }
       `}</style>

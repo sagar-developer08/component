@@ -964,10 +964,10 @@ const Navigation = memo(function Navigation() {
             display: none;
           }
 
-          /* Show cart and wishlist on mobile */
+          /* Hide cart and wishlist on mobile - they're in hamburger menu */
           .nav-actions .action-btn:nth-child(3),
           .nav-actions .action-btn:nth-child(4) {
-            display: flex;
+            display: none;
           }
 
           .nav-actions {
@@ -1018,10 +1018,10 @@ const Navigation = memo(function Navigation() {
             padding: 0 12px;
           }
 
-          /* Show cart and wishlist on mobile */
+          /* Hide cart and wishlist on mobile - they're in hamburger menu */
           .nav-actions .action-btn:nth-child(3),
           .nav-actions .action-btn:nth-child(4) {
-            display: flex;
+            display: none;
           }
 
           .nav-actions {
