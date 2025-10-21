@@ -112,6 +112,11 @@ export const addresses = {
   setDefault: `${BASES.auth}/addresses/default`,
 }
 
+export const orders = {
+  base: `${BASES.cart}/orders`,
+  getUserOrders: `${BASES.cart}/orders/user-orders`,
+}
+
 
 export const upload = {
   base: `${BASES.upload}/upload`,
@@ -139,6 +144,6 @@ export const review = {
   userReviews: `${BASES.review}/reviews/user/product-reviews`,
 }
 
-export default { catalog, search, auth, cart, addresses, upload, review }
+export default { catalog, search, auth, cart, addresses, orders, upload, review }
 
 

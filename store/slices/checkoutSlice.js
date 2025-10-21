@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { getAuthToken } from '../../utils/userUtils'
 import { addresses, payment } from '../api/endpoints'
+ 
 
 // Async thunks for checkout operations
 export const fetchUserAddresses = createAsyncThunk(
@@ -113,20 +114,23 @@ export const createStripePaymentIntent = createAsyncThunk(
 
       console.log('✅ Auth token obtained')
 
+      
+
       // Handle Stripe payment
       const stripeCheckoutData = {
-        items: orderData.items.map(item => ({
-          productId: item.productId || item.id || `product_${Math.random().toString(36).substr(2, 9)}`,
-          name: item.name || 'Product',
-          quantity: item.quantity || 1,
-          price: item.price || 0,
-          image: item.image || 'https://example.com/image.jpg'
-        })),
+        items: orderData.items.map(item => {
+          return {
+            productId: item.productId || item.id,
+            name: item.name || 'Product',
+            quantity: item.quantity || 1,
+            price: item.price || 0,
+            image: item.image || 'https://example.com/image.jpg'
+          }
+        }),
         total: orderData.total,
         currency: 'usd'
       }
 
-      console.log('📤 Sending payment request:', stripeCheckoutData)
       console.log('🔗 Endpoint:', payment.stripeCheckout)
 
       const response = await fetch(payment.stripeCheckout, {

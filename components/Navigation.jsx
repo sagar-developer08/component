@@ -141,22 +141,7 @@ const Navigation = memo(function Navigation() {
     }
   }, [])
 
-  // When authenticated, fetch cart, wishlist, and profile to populate counts
-  useEffect(() => {
-    if (!isAuthenticated) return
-    (async () => {
-      try {
-        const userId = await getUserFromCookies()
-        if (userId) {
-          dispatch(fetchCart(userId))
-        }
-      } catch (e) {
-        console.error('Nav: failed to fetch cart after login', e)
-      }
-      dispatch(fetchWishlist())
-      dispatch(fetchProfile())
-    })()
-  }, [isAuthenticated, dispatch])
+  // Cart, wishlist, and profile are now fetched automatically in AuthContext on login
 
   // Debounce search query
   useEffect(() => {
