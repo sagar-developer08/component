@@ -42,7 +42,7 @@ export default function CheckoutPage() {
   const { items: cartItems, total: cartTotal, loading: cartLoading } = useSelector(state => state.cart)
 
   // Profile state - for user data
-  const { user } = useSelector(state => state.profile)
+  const { user, addresses: profileAddresses } = useSelector(state => state.profile)
 
   // Checkout state
   const {
@@ -63,6 +63,11 @@ export default function CheckoutPage() {
     isCreatingPaymentIntent,
     paymentIntentError
   } = useSelector(state => state.checkout)
+
+  // Prefer checkout slice addresses; fall back to profile addresses
+  const displayAddresses = (userAddresses && userAddresses.length > 0)
+    ? userAddresses
+    : (profileAddresses || [])
 
   // Calculate total if not provided by API
   const calculatedTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
@@ -127,6 +132,14 @@ export default function CheckoutPage() {
       }))
     }
   }, [showAddressForm, user, dispatch])
+
+  // Ensure a selected address when addresses are available (prefer default)
+  useEffect(() => {
+    if (!selectedAddress && displayAddresses.length > 0) {
+      const defaultAddr = displayAddresses.find(a => a.isDefault)
+      dispatch(setSelectedAddress(defaultAddr || displayAddresses[0]))
+    }
+  }, [displayAddresses, selectedAddress, dispatch])
 
   // Debug: Log cart data when it changes (commented out to prevent console spam)
   // useEffect(() => {
@@ -460,14 +473,14 @@ export default function CheckoutPage() {
 
               {loadingAddresses ? (
                 <div className={styles.loadingText}>Loading addresses...</div>
-              ) : userAddresses.length > 0 ? (
+              ) : displayAddresses.length > 0 ? (
                 <>
                   {/* Display existing addresses */}
                   <div className={styles.addressesList}>
-                    {userAddresses.map((address) => (
+                    {displayAddresses.map((address) => (
                       <div
-                        key={address.id}
-                        className={`${styles.addressCard} ${selectedAddress?.id === address.id ? styles.selectedAddress : ''}`}
+                        key={address.id || address._id}
+                        className={`${styles.addressCard} ${((selectedAddress?.id || selectedAddress?._id) === (address.id || address._id)) ? styles.selectedAddress : ''}`}
                         onClick={() => dispatch(setSelectedAddress(address))}
                         style={{ cursor: 'pointer' }}
                       >
@@ -486,7 +499,7 @@ export default function CheckoutPage() {
                               <span className={styles.defaultBadge}>Default</span>
                             )} */}
                           </div>
-                          {selectedAddress?.id === address.id && (
+                          {((selectedAddress?.id || selectedAddress?._id) === (address.id || address._id)) && (
                             <div className={styles.selectedIndicator}>
                               <FontAwesomeIcon icon={faCheck} className={styles.checkIcon} />
                             </div>
