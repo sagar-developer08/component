@@ -21,9 +21,6 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchProducts } from '@/store/slices/productsSlice'
-import { fetchCart } from '@/store/slices/cartSlice'
-import { fetchWishlist } from '@/store/slices/wishlistSlice'
-import { getUserFromCookies } from '@/utils/userUtils'
 import { fetchBrands } from '@/store/slices/brandsSlice'
 import { fetchStores } from '@/store/slices/storesSlice'
 import { fetchPopularCategories, fetchLevel2Categories } from '@/store/slices/categoriesSlice'
@@ -307,21 +304,7 @@ export default function Home() {
     dispatch(fetchLevel2Categories());
   }, [dispatch]);
 
-  // Ensure cart and wishlist are loaded on home page
-  useEffect(() => {
-    (async () => {
-      try {
-        const userId = await getUserFromCookies()
-        if (userId) {
-          dispatch(fetchCart(userId))
-        }
-      } catch (e) {
-        console.error('Failed to load cart on home:', e)
-      }
-      // Wishlist fetch uses token from cookies internally
-      dispatch(fetchWishlist())
-    })()
-  }, [dispatch])
+  // Cart and wishlist are now fetched on login, not on home page visit
 
   // Transform API data for different sections with memoization
   const transformedProducts = useMemo(() => products.map(transformProductData), [products]);

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { getAuthToken, getUserFromCookies } from '../../utils/userUtils'
 import { cart } from '../api/endpoints'
+ 
 
 // Async thunks for API calls
 export const addToCart = createAsyncThunk(
@@ -228,6 +229,9 @@ const cartSlice = createSlice({
         state.loading = false
         // Handle the API response structure: { success, message, data: { cart: { items, totalItems, totalPrice } } }
         const cartData = action.payload.data?.cart || action.payload.cart || action.payload
+        
+        
+        
         state.items = cartData.items || []
         state.itemsCount = cartData.totalItems || cartData.itemsCount || 0
         state.total = cartData.totalPrice || cartData.total || 0

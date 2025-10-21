@@ -1,6 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchProfile, fetchOrders } from '@/store/slices/profileSlice'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
@@ -15,13 +17,27 @@ import QoynsHistory from '../../components/profile/QoynsHistory/QoynsHistory'
 import SendQoyn from '../../components/profile/SendQoyn/SendQoyn'
 import NewAddress from '../../components/profile/NewAddress/newAddress'
 
-// User data is now fetched from the aggregated API in each component
+// User data is now fetched once in the main ProfilePage component and passed down
 
 export default function ProfilePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const dispatch = useDispatch()
+  const { user, addresses, orders, loading, error } = useSelector(state => state.profile)
   const [activeTab, setActiveTab] = useState('personal-info')
   const [isEditing, setIsEditing] = useState(false)
+
+  // Fetch profile data once when component mounts
+  useEffect(() => {
+    dispatch(fetchProfile())
+  }, [dispatch])
+
+  // Fetch orders when orders tab becomes active
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      dispatch(fetchOrders())
+    }
+  }, [activeTab, dispatch])
 
   // Initialize active tab from URL parameter
   useEffect(() => {
@@ -166,60 +182,77 @@ export default function ProfilePage() {
             )}
           </div>
           <div className={styles.mainContent}>
-            {activeTab === 'personal-info' && (
+            {loading && (
               <div className={styles.sectionContent}>
-                <PersonalInfo />
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  Loading profile data...
+                </div>
               </div>
             )}
-            {activeTab === 'cash-wallet' && (
+            {error && (
               <div className={styles.sectionContent}>
-                <CashWallet />
+                <div style={{ textAlign: 'center', padding: '40px', color: 'red' }}>
+                  Error loading profile: {error}
+                </div>
               </div>
             )}
-            {activeTab === 'add-card' && (
-              <div className={styles.sectionContent}>
-                <AddCard
-                  onCancel={handleNewCardCancel}
-                  onSave={handleNewCardSave}
-                />
-              </div>
-            )}
-            {activeTab === 'qoyns-wallet' && (
-              <div className={styles.sectionContent}>
-                <QoynsWallet
-                />
-              </div>
-            )}
-            {activeTab === 'qoyns-history' && (
-              <div className={styles.sectionContent}>
-                <QoynsHistory />
-              </div>
-            )}
-            {activeTab === 'send-qoyn' && (
-              <div className={styles.sectionContent}>
-                <SendQoyn
-                  onCancel={handleSendQoynCancel}
-                  onSave={handleSendQoynSave}
-                />
-              </div>
-            )}
-            {activeTab === 'orders' && (
-              <div className={styles.sectionContent}>
-                <Orders />
-              </div>
-            )}
-            {activeTab === 'addresses' && (
-              <div className={styles.sectionContent}>
-                <Addresses />
-              </div>
-            )}
-            {activeTab === 'new-address' && (
-              <div className={styles.sectionContent}>
-                <NewAddress
-                  onCancel={handleNewAddressCancel}
-                  onSave={handleNewAddressSave}
-                />
-              </div>
+            {!loading && !error && (
+              <>
+                {activeTab === 'personal-info' && (
+                  <div className={styles.sectionContent}>
+                    <PersonalInfo user={user} />
+                  </div>
+                )}
+                {activeTab === 'cash-wallet' && (
+                  <div className={styles.sectionContent}>
+                    <CashWallet user={user} />
+                  </div>
+                )}
+                {activeTab === 'add-card' && (
+                  <div className={styles.sectionContent}>
+                    <AddCard
+                      onCancel={handleNewCardCancel}
+                      onSave={handleNewCardSave}
+                    />
+                  </div>
+                )}
+                {activeTab === 'qoyns-wallet' && (
+                  <div className={styles.sectionContent}>
+                    <QoynsWallet user={user} />
+                  </div>
+                )}
+                {activeTab === 'qoyns-history' && (
+                  <div className={styles.sectionContent}>
+                    <QoynsHistory user={user} />
+                  </div>
+                )}
+                {activeTab === 'send-qoyn' && (
+                  <div className={styles.sectionContent}>
+                    <SendQoyn
+                      onCancel={handleSendQoynCancel}
+                      onSave={handleSendQoynSave}
+                    />
+                  </div>
+                )}
+                {activeTab === 'orders' && (
+                  <div className={styles.sectionContent}>
+                    <Orders orders={orders} />
+                  </div>
+                )}
+                {activeTab === 'addresses' && (
+                  <div className={styles.sectionContent}>
+                    <Addresses addresses={addresses} />
+                  </div>
+                )}
+                {activeTab === 'new-address' && (
+                  <div className={styles.sectionContent}>
+                    <NewAddress
+                      onCancel={handleNewAddressCancel}
+                      onSave={handleNewAddressSave}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

@@ -1,10 +1,17 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect } from 'react'
+import { useDispatch } from 'react-redux'
+import { fetchCart } from '@/store/slices/cartSlice'
+import { fetchWishlist } from '@/store/slices/wishlistSlice'
+import { fetchProfile } from '@/store/slices/profileSlice'
+import { getUserFromCookies } from '@/utils/userUtils'
 
 const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
+  const dispatch = useDispatch()
+  
   // Use a safe toast function that won't break if ToastProvider isn't available
   const showToast = (message, type = 'success') => {
     if (typeof window !== 'undefined') {
@@ -18,7 +25,7 @@ export function AuthProvider({ children }) {
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
 
-  // Check for existing token on mount
+  // Check for existing token on mount and load user data if authenticated
   useEffect(() => {
     // Do not use localStorage for tokens. Optionally, restore session from cognitoId cookie.
     if (typeof document !== 'undefined') {
@@ -27,16 +34,44 @@ export function AuthProvider({ children }) {
       const tokenCookie = cookies.find(c => c.startsWith('accessToken='))
       if (cognitoCookie || tokenCookie) {
         setIsAuthenticated(true)
+        
+        // Load user's cart, wishlist, and profile data if already authenticated
+        const loadUserData = async () => {
+          try {
+            const userId = await getUserFromCookies()
+            if (userId) {
+              dispatch(fetchCart(userId))
+            }
+            dispatch(fetchWishlist())
+            dispatch(fetchProfile())
+          } catch (e) {
+            console.error('Failed to load user data on app init:', e)
+          }
+        }
+        loadUserData()
       }
     }
     setIsInitialized(true)
-  }, [])
+  }, [dispatch])
 
-  const login = (userData, authToken, skipToast = false) => {
+  const login = async (userData, authToken, skipToast = false) => {
     setToken(authToken)
     setUser(userData)
     setIsAuthenticated(true)
     setLoginModalOpen(false)
+    
+    // Fetch user's cart, wishlist, and profile data immediately after login
+    try {
+      const userId = await getUserFromCookies()
+      if (userId) {
+        dispatch(fetchCart(userId))
+      }
+      dispatch(fetchWishlist())
+      dispatch(fetchProfile())
+    } catch (e) {
+      console.error('Failed to load user data after login:', e)
+    }
+    
     if (!skipToast) {
       showToast('Logged in')
     }

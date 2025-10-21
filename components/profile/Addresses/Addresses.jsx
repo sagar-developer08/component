@@ -1,21 +1,17 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchProfile, setDefaultAddress } from '../../../store/slices/profileSlice'
+import { setDefaultAddress } from '../../../store/slices/profileSlice'
 import { useToast } from '../../../contexts/ToastContext'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck, faHome, faBriefcase, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons'
 import styles from './addresses.module.css'
 
-export default function Addresses() {
+export default function Addresses({ addresses }) {
   const dispatch = useDispatch()
   const { show } = useToast()
-  const { addresses, loading, error, settingDefault, defaultAddressError } = useSelector(state => state.profile)
+  const { settingDefault, defaultAddressError } = useSelector(state => state.profile)
   const [selectedAddress, setSelectedAddress] = useState(null)
-
-  useEffect(() => {
-    dispatch(fetchProfile())
-  }, [dispatch])
 
   // Set initial selected address to default address
   useEffect(() => {
@@ -42,23 +38,7 @@ export default function Addresses() {
     setSelectedAddress(address)
   }
 
-  if (loading) {
-    return (
-      <div className={styles.walletHeader}>
-        <div style={{ textAlign: 'center', padding: '20px' }}>Loading addresses...</div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className={styles.walletHeader}>
-        <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
-          Error loading addresses: {error}
-        </div>
-      </div>
-    )
-  }
+  // Loading and error states are now handled in the parent ProfilePage component
 
   if (!addresses || addresses.length === 0) {
     return (

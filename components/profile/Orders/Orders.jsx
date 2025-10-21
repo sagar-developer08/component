@@ -1,19 +1,10 @@
 'use client'
-import { useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { fetchProfile } from '../../../store/slices/profileSlice'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import styles from './orders.module.css'
 
-export default function Orders() {
-  const dispatch = useDispatch()
+export default function Orders({ orders }) {
   const router = useRouter()
-  const { orders, loading, error } = useSelector(state => state.profile)
-
-  useEffect(() => {
-    dispatch(fetchProfile())
-  }, [dispatch])
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
@@ -33,6 +24,25 @@ export default function Orders() {
         return '#F44336'
       case 'processing':
         return '#2196F3'
+      case 'shipped':
+        return '#9C27B0'
+      case 'in-transit':
+        return '#2196F3'
+      default:
+        return '#666'
+    }
+  }
+
+  const getPaymentStatusColor = (paymentStatus) => {
+    switch (paymentStatus.toLowerCase()) {
+      case 'paid':
+        return '#4CAF50'
+      case 'pending':
+        return '#FF9800'
+      case 'failed':
+        return '#F44336'
+      case 'refunded':
+        return '#9C27B0'
       default:
         return '#666'
     }
@@ -45,23 +55,7 @@ export default function Orders() {
     router.push(url)
   }
 
-  if (loading) {
-    return (
-      <div className={styles.ordersList}>
-        <div style={{ textAlign: 'center', padding: '20px' }}>Loading orders...</div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className={styles.ordersList}>
-        <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
-          Error loading orders: {error}
-        </div>
-      </div>
-    )
-  }
+  // Loading and error states are now handled in the parent ProfilePage component
 
   if (!orders || orders.length === 0) {
     return (
@@ -74,8 +68,30 @@ export default function Orders() {
   }
 
   return (
-    <div className={styles.ordersList}>
-      {orders.map((order) => (
+    <div className={styles.ordersContainer}>
+      <div className={styles.ordersSummary} style={{ 
+        padding: '16px', 
+        backgroundColor: '#f8f9fa', 
+        borderRadius: '8px', 
+        marginBottom: '20px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Your Orders</h3>
+          <p style={{ margin: '4px 0 0 0', color: '#666', fontSize: '14px' }}>
+            {orders.length} order{orders.length !== 1 ? 's' : ''} found
+          </p>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '14px', color: '#666' }}>
+            Total Amount: {orders.length > 0 ? orders[0].currency || 'USD' : 'USD'} {orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0).toFixed(2)}
+          </div>
+        </div>
+      </div>
+      <div className={styles.ordersList}>
+        {orders.map((order) => (
         (order.items || []).map((item, idx) => (
           <div 
             key={`${order._id}_${idx}`}
@@ -103,8 +119,18 @@ export default function Orders() {
               <div className={styles.orderName}>
                 {item?.name || 'No items'}
               </div>
+              {item?.quantity && (
+                <div className={styles.orderQuantity} style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                  Qty: {item.quantity}
+                </div>
+              )}
+              {item?.vendorName && item.vendorName !== 'Unknown Vendor' && (
+                <div className={styles.orderVendor} style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                  {item.vendorName}
+                </div>
+              )}
               <div className={styles.orderPrice}>
-                {"AED"} {item?.price ?? order.totalAmount}
+                {order.currency || "USD"} {item?.price ?? order.totalAmount}
               </div>
               <div 
                 className={styles.orderStatus}
@@ -116,7 +142,7 @@ export default function Orders() {
             <div className={styles.orderRightSection}>
               <div className={styles.orderDate}>{formatDate(order.createdAt)}</div>
               <div className={styles.paymentStatus} style={{ 
-                color: order.paymentStatus === 'paid' ? '#4CAF50' : '#FF9800',
+                color: getPaymentStatusColor(order.paymentStatus),
                 fontSize: '12px',
                 marginTop: '4px'
               }}>
@@ -126,6 +152,7 @@ export default function Orders() {
           </div>
         ))
       ))}
+      </div>
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { auth, addresses } from '../api/endpoints'
+import { auth, addresses, orders } from '../api/endpoints'
 import { decryptText } from '../../utils/crypto'
 
 // Fetch user profile data with aggregated information
@@ -80,6 +80,42 @@ export const setDefaultAddress = createAsyncThunk(
   }
 )
 
+// Fetch user orders specifically
+export const fetchOrders = createAsyncThunk(
+  'profile/fetchOrders',
+  async (_, { rejectWithValue }) => {
+    try {
+      let token = ''
+      if (typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';').map(c => c.trim())
+        const tokenCookie = cookies.find(c => c.startsWith('accessToken='))
+        if (tokenCookie) {
+          try {
+            const enc = decodeURIComponent(tokenCookie.split('=')[1] || '')
+            token = await decryptText(enc)
+          } catch {}
+        }
+      }
+
+      const response = await fetch(orders.getUserOrders, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          'Content-Type': 'application/json',
+        }
+      })
+      
+      if (!response.ok) {
+        const text = await response.text()
+        throw new Error(text || `HTTP error ${response.status}`)
+      }
+      
+      return await response.json()
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const initialState = {
   user: null,
   addresses: [],
@@ -144,6 +180,22 @@ const profileSlice = createSlice({
       .addCase(setDefaultAddress.rejected, (state, action) => {
         state.settingDefault = false
         state.defaultAddressError = action.payload
+      })
+      // Fetch orders
+      .addCase(fetchOrders.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchOrders.fulfilled, (state, action) => {
+        state.loading = false
+        // Handle both direct orders array and nested data structure
+        state.orders = action.payload.data?.orders || action.payload.orders || []
+        state.error = null
+      })
+      .addCase(fetchOrders.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+        state.orders = []
       })
   }
 })

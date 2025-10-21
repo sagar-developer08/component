@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { useRouter } from 'next/navigation'
 import { fetchProfile } from '@/store/slices/profileSlice'
 import { useAuth } from '../../../contexts/AuthContext'
@@ -8,11 +8,10 @@ import { auth, upload } from '@/store/api/endpoints'
 import { decryptText } from '@/utils/crypto'
 import styles from './personalInfo.module.css'
 
-export default function PersonalInfo() {
+export default function PersonalInfo({ user }) {
   const dispatch = useDispatch()
   const router = useRouter()
   const { logout } = useAuth()
-  const { user, loading, error } = useSelector(state => state.profile)
   const [isEditing, setIsEditing] = useState(false)
   const [showChangePassword, setShowChangePassword] = useState(false)
   const [formData, setFormData] = useState({
@@ -47,9 +46,7 @@ export default function PersonalInfo() {
     confirmPassword: false
   })
 
-  useEffect(() => {
-    dispatch(fetchProfile())
-  }, [dispatch])
+  // No longer need to fetch profile data here - it's passed as props
 
 
   useEffect(() => {
@@ -557,25 +554,7 @@ export default function PersonalInfo() {
     // Redirect to home page
     router.push('/')
   }
-  if (loading) {
-    return (
-      <div className={styles.profileForm}>
-        <div style={{ textAlign: 'center', padding: '20px' }}>
-          Loading profile data...
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className={styles.profileForm}>
-        <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
-          Error loading profile: {error}
-        </div>
-      </div>
-    )
-  }
+  // Loading and error states are now handled in the parent ProfilePage component
 
   return (
     <form className={styles.profileForm}>

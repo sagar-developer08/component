@@ -161,6 +161,7 @@ export default function CartDrawer({ open, onClose }) {
                           className="cart-qty-btn"
                           onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
                           disabled={item.quantity <= 1}
+                          aria-label="Decrease quantity"
                         >
                           -
                         </button>
@@ -168,6 +169,7 @@ export default function CartDrawer({ open, onClose }) {
                         <button
                           className="cart-qty-btn"
                           onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                          aria-label="Increase quantity"
                         >
                           +
                         </button>
@@ -176,19 +178,20 @@ export default function CartDrawer({ open, onClose }) {
                       <button
                         className="cart-wishlist-btn"
                         onClick={() => handleAddToWishlist(item.productId)}
+                        aria-label="Add to wishlist"
                       >
                         <svg width="28" height="28" viewBox="6 0 28 26" fill="none">
                           <path d="M20.09 18.5586L20 18.6458L19.901 18.5586C15.626 14.8005 12.8 12.3155 12.8 9.7956C12.8 8.0518 14.15 6.7439 15.95 6.7439C17.336 6.7439 18.686 7.6158 19.163 8.8016H20.837C21.314 7.6158 22.664 6.7439 24.05 6.7439C25.85 6.7439 27.2 8.0518 27.2 9.7956C27.2 12.3155 24.374 14.8005 20.09 18.5586Z" stroke="#0082FF" strokeWidth="2" />
                         </svg>
                       </button>
                     </div>
+                    <button
+                      className="cart-remove-btn"
+                      onClick={() => handleRemoveItem(item.productId)}
+                    >
+                      Remove
+                    </button>
                   </div>
-                  <button
-                    className="cart-remove-btn"
-                    onClick={() => handleRemoveItem(item.productId)}
-                  >
-                    Remove
-                  </button>
                 </div>
               )) : (
                 <div className="cart-empty">
@@ -253,8 +256,18 @@ export default function CartDrawer({ open, onClose }) {
           background: none;
           border: none;
           cursor: pointer;
-          padding: 0;
+          padding: 8px;
           border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background-color 0.2s ease;
+        }
+        .drawer-close:hover {
+          background-color: rgba(0, 0, 0, 0.05);
+        }
+        .drawer-close:active {
+          background-color: rgba(0, 0, 0, 0.1);
         }
         .drawer-divider {
           border-bottom: 1px solid #e5e5e5;
@@ -350,6 +363,16 @@ export default function CartDrawer({ open, onClose }) {
           display: flex;
           align-items: center;
           justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          touch-action: manipulation;
+        }
+        .cart-qty-btn:hover {
+          background-color: #f5f5f5;
+        }
+        .cart-qty-btn:active {
+          background-color: #e5e5e5;
+          transform: scale(0.95);
         }
         .cart-qty {
           font-size: 16px;
@@ -475,6 +498,31 @@ export default function CartDrawer({ open, onClose }) {
           color: #666;
           margin: 0;
         }
+        .cart-loading {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 20px;
+          text-align: center;
+        }
+        .cart-loading p {
+          margin-top: 16px;
+          color: #666;
+          font-size: 16px;
+        }
+        .cart-error {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 40px 20px;
+          text-align: center;
+        }
+        .cart-error p {
+          color: #ff4444;
+          margin-bottom: 16px;
+        }
         .cart-items {
           display: flex;
           flex-direction: column;
@@ -488,15 +536,166 @@ export default function CartDrawer({ open, onClose }) {
           opacity: 0.5;
           cursor: not-allowed;
         }
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
           .drawer {
             width: 100vw;
             padding: 0;
           }
-          .drawer-header,
-          .drawer-content,
+          .drawer-header {
+            padding: 20px 16px 0 16px;
+          }
+          .drawer-content {
+            padding: 20px 16px 0 16px;
+            padding-bottom: 120px;
+          }
           .drawer-footer {
             padding: 16px;
+          }
+          .drawer-title {
+            font-size: 20px;
+          }
+          .drawer-close {
+            padding: 12px;
+          }
+          .cart-item {
+            flex-direction: column;
+            gap: 16px;
+            padding: 16px;
+            border: 1px solid #e5e5e5;
+            border-radius: 12px;
+            background: #fafafa;
+          }
+          .cart-image-wrap {
+            width: 100%;
+            height: 120px;
+            align-self: center;
+          }
+          .cart-image {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+          }
+          .cart-info {
+            width: 100%;
+          }
+          .cart-brand {
+            font-size: 12px;
+          }
+          .cart-name {
+            font-size: 16px;
+            line-height: 1.4;
+          }
+          .cart-price {
+            font-size: 18px;
+          }
+          .cart-actions {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+            margin-top: 16px;
+          }
+          .cart-qty-control {
+            width: 100%;
+            justify-content: space-between;
+            padding: 0 16px;
+          }
+          .cart-qty-btn {
+            width: 48px;
+            height: 48px;
+            font-size: 20px;
+          }
+          .cart-qty {
+            font-size: 18px;
+          }
+          .cart-wishlist-btn {
+            width: 48px;
+            height: 48px;
+            align-self: center;
+          }
+          .cart-remove-btn {
+            margin-left: 0;
+            margin-top: 8px;
+            padding: 8px 16px;
+            background: #ff4444;
+            color: white;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+          }
+          .drawer-checkout-btn {
+            padding: 16px 24px;
+            font-size: 16px;
+          }
+          .drawer-total {
+            padding: 16px 24px;
+            font-size: 16px;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .drawer-header {
+            padding: 16px 12px 0 12px;
+          }
+          .drawer-content {
+            padding: 16px 12px 0 12px;
+            padding-bottom: 120px;
+          }
+          .drawer-footer {
+            padding: 12px;
+          }
+          .cart-item {
+            padding: 12px;
+            gap: 12px;
+          }
+          .cart-image-wrap {
+            height: 100px;
+          }
+          .cart-name {
+            font-size: 14px;
+          }
+          .cart-price {
+            font-size: 16px;
+          }
+          .cart-qty-control {
+            padding: 0 12px;
+          }
+          .cart-qty-btn {
+            width: 44px;
+            height: 44px;
+            font-size: 18px;
+          }
+          .cart-wishlist-btn {
+            width: 44px;
+            height: 44px;
+          }
+          .drawer-checkout-btn {
+            padding: 14px 20px;
+            font-size: 14px;
+          }
+          .drawer-total {
+            padding: 14px 20px;
+            font-size: 14px;
+          }
+          .cart-empty {
+            padding: 40px 16px;
+          }
+          .cart-empty h3 {
+            font-size: 18px;
+          }
+          .cart-empty p {
+            font-size: 14px;
+          }
+          .cart-loading {
+            padding: 30px 16px;
+          }
+          .cart-loading p {
+            font-size: 14px;
+          }
+          .cart-error {
+            padding: 30px 16px;
+          }
+          .cart-error p {
+            font-size: 14px;
           }
         }
       `}</style>
