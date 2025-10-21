@@ -154,7 +154,7 @@ export default function ProductDetails({ product }) {
   return (
     <div className="product-details">
       <div className="product-main">
-        {/* Left Side - Product Images */}
+        {/* Product Images Section */}
         <div className="product-images">
           <div className="main-image-container">
             <button className="nav-arrow left" onClick={prevImage}>
@@ -166,8 +166,8 @@ export default function ProductDetails({ product }) {
             <Image
               src={product.images[currentImageIndex]}
               alt={product.name}
-              width={600}
-              height={650}
+              width={400}
+              height={400}
               className="main-image"
             />
 
@@ -189,39 +189,47 @@ export default function ProductDetails({ product }) {
           </div>
         </div>
 
-        {/* Right Side - Product Details */}
+        {/* Product Information Section */}
         <div className="product-info">
-          {/* First row: Brand name and bought count */}
-          <div className="first-row">
+          {/* Brand and Bought Count */}
+          <div className="brand-row">
             <div className="brand-name">{product.brand}</div>
-            <span className="bought-count">{product.boughtCount}</span>
+            <div className="bought-count">{product.boughtCount}</div>
           </div>
 
-          {/* Second row: Product name and delivery time */}
-          <div className="stats">
+          {/* Product Name and Availability */}
+          <div className="product-name-row">
             <h1 className="product-name">{product.name}</h1>
-            <span className="delivery-time">{product.deliveryTime}</span>
+            <div className="availability-info">
+              <div className="delivery-time">{product.deliveryTime}</div>
+              <div className="stock-status">{product.stock}</div>
+            </div>
           </div>
-          <div className="second-row-stats">
-            <div className="stock-status">{product.stock}</div>
+
+          {/* Rating */}
+          <div className="rating-section">
             <div className="rating">
               {[...Array(5)].map((_, i) => (
-                <svg key={i} width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <svg key={i} width="16" height="16" viewBox="0 0 20 20" fill="none">
                   <path d="M10 15.0742L12.4208 16.5384C12.8635 16.8067 13.406 16.41 13.2894 15.9084L12.6477 13.155L14.7885 11.3C15.1794 10.9617 14.9694 10.32 14.456 10.2792L11.6385 10.04L10.536 7.43836C10.3377 6.96586 9.66104 6.96586 9.4627 7.43836L8.3602 10.0342L5.5427 10.2734C5.02937 10.3142 4.81937 10.9559 5.2102 11.2942L7.35104 13.1492L6.70937 15.9025C6.5927 16.4042 7.1352 16.8009 7.57854 16.5325L10 15.0742Z" fill="#0082FF" />
                 </svg>
               ))}
             </div>
           </div>
-          <div className="pricing">
-            <span className="original-price">AED {product.originalPrice.toLocaleString()}</span>
-            <span className="current-price">AED {product.price.toLocaleString()}</span>
-            <span className="discount">{product.discount}% Off</span>
+
+          {/* Pricing */}
+          <div className="pricing-section">
+            <div className="price-row">
+              <span className="original-price">AED {product.originalPrice.toLocaleString()}</span>
+              <span className="current-price">AED {product.price.toLocaleString()}</span>
+              <span className="discount">{product.discount}% Off</span>
+            </div>
           </div>
 
-          {/* Color Selection - Only show if multiple colors available */}
+          {/* Color Selection */}
           {product.colors && product.colors.length > 1 && (
-            <div className="selection-group">
-              <label>Color:</label>
+            <div className="selection-section">
+              <div className="selection-label">Color:</div>
               <div className="color-options">
                 {product.colors.map((color) => (
                   <button
@@ -237,14 +245,19 @@ export default function ProductDetails({ product }) {
                     {color}
                   </button>
                 ))}
+                <div className="fox-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#FF6B35"/>
+                  </svg>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Size Selection - Only show if multiple sizes available */}
+          {/* Size Selection */}
           {product.sizes && product.sizes.length > 1 && (
-            <div className="selection-group">
-              <label>Size:</label>
+            <div className="selection-section">
+              <div className="selection-label">Size:</div>
               <div className="size-options">
                 {product.sizes.map((size) => (
                   <button
@@ -264,138 +277,135 @@ export default function ProductDetails({ product }) {
             </div>
           )}
 
-          {/* Quantity Selector and Share Section */}
-          <div className="quantity-share-container">
-            <div className="selection-group">
-              <label>Quantity:</label>
-              <div className="quantity-selector">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
-                <span>{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)}>+</button>
-              </div>
-            </div>
-            <div className="share-section">
-              <span>Share:</span>
-              <div className="share-icons">
-                <svg width="24" height="24" viewBox="0 0 24 22" fill="none">
-                  <path fillRule="evenodd" clipRule="evenodd" d="M16 3.24268H8C5.23858 3.24268 3 5.48126 3 8.24268V16.2427C3 19.0041 5.23858 21.2427 8 21.2427H16C18.7614 21.2427 21 19.0041 21 16.2427V8.24268C21 5.48126 18.7614 3.24268 16 3.24268ZM19.25 16.2427C19.2445 18.0353 17.7926 19.4872 16 19.4927H8C6.20735 19.4872 4.75549 18.0353 4.75 16.2427V8.24268C4.75549 6.45003 6.20735 4.99817 8 4.99268H16C17.7926 4.99817 19.2445 6.45003 19.25 8.24268V16.2427ZM16.75 8.49268C17.3023 8.49268 17.75 8.04496 17.75 7.49268C17.75 6.9404 17.3023 6.49268 16.75 6.49268C16.1977 6.49268 15.75 6.9404 15.75 7.49268C15.75 8.04496 16.1977 8.49268 16.75 8.49268ZM12 7.74268C9.51472 7.74268 7.5 9.7574 7.5 12.2427C7.5 14.728 9.51472 16.7427 12 16.7427C14.4853 16.7427 16.5 14.728 16.5 12.2427C16.5027 11.0484 16.0294 9.90225 15.1849 9.05776C14.3404 8.21327 13.1943 7.74002 12 7.74268ZM9.25 12.2427C9.25 13.7615 10.4812 14.9927 12 14.9927C13.5188 14.9927 14.75 13.7615 14.75 12.2427C14.75 10.7239 13.5188 9.49268 12 9.49268C10.4812 9.49268 9.25 10.7239 9.25 12.2427Z" fill="black" />
-                </svg>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M22 12.3038C22 6.74719 17.5229 2.24268 12 2.24268C6.47715 2.24268 2 6.74719 2 12.3038C2 17.3255 5.65684 21.4879 10.4375 22.2427V15.2121H7.89844V12.3038H10.4375V10.0872C10.4375 7.56564 11.9305 6.1728 14.2146 6.1728C15.3088 6.1728 16.4531 6.36931 16.4531 6.36931V8.84529H15.1922C13.95 8.84529 13.5625 9.6209 13.5625 10.4166V12.3038H16.3359L15.8926 15.2121H13.5625V22.2427C18.3432 21.4879 22 17.3257 22 12.3038Z" fill="black" />
-                </svg>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M17.1761 4.24268H19.9362L13.9061 11.0201L21 20.2427H15.4456L11.0951 14.6493L6.11723 20.2427H3.35544L9.80517 12.9935L3 4.24268H8.69545L12.6279 9.3553L17.1761 4.24268ZM16.2073 18.6181H17.7368L7.86441 5.78196H6.2232L16.2073 18.6181Z" fill="black" />
-                </svg>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path fillRule="evenodd" clipRule="evenodd" d="M4.5 3.24268C3.67157 3.24268 3 3.91425 3 4.74268V19.7427C3 20.5711 3.67157 21.2427 4.5 21.2427H19.5C20.3284 21.2427 21 20.5711 21 19.7427V4.74268C21 3.91425 20.3284 3.24268 19.5 3.24268H4.5ZM8.52076 7.2454C8.52639 8.20165 7.81061 8.79087 6.96123 8.78665C6.16107 8.78243 5.46357 8.1454 5.46779 7.24681C5.47201 6.40165 6.13998 5.72243 7.00764 5.74212C7.88795 5.76181 8.52639 6.40728 8.52076 7.2454ZM12.2797 10.0044H9.75971H9.7583V18.5643H12.4217V18.3646C12.4217 17.9847 12.4214 17.6047 12.4211 17.2246C12.4203 16.2108 12.4194 15.1959 12.4246 14.1824C12.426 13.9363 12.4372 13.6804 12.5005 13.4455C12.7381 12.568 13.5271 12.0013 14.4074 12.1406C14.9727 12.2291 15.3467 12.5568 15.5042 13.0898C15.6013 13.423 15.6449 13.7816 15.6491 14.129C15.6605 15.1766 15.6589 16.2242 15.6573 17.2719C15.6567 17.6417 15.6561 18.0117 15.6561 18.3815V18.5629H18.328V18.3576C18.328 17.9056 18.3278 17.4537 18.3275 17.0018C18.327 15.8723 18.3264 14.7428 18.3294 13.6129C18.3308 13.1024 18.276 12.599 18.1508 12.1054C17.9638 11.3713 17.5771 10.7638 16.9485 10.3251C16.5027 10.0129 16.0133 9.81178 15.4663 9.78928C15.404 9.78669 15.3412 9.7833 15.2781 9.77989C14.9984 9.76477 14.7141 9.74941 14.4467 9.80334C13.6817 9.95662 13.0096 10.3068 12.5019 10.9241C12.4429 10.9949 12.3852 11.0668 12.2991 11.1741L12.2797 11.1984V10.0044ZM5.68164 18.5671H8.33242V10.01H5.68164V18.5671Z" fill="black" />
+          {/* Share Section */}
+          <div className="share-section">
+            <div className="share-label">Share:</div>
+            <div className="share-icons">
+              <div className="share-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" fill="black"/>
                 </svg>
               </div>
+              <div className="share-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z" fill="#1877F2"/>
+                </svg>
+              </div>
+              <div className="share-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" fill="black"/>
+                </svg>
+              </div>
+              <div className="share-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.16 11.88c0 2.096.547 4.142 1.588 5.945L.05 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.89-11.893A11.821 11.821 0 0020.885 3.488" fill="#25D366"/>
+                </svg>
+              </div>
             </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="action-buttons">
-            <button 
-              className={`add-to-cart ${(isAddedToCart || isInCart) ? 'added' : ''}`} 
-              onClick={handleAddToCart}
-              disabled={isAddedToCart || isInCart}
-            >
-              {(isAddedToCart || isInCart) ? 'Added To Cart' : 'Add To Cart'}
-            </button>
-            <button 
-              className={`add-to-favourite ${(isAddedToWishlist || isInWishlist) ? 'added' : ''}`} 
-              onClick={handleAddToFavourite}
-              disabled={isAddedToWishlist || isInWishlist}
-            >
-              {(isAddedToWishlist || isInWishlist) ? 'Added To Wishlist' : 'Add To Wishlist'}
-            </button>
           </div>
 
           {/* Other Sellers */}
           <div className="other-sellers" onClick={() => setDrawerOpen(true)}>
             <span>Other Sellers</span>
-            <button className="arrow-right">→</button>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6-6 6-1.41-1.41z" fill="black"/>
+            </svg>
           </div>
 
-          {/* Promo Cards - Two in one row */}
-          <div className="promo-cards-row">
-            <div className="promo-card promo-card-outline">
-              <div className="promo-card-icon">
-                <Image src="/discount.svg" alt="Return Policy" width={32} height={32} />
-              </div>
-              <div className="promo-card-content">
-                <div className="promo-card-title">Pay in 3 interest-free payments</div>
-                <div className="promo-card-link">Learn More</div>
-              </div>
+          {/* Payment Policy Card */}
+          <div className="payment-policy-card">
+            <div className="policy-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#0082FF"/>
+              </svg>
             </div>
-            <div className="promo-card promo-card-outline">
-              <div className="promo-card-icon">
-                <Image src="/discount.svg" alt="Return Policy" width={32} height={32} />
-              </div>
-              <div className="promo-card-content">
-                <div className="promo-card-title">Pay in 3 interest-free payments</div>
-                <div className="promo-card-link">Learn More</div>
-              </div>
+            <div className="policy-content">
+              <div className="policy-title">Pay in 3 interest-free payments</div>
+              <div className="policy-link">Learn More</div>
             </div>
           </div>
 
           {/* Additional Info */}
           <div className="additional-info">
             <div className="info-item">
-              <span className="icon">
-                <Image src="/return.svg" alt="Return Policy" width={20} height={20} />
-              </span>
+              <div className="info-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" fill="black"/>
+                </svg>
+              </div>
               <span>Return Policy</span>
             </div>
             <div className="info-item">
-              <span className="icon">
-                <Image src="/star.svg" alt="Return Policy" width={30} height={30} />
-              </span>
+              <div className="info-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" fill="black"/>
+                </svg>
+              </div>
               <span>1 Year Warranty</span>
             </div>
             <div className="info-item">
-              <span className="icon">
-                <Image src="/warrenty.svg" alt="Return Policy" width={20} height={20} />
-              </span>
+              <div className="info-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z" fill="black"/>
+                </svg>
+              </div>
               <span>Secure Payments</span>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Bottom Action Bar for Mobile */}
+      <div className="bottom-action-bar">
+        <div className="quantity-selector">
+          <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
+          <span>{quantity}</span>
+          <button onClick={() => setQuantity(quantity + 1)}>+</button>
+        </div>
+        
+        <div className="heart-icon" onClick={handleAddToFavourite}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill={isAddedToWishlist || isInWishlist ? "#FF6B6B" : "#666"}/>
+          </svg>
+        </div>
+        
+        <button 
+          className="add-to-cart-btn"
+          onClick={handleAddToCart}
+          disabled={isAddedToCart || isInCart}
+        >
+          {(isAddedToCart || isInCart) ? 'Added To Cart' : 'Add To Cart'}
+        </button>
+      </div>
+
       <OtherSellersDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} sellers={sellers} />
 
       <style jsx>{`
         .product-details {
-          max-width: 1392px;
-          justify-content: center;
-          align-items: center;
-          margin: 0 auto;
-          padding: 40px 20px;
-          width: 100%;
+          background: white;
+          min-height: 100vh;
         }
 
         .product-main {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 40px;
-        }
-
-        .product-images {
           display: flex;
           flex-direction: column;
-          align-items: center;
-          gap: 20px;
+          gap: 0;
+        }
+
+        /* Product Images Section */
+        .product-images {
+          position: relative;
+          background: white;
         }
 
         .main-image-container {
           position: relative;
-          width: 600px;
-          height: 687px;
-          border-radius: 16px;
-          overflow: hidden;
+          width: 100%;
+          height: 400px;
           background: white;
-          border: 1px solid rgba(0, 0, 0, 0.1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .main-image {
@@ -408,11 +418,11 @@ export default function ProductDetails({ product }) {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
-          background: rgba(255, 255, 255, 0.9);
+          background: rgba(0, 0, 0, 0.1);
           border: none;
           border-radius: 50%;
-          width: 40px;
-          height: 40px;
+          width: 32px;
+          height: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -431,7 +441,9 @@ export default function ProductDetails({ product }) {
 
         .image-dots {
           display: flex;
+          justify-content: center;
           gap: 8px;
+          padding: 16px 0;
         }
 
         .dot {
@@ -447,17 +459,17 @@ export default function ProductDetails({ product }) {
           background: #0082FF;
         }
 
+        /* Product Information Section */
         .product-info {
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
+          padding: 20px 16px;
+          background: white;
         }
 
-        /* First row: Brand name and bought count */
-        .first-row {
+        .brand-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          margin-bottom: 12px;
         }
 
         .brand-name {
@@ -472,64 +484,71 @@ export default function ProductDetails({ product }) {
           font-weight: 600;
         }
 
-        /* Second row: Product name and delivery time */
-        .stats {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 16px;
-        }
-        .second-row-stats {
+        .product-name-row {
           display: flex;
           justify-content: space-between;
           align-items: flex-start;
-          gap: 6px;
+          margin-bottom: 8px;
         }
 
         .product-name {
-          font-size: 40px;
-          font-weight: 600;
+          font-size: 24px;
+          font-weight: 700;
           color: #000;
           margin: 0;
           line-height: 1.2;
           flex: 1;
         }
 
+        .availability-info {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 4px;
+        }
+
         .delivery-time {
           color: #0082FF;
           font-size: 14px;
           font-weight: 600;
-          white-space: nowrap;
         }
 
         .stock-status {
           color: #000;
-          font-size: 16px;
-          font-weight: 600;
-        }
-
-        .rating {
-          display: flex;
-          gap: 4px;
-        }
-
-        .pricing {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-        }
-
-        .original-price {
-          color: #666;
-          text-decoration: line-through;
           font-size: 14px;
           font-weight: 600;
         }
 
+        .rating-section {
+          margin-bottom: 16px;
+        }
+
+        .rating {
+          display: flex;
+          gap: 2px;
+        }
+
+        .pricing-section {
+          margin-bottom: 20px;
+        }
+
+        .price-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .original-price {
+          color: #999;
+          text-decoration: line-through;
+          font-size: 16px;
+          font-weight: 500;
+        }
+
         .current-price {
           color: #000;
-          font-size: 24px;
-          font-weight: 600;
+          font-size: 28px;
+          font-weight: 700;
         }
 
         .discount {
@@ -538,152 +557,58 @@ export default function ProductDetails({ product }) {
           font-weight: 600;
         }
 
-        .description {
-          color: #000;
-          line-height: 150%;
-          margin: 0;
+        /* Selection Sections */
+        .selection-section {
+          margin-bottom: 20px;
         }
 
-        .selection-group {
-          display: flex;
-          flex-direction: row;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .selection-group label {
+        .selection-label {
           font-weight: 600;
-          color: #333;
-          min-width: 70px;
+          color: #000;
+          margin-bottom: 8px;
+          font-size: 16px;
         }
 
         .color-options, .size-options {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           flex-wrap: wrap;
+          align-items: center;
         }
 
-        .color-btn {
-          padding: 8px 32px;
+        .color-btn, .size-btn {
+          padding: 8px 16px;
           border: 2px solid #0082FF;
-          border-radius: 25px;
+          border-radius: 20px;
           background: white;
           cursor: pointer;
           transition: all 0.2s ease;
           font-weight: 600;
-          white-space: nowrap;
-        }
-        
-        .size-btn {
-          padding: 8px 24px;
-          border: 2px solid #0082FF;
-          border-radius: 25px;
-          background: white;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          font-weight: 600;
+          font-size: 14px;
           white-space: nowrap;
         }
 
         .color-btn.selected, .size-btn.selected {
-          border-color: #0082FF;
           background: #0082FF;
           color: white;
         }
 
-        /* Quantity and Share Container */
-        .quantity-share-container {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 20px;
+        .fox-icon {
+          margin-left: 8px;
         }
 
-        .quantity-selector {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          border: 1px solid #e5e7eb;
-          border-radius: 25px;
-          padding: 8px;
-          width: fit-content;
-        }
-
-        .quantity-selector button {
-          width: 32px;
-          height: 32px;
-          border: none;
-          background: #fff;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 18px;
-          font-weight: 600;
-        }
-
-        .quantity-selector span {
-          min-width: 40px;
-          text-align: center;
-          font-weight: 600;
-        }
-
-        .action-buttons {
-          display: flex;
-          gap: 16px;
-        }
-
-        .add-to-cart {
-          width: 100%;
-          max-width: 342px;
-          padding: 12px 40px;
-          background: rgba(0, 130, 255, 0.24); 
-          border: none;
-          border-radius: 50px;
-          color: #0082FF;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background 0.2s ease;
-        }
-        
-        .add-to-cart.added {
-          background: rgba(0, 204, 102, 0.24);
-          color: #00CC66;
-        }
-        
-        .add-to-cart:disabled {
-          cursor: default;
-          opacity: 0.9;
-        }
-
-        .add-to-favourite {
-          padding: 12px 40px;
-          width: 100%;
-          max-width: 342px;
-          background: white;
-          color: #0082FF;
-          border: 2px solid #0082FF;
-          border-radius: 50px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        
-        .add-to-favourite.added {
-          background: rgba(0, 130, 255, 0.05);
-          color: #0082FF;
-          border: 2px solid #0082FF;
-        }
-        
-        .add-to-favourite:disabled {
-          cursor: default;
-          opacity: 0.9;
-        }
-
+        /* Share Section */
         .share-section {
           display: flex;
           align-items: center;
           gap: 12px;
+          margin-bottom: 20px;
+        }
+
+        .share-label {
+          font-weight: 600;
+          color: #000;
+          font-size: 16px;
         }
 
         .share-icons {
@@ -692,99 +617,70 @@ export default function ProductDetails({ product }) {
         }
 
         .share-icon {
-          width: 40px;
-          height: 40px;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          background: white;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           cursor: pointer;
-          font-size: 18px;
-          transition: all 0.2s ease;
         }
 
-        .share-icon:hover {
-          border-color: #0082FF;
-          background: #f0f8ff;
-        }
-
+        /* Other Sellers */
         .other-sellers {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 12px 24px;
+          padding: 12px 16px;
           border: 2px solid #0082FF;
-          border-radius: 50px;
+          border-radius: 25px;
           cursor: pointer;
+          margin-bottom: 20px;
+          background: white;
         }
 
-        .arrow-right {
-          background: none;
-          border: none;
-          font-size: 20px;
-          cursor: pointer;
+        .other-sellers span {
+          font-weight: 600;
           color: #000;
+          font-size: 16px;
         }
 
-        /* Promo Cards - Two in one row */
-        .promo-cards-row {
-          display: flex;
-          gap: 16px;
-          width: 100%;
-        }
-        
-        .promo-card {
+        /* Payment Policy Card */
+        .payment-policy-card {
           display: flex;
           align-items: center;
-          border-radius: 16px;
-          padding: 18px;
-          flex: 1;
-          box-sizing: border-box;
+          background: white;
+          border: 2px solid #0082FF;
+          border-radius: 12px;
+          padding: 16px;
+          margin-bottom: 20px;
           gap: 12px;
-          min-width: 0; /* Allows text truncation */
         }
-        
-        .promo-card-outline {
-          border: 2px solid #2196F3;
-          background: #fff;
-        }
-        
-        .promo-card-icon {
+
+        .policy-icon {
           flex-shrink: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
         }
-        
-        .promo-card-content {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          min-width: 0; /* Allows text truncation */
+
+        .policy-content {
           flex: 1;
         }
-        
-        .promo-card-title {
+
+        .policy-title {
           font-size: 16px;
           font-weight: 600;
           color: #000;
-          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        
-        .promo-card-link {
-          font-size: 14px;
-          font-weight: 600;
-          color: #000;
-          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          white-space: nowrap;
+          margin-bottom: 4px;
         }
 
+        .policy-link {
+          font-size: 14px;
+          font-weight: 600;
+          color: #0082FF;
+        }
+
+        /* Additional Info */
         .additional-info {
           display: flex;
-          flex-direction: row;
-          justify-content: space-between;
+          flex-direction: column;
           gap: 12px;
         }
 
@@ -793,53 +689,131 @@ export default function ProductDetails({ product }) {
           align-items: center;
           gap: 12px;
           color: #000;
-          cursor: pointer;
           font-weight: 600;
           font-size: 16px;
         }
 
-        .info-item:hover {
-          color: #0082FF;
+        .info-icon {
+          width: 16px;
+          height: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
-        @media (max-width: 768px) {
+        /* Bottom Action Bar */
+        .bottom-action-bar {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: white;
+          border-top: 1px solid #e5e7eb;
+          padding: 16px;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          z-index: 100;
+        }
+
+        .quantity-selector {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          background: #f0f8ff;
+          border-radius: 20px;
+          padding: 8px 12px;
+        }
+
+        .quantity-selector button {
+          width: 24px;
+          height: 24px;
+          border: none;
+          background: #0082FF;
+          color: white;
+          border-radius: 50%;
+          cursor: pointer;
+          font-size: 16px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .quantity-selector span {
+          min-width: 20px;
+          text-align: center;
+          font-weight: 600;
+          font-size: 16px;
+        }
+
+        .heart-icon {
+          width: 40px;
+          height: 40px;
+          background: #f0f8ff;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+        }
+
+        .add-to-cart-btn {
+          flex: 1;
+          background: #0082FF;
+          color: white;
+          border: none;
+          border-radius: 25px;
+          padding: 12px 24px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s ease;
+        }
+
+        .add-to-cart-btn:disabled {
+          background: #ccc;
+          cursor: not-allowed;
+        }
+
+        /* Desktop Styles */
+        @media (min-width: 769px) {
+
           .product-main {
-            grid-template-columns: 1fr;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+          }
+
+          .product-images {
+            background: transparent;
           }
 
           .main-image-container {
-            width: 100%;
-            height: 400px;
+            height: 500px;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+          }
+
+          .product-info {
+            padding: 0;
+            background: transparent;
           }
 
           .product-name {
-            font-size: 24px;
+            font-size: 32px;
           }
 
-          .stats {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-          }
-          
-          .first-row {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
+          .current-price {
+            font-size: 32px;
           }
 
-          .action-buttons {
-            flex-direction: column;
-          }
-          
-          .quantity-share-container {
-            flex-direction: column;
-            align-items: flex-start;
-          }
-          
-          .promo-cards-row {
-            flex-direction: column;
+          .bottom-action-bar {
+            display: none;
           }
         }
       `}</style>
