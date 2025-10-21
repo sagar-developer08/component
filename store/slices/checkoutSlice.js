@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
-import { getAuthToken } from '../../utils/userUtils'
+import { getAuthToken, getUserFromCookies } from '../../utils/userUtils'
 import { addresses, payment } from '../api/endpoints'
  
 

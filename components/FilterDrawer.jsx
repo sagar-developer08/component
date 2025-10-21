@@ -66,13 +66,30 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
   const handleRangeChange = (facetKey, field, value) => {
     if (!onChange) return
     
-    // Update local state immediately for smooth UI
+    // Get current values
     const currentRange = localPriceRange[facetKey] || selected[facetKey] || {};
-    const newRange = { ...currentRange };
-    const num = value === '' ? undefined : Number(value);
-    newRange[field] = isNaN(num) ? undefined : num;
+    const facetMin = 0; // Default min
+    const facetMax = 1000; // Default max
     
-    // Update local state
+    // Parse the new value
+    const numValue = parseInt(value) || 0;
+    
+    // Create new range object
+    const newRange = { ...currentRange };
+    
+    if (field === 'min') {
+      // Ensure min doesn't exceed max
+      const currentMax = newRange.max ?? facetMax;
+      newRange.min = Math.min(numValue, currentMax);
+      console.log('Min slider changed:', { value, numValue, currentMax, newMin: newRange.min });
+    } else if (field === 'max') {
+      // Ensure max doesn't go below min
+      const currentMin = newRange.min ?? facetMin;
+      newRange.max = Math.max(numValue, currentMin);
+      console.log('Max slider changed:', { value, numValue, currentMin, newMax: newRange.max });
+    }
+    
+    // Update local state immediately for smooth UI
     setLocalPriceRange(prev => ({
       ...prev,
       [facetKey]: newRange
@@ -100,19 +117,58 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
     onChange(facetKey, typeof value === 'number' ? value : undefined)
   }
 
+  // Check if any filters are applied
+  const hasAppliedFilters = () => {
+    return Object.keys(selected).some(key => {
+      const value = selected[key];
+      if (value instanceof Set) {
+        return value.size > 0;
+      }
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      if (typeof value === 'object' && value !== null) {
+        return value.min !== undefined || value.max !== undefined;
+      }
+      if (typeof value === 'number') {
+        return value > 0;
+      }
+      return Boolean(value);
+    });
+  }
+
+  // Reset all filters
+  const handleReset = () => {
+    if (onClear) {
+      onClear();
+    }
+    // Also clear local price range
+    setLocalPriceRange({});
+  }
+
   return (
     <div className={inline ? "filter-drawer-inline-wrapper" : "filter-drawer-overlay"}>
       <div className="filter-drawer">
         <div className="filter-header">
           <span className="filter-title">Filters</span>
-          {!inline && (
-            <button className="filter-close" onClick={onClose}>
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <circle cx="16" cy="16" r="16" fill="#F5F5F5"/>
-              <path d="M11 11L21 21M21 11L11 21" stroke="#222" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
-          )}
+          <div className="filter-header-actions">
+            {hasAppliedFilters() && (
+              <button className="filter-reset" onClick={handleReset}>
+                {/* <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                  <path d="M8 3V1M8 3H6M8 3H10M8 3V5M3 8H1M3 8V6M3 8V10M3 8H5M8 13V15M8 13H6M8 13H10M8 13V11M13 8H15M13 8V6M13 8V10M13 8H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg> */}
+                Reset
+              </button>
+            )}
+            {!inline && (
+              <button className="filter-close" onClick={onClose}>
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="16" fill="#F5F5F5"/>
+                <path d="M11 11L21 21M21 11L11 21" stroke="#222" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+            )}
+          </div>
         </div>
         <div className="filter-divider"></div>
         <div className="filter-list">
@@ -176,6 +232,7 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                           type="range"
                           min={facet.min ?? 0}
                           max={facet.max ?? 1000}
+                          step="1"
                           value={localPriceRange[facet.key]?.min ?? selected[facet.key]?.min ?? facet.min ?? 0}
                           onChange={(e) => handleRangeChange(facet.key, 'min', e.target.value)}
                           className="range-slider min-slider"
@@ -184,6 +241,7 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                           type="range"
                           min={facet.min ?? 0}
                           max={facet.max ?? 1000}
+                          step="1"
                           value={localPriceRange[facet.key]?.max ?? selected[facet.key]?.max ?? facet.max ?? 1000}
                           onChange={(e) => handleRangeChange(facet.key, 'max', e.target.value)}
                           className="range-slider max-slider"
@@ -266,6 +324,25 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
           justify-content: space-between;
           padding: 24px 24px 16px 24px;
         }
+        .filter-header-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .filter-reset {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background:rgb(0, 130, 255, 0.2);
+          color: #0082FF;
+          border: none;
+          border-radius: 32px;
+          padding: 8px 16px;
+          font-size: 16px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
         .filter-title {
           font-size: 24px;
           font-weight: 600;
@@ -336,13 +413,14 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
         .range-slider { 
           position: absolute; 
           width: 100%; 
-          height: 6px; 
+          height: 20px; 
           background: transparent; 
           outline: none; 
           -webkit-appearance: none; 
           appearance: none;
           top: 50%;
           transform: translateY(-50%);
+          cursor: pointer;
         }
         .range-slider::-webkit-slider-track { 
           height: 6px; 
@@ -383,8 +461,14 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
         .range-slider::-moz-range-thumb:hover {
           transform: scale(1.1);
         }
-        .min-slider { z-index: 2; }
-        .max-slider { z-index: 1; }
+        .min-slider { 
+          z-index: 3; 
+          pointer-events: auto;
+        }
+        .max-slider { 
+          z-index: 4; 
+          pointer-events: auto;
+        }
         .filter-actions {
           display: flex;
           gap: 18px;

@@ -39,7 +39,7 @@ export default function ProductCard({
   const isInCart = cartQuantity > 0
 
   // Fallback image URL
-  const fallbackImage = 'https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644'
+  const fallbackImage = '/iphone.jpg'
   const imageSrc = imageError ? fallbackImage : image
 
   const handleCardClick = () => {

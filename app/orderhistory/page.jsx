@@ -5,7 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchProfile } from '../../store/slices/profileSlice';
 import { createProductReview, clearReviewState } from '../../store/slices/reviewSlice';
-import { getAuthToken } from '../../utils/userUtils';
+import { addToCart } from '../../store/slices/cartSlice';
+import { getAuthToken, getUserFromCookies } from '../../utils/userUtils';
 import Navigation from '@/components/Navigation';
 import styles from './orderHistory.module.css';
 import Image from 'next/image';
@@ -41,14 +42,9 @@ const OrderHistoryPage = () => {
   useEffect(() => {
     const checkExistingReview = async () => {
       try {
-        // First, get the actual MongoDB product ID
+        // Use productId field directly as specified
         const firstItem = orderData?.items?.[0];
-        const actualProductId = firstItem?._id || 
-                               firstItem?.mongoProductId || 
-                               firstItem?.product_id ||
-                               firstItem?.productMongoId ||
-                               (firstItem?.productId && String(firstItem.productId).length === 24 ? firstItem.productId : null) ||
-                               (productId && String(productId).length === 24 ? productId : null);
+        const actualProductId = firstItem?.productId || productId;
         
         if (!actualProductId) {
           console.log('⚠️ No valid product ID found');
@@ -63,49 +59,61 @@ const OrderHistoryPage = () => {
         
         console.log('📝 Product reviews response:', data);
         
-        if (data.success && data.data && Array.isArray(data.data)) {
-          // Get auth token to identify current user
-          const token = await getAuthToken();
-          
-          if (token) {
-            // Decode token to get user ID
-            const tokenParts = token.split('.');
-            if (tokenParts.length === 3) {
-              const payload = JSON.parse(atob(tokenParts[1]));
-              const currentUserId = payload.sub;
-              
-              // Find review by current user
-              const review = data.data.find(r => r.userId === currentUserId);
-              
-              if (review) {
-                console.log('✅ Found your existing review:', review);
-                setExistingReview(review);
-                setIsEditMode(true);
-                setShowEditForm(false); // Show view mode first
-                
-                // Populate form data (but don't show form yet)
-                setRating(review.rating);
-                setReviewData({
-                  name: review.title || '',
-                  review: review.comment || ''
-                });
-                
-                if (review.images && review.images.length > 0) {
-                  setImagePreviews(review.images);
-                }
-                
-                console.log('📋 Review data loaded');
-              } else {
-                console.log('ℹ️ No existing review found for this product');
-                setShowEditForm(true); // Show form to create new review
-              }
-            }
-          } else {
-            setShowEditForm(true); // No auth, show form
-          }
-        } else {
-          setShowEditForm(true); // No reviews, show form
-        }
+         if (data.success && data.data && data.data.reviews && Array.isArray(data.data.reviews)) {
+           // Get auth token to identify current user
+           const token = await getAuthToken();
+           let foundReview = null;
+           
+           if (token) {
+             // Decode token to get user ID
+             const tokenParts = token.split('.');
+             if (tokenParts.length === 3) {
+               const payload = JSON.parse(atob(tokenParts[1]));
+               const currentUserId = payload.sub;
+               
+               // First try to find review by current user ID
+               foundReview = data.data.reviews.find(r => r.userId === currentUserId);
+               
+               // If no review found with user ID, check for anonymous reviews
+               if (!foundReview) {
+                 foundReview = data.data.reviews.find(r => r.userId === 'anonymous');
+               }
+             }
+           } else {
+             // No auth token, check for anonymous reviews
+             foundReview = data.data.reviews.find(r => r.userId === 'anonymous');
+           }
+           
+           if (foundReview) {
+             console.log('✅ Found existing review:', foundReview);
+             setExistingReview(foundReview);
+             setIsEditMode(true);
+             setShowEditForm(false); // Show view mode first
+             
+             // Populate form data (but don't show form yet)
+             setRating(foundReview.rating);
+             setReviewData({
+               name: foundReview.title || '',
+               review: foundReview.comment || ''
+             });
+             
+             if (foundReview.images && foundReview.images.length > 0) {
+               setImagePreviews(foundReview.images);
+             }
+             
+             console.log('📋 Review data loaded - showing review with edit button');
+           } else {
+             console.log('ℹ️ No existing review found for this product');
+             setExistingReview(null);
+             setIsEditMode(false);
+             setShowEditForm(true); // Show form to create new review
+           }
+         } else {
+           console.log('ℹ️ No reviews found - showing create form');
+           setExistingReview(null);
+           setIsEditMode(false);
+           setShowEditForm(true); // No reviews, show form
+         }
       } catch (err) {
         console.error('❌ Error checking for existing review:', err);
         setShowEditForm(true); // On error, show form
@@ -230,15 +238,9 @@ const OrderHistoryPage = () => {
       return;
     }
 
-    // Get the actual product ID from the order items
-    // Try multiple fields to find the MongoDB ObjectId (24-char hex string)
+    // Use productId field directly as specified
     const firstItem = orderData?.items?.[0];
-    const actualProductId = firstItem?._id || 
-                           firstItem?.mongoProductId || 
-                           firstItem?.product_id ||
-                           firstItem?.productMongoId ||
-                           (firstItem?.productId && String(firstItem.productId).length === 24 ? firstItem.productId : null) ||
-                           (productId && String(productId).length === 24 ? productId : null);
+    const actualProductId = firstItem?.productId || productId;
     
     if (!actualProductId) {
       alert('Product MongoDB ID not found. Please contact support.');
@@ -358,6 +360,58 @@ const OrderHistoryPage = () => {
   };
 
   const handleCancelReview = handleCancelEdit;
+
+  const handleBuyAgain = async () => {
+    try {
+      // Get the first item from the order (or the specific product if filtered)
+      const item = orderData?.items?.[0];
+      
+      if (!item) {
+        alert('No product found to add to cart');
+        return;
+      }
+
+      // Get user ID for cart operations
+      const userId = await getUserFromCookies();
+      if (!userId) {
+        alert('Please login to add items to cart');
+        return;
+      }
+
+      // Prepare cart item data
+      const cartItem = {
+        productId: item.productId,
+        name: item.name,
+        price: item.price || item.unitPrice,
+        quantity: item.quantity,
+        image: item.image || '/iphone.jpg', // fallback image
+        brand: item.brand || 'Product'
+      };
+
+      console.log('Adding to cart:', cartItem);
+
+      // Add to cart
+      const result = await dispatch(addToCart({
+        userId,
+        productId: cartItem.productId,
+        name: cartItem.name,
+        price: cartItem.price,
+        quantity: cartItem.quantity,
+        image: cartItem.image,
+        brand: cartItem.brand
+      }));
+
+      if (addToCart.fulfilled.match(result)) {
+        // Navigate to checkout page
+        window.location.href = '/checkout';
+      } else {
+        alert('Failed to add item to cart. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      alert('Error adding item to cart. Please try again.');
+    }
+  };
 
   // Helper functions for formatting
   const formatDate = (dateString) => {
@@ -686,9 +740,9 @@ const OrderHistoryPage = () => {
               </>
             ) : (
               <>
-                <h3 className={styles.cardTitle}>
-                  {isEditMode ? 'Edit Your Review' : 'Write a review'}
-                </h3>
+                 <h3 className={styles.cardTitle}>
+                   {isEditMode ? 'Edit Your Review' : 'Write a review'}
+                 </h3>
                 <div className={styles.reviewForm}>
               <div className={styles.ratingSection}>
                 <label className={styles.formLabel}>Rating</label>
@@ -880,7 +934,10 @@ const OrderHistoryPage = () => {
             </div>
 
             <div className={styles.summaryButtons}>
-              <button className={styles.buyAgainButton}>
+              <button 
+                className={styles.buyAgainButton}
+                onClick={handleBuyAgain}
+              >
                 Buy Again
               </button>
               <button className={styles.downloadInvoiceButton}>

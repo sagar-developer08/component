@@ -90,7 +90,7 @@ export const cart = {
   get: `${BASES.cart}/cart`,
   update: `${BASES.cart}/cart/update`,
   remove: `${BASES.cart}/cart/remove`,
-  moveToWishlist: `${BASES.cart}/cart/move-to-wishlist`,
+  moveToWishlist: `${BASES.cart}/wishlist/add`,
   wishlistAdd: `${BASES.cart}/wishlist/add`,
   wishlistGet: `${BASES.cart}/wishlist`,
   wishlistRemove: `${BASES.cart}/wishlist/remove`,
