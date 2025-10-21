@@ -177,10 +177,11 @@ export const getProductReviews = createAsyncThunk(
         throw new Error(data.message || 'Failed to fetch reviews')
       }
 
-      // New API returns data directly as array
+      // API returns data with reviews array inside data object
       return {
-        reviews: data.data || [],
-        total: data.data?.length || 0
+        reviews: data.data?.reviews || [],
+        total: data.data?.pagination?.total || 0,
+        statistics: data.data?.statistics || null
       }
     } catch (error) {
       console.error('Error fetching reviews:', error)
@@ -196,7 +197,9 @@ const initialState = {
   loading: false,
   uploadingImages: false,
   error: null,
-  success: false
+  success: false,
+  total: 0,
+  statistics: null
 }
 
 const reviewSlice = createSlice({
@@ -257,6 +260,8 @@ const reviewSlice = createSlice({
       .addCase(getProductReviews.fulfilled, (state, action) => {
         state.loading = false
         state.reviews = action.payload.reviews || []
+        state.total = action.payload.total || 0
+        state.statistics = action.payload.statistics || null
         state.error = null
       })
       .addCase(getProductReviews.rejected, (state, action) => {

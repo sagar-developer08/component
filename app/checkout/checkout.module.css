@@ -173,6 +173,41 @@
   cursor: pointer;
 }
 
+.viewMoreBtn {
+  width: 100%;
+  background: transparent;
+  color: #0082FF;
+  border: 1px solid #0082FF;
+  border-radius: 100px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewMoreBtn:hover {
+  background: #0082FF;
+  color: white;
+}
+
+.addressButtonsRow {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.addressButtonsRow .viewMoreBtn {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.addressButtonsRow .addAddressBtn {
+  flex: 1;
+  margin-bottom: 0;
+}
+
 .addressForm {
   background: #fff;
   border-radius: 12px;

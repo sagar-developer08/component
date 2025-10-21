@@ -3,7 +3,7 @@
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { getAuthToken, getUserFromCookies, getUserIds } from '@/utils/userUtils'
 import { fetchCart } from '@/store/slices/cartSlice'
@@ -37,6 +37,9 @@ import styles from './checkout.module.css'
 
 export default function CheckoutPage() {
   const dispatch = useDispatch()
+  
+  // State to control address display
+  const [showAllAddresses, setShowAllAddresses] = useState(false)
 
   // Cart state
   const { items: cartItems, total: cartTotal, loading: cartLoading } = useSelector(state => state.cart)
@@ -64,10 +67,28 @@ export default function CheckoutPage() {
     paymentIntentError
   } = useSelector(state => state.checkout)
 
-  // Prefer checkout slice addresses; fall back to profile addresses
-  const displayAddresses = (userAddresses && userAddresses.length > 0)
-    ? userAddresses
-    : (profileAddresses || [])
+  // Combine addresses from both sources to ensure we get all available addresses
+  const allAddresses = []
+  
+  // Add addresses from checkout slice
+  if (userAddresses && userAddresses.length > 0) {
+    allAddresses.push(...userAddresses)
+  }
+  
+  // Add addresses from profile slice that aren't already included
+  if (profileAddresses && profileAddresses.length > 0) {
+    profileAddresses.forEach(profileAddr => {
+      const exists = allAddresses.some(addr => 
+        (addr.id || addr._id) === (profileAddr.id || profileAddr._id)
+      )
+      if (!exists) {
+        allAddresses.push(profileAddr)
+      }
+    })
+  }
+  
+  // Show only first 2 addresses initially, or all if showAllAddresses is true
+  const displayAddresses = showAllAddresses ? allAddresses : allAddresses.slice(0, 2)
 
   // Calculate total if not provided by API
   const calculatedTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
@@ -101,13 +122,16 @@ export default function CheckoutPage() {
         const token = await getAuthToken()
         if (token) {
           // Get userId and dispatch fetchCart with userId
-          const userId = await getUserFromCookies()
-          if (userId) {
-            console.log('Fetching cart for userId:', userId)
-            dispatch(fetchCart(userId))
-          } else {
-            dispatch(clearError())
-            // Set error in checkout state
+          try {
+            const userId = await getUserFromCookies()
+            if (userId) {
+              console.log('Fetching cart for userId:', userId)
+              dispatch(fetchCart(userId))
+            } else {
+              dispatch(clearError())
+            }
+          } catch (error) {
+            console.log('No user found in cookies')
             dispatch(clearError())
           }
         } else {
@@ -419,7 +443,7 @@ export default function CheckoutPage() {
                       dispatch(fetchCart(userId))
                     }
                   } catch (error) {
-                    console.error('Error refreshing cart:', error)
+                    console.log('No user found in cookies')
                   }
                 }}
               >
@@ -441,7 +465,7 @@ export default function CheckoutPage() {
                     dispatch(fetchCart(userId))
                   }
                 } catch (error) {
-                  console.error('Error refreshing cart:', error)
+                  console.log('No user found in cookies')
                 }
               }}
             >
@@ -473,7 +497,7 @@ export default function CheckoutPage() {
 
               {loadingAddresses ? (
                 <div className={styles.loadingText}>Loading addresses...</div>
-              ) : displayAddresses.length > 0 ? (
+              ) : allAddresses.length > 0 ? (
                 <>
                   {/* Display existing addresses */}
                   <div className={styles.addressesList}>
@@ -530,13 +554,26 @@ export default function CheckoutPage() {
                       </div>
                     ))}
                   </div>
-                  <button
-                    className={styles.addAddressBtn}
-                    onClick={() => dispatch(setShowAddressForm(!showAddressForm))}
-                  >
-                    <FontAwesomeIcon icon={faPlus} className={styles.addIcon} />
-                    Add New Address
-                  </button>
+                  
+                  {/* Button row - View More and Add New Address */}
+                  <div className={styles.addressButtonsRow}>
+                    {allAddresses.length > 2 && (
+                      <button
+                        className={styles.viewMoreBtn}
+                        onClick={() => setShowAllAddresses(!showAllAddresses)}
+                      >
+                        {showAllAddresses ? 'View Less' : `View More`}
+                      </button>
+                    )}
+                    
+                    <button
+                      className={styles.addAddressBtn}
+                      onClick={() => dispatch(setShowAddressForm(!showAddressForm))}
+                    >
+                      <FontAwesomeIcon icon={faPlus} className={styles.addIcon} />
+                      Add New Address
+                    </button>
+                  </div>
                 </>
               ) : (
                 <div className={styles.noAddresses}>

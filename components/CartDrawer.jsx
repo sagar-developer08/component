@@ -11,19 +11,21 @@ export default function CartDrawer({ open, onClose }) {
   const { requireAuth, user } = useAuth()
   const dispatch = useDispatch()
   const { items, total, itemsCount, loading, error } = useSelector(state => state.cart)
+  const { items: wishlistItems } = useSelector(state => state.wishlist)
   const { show } = useToast()
 
-  // Fetch cart when drawer opens and user is authenticated
+  // Fetch cart and wishlist when drawer opens and user is authenticated
   useEffect(() => {
     if (open) {
-      const fetchUserCart = async () => {
+      const fetchUserData = async () => {
         let userId = user?.id || await getUserFromCookies()
         if (userId) {
-          console.log('Fetching cart for userId:', userId)
+          console.log('Fetching cart and wishlist for userId:', userId)
           dispatch(fetchCart(userId))
+          dispatch(fetchWishlist())
         }
       }
-      fetchUserCart()
+      fetchUserData()
     }
   }, [open, user?.id, dispatch])
 
@@ -152,7 +154,12 @@ export default function CartDrawer({ open, onClose }) {
                     <div className="cart-price-container">
                       <span className="cart-price">AED {item.discountPrice || item.price}</span>
                       {item.originalPrice && item.originalPrice > (item.discountPrice || item.price) && (
-                        <span className="cart-original-price">AED {item.originalPrice}</span>
+                        <>
+                          <span className="cart-original-price">AED {item.originalPrice}</span>
+                          <span className="cart-discount-badge">
+                            {Math.round(((item.originalPrice - (item.discountPrice || item.price)) / item.originalPrice) * 100)}% Off
+                          </span>
+                        </>
                       )}
                     </div>
                     <div className="cart-actions">
@@ -178,6 +185,7 @@ export default function CartDrawer({ open, onClose }) {
                       <button
                         className="cart-wishlist-btn"
                         onClick={() => handleAddToWishlist(item.productId)}
+                        disabled={wishlistItems.some(wishlistItem => wishlistItem.productId === item.productId)}
                         aria-label="Add to wishlist"
                       >
                         <svg width="28" height="28" viewBox="6 0 28 26" fill="none">
@@ -185,13 +193,13 @@ export default function CartDrawer({ open, onClose }) {
                         </svg>
                       </button>
                     </div>
-                    <button
-                      className="cart-remove-btn"
-                      onClick={() => handleRemoveItem(item.productId)}
-                    >
-                      Remove
-                    </button>
                   </div>
+                  <button
+                    className="cart-remove-btn"
+                    onClick={() => handleRemoveItem(item.productId)}
+                  >
+                    Remove
+                  </button>
                 </div>
               )) : (
                 <div className="cart-empty">
@@ -390,6 +398,23 @@ export default function CartDrawer({ open, onClose }) {
           display: flex;
           align-items: center;
           justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        .cart-wishlist-btn:hover:not(:disabled) {
+          background: #0082FF;
+        }
+        .cart-wishlist-btn:hover:not(:disabled) svg path {
+          stroke: white;
+        }
+        .cart-wishlist-btn:disabled {
+          background: #f5f5f5;
+          border-color: #ccc;
+          cursor: not-allowed;
+          opacity: 0.6;
+        }
+        .cart-wishlist-btn:disabled svg path {
+          stroke: #ccc;
         }
         .cart-remove-btn {
           background: none;

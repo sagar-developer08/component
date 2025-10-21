@@ -127,13 +127,13 @@ export const moveToWishlist = createAsyncThunk(
     try {
       const token = await getAuthToken()
       
-      const response = await fetch(cart.moveToWishlist, {
+      const response = await fetch(cart.wishlistAdd, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ userId, productId }),
+        body: JSON.stringify({ productId }),
       })
 
       if (!response.ok) {
@@ -309,16 +309,8 @@ const cartSlice = createSlice({
       })
       .addCase(moveToWishlist.fulfilled, (state, action) => {
         state.loading = false
-        // The API returns both updated cart and wishlist
-        const responseData = action.payload.data || action.payload
-        const cartData = responseData.cart || responseData
-        
-        if (cartData) {
-          // Update the entire cart state with the fresh data from API
-          state.items = cartData.items || []
-          state.itemsCount = cartData.totalItems || 0
-          state.total = cartData.totalPrice || 0
-        }
+        // The wishlist/add API only adds to wishlist, cart remains unchanged
+        // No need to update cart state since item stays in cart
       })
       .addCase(moveToWishlist.rejected, (state, action) => {
         state.loading = false

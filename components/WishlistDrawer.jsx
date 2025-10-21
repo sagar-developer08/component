@@ -100,7 +100,12 @@ export default function WishlistDrawer({ open, onClose }) {
                   <div className="wishlist-price-container">
                     <span className="wishlist-price">{typeof (it.discountPrice || it.price) !== 'undefined' ? `AED ${it.discountPrice || it.price}` : ''}</span>
                     {it.originalPrice && it.originalPrice > (it.discountPrice || it.price) && (
-                      <span className="wishlist-original-price">AED {it.originalPrice}</span>
+                      <>
+                        <span className="wishlist-original-price">AED {it.originalPrice}</span>
+                        <span className="wishlist-discount-badge">
+                          {Math.round(((it.originalPrice - (it.discountPrice || it.price)) / it.originalPrice) * 100)}% Off
+                        </span>
+                      </>
                     )}
                   </div>
                   <div className="wishlist-actions">
@@ -222,6 +227,15 @@ export default function WishlistDrawer({ open, onClose }) {
           font-size: 14px;
           color: #888;
           text-decoration: line-through;
+        }
+        .wishlist-discount-badge {
+          font-size: 12px;
+          color: #0082FF;
+          background: #E6F3FF;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-weight: 600;
+          margin-left: 8px;
         }
         .wishlist-actions {
           display: flex;

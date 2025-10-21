@@ -7,12 +7,12 @@ import { useRef } from 'react'
 
 const categories = [
   {
-    name: 'Hypermarket',
+    name: 'Restaurants',
     icon: '/hypermarket.svg',
     bgColor: 'rgba(31, 199, 10, 0.16)'
   },
   {
-    name: 'Supermarket',
+    name: 'Sweets Shops',
     icon: '/supermarket.svg',
     bgColor: 'rgba(203, 89, 101, 0.16)'
   },
@@ -76,6 +76,9 @@ export default function Categories() {
                   width={80}
                   height={80}
                 />
+                <div className="coming-soon-overlay">
+                  <span>Coming Soon</span>
+                </div>
               </div>
               <div className="category-text">
                 <h3>{category.name}</h3>
@@ -108,6 +111,9 @@ export default function Categories() {
                       width={60}
                       height={60}
                     />
+                    <div className="coming-soon-overlay">
+                      <span>Coming Soon</span>
+                    </div>
                   </div>
                   <div className="category-text">
                     <h3>{category.name}</h3>
@@ -172,6 +178,36 @@ export default function Categories() {
           align-items: center;
           border-radius: 16px;
           position: relative;
+          overflow: hidden;
+        }
+
+        .coming-soon-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          border-radius: 16px;
+          opacity: 0;
+          visibility: hidden;
+          transition: all 0.3s ease;
+        }
+
+        .coming-soon-overlay span {
+          color: white;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          text-align: center;
+        }
+
+        .category-item:hover .coming-soon-overlay {
+          opacity: 1;
+          visibility: visible;
         }
 
         .category-text {
@@ -208,6 +244,10 @@ export default function Categories() {
           
           .category-text h3 {
             font-size: 14px;
+          }
+
+          .coming-soon-overlay span {
+            font-size: 12px;
           }
 
           .categories-swiper-container {
