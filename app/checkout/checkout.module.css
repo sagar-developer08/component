@@ -51,6 +51,37 @@
   align-items: flex-start;
   gap: 8px;
   color: #000;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 0;
+  flex-direction: column;
+}
+
+.orderSummaryMessage {
+  background: rgb(0, 130, 255, 0.2);
+  border-radius: 16px;
+  border: none;
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #0082FF;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 0;
+  flex-direction: column;
+}
+
+.orderSummaryMessage1 {
+  background: rgb(0, 130, 255);
+  border-radius: 16px;
+  border: none;
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #fff;
+  font-size: 16px;
   font-weight: 600;
   margin-bottom: 0;
   flex-direction: column;
@@ -93,11 +124,6 @@
 .walletTitle {
   font-size: 16px;
   font-weight: 600;
-}
-
-.walletExpiry {
-  font-size: 12px;
-  color: #000;
 }
 
 .section {
@@ -206,6 +232,37 @@
 .addressButtonsRow .addAddressBtn {
   flex: 1;
   margin-bottom: 0;
+}
+
+.noAddresses {
+  text-align: center;
+  padding: 24px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  margin-bottom: 16px;
+}
+
+.noAddresses p {
+  color: #666;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.noAddressSelected {
+  text-align: center;
+  padding: 16px;
+  background: #fff3cd;
+  border-radius: 8px;
+  border: 1px solid #ffeaa7;
+  margin: 16px 0;
+}
+
+.noAddressSelected p {
+  color: #856404;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .addressForm {

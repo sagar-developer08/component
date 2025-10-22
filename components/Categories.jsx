@@ -17,11 +17,6 @@ const categories = [
     bgColor: 'rgba(203, 89, 101, 0.16)'
   },
   {
-    name: 'Brands Stores',
-    icon: '/brandStore.svg',
-    bgColor: 'rgba(198, 128, 0, 0.16)'
-  },
-  {
     name: 'Bakeries',
     icon: '/Bakeries.svg',
     bgColor: 'rgba(0, 157, 224, 0.16)'

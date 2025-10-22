@@ -69,7 +69,7 @@ export default function Orders({ orders }) {
 
   return (
     <div className={styles.ordersContainer}>
-      <div className={styles.ordersSummary} style={{ 
+      {/* <div className={styles.ordersSummary} style={{ 
         padding: '16px', 
         backgroundColor: '#f8f9fa', 
         borderRadius: '8px', 
@@ -89,7 +89,7 @@ export default function Orders({ orders }) {
             Total Amount: {orders.length > 0 ? orders[0].currency || 'USD' : 'USD'} {orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0).toFixed(2)}
           </div>
         </div>
-      </div>
+      </div> */}
       <div className={styles.ordersList}>
         {orders.map((order) => (
         (order.items || []).map((item, idx) => (

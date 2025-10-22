@@ -1,23 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchProfile } from '../../store/slices/profileSlice';
-import { createProductReview, clearReviewState } from '../../store/slices/reviewSlice';
+import { createProductReview, updateProductReview, clearReviewState } from '../../store/slices/reviewSlice';
 import { addToCart } from '../../store/slices/cartSlice';
 import { getAuthToken, getUserFromCookies } from '../../utils/userUtils';
+import { useToast } from '../../contexts/ToastContext';
 import Navigation from '@/components/Navigation';
 import styles from './orderHistory.module.css';
 import Image from 'next/image';
 
 const OrderHistoryPage = () => {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
   const productId = searchParams.get('productId');
   const dispatch = useDispatch();
   const { orders, loading, error } = useSelector(state => state.profile);
   const { loading: reviewLoading, error: reviewError, success: reviewSuccess, reviews } = useSelector(state => state.review);
+  const { show: showToast } = useToast();
   
   const [rating, setRating] = useState(0);
   const [reviewData, setReviewData] = useState({
@@ -58,6 +61,8 @@ const OrderHistoryPage = () => {
         const data = await response.json();
         
         console.log('📝 Product reviews response:', data);
+        console.log('📝 All reviews found:', data.data?.reviews);
+        console.log('📝 Number of reviews:', data.data?.reviews?.length);
         
          if (data.success && data.data && data.data.reviews && Array.isArray(data.data.reviews)) {
            // Get auth token to identify current user
@@ -65,19 +70,38 @@ const OrderHistoryPage = () => {
            let foundReview = null;
            
            if (token) {
-             // Decode token to get user ID
-             const tokenParts = token.split('.');
-             if (tokenParts.length === 3) {
-               const payload = JSON.parse(atob(tokenParts[1]));
-               const currentUserId = payload.sub;
+             try {
+               // Get MongoDB user ID from encrypted cookies (this is the correct way)
+               const mongoUserId = await getUserFromCookies();
+               console.log('🔍 Looking for review with MongoDB user ID:', mongoUserId);
                
-               // First try to find review by current user ID
-               foundReview = data.data.reviews.find(r => r.userId === currentUserId);
+               if (mongoUserId) {
+                 // First try to find review by MongoDB user ID
+                 foundReview = data.data.reviews.find(r => r.userId === mongoUserId);
+                 console.log('🔍 Found review by MongoDB ID:', foundReview ? 'YES' : 'NO');
+               }
                
-               // If no review found with user ID, check for anonymous reviews
+               // If no review found with MongoDB user ID, try JWT token sub
+               if (!foundReview) {
+                 const tokenParts = token.split('.');
+                 if (tokenParts.length === 3) {
+                   const payload = JSON.parse(atob(tokenParts[1]));
+                   const currentUserId = payload.sub;
+                   console.log('🔍 Trying JWT sub:', currentUserId);
+                   foundReview = data.data.reviews.find(r => r.userId === currentUserId);
+                   console.log('🔍 Found review by JWT sub:', foundReview ? 'YES' : 'NO');
+                 }
+               }
+               
+               // If still no review found, check for anonymous reviews
                if (!foundReview) {
                  foundReview = data.data.reviews.find(r => r.userId === 'anonymous');
+                 console.log('🔍 Found anonymous review:', foundReview ? 'YES' : 'NO');
                }
+             } catch (error) {
+               console.error('❌ Error getting user ID:', error);
+               // Fallback to anonymous review check
+               foundReview = data.data.reviews.find(r => r.userId === 'anonymous');
              }
            } else {
              // No auth token, check for anonymous reviews
@@ -86,27 +110,91 @@ const OrderHistoryPage = () => {
            
            if (foundReview) {
              console.log('✅ Found existing review:', foundReview);
-             setExistingReview(foundReview);
+             
+             // Map the review data to match our expected structure
+             const mappedReview = {
+               id: foundReview.id,
+               _id: foundReview.id, // Add _id for compatibility
+               userId: foundReview.userId,
+               productId: foundReview.productId,
+               rating: foundReview.rating,
+               title: foundReview.title,
+               comment: foundReview.comment,
+               images: foundReview.images || [],
+               pros: foundReview.pros || [],
+               cons: foundReview.cons || [],
+               isVerified: foundReview.isVerified || false,
+               isHelpful: foundReview.isHelpful || 0,
+               status: foundReview.status || 'pending',
+               createdAt: foundReview.createdAt,
+               updatedAt: foundReview.updatedAt
+             };
+             
+             setExistingReview(mappedReview);
              setIsEditMode(true);
              setShowEditForm(false); // Show view mode first
              
              // Populate form data (but don't show form yet)
-             setRating(foundReview.rating);
+             setRating(mappedReview.rating);
              setReviewData({
-               name: foundReview.title || '',
-               review: foundReview.comment || ''
+               name: mappedReview.title || '',
+               review: mappedReview.comment || ''
              });
              
-             if (foundReview.images && foundReview.images.length > 0) {
-               setImagePreviews(foundReview.images);
+             if (mappedReview.images && mappedReview.images.length > 0) {
+               setImagePreviews(mappedReview.images);
              }
              
              console.log('📋 Review data loaded - showing review with edit button');
            } else {
              console.log('ℹ️ No existing review found for this product');
-             setExistingReview(null);
-             setIsEditMode(false);
-             setShowEditForm(true); // Show form to create new review
+             
+             // FALLBACK: If we have reviews but couldn't match user ID, show the first review
+             // This is a temporary solution to help debug the issue
+             if (data.data.reviews && data.data.reviews.length > 0) {
+               console.log('⚠️ FALLBACK: Showing first review for debugging purposes');
+               const fallbackReview = data.data.reviews[0];
+               
+               // Map the review data to match our expected structure
+               const mappedReview = {
+                 id: fallbackReview.id,
+                 _id: fallbackReview.id,
+                 userId: fallbackReview.userId,
+                 productId: fallbackReview.productId,
+                 rating: fallbackReview.rating,
+                 title: fallbackReview.title,
+                 comment: fallbackReview.comment,
+                 images: fallbackReview.images || [],
+                 pros: fallbackReview.pros || [],
+                 cons: fallbackReview.cons || [],
+                 isVerified: fallbackReview.isVerified || false,
+                 isHelpful: fallbackReview.isHelpful || 0,
+                 status: fallbackReview.status || 'pending',
+                 createdAt: fallbackReview.createdAt,
+                 updatedAt: fallbackReview.updatedAt
+               };
+               
+               setExistingReview(mappedReview);
+               setIsEditMode(true);
+               setShowEditForm(false);
+               
+               // Populate form data
+               setRating(mappedReview.rating);
+               setReviewData({
+                 name: mappedReview.title || '',
+                 review: mappedReview.comment || ''
+               });
+               
+               if (mappedReview.images && mappedReview.images.length > 0) {
+                 setImagePreviews(mappedReview.images);
+               }
+               
+               console.log('📋 FALLBACK: Review data loaded for debugging');
+             } else {
+               setExistingReview(null);
+               setIsEditMode(false);
+               setShowEditForm(true); // Show form to create new review
+             }
            }
          } else {
            console.log('ℹ️ No reviews found - showing create form');
@@ -147,29 +235,34 @@ const OrderHistoryPage = () => {
   // Handle review success
   useEffect(() => {
     if (reviewSuccess) {
-      alert('Review submitted successfully!')
-      // After successful creation, refresh to check for existing review
-      setReviewData({ name: '', review: '' })
-      setRating(0)
-      setImageFiles([])
-      setImagePreviews([])
-      setShowEditForm(false)
-      // Reload the page to fetch the newly created review
-      window.location.reload()
+      // Check if we're in edit mode to show appropriate message
+      if (isEditMode) {
+        showToast('Review updated successfully!', 'success')
+      } else {
+        showToast('Review submitted successfully!', 'success')
+        // After successful creation, refresh to check for existing review
+        setReviewData({ name: '', review: '' })
+        setRating(0)
+        setImageFiles([])
+        setImagePreviews([])
+        setShowEditForm(false)
+        // Reload the page to fetch the newly created review
+        window.location.reload()
+      }
       // Clear review state
       setTimeout(() => {
         dispatch(clearReviewState())
       }, 2000)
     }
-  }, [reviewSuccess, dispatch])
+  }, [reviewSuccess, dispatch, showToast, isEditMode])
 
   // Handle review error
   useEffect(() => {
     if (reviewError) {
-      alert(`Error: ${reviewError}`)
+      showToast(`Error: ${reviewError}`, 'error')
       dispatch(clearReviewState())
     }
-  }, [reviewError, dispatch])
+  }, [reviewError, dispatch, showToast])
 
   const handleRatingChange = (newRating) => {
     setRating(newRating);
@@ -186,15 +279,18 @@ const OrderHistoryPage = () => {
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
     
-    if (files.length + imageFiles.length > 5) {
-      alert('Maximum 5 images allowed per review');
+    // Count existing images (URLs) and new files
+    const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
+    
+    if (files.length + imageFiles.length + existingImageCount > 5) {
+      showToast('Maximum 5 images allowed per review', 'error');
       return;
     }
 
     // Validate file types
     const validFiles = files.filter(file => file.type.startsWith('image/'));
     if (validFiles.length !== files.length) {
-      alert('Only image files are allowed');
+      showToast('Only image files are allowed', 'error');
       return;
     }
 
@@ -221,7 +317,13 @@ const OrderHistoryPage = () => {
       // Note: The existing images will be updated when form is submitted
     } else {
       // Remove from new uploads
-      setImageFiles(prev => prev.filter((_, i) => i !== index));
+      // Calculate the correct index for new files (excluding existing images)
+      const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
+      const newFileIndex = index - existingImageCount;
+      
+      if (newFileIndex >= 0) {
+        setImageFiles(prev => prev.filter((_, i) => i !== newFileIndex));
+      }
       setImagePreviews(prev => prev.filter((_, i) => i !== index));
     }
   };
@@ -229,12 +331,12 @@ const OrderHistoryPage = () => {
   const handleSubmitReview = async () => {
     // Validate required fields
     if (rating === 0) {
-      alert('Please select a rating (1-5 stars)');
+      showToast('Please select a rating (1-5 stars)', 'error');
       return;
     }
 
     if (!reviewData.review || reviewData.review.trim().length === 0) {
-      alert('Please write a review');
+      showToast('Please write a review', 'error');
       return;
     }
 
@@ -243,7 +345,7 @@ const OrderHistoryPage = () => {
     const actualProductId = firstItem?.productId || productId;
     
     if (!actualProductId) {
-      alert('Product MongoDB ID not found. Please contact support.');
+      showToast('Product MongoDB ID not found. Please contact support.', 'error');
       console.error('Available product data:', firstItem);
       return;
     }
@@ -251,75 +353,41 @@ const OrderHistoryPage = () => {
     console.log(isEditMode ? 'Updating review' : 'Creating review', 'with product ID:', actualProductId);
 
     if (isEditMode && existingReview) {
-      // Update existing review
+      // Update existing review using Redux action
       try {
-        const token = await getAuthToken();
-        
         // Get existing image URLs from previews
         const existingImageUrls = imagePreviews.filter(url => typeof url === 'string' && url.startsWith('http'));
         
-        // Upload new images if any
-        let newImageUrls = [];
-        if (imageFiles.length > 0 && token) {
-          const formData = new FormData();
-          imageFiles.forEach((file) => {
-            formData.append('files', file);
-          });
+        const result = await dispatch(updateProductReview({
+          reviewId: existingReview.id || existingReview._id,
+          rating: rating,
+          title: reviewData.name,
+          comment: reviewData.review,
+          images: existingImageUrls,
+          imageFiles: imageFiles
+        }));
 
-          const uploadResponse = await fetch('https://ecomupload.qliq.ae/api/upload/review-images', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            },
-            body: formData
-          });
-
-          const uploadData = await uploadResponse.json();
-          if (uploadResponse.ok) {
-            newImageUrls = uploadData.data.map(result => result.url);
-          }
-        }
-
-        // Combine existing and new image URLs
-        const allImageUrls = [...existingImageUrls, ...newImageUrls];
-
-        const response = await fetch(`https://backendreview.qliq.ae/api/product-reviews/${existingReview.id || existingReview._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            rating: rating,
-            title: reviewData.name,
-            comment: reviewData.review,
-            images: allImageUrls
-          })
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          alert('Review updated successfully!');
+        if (updateProductReview.fulfilled.match(result)) {
           // Update the existing review state with new data
           setExistingReview({
             ...existingReview,
             rating: rating,
             title: reviewData.name,
             comment: reviewData.review,
-            images: allImageUrls,
+            images: result.payload.images || existingImageUrls,
             updatedAt: new Date().toISOString()
           });
           // Clear new file uploads
           setImageFiles([]);
           // Keep the updated image previews
-          setImagePreviews(allImageUrls);
+          setImagePreviews(result.payload.images || existingImageUrls);
           // Go back to view mode
           setShowEditForm(false);
         } else {
-          throw new Error(data.message || 'Failed to update review');
+          throw new Error(result.payload || 'Failed to update review');
         }
       } catch (err) {
-        alert(`Error updating review: ${err.message}`);
+        showToast(`Error updating review: ${err.message}`, 'error');
       }
     } else {
       // Create new review
@@ -334,6 +402,24 @@ const OrderHistoryPage = () => {
   };
 
   const handleEditClick = () => {
+    if (existingReview) {
+      // Populate form with existing review data
+      setRating(existingReview.rating);
+      setReviewData({
+        name: existingReview.title || '',
+        review: existingReview.comment || ''
+      });
+      
+      // Set existing images as previews
+      if (existingReview.images && existingReview.images.length > 0) {
+        setImagePreviews(existingReview.images);
+      } else {
+        setImagePreviews([]);
+      }
+      
+      // Clear any new file uploads
+      setImageFiles([]);
+    }
     setShowEditForm(true);
   };
 
@@ -367,14 +453,14 @@ const OrderHistoryPage = () => {
       const item = orderData?.items?.[0];
       
       if (!item) {
-        alert('No product found to add to cart');
+        showToast('No product found to add to cart', 'error');
         return;
       }
 
       // Get user ID for cart operations
       const userId = await getUserFromCookies();
       if (!userId) {
-        alert('Please login to add items to cart');
+        showToast('Please login to add items to cart', 'error');
         return;
       }
 
@@ -402,14 +488,15 @@ const OrderHistoryPage = () => {
       }));
 
       if (addToCart.fulfilled.match(result)) {
+        showToast('Item added to cart successfully!', 'success');
         // Navigate to checkout page
         window.location.href = '/checkout';
       } else {
-        alert('Failed to add item to cart. Please try again.');
+        showToast('Failed to add item to cart. Please try again.', 'error');
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('Error adding item to cart. Please try again.');
+      showToast('Error adding item to cart. Please try again.', 'error');
     }
   };
 
@@ -566,7 +653,7 @@ const OrderHistoryPage = () => {
       <div className={styles.container}>
       {/* Header Section */}
       <div className={styles.header}>
-        <button className={styles.backButton} onClick={() => window.history.back()}>
+        <button className={styles.backButton} onClick={() => router.push('/profile?tab=orders')}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -630,8 +717,8 @@ const OrderHistoryPage = () => {
           </div>
 
           {/* Shipping Address Card */}
-          <div className={styles.addressCard}>
-            <h3 className={styles.cardTitle}>Shipping Address</h3>
+          {/* <div className={styles.addressCard}>
+            <h3 className={styles.cardTitle}>Billing Address</h3>
             <div className={styles.addressContent}>
               <span className={styles.addressType}>Home</span>
               <p className={styles.addressText}>
@@ -650,7 +737,7 @@ const OrderHistoryPage = () => {
                 </span>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Bottom Row - Review and Order Summary */}
@@ -775,8 +862,20 @@ const OrderHistoryPage = () => {
               <div className={styles.formGroup}>
                 <div 
                   className={styles.uploadInput}
-                  onClick={() => imageFiles.length < 5 && document.getElementById('photo-upload').click()}
-                  style={{ cursor: imageFiles.length < 5 ? 'pointer' : 'not-allowed' }}
+                  onClick={() => {
+                    const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
+                    const totalImages = imageFiles.length + existingImageCount;
+                    if (totalImages < 5) {
+                      document.getElementById('photo-upload').click();
+                    }
+                  }}
+                  style={{ 
+                    cursor: (() => {
+                      const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
+                      const totalImages = imageFiles.length + existingImageCount;
+                      return totalImages < 5 ? 'pointer' : 'not-allowed';
+                    })()
+                  }}
                 >
                   <input
                     type="file"
@@ -789,17 +888,40 @@ const OrderHistoryPage = () => {
                   />
                   <input
                     type="text"
-                    value={imageFiles.length > 0 ? `${imageFiles.length} image(s) selected` : ''}
+                    value={(() => {
+                      const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
+                      const totalImages = imageFiles.length + existingImageCount;
+                      if (totalImages > 0) {
+                        return `${totalImages} image(s) selected (${existingImageCount} existing, ${imageFiles.length} new)`;
+                      }
+                      return '';
+                    })()}
                     className={styles.formInput}
                     placeholder="Choose file (max 5 images)"
                     readOnly
-                    style={{ cursor: imageFiles.length < 5 ? 'pointer' : 'not-allowed' }}
+                    style={{ 
+                      cursor: (() => {
+                        const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
+                        const totalImages = imageFiles.length + existingImageCount;
+                        return totalImages < 5 ? 'pointer' : 'not-allowed';
+                      })()
+                    }}
                   />
                   <button 
                     type="button"
                     className={styles.uploadButton}
-                    style={{ cursor: imageFiles.length < 5 ? 'pointer' : 'not-allowed' }}
-                    disabled={imageFiles.length >= 5}
+                    style={{ 
+                      cursor: (() => {
+                        const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
+                        const totalImages = imageFiles.length + existingImageCount;
+                        return totalImages < 5 ? 'pointer' : 'not-allowed';
+                      })()
+                    }}
+                    disabled={(() => {
+                      const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
+                      const totalImages = imageFiles.length + existingImageCount;
+                      return totalImages >= 5;
+                    })()}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -907,29 +1029,29 @@ const OrderHistoryPage = () => {
                   {orderData.shippingCost === 0 ? 'FREE' : `${'AED'} ${orderData.shippingCost}`}
                 </span>
               </div>
-              {getItemsTax(orderData) > 0 && (
+              {/* {getItemsTax(orderData) > 0 && (
                 <div className={styles.costItem}>
                   <span className={styles.costLabel}>Tax</span>
                   <span className={styles.costValue}>{'AED'} {getItemsTax(orderData)}</span>
                 </div>
-              )}
+              )} */}
               {getItemsVat(orderData) > 0 && (
                 <div className={styles.costItem}>
                   <span className={styles.costLabel}>VAT</span>
                   <span className={styles.costValue}>{'AED'} {getItemsVat(orderData)}</span>
                 </div>
               )}
-              {orderData.discount && orderData.discount > 0 && (
+              {orderData.discount !== undefined && orderData.discount !== null && (
                 <div className={styles.costItem}>
                   <span className={styles.costLabel}>Discount</span>
-                  <span className={`${styles.costValue} ${styles.discountValue}`}>
-                    - {orderData.currency} {Number(orderData.discount).toFixed(2)}
+                  <span className={`${styles.costValue}`}>
+                    {orderData.discount > 0 ? '-' : ''} {"AED"} {Number(orderData.discount).toFixed(2)}
                   </span>
                 </div>
               )}
               <div className={`${styles.costItem} ${styles.totalItem}`}>
                 <span className={styles.costLabel}>Order Total</span>
-                <span className={styles.totalValue}>{'AED'} {Number(getItemsSubtotal(orderData) + getItemsTax(orderData) + getItemsVat(orderData)).toFixed(2)}</span>
+                <span className={styles.totalValue}>{'AED'} {Number(getItemsSubtotal(orderData) + getItemsVat(orderData) ).toFixed(2)}</span>
               </div>
             </div>
 

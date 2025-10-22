@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { upload, review } from '../api/endpoints'
 import { decryptText } from '../../utils/crypto'
+import { getUserFromCookies } from '../../utils/userUtils'
 
 // Get auth token helper
 const getAuthToken = async () => {
@@ -95,6 +96,15 @@ export const createProductReview = createAsyncThunk(
 
       const token = await getAuthToken()
 
+      // Get MongoDB user ID from encrypted cookies
+      let userId = null
+      try {
+        userId = await getUserFromCookies()
+        console.log('📝 [Review] MongoDB User ID from cookies:', userId)
+      } catch (error) {
+        console.warn('Could not get MongoDB user ID from cookies:', error)
+      }
+
       // Step 1: Upload images if provided (only if token available)
       let imageUrls = []
       if (imageFiles.length > 0 && token) {
@@ -120,7 +130,7 @@ export const createProductReview = createAsyncThunk(
         imageUrls = uploadData.data.map(result => result.url)
       }
 
-      // Step 2: Create review with image URLs
+      // Step 2: Create review with image URLs and user ID
       const reviewPayload = {
         productId,
         rating: parseInt(rating),
@@ -128,7 +138,8 @@ export const createProductReview = createAsyncThunk(
         comment: comment.trim(),
         images: imageUrls,
         pros: [],
-        cons: []
+        cons: [],
+        userId: userId // Include user ID in the payload
       }
 
       // Use direct endpoint by product ID (bypasses validation and auth)
@@ -162,6 +173,116 @@ export const createProductReview = createAsyncThunk(
   }
 )
 
+// Update product review
+export const updateProductReview = createAsyncThunk(
+  'review/updateProductReview',
+  async (updateData, { rejectWithValue }) => {
+    try {
+      const {
+        reviewId,
+        rating,
+        title,
+        comment,
+        images = [],
+        imageFiles = []
+      } = updateData
+
+      // Validate required fields
+      if (!reviewId) {
+        throw new Error('Review ID is required')
+      }
+
+      if (rating !== undefined && (rating < 1 || rating > 5)) {
+        throw new Error('Rating must be between 1 and 5 stars')
+      }
+
+      if (comment && comment.length > 2000) {
+        throw new Error('Comment must be less than 2000 characters')
+      }
+
+      const token = await getAuthToken()
+      
+      if (!token) {
+        throw new Error('Authentication required to update review')
+      }
+
+      // Get MongoDB user ID from encrypted cookies
+      let userId = null
+      try {
+        userId = await getUserFromCookies()
+        console.log('📝 [Review] MongoDB User ID from cookies for update:', userId)
+      } catch (error) {
+        console.warn('Could not get MongoDB user ID from cookies:', error)
+        throw new Error('Could not get user ID from cookies')
+      }
+
+      // Step 1: Upload new images if provided
+      let newImageUrls = []
+      if (imageFiles.length > 0) {
+        const formData = new FormData()
+        imageFiles.forEach((file) => {
+          formData.append('files', file)
+        })
+
+        const uploadResponse = await fetch(upload.reviewImages, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        })
+
+        const uploadData = await uploadResponse.json()
+
+        if (!uploadResponse.ok) {
+          throw new Error(uploadData.message || 'Failed to upload images')
+        }
+
+        newImageUrls = uploadData.data.map(result => result.url)
+      }
+
+      // Step 2: Combine existing and new image URLs
+      const allImageUrls = [...images, ...newImageUrls]
+
+      // Step 3: Update review
+      const updatePayload = {
+        rating: rating ? parseInt(rating) : undefined,
+        title: title || undefined,
+        comment: comment ? comment.trim() : undefined,
+        images: allImageUrls,
+        userId: userId // Include user ID in the payload
+      }
+
+      // Remove undefined values
+      Object.keys(updatePayload).forEach(key => {
+        if (updatePayload[key] === undefined) {
+          delete updatePayload[key]
+        }
+      })
+
+      const response = await fetch(review.update(reviewId), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatePayload)
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update review')
+      }
+
+      return data.data.review
+
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 // Get reviews for a product
 export const getProductReviews = createAsyncThunk(
   'review/getProductReviews',
@@ -178,8 +299,27 @@ export const getProductReviews = createAsyncThunk(
       }
 
       // API returns data with reviews array inside data object
+      // Map the review data to match our expected structure
+      const mappedReviews = (data.data?.reviews || []).map(review => ({
+        id: review.id,
+        _id: review.id, // Add _id for compatibility
+        userId: review.userId,
+        productId: review.productId,
+        rating: review.rating,
+        title: review.title,
+        comment: review.comment,
+        images: review.images || [],
+        pros: review.pros || [],
+        cons: review.cons || [],
+        isVerified: review.isVerified || false,
+        isHelpful: review.isHelpful || 0,
+        status: review.status || 'pending',
+        createdAt: review.createdAt,
+        updatedAt: review.updatedAt
+      }))
+
       return {
-        reviews: data.data?.reviews || [],
+        reviews: mappedReviews,
         total: data.data?.pagination?.total || 0,
         statistics: data.data?.statistics || null
       }
@@ -248,6 +388,24 @@ const reviewSlice = createSlice({
         state.uploadedImages = []
       })
       .addCase(createProductReview.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+        state.success = false
+      })
+      // Update review
+      .addCase(updateProductReview.pending, (state) => {
+        state.loading = true
+        state.error = null
+        state.success = false
+      })
+      .addCase(updateProductReview.fulfilled, (state, action) => {
+        state.loading = false
+        state.currentReview = action.payload
+        state.success = true
+        state.error = null
+        state.uploadedImages = []
+      })
+      .addCase(updateProductReview.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
         state.success = false

@@ -136,12 +136,12 @@ export const review = {
   create: `${BASES.review}/product-reviews/product`,
   createByProductId: (productId) => `${BASES.review}/product-reviews/product/${productId}/review`, // Direct review by product ID (no validation)
   getByProduct: (productId) => `${BASES.review}/product-reviews/product/${productId}`, // Updated to new endpoint
-  getById: (reviewId) => `${BASES.review}/reviews/${reviewId}`,
-  update: (reviewId) => `${BASES.review}/reviews/${reviewId}`,
-  delete: (reviewId) => `${BASES.review}/reviews/${reviewId}`,
-  markHelpful: (reviewId) => `${BASES.review}/reviews/${reviewId}/helpful`,
-  statistics: (productId) => `${BASES.review}/reviews/statistics/product/${productId}`,
-  userReviews: `${BASES.review}/reviews/user/product-reviews`,
+  getById: (reviewId) => `${BASES.review}/product-reviews/${reviewId}`,
+  update: (reviewId) => `${BASES.review}/product-reviews/${reviewId}`,
+  delete: (reviewId) => `${BASES.review}/product-reviews/${reviewId}`,
+  markHelpful: (reviewId) => `${BASES.review}/product-reviews/${reviewId}/helpful`,
+  statistics: (productId) => `${BASES.review}/product-reviews/statistics/product/${productId}`,
+  userReviews: `${BASES.review}/product-reviews/user/product-reviews`,
 }
 
 export default { catalog, search, auth, cart, addresses, orders, upload, review }
