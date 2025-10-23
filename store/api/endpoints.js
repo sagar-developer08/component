@@ -9,6 +9,7 @@ export const BASES = {
   payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'https://backendcart.qliq.ae/api',
   upload: process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || 'http://localhost:5005/api',
   review: process.env.NEXT_PUBLIC_REVIEW_BASE_URL || 'http://localhost:8008/api',
+  subscription: process.env.NEXT_PUBLIC_SUBSCRIPTION_BASE_URL || 'https://backendamp.qliq.ae/api',
 }
 
 
@@ -144,6 +145,11 @@ export const review = {
   userReviews: `${BASES.review}/product-reviews/user/product-reviews`,
 }
 
-export default { catalog, search, auth, cart, addresses, orders, upload, review }
+export const subscription = {
+  base: BASES.subscription,
+  details: `${BASES.subscription}/users/subscription-details`,
+}
+
+export default { catalog, search, auth, cart, addresses, orders, upload, review, subscription }
 
 

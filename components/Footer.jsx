@@ -59,11 +59,11 @@ export default function Footer() {
 
         {/* Middle Section - Navigation Links */}
         <div className="footer-navigation">
-          <a href="#" className="nav-link">Discovery</a>
-          <a href="#" className="nav-link">Hypermarket</a>
-          <a href="#" className="nav-link">Stores</a>
-          <a href="#" className="nav-link">E-Shop</a>
-          <a href="#" className="nav-link">Supermarket</a>
+          <a href="/" className="nav-link">Discovery</a>
+          <a href="/hypermarket" className="nav-link">Hypermarket</a>
+          <a href="/stores" className="nav-link">Stores</a>
+          <a href="/eshop" className="nav-link">E-Shop</a>
+          <a href="/supermarket" className="nav-link">Supermarket</a>
           <a href="#" className="nav-link">Privacy Policy</a>
           <a href="#" className="nav-link">Terms of Service</a>
           <a href="#" className="nav-link">Returns & Exchange</a>

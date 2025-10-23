@@ -10,6 +10,7 @@ import profileReducer from './slices/profileSlice'
 import checkoutReducer from './slices/checkoutSlice'
 import productDetailReducer from './slices/productDetailSlice'
 import reviewReducer from './slices/reviewSlice'
+import subscriptionReducer from './slices/subscriptionSlice'
 
 export const store = configureStore({
   reducer: {
@@ -24,6 +25,7 @@ export const store = configureStore({
     checkout: checkoutReducer,
     productDetail: productDetailReducer,
     review: reviewReducer,
+    subscription: subscriptionReducer,
   },
 })
 

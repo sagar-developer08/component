@@ -1,12 +1,44 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchSubscriptionDetails } from '@/store/slices/subscriptionSlice'
 
 export default function SubscriptionModal({ open, onClose }) {
   const [selectedPlan, setSelectedPlan] = useState('plus')
+  const dispatch = useDispatch()
+  const { subscriptionDetails, loading, error } = useSelector(state => state.subscription)
+
+  // Fetch subscription details when modal opens
+  useEffect(() => {
+    if (open) {
+      dispatch(fetchSubscriptionDetails())
+    }
+  }, [open, dispatch])
 
   const handleUpgrade = (plan) => {
     // TODO: Implement upgrade functionality
     console.log(`Upgrading to ${plan} plan`)
     onClose()
+  }
+
+  // Helper function to get plan data by tier name
+  const getPlanData = (tierName) => {
+    return subscriptionDetails.find(plan => 
+      plan.tier.toLowerCase() === tierName.toLowerCase()
+    )
+  }
+
+  // Helper function to get tier color
+  const getTierColor = (tierName) => {
+    switch (tierName.toLowerCase()) {
+      case 'plus':
+        return '#0082FF'
+      case 'silver':
+        return '#C5C5C5'
+      case 'gold':
+        return '#FFD700'
+      default:
+        return '#0082FF'
+    }
   }
 
   if (!open) return null
@@ -25,178 +57,72 @@ export default function SubscriptionModal({ open, onClose }) {
           <div className="subscription-modal-content">
             <h1 className="subscription-title">Upgrade Account</h1>
             
-            <div className="subscription-plans">
-              {/* Plus Plan */}
-              <div className={`subscription-plan ${selectedPlan === 'plus' ? 'selected' : ''}`}>
-                <div className="plan-header">
-                  <h3 className="plan-name plus">Plus</h3>
-                  <div className="plan-price">$100</div>
-                  <div className="plan-billing">per user/year</div>
-                </div>
-                
-                <div className="plan-features">
-                  <h4 className="features-title">Features</h4>
-                  <ul className="features-list">
-                    <li className="feature-item">
-                      <svg className="checkmark plus" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#0082FF" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                    <li className="feature-item">
-                      <svg className="checkmark plus" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#0082FF" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                    <li className="feature-item">
-                      <svg className="checkmark plus" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#0082FF" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                    <li className="feature-item">
-                      <svg className="checkmark plus" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#0082FF" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                    <li className="feature-item">
-                      <svg className="checkmark plus" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#0082FF" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <button 
-                  className="upgrade-btn plus"
-                  onClick={() => handleUpgrade('plus')}
-                >
-                  Upgrade Now
-                </button>
+            {loading && (
+              <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Loading subscription details...</p>
               </div>
-
-              {/* Silver Plan */}
-              <div className={`subscription-plan silver ${selectedPlan === 'silver' ? 'selected' : ''}`}>
-                <div className="plan-header">
-                  <h3 className="plan-name silver">Silver</h3>
-                  <div className="plan-price">$365</div>
-                  <div className="plan-billing">per user/year</div>
-                </div>
-                
-                <div className="plan-features">
-                  <h4 className="features-title">Features</h4>
-                  <ul className="features-list">
-                    <li className="feature-item">
-                      <svg className="checkmark silver" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#C5C5C5" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                    <li className="feature-item">
-                      <svg className="checkmark silver" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#C5C5C5" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                    <li className="feature-item">
-                      <svg className="checkmark silver" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#C5C5C5" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                    <li className="feature-item">
-                      <svg className="checkmark silver" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#C5C5C5" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                    <li className="feature-item">
-                      <svg className="checkmark silver" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#C5C5C5" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <button 
-                  className="upgrade-btn silver"
-                  onClick={() => handleUpgrade('silver')}
-                >
-                  Upgrade Now
-                </button>
+            )}
+            
+            {error && (
+              <div className="error-container">
+                <p>Error loading subscription details: {error}</p>
               </div>
-
-              {/* Gold Plan */}
-              <div className={`subscription-plan gold ${selectedPlan === 'gold' ? 'selected' : ''}`}>
-                <div className="plan-header">
-                  <h3 className="plan-name gold">Gold</h3>
-                  <div className="plan-price">$3650</div>
-                  <div className="plan-billing">per user/year</div>
-                </div>
-                
-                <div className="plan-features">
-                  <h4 className="features-title">Features</h4>
-                  <ul className="features-list">
-                    <li className="feature-item">
-                      <svg className="checkmark gold" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#FFD700" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                    <li className="feature-item">
-                      <svg className="checkmark gold" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#FFD700" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                    <li className="feature-item">
-                      <svg className="checkmark gold" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#FFD700" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                    <li className="feature-item">
-                      <svg className="checkmark gold" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#FFD700" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                    <li className="feature-item">
-                      <svg className="checkmark gold" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="10" fill="#FFD700" />
-                        <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span>Lorem ipsum dolor sit a onsectetur adipiscing elit.</span>
-                    </li>
-                  </ul>
-                </div>
-                
-                <button 
-                  className="upgrade-btn gold"
-                  onClick={() => handleUpgrade('gold')}
-                >
-                  Upgrade Now
-                </button>
+            )}
+            
+            {!loading && !error && subscriptionDetails.length > 0 && (
+              <div className="subscription-plans">
+                {subscriptionDetails.map((plan) => {
+                  const tierName = plan.tier.toLowerCase()
+                  const tierColor = getTierColor(tierName)
+                  const isSelected = selectedPlan === tierName
+                  const canUpgrade = plan.upgrade
+                  const userAlreadyHas = plan.userAlreadyHas
+                  
+                  return (
+                    <div 
+                      key={plan.tier}
+                      className={`subscription-plan ${tierName} ${isSelected ? 'selected' : ''}`}
+                    >
+                      <div className="plan-header">
+                        <h3 className={`plan-name ${tierName}`}>{plan.tier}</h3>
+                        <div className="plan-price">${plan.price}</div>
+                        <div className="plan-billing">per user/year</div>
+                        {plan.userLimit > 0 && (
+                          <div className="plan-limit">User Limit: {plan.userLimit}</div>
+                        )}
+                        {userAlreadyHas && (
+                          <div className="current-plan-badge">Current Plan</div>
+                        )}
+                      </div>
+                      
+                      <div className="plan-features">
+                        <h4 className="features-title">Features</h4>
+                        <ul className="features-list">
+                          {plan.benefits.map((benefit, index) => (
+                            <li key={index} className="feature-item">
+                              <svg className={`checkmark ${tierName}`} width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <circle cx="10" cy="10" r="10" fill={tierColor} />
+                                <path d="M6 10L8.5 12.5L14 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                              <span>{benefit}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <button 
+                        className={`upgrade-btn ${tierName} ${!canUpgrade ? 'disabled' : ''}`}
+                        onClick={() => handleUpgrade(tierName)}
+                        disabled={!canUpgrade || userAlreadyHas}
+                      >
+                        {userAlreadyHas ? 'Current Plan' : canUpgrade ? 'Upgrade Now' : 'Not Available'}
+                      </button>
+                    </div>
+                  )
+                })}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
@@ -253,6 +179,46 @@ export default function SubscriptionModal({ open, onClose }) {
           font-weight: 700;
           color: #000;
           margin: 0 0 16px 0;
+          text-align: center;
+        }
+
+        .loading-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 40px;
+        }
+
+        .loading-spinner {
+          width: 40px;
+          height: 40px;
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #0082FF;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .error-container {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 40px;
+          background: #fee;
+          border: 1px solid #fcc;
+          border-radius: 8px;
+          margin: 20px 0;
+        }
+
+        .error-container p {
+          color: #c33;
+          margin: 0;
           text-align: center;
         }
 
@@ -327,6 +293,24 @@ export default function SubscriptionModal({ open, onClose }) {
           font-weight: 400;
         }
 
+        .plan-limit {
+          font-size: 12px;
+          color: #666;
+          font-weight: 400;
+          margin-top: 4px;
+        }
+
+        .current-plan-badge {
+          background: #0082FF;
+          color: white;
+          padding: 4px 8px;
+          border-radius: 12px;
+          font-size: 12px;
+          font-weight: 600;
+          margin-top: 8px;
+          display: inline-block;
+        }
+
         .plan-features {
           width: 100%;
           margin-bottom: 24px;
@@ -388,6 +372,18 @@ export default function SubscriptionModal({ open, onClose }) {
         .upgrade-btn.gold {
           background: #FFD700;
           color: #fff;
+        }
+
+        .upgrade-btn.disabled {
+          background: #ccc;
+          color: #666;
+          cursor: not-allowed;
+          opacity: 0.6;
+        }
+
+        .upgrade-btn.disabled:hover {
+          background: #ccc;
+          transform: none;
         }
 
         @media (max-width: 768px) {
