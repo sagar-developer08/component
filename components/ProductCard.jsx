@@ -290,18 +290,18 @@ export default function ProductCard({
       <div className="product-info">
         <div className="product-title-row">
           <h3 className="product-title">{title}</h3>
-          <div className="delivery-time">
+          {/* <div className="delivery-time">
             {deliveryTime}
-          </div>
+          </div> */}
         </div>
 
         <div className="product-bottom">
-          <div className="product-price">{price}</div>
+          <div className="product-price">{typeof price === 'number' ? price.toFixed(2) : (typeof price === 'string' ? (isNaN(parseFloat(price)) ? price : parseFloat(price).toFixed(2)) : price)}</div>
           <div className="product-rating">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M6.99937 10.0742L9.4202 11.5384C9.86354 11.8067 10.406 11.41 10.2894 10.9084L9.64771 8.15503L11.7885 6.30003C12.1794 5.96169 11.9694 5.32003 11.456 5.27919L8.63854 5.04003L7.53604 2.43836C7.3377 1.96586 6.66104 1.96586 6.4627 2.43836L5.3602 5.03419L2.5427 5.27336C2.02937 5.31419 1.81937 5.95586 2.2102 6.29419L4.35104 8.14919L3.70937 10.9025C3.5927 11.4042 4.1352 11.8009 4.57854 11.5325L6.99937 10.0742Z" fill="#0082FF" />
             </svg>
-            <span>{rating}</span>
+            <span>{typeof rating === 'number' ? rating.toFixed(2) : (typeof rating === 'string' ? (isNaN(parseFloat(rating)) ? rating : parseFloat(rating).toFixed(2)) : rating)}</span>
           </div>
         </div>
       </div>

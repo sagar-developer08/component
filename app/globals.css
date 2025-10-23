@@ -325,7 +325,7 @@ button {
 /* Bestsellers Swiper Styles */
 .bestsellers-swiper {
   width: 100%;
-  max-width: 1360px;
+  max-width: 1365px;
   margin: 0 auto;
   display: flex;
   justify-content: flex-start;
@@ -335,6 +335,8 @@ button {
   width: auto !important;
   display: flex;
   justify-content: flex-start;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* Page-level layout classes moved from app/page.tsx */
