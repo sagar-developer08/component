@@ -94,10 +94,19 @@ export default function CheckoutPage() {
   const calculatedTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
   const subtotal = cartTotal || calculatedTotal
 
-  // VAT Calculation (5% VAT - standard rate in UAE)
-  const VAT_RATE = 0.05
-  const vatAmount = subtotal * VAT_RATE
-  const finalTotal = subtotal + vatAmount
+  // VAT Calculation - use product VAT percentage or default to 5%
+  const getVatRate = () => {
+    if (cartItems.length === 0) return 0.05; // Default 5%
+    
+    // Get VAT percentage from the first item (assuming all items have same VAT rate)
+    const firstItem = cartItems[0];
+    const vatPercentage = firstItem.vat_percentage || 5; // Default to 5% if not provided
+    return vatPercentage / 100; // Convert percentage to decimal
+  }
+  
+  const vatRate = getVatRate();
+  const vatAmount = subtotal * vatRate;
+  const finalTotal = subtotal + vatAmount;
 
   // Combined error state
   const error = addressError || orderError || paymentIntentError
