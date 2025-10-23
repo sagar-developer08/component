@@ -440,11 +440,15 @@ export default function Home() {
   };
 
   const handleSeeAllStores = () => {
-    router.push('/store');
+    router.push('/stores');
   };
 
   const handleSeeAllFeaturedOffers = () => {
     router.push('/ecommerce');
+  };
+
+  const handleBannerClick = () => {
+    window.open('https://dev.qliq.ae/', '_blank');
   };
 
   const handleCategoryClick = (category) => {
@@ -577,6 +581,7 @@ export default function Home() {
           description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
           buttonText="Try Qliq Live Now"
           backgroundImage="3.jpg"
+          onButtonClick={handleBannerClick}
         />
 
         {/* Offers Section */}
@@ -651,8 +656,6 @@ export default function Home() {
             <SectionHeader
               title="Special Deals For QLIQ+"
               showNavigation={true}
-              showButton={true}
-              buttonText="Upgrade"
               onPrev={handleSpecialDealsPrev}
               onNext={handleSpecialDealsNext}
             />
@@ -680,6 +683,7 @@ export default function Home() {
           description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
           buttonText="Download Qliq Now"
           backgroundImage="1.jpg"
+          onButtonClick={handleBannerClick}
         />
 
         {/* Top Stores Section */}
@@ -730,9 +734,6 @@ export default function Home() {
             <SectionHeader
               title="Featured Offers"
               showNavigation={true}
-              showButton={true}
-              buttonText="See All"
-              onButtonClick={handleSeeAllFeaturedOffers}
               onPrev={handleFeaturedOffersPrev}
               onNext={handleFeaturedOffersNext}
             />
@@ -803,6 +804,7 @@ export default function Home() {
           description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
           buttonText="Login on Qliq Live Now"
           backgroundImage="2.jpg"
+          onButtonClick={handleBannerClick}
         />
 
         {/* New Stores Section */}

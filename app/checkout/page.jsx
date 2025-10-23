@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { getAuthToken, getUserFromCookies, getUserIds } from '@/utils/userUtils'
 import { fetchCart } from '@/store/slices/cartSlice'
- 
+
 import {
   fetchUserAddresses,
   createAddress,
@@ -37,7 +37,7 @@ import styles from './checkout.module.css'
 
 export default function CheckoutPage() {
   const dispatch = useDispatch()
-  
+
   // State to control address display
   const [showAllAddresses, setShowAllAddresses] = useState(false)
 
@@ -69,16 +69,16 @@ export default function CheckoutPage() {
 
   // Combine addresses from both sources to ensure we get all available addresses
   const allAddresses = []
-  
+
   // Add addresses from checkout slice
   if (userAddresses && userAddresses.length > 0) {
     allAddresses.push(...userAddresses)
   }
-  
+
   // Add addresses from profile slice that aren't already included
   if (profileAddresses && profileAddresses.length > 0) {
     profileAddresses.forEach(profileAddr => {
-      const exists = allAddresses.some(addr => 
+      const exists = allAddresses.some(addr =>
         (addr.id || addr._id) === (profileAddr.id || profileAddr._id)
       )
       if (!exists) {
@@ -86,7 +86,7 @@ export default function CheckoutPage() {
       }
     })
   }
-  
+
   // Show only first 2 addresses initially, or all if showAllAddresses is true
   const displayAddresses = showAllAddresses ? allAddresses : allAddresses.slice(0, 2)
 
@@ -165,6 +165,13 @@ export default function CheckoutPage() {
     }
   }, [displayAddresses, selectedAddress, dispatch])
 
+  // Set Stripe as default payment method
+  useEffect(() => {
+    if (!selectedPaymentMethod) {
+      dispatch(setSelectedPaymentMethod('credit-card'))
+    }
+  }, [selectedPaymentMethod, dispatch])
+
   // Debug: Log cart data when it changes (commented out to prevent console spam)
   // useEffect(() => {
   //   console.log('Checkout page cart data:', { 
@@ -236,7 +243,7 @@ export default function CheckoutPage() {
       return
     }
 
-    
+
 
     const orderData = {
       items: cartItems,
@@ -264,7 +271,7 @@ export default function CheckoutPage() {
       return
     }
 
-    
+
 
     const orderData = {
       items: cartItems,
@@ -330,7 +337,7 @@ export default function CheckoutPage() {
 
       console.log('✅ Auth token obtained')
 
-      
+
 
       // Validate that all cart items have valid product IDs
       const invalidItems = cartItems.filter(item => !item.productId && !item.id)
@@ -367,7 +374,7 @@ export default function CheckoutPage() {
       console.log('🔗 Endpoint:', paymentEndpoints.stripeHostedCheckout)
       console.log('📦 Payload:', body)
 
-      
+
 
       const res = await fetch(paymentEndpoints.stripeHostedCheckout, {
         method: 'POST',
@@ -554,7 +561,14 @@ export default function CheckoutPage() {
                       </div>
                     ))}
                   </div>
-                  
+
+                  {/* No address selected message */}
+                  {!selectedAddress && (
+                    <div className={styles.noAddressSelected}>
+                      <p>Please select an address to continue with your order.</p>
+                    </div>
+                  )}
+
                   {/* Button row - View More and Add New Address */}
                   <div className={styles.addressButtonsRow}>
                     {allAddresses.length > 2 && (
@@ -565,7 +579,7 @@ export default function CheckoutPage() {
                         {showAllAddresses ? 'View Less' : `View More`}
                       </button>
                     )}
-                    
+
                     <button
                       className={styles.addAddressBtn}
                       onClick={() => dispatch(setShowAddressForm(!showAddressForm))}
@@ -749,7 +763,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* Shipping Address */}
-            <div className={styles.section}>
+            {/* <div className={styles.section}>
               <div className={styles.sectionHeader}>Shipping Address</div>
               <div className={styles.shippingTabs}>
                 <button
@@ -771,16 +785,12 @@ export default function CheckoutPage() {
                   Use a Different Address
                 </button>
               </div>
-
-              {/* Show message when same as delivery address is selected */}
               {shippingSameAsDelivery && selectedAddress && (
                 <div className={styles.sameAsDeliveryMessage}>
                   <FontAwesomeIcon icon={faCheck} className={styles.checkIcon} />
                   <span>Using the same address as delivery address</span>
                 </div>
               )}
-
-              {/* Shipping Address Form - Only show if different address is selected */}
               {!shippingSameAsDelivery && showShippingForm && (
                 <form className={styles.addressForm} onSubmit={handleAddressSubmit}>
                   <div className={styles.addressFormTabs}>
@@ -930,7 +940,7 @@ export default function CheckoutPage() {
                   </div>
                 </form>
               )}
-            </div>
+            </div> */}
 
             {/* Shipping Method */}
             <div className={styles.section}>
@@ -942,7 +952,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* Payment Method */}
-            <div className={styles.section}>
+            {/* <div className={styles.section}>
               <div className={styles.sectionHeader}>Payment Method</div>
               <div className={styles.paymentMethods}>
                 <label className={styles.paymentOption}>
@@ -950,15 +960,12 @@ export default function CheckoutPage() {
                     type="radio"
                     name="paymentMethod"
                     value="credit-card"
-                    checked={selectedPaymentMethod === 'credit-card'}
-                    onChange={(e) => {
-                      dispatch(setSelectedPaymentMethod(e.target.value))
-                      dispatch(clearStripeData()) // Clear previous Stripe data when switching
-                    }}
+                    checked={true}
+                    readOnly
                     className={styles.paymentRadio}
                   />
                   <div className={styles.paymentContent}>
-                    <div className={styles.paymentText}>Credit/Debit</div>
+                    <div className={styles.paymentText}>Pay with Stripe</div>
                   </div>
                 </label>
                 <label className={styles.paymentOption}>
@@ -997,21 +1004,10 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 </label>
+
               </div>
 
-              {/* Stripe Hosted Checkout Button */}
-              {selectedPaymentMethod === 'credit-card' && (
-                <div className={styles.stripePaymentSection}>
-                  <button
-                    className={styles.placeOrderBtn}
-                    onClick={handleHostedCheckout}
-                    disabled={cartItems.length === 0 || !selectedAddress}
-                  >
-                    Pay with Card (Stripe Checkout)
-                  </button>
-                </div>
-              )}
-            </div>
+            </div> */}
           </div>
 
           {/* Right Side - Order Summary */}
@@ -1045,8 +1041,18 @@ export default function CheckoutPage() {
                   <p>Add items to proceed with checkout</p>
                 </div>
               )}
+              <div className={styles.orderSummaryMessage}>
+                <div className={styles.walletExpiry}>Minimum order value is AED 100 — you must spend at least AED 100 to apply Qoyns.</div>
+              </div>
+              <div className={styles.orderSummaryMessage1}>
+                <div className={styles.walletExpiry}>You can get Maximum of 1650 AED Discount if you spend 3300 AED. Avail this Offer Now!</div>
+              </div>
               {/* Qoyns Slider */}
-              <div className={styles.qoynsSliderSection}>
+              <div className={styles.promoCode}>
+                <input className={styles.promoInput} value="" placeholder='250 Qoyns' readOnly />
+                <button className={styles.promoApplyBtn}>Apply</button>
+              </div>
+              {/* <div className={styles.qoynsSliderSection}>
                 <div className={styles.qoynsSliderLabel}>Choose Qoyns to use</div>
                 <div className={styles.qoynsSliderTrack}>
                   <input type="range" min="10" max="50" step="10" className={styles.qoynsSlider} />
@@ -1058,7 +1064,7 @@ export default function CheckoutPage() {
                     <span>50%</span>
                   </div>
                 </div>
-              </div>
+              </div> */}
               {/* Promo Code */}
               <div className={styles.promoCode}>
                 <input className={styles.promoInput} value="" placeholder='OFF500' readOnly />
@@ -1089,26 +1095,19 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               )}
-              {selectedPaymentMethod === 'credit-card' ? (
-                // For Stripe, the payment button is in the Stripe Elements component
-                <div className={styles.stripeNote}>
-                  {/* Complete payment using the form above */}
-                </div>
-              ) : (
-                <button
-                  className={styles.placeOrderBtn}
-                  onClick={handlePlaceOrder}
-                  disabled={isPlacingOrder || cartItems.length === 0}
-                >
-                  {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
-                </button>
-              )}
+              <button
+                className={styles.placeOrderBtn}
+                onClick={handleHostedCheckout}
+                disabled={cartItems.length === 0 || !selectedAddress}
+              >
+                Pay with Stripe
+              </button>
             </div>
           </div>
         </div>
       </div>
       <Footer />
-      
+
     </div>
   )
 }

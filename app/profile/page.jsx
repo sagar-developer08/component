@@ -16,6 +16,8 @@ import AddCard from '../../components/profile/AddCard/AddCard'
 import QoynsHistory from '../../components/profile/QoynsHistory/QoynsHistory'
 import SendQoyn from '../../components/profile/SendQoyn/SendQoyn'
 import NewAddress from '../../components/profile/NewAddress/newAddress'
+import LocationModal from '../../components/LocationModal'
+import SubscriptionModal from '../../components/SubscriptionModal'
 
 // User data is now fetched once in the main ProfilePage component and passed down
 
@@ -26,6 +28,8 @@ export default function ProfilePage() {
   const { user, addresses, orders, loading, error } = useSelector(state => state.profile)
   const [activeTab, setActiveTab] = useState('personal-info')
   const [isEditing, setIsEditing] = useState(false)
+  const [locationModalOpen, setLocationModalOpen] = useState(false)
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false)
 
   // Fetch profile data once when component mounts
   useEffect(() => {
@@ -85,7 +89,7 @@ export default function ProfilePage() {
 
   const tabs = [
     { id: 'personal-info', label: 'Personal Info' },
-    { id: 'cash-wallet', label: 'Cash Wallet' },
+    // { id: 'cash-wallet', label: 'Cash Wallet' },
     { id: 'qoyns-wallet', label: 'Qoyns Wallet' },
     { id: 'orders', label: 'Orders' },
     { id: 'addresses', label: 'Addresses' },
@@ -104,7 +108,12 @@ export default function ProfilePage() {
           </div>
           <div className={styles.actionTop}>
             <button className={styles.goLiveBtn}>Go to QLIQ Live</button>
-            <button className={styles.upgradeBtn}>Upgrade to QLIQ Plus</button>
+            <button 
+              className={styles.upgradeBtn}
+              onClick={() => setSubscriptionModalOpen(true)}
+            >
+              Upgrade to QLIQ Plus
+            </button>
           </div>
         </div>
         <div className={styles.profileContent}>
@@ -169,7 +178,10 @@ export default function ProfilePage() {
             )}
             {activeTab === 'addresses' && (
               <div className={styles.qoynsActionsRow}>
-                <button className={styles.addCardBtn}>
+                <button 
+                  className={styles.addCardBtn}
+                  onClick={() => setLocationModalOpen(true)}
+                >
                   Use my Current Location
                 </button>
                 <button
@@ -203,11 +215,11 @@ export default function ProfilePage() {
                     <PersonalInfo user={user} />
                   </div>
                 )}
-                {activeTab === 'cash-wallet' && (
+                {/* {activeTab === 'cash-wallet' && (
                   <div className={styles.sectionContent}>
                     <CashWallet user={user} />
                   </div>
-                )}
+                )} */}
                 {activeTab === 'add-card' && (
                   <div className={styles.sectionContent}>
                     <AddCard
@@ -258,6 +270,14 @@ export default function ProfilePage() {
         </div>
       </div>
       <Footer />
+      <LocationModal 
+        open={locationModalOpen}
+        onClose={() => setLocationModalOpen(false)}
+      />
+      <SubscriptionModal 
+        open={subscriptionModalOpen}
+        onClose={() => setSubscriptionModalOpen(false)}
+      />
     </div>
   )
 }

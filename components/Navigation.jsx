@@ -32,9 +32,9 @@ const Navigation = memo(function Navigation() {
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [isDebouncing, setIsDebouncing] = useState(false)
-  
+
   // This effect has been removed as we no longer need to open the cart drawer automatically
-  
+
   const router = useRouter()
   const pathname = usePathname()
   const { requireAuth, loginModalOpen, closeLoginModal, openLoginModal, isAuthenticated } = useAuth()
@@ -42,8 +42,10 @@ const Navigation = memo(function Navigation() {
   const [locationModalOpen, setLocationModalOpen] = useState(false)
   const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false)
   const [currentLocation, setCurrentLocation] = useState('')
+  const [currentCity, setCurrentCity] = useState('')
+  const [currentCountry, setCurrentCountry] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  
+
   // Determine active nav based on current path
   const getActiveNav = () => {
     if (pathname === '/') return 'Discovery'
@@ -108,6 +110,14 @@ const Navigation = memo(function Navigation() {
     setMobileMenuOpen(false)
   }
 
+  const handleLocationSelect = (locationData) => {
+    setCurrentCity(locationData.cityName)
+    setCurrentCountry(locationData.countryName || '')
+    setCurrentLocation(locationData.address)
+    // You can also save to localStorage or Redux store here
+    localStorage.setItem('userLocation', JSON.stringify(locationData))
+  }
+
   useEffect(() => {
     const updateHeight = () => {
       if (navRef.current) {
@@ -143,12 +153,27 @@ const Navigation = memo(function Navigation() {
 
   // Cart, wishlist, and profile are now fetched automatically in AuthContext on login
 
+  // Load saved location on mount
+  useEffect(() => {
+    const savedLocation = localStorage.getItem('userLocation')
+    if (savedLocation) {
+      try {
+        const locationData = JSON.parse(savedLocation)
+        setCurrentCity(locationData.cityName)
+        setCurrentCountry(locationData.countryName || '')
+        setCurrentLocation(locationData.address)
+      } catch (error) {
+        console.error('Error parsing saved location:', error)
+      }
+    }
+  }, [])
+
   // Debounce search query
   useEffect(() => {
     if (searchQuery) {
       setIsDebouncing(true)
     }
-    
+
     const timer = setTimeout(() => {
       setDebouncedQuery(searchQuery)
       setIsDebouncing(false)
@@ -191,7 +216,7 @@ const Navigation = memo(function Navigation() {
 
   const navItems = [
     {
-      key: 'Discovery', 
+      key: 'Discovery',
       path: '/',
       icon: (
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -203,7 +228,7 @@ const Navigation = memo(function Navigation() {
       ), label: 'Discovery'
     },
     {
-      key: 'Hypermarket', 
+      key: 'Hypermarket',
       path: '/hypermarket',
       icon: (
         <svg className="nav-icon" width="20" height="20" viewBox="0 0 20 20">
@@ -215,7 +240,7 @@ const Navigation = memo(function Navigation() {
       ), label: 'Hypermarket'
     },
     {
-      key: 'Stores', 
+      key: 'Stores',
       path: '/stores',
       icon: (
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -230,7 +255,7 @@ const Navigation = memo(function Navigation() {
       ), label: 'Stores'
     },
     {
-      key: 'E-Shop', 
+      key: 'E-Shop',
       path: '/eshop',
       icon: (
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -245,7 +270,7 @@ const Navigation = memo(function Navigation() {
       ), label: 'E-Shop'
     },
     {
-      key: 'Supermarket', 
+      key: 'Supermarket',
       path: '/supermarket',
       icon: (
         <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
@@ -310,7 +335,7 @@ const Navigation = memo(function Navigation() {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="search-input"
-                        style={{ 
+                        style={{
                           background: isDebouncing ? '#F0F9FF' : '#F9FAFB',
                           borderColor: isDebouncing ? '#0082FF' : '#E5E7EB'
                         }}
@@ -333,11 +358,22 @@ const Navigation = memo(function Navigation() {
               </div>
               {/* nav-actions */}
               <div className="nav-actions">
-                <div className="action-btn" onClick={() => setLocationModalOpen(true)}>
-                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                    <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
-                    <path d="M20 12.6213C18.3498 12.6213 16.7671 13.2189 15.6002 14.2826C14.4333 15.3463 13.7778 16.7889 13.7778 18.2932C13.7778 20.6122 15.3618 22.8493 17.1004 24.5824C17.9895 25.4653 18.9595 26.2775 20 27.01C20.1553 26.9014 20.3375 26.7691 20.5467 26.613C21.382 25.9877 22.1683 25.3097 22.8996 24.5841C24.6382 22.8493 26.2222 20.613 26.2222 18.2932C26.2222 16.7889 25.5667 15.3463 24.3998 14.2826C23.2329 13.2189 21.6502 12.6213 20 12.6213ZM20 29L19.496 28.684L19.4933 28.6824L19.488 28.6783L19.4702 28.667L19.4036 28.624L19.1636 28.4644C17.9474 27.6313 16.8177 26.6983 15.7884 25.6771C13.9716 23.8637 12 21.2393 12 18.2924C12 16.3583 12.8429 14.5035 14.3431 13.1359C15.8434 11.7683 17.8783 11 20 11C22.1217 11 24.1566 11.7683 25.6569 13.1359C27.1571 14.5035 28 16.3583 28 18.2924C28 21.2393 26.0284 23.8646 24.2116 25.6755C23.1826 26.6966 22.0531 27.6296 20.8373 28.4628C20.736 28.5318 20.6338 28.5996 20.5307 28.6662L20.512 28.6775L20.5067 28.6816L20.5049 28.6824L20 29ZM20 16.6727C19.5285 16.6727 19.0763 16.8434 18.7429 17.1473C18.4095 17.4512 18.2222 17.8634 18.2222 18.2932C18.2222 18.723 18.4095 19.1352 18.7429 19.4391C19.0763 19.743 19.5285 19.9137 20 19.9137C20.4715 19.9137 20.9237 19.743 21.2571 19.4391C21.5905 19.1352 21.7778 18.723 21.7778 18.2932C21.7778 17.8634 21.5905 17.4512 21.2571 17.1473C20.9237 16.8434 20.4715 16.6727 20 16.6727ZM16.4444 18.2932C16.4444 17.4336 16.819 16.6092 17.4858 16.0014C18.1526 15.3936 19.057 15.0521 20 15.0521C20.943 15.0521 21.8474 15.3936 22.5142 16.0014C23.181 16.6092 23.5556 17.4336 23.5556 18.2932C23.5556 19.1528 23.181 19.9771 22.5142 20.585C21.8474 21.1928 20.943 21.5342 20 21.5342C19.057 21.5342 18.1526 21.1928 17.4858 20.585C16.819 19.9771 16.4444 19.1528 16.4444 18.2932Z" fill="black" />
-                  </svg>
+                <div className="location-container" onClick={() => setLocationModalOpen(true)}>
+                  {currentCity && (
+                    <div className="location-text-container">
+                      <div className="location-city">{currentCity}</div>
+                      {currentCountry && (
+                        <div className="location-country">{currentCountry}</div>
+                      )}
+                    </div>
+                  )}
+                  <div className="action-btn">
+                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                      <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
+                      <path d="M20 12.6213C18.3498 12.6213 16.7671 13.2189 15.6002 14.2826C14.4333 15.3463 13.7778 16.7889 13.7778 18.2932C13.7778 20.6122 15.3618 22.8493 17.1004 24.5824C17.9895 25.4653 18.9595 26.2775 20 27.01C20.1553 26.9014 20.3375 26.7691 20.5467 26.613C21.382 25.9877 22.1683 25.3097 22.8996 24.5841C24.6382 22.8493 26.2222 20.613 26.2222 18.2932C26.2222 16.7889 25.5667 15.3463 24.3998 14.2826C23.2329 13.2189 21.6502 12.6213 20 12.6213ZM20 29L19.496 28.684L19.4933 28.6824L19.488 28.6783L19.4702 28.667L19.4036 28.624L19.1636 28.4644C17.9474 27.6313 16.8177 26.6983 15.7884 25.6771C13.9716 23.8637 12 21.2393 12 18.2924C12 16.3583 12.8429 14.5035 14.3431 13.1359C15.8434 11.7683 17.8783 11 20 11C22.1217 11 24.1566 11.7683 25.6569 13.1359C27.1571 14.5035 28 16.3583 28 18.2924C28 21.2393 26.0284 23.8646 24.2116 25.6755C23.1826 26.6966 22.0531 27.6296 20.8373 28.4628C20.736 28.5318 20.6338 28.5996 20.5307 28.6662L20.512 28.6775L20.5067 28.6816L20.5049 28.6824L20 29ZM20 16.6727C19.5285 16.6727 19.0763 16.8434 18.7429 17.1473C18.4095 17.4512 18.2222 17.8634 18.2222 18.2932C18.2222 18.723 18.4095 19.1352 18.7429 19.4391C19.0763 19.743 19.5285 19.9137 20 19.9137C20.4715 19.9137 20.9237 19.743 21.2571 19.4391C21.5905 19.1352 21.7778 18.723 21.7778 18.2932C21.7778 17.8634 21.5905 17.4512 21.2571 17.1473C20.9237 16.8434 20.4715 16.6727 20 16.6727ZM16.4444 18.2932C16.4444 17.4336 16.819 16.6092 17.4858 16.0014C18.1526 15.3936 19.057 15.0521 20 15.0521C20.943 15.0521 21.8474 15.3936 22.5142 16.0014C23.181 16.6092 23.5556 17.4336 23.5556 18.2932C23.5556 19.1528 23.181 19.9771 22.5142 20.585C21.8474 21.1928 20.943 21.5342 20 21.5342C19.057 21.5342 18.1526 21.1928 17.4858 20.585C16.819 19.9771 16.4444 19.1528 16.4444 18.2932Z" fill="black" />
+                    </svg>
+                  </div>
+
                 </div>
                 <div className="action-btn" onClick={handleSearchClick}>
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
@@ -365,7 +401,7 @@ const Navigation = memo(function Navigation() {
                 <div className="mobile-menu-toggle" onClick={handleMobileMenuToggle}>
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                     <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
-                    <path d="M12 16H28M12 20H28M12 24H28" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12 16H28M12 20H28M12 24H28" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
 
@@ -416,7 +452,7 @@ const Navigation = memo(function Navigation() {
                   </div>
                   <button className="mobile-nav-close" onClick={() => setMobileMenuOpen(false)}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M18 6L6 18M6 6L18 18" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M18 6L6 18M6 6L18 18" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
                 </div>
@@ -438,9 +474,9 @@ const Navigation = memo(function Navigation() {
                     setMobileMenuOpen(false)
                   }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M9 22C9.55228 22 10 21.5523 10 21C10 20.4477 9.55228 20 9 20C8.44772 20 8 20.4477 8 21C8 21.5523 8.44772 22 9 22Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M9 22C9.55228 22 10 21.5523 10 21C10 20.4477 9.55228 20 9 20C8.44772 20 8 20.4477 8 21C8 21.5523 8.44772 22 9 22Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <span>Cart {displayCartCount > 0 && `(${displayCartCount})`}</span>
                   </div>
@@ -449,11 +485,11 @@ const Navigation = memo(function Navigation() {
                     setMobileMenuOpen(false)
                   }}>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                      <path d="M20.84 4.61C20.3292 4.099 19.7228 3.69364 19.0554 3.41708C18.3879 3.14052 17.6725 2.99817 16.95 2.99817C16.2275 2.99817 15.5121 3.14052 14.8446 3.41708C14.1772 3.69364 13.5708 4.099 13.06 4.61L12 5.67L10.94 4.61C9.9083 3.5783 8.50903 2.9987 7.05 2.9987C5.59096 2.9987 4.19169 3.5783 3.16 4.61C2.1283 5.6417 1.5487 7.04097 1.5487 8.5C1.5487 9.95903 2.1283 11.3583 3.16 12.39L12 21.23L20.84 12.39C21.351 11.8792 21.7563 11.2728 22.0329 10.6053C22.3095 9.93789 22.4518 9.22248 22.4518 8.5C22.4518 7.77752 22.3095 7.06211 22.0329 6.39467C21.7563 5.72723 21.351 5.1208 20.84 4.61Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M20.84 4.61C20.3292 4.099 19.7228 3.69364 19.0554 3.41708C18.3879 3.14052 17.6725 2.99817 16.95 2.99817C16.2275 2.99817 15.5121 3.14052 14.8446 3.41708C14.1772 3.69364 13.5708 4.099 13.06 4.61L12 5.67L10.94 4.61C9.9083 3.5783 8.50903 2.9987 7.05 2.9987C5.59096 2.9987 4.19169 3.5783 3.16 4.61C2.1283 5.6417 1.5487 7.04097 1.5487 8.5C1.5487 9.95903 2.1283 11.3583 3.16 12.39L12 21.23L20.84 12.39C21.351 11.8792 21.7563 11.2728 22.0329 10.6053C22.3095 9.93789 22.4518 9.22248 22.4518 8.5C22.4518 7.77752 22.3095 7.06211 22.0329 6.39467C21.7563 5.72723 21.351 5.1208 20.84 4.61Z" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                     <span>Wishlist {displayWishlistCount > 0 && `(${displayWishlistCount})`}</span>
                   </div>
-                  
+
                   {isAuthenticated ? (
                     <div className="mobile-action-btn" onClick={() => {
                       router.push('/profile')
@@ -481,8 +517,8 @@ const Navigation = memo(function Navigation() {
                         setMobileMenuOpen(false)
                       }}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <circle cx="12" cy="7" r="4" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <circle cx="12" cy="7" r="4" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                         <span>Login</span>
                       </div>
@@ -491,10 +527,10 @@ const Navigation = memo(function Navigation() {
                         setMobileMenuOpen(false)
                       }}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <circle cx="8.5" cy="7" r="4" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <line x1="20" y1="8" x2="20" y2="14" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <line x1="23" y1="11" x2="17" y2="11" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <circle cx="8.5" cy="7" r="4" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <line x1="20" y1="8" x2="20" y2="14" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <line x1="23" y1="11" x2="17" y2="11" stroke="#0082FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                         <span>Sign Up</span>
                       </div>
@@ -628,13 +664,38 @@ const Navigation = memo(function Navigation() {
           display: flex;
           align-items: center;
           gap: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          padding: 4px 0;
+          border-radius: 8px;
         }
         
-        .location-text {
-          font-size: 12px;
-          color: #666;
-          font-weight: 500;
+        .location-container:hover {
+          background: rgba(0, 130, 255, 0.05);
+        }
+        
+        .location-text-container {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
           max-width: 120px;
+        }
+        
+        .location-city {
+          font-size: 12px;
+          color: #333;
+          font-weight: 600;
+          line-height: 1.2;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        
+        .location-country {
+          font-size: 10px;
+          color: #666;
+          font-weight: 400;
+          line-height: 1.2;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -1085,8 +1146,8 @@ const Navigation = memo(function Navigation() {
       </div>
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
       <WishlistDrawer open={wishlistOpen} onClose={() => setWishlistOpen(false)} />
-      <LoginModal 
-        open={loginModalOpen} 
+      <LoginModal
+        open={loginModalOpen}
         onClose={closeLoginModal}
         onOpenRegister={() => {
           setRegisterModalOpen(true)
@@ -1097,20 +1158,21 @@ const Navigation = memo(function Navigation() {
           closeLoginModal()
         }}
       />
-      <RegisterModal 
-        open={registerModalOpen} 
+      <RegisterModal
+        open={registerModalOpen}
         onClose={() => setRegisterModalOpen(false)}
         onSwitchToLogin={() => {
           setRegisterModalOpen(false)
           openLoginModal()
         }}
       />
-      <LocationModal 
-        open={locationModalOpen} 
+      <LocationModal
+        open={locationModalOpen}
         onClose={() => setLocationModalOpen(false)}
+        onLocationSelect={handleLocationSelect}
       />
-      <ForgotPasswordModal 
-        open={forgotPasswordModalOpen} 
+      <ForgotPasswordModal
+        open={forgotPasswordModalOpen}
         onClose={() => setForgotPasswordModalOpen(false)}
       />
     </>
