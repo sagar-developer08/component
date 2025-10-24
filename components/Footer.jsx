@@ -64,8 +64,8 @@ export default function Footer() {
           <a href="/stores" className="nav-link">Stores</a>
           <a href="/eshop" className="nav-link">E-Shop</a>
           <a href="/supermarket" className="nav-link">Supermarket</a>
-          <a href="#" className="nav-link">Privacy Policy</a>
-          <a href="#" className="nav-link">Terms of Service</a>
+          <a href="/privacy-policy" className="nav-link">Privacy Policy</a>
+          <a href="/terms-and-conditions" className="nav-link">Terms of Service</a>
           <a href="#" className="nav-link">Returns & Exchange</a>
           <a href="#" className="nav-link">Shipping & Delivery</a>
         </div>

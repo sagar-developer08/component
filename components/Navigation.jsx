@@ -359,14 +359,18 @@ const Navigation = memo(function Navigation() {
               {/* nav-actions */}
               <div className="nav-actions">
                 <div className="location-container" onClick={() => setLocationModalOpen(true)}>
-                  {currentCity && (
-                    <div className="location-text-container">
-                      <div className="location-city">{currentCity}</div>
-                      {currentCountry && (
-                        <div className="location-country">{currentCountry}</div>
-                      )}
-                    </div>
-                  )}
+                  <div className="location-text-container">
+                    {currentCity ? (
+                      <>
+                        <div className="location-city">{currentCity}</div>
+                        {currentCountry && (
+                          <div className="location-country">{currentCountry}</div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="location-placeholder">Select Location</div>
+                    )}
+                  </div>
                   <div className="action-btn">
                     <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                       <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
@@ -695,6 +699,16 @@ const Navigation = memo(function Navigation() {
           font-size: 10px;
           color: #666;
           font-weight: 400;
+          line-height: 1.2;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        
+        .location-placeholder {
+          font-size: 12px;
+          color: #999;
+          font-weight: 500;
           line-height: 1.2;
           overflow: hidden;
           text-overflow: ellipsis;
