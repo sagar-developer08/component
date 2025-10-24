@@ -17,7 +17,6 @@ import QoynsHistory from '../../components/profile/QoynsHistory/QoynsHistory'
 import SendQoyn from '../../components/profile/SendQoyn/SendQoyn'
 import NewAddress from '../../components/profile/NewAddress/newAddress'
 import LocationModal from '../../components/LocationModal'
-import SubscriptionModal from '../../components/SubscriptionModal'
 
 // User data is now fetched once in the main ProfilePage component and passed down
 
@@ -29,7 +28,6 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('personal-info')
   const [isEditing, setIsEditing] = useState(false)
   const [locationModalOpen, setLocationModalOpen] = useState(false)
-  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false)
 
   // Fetch profile data once when component mounts
   useEffect(() => {
@@ -110,7 +108,7 @@ export default function ProfilePage() {
             <button className={styles.goLiveBtn}>Go to QLIQ Live</button>
             <button 
               className={styles.upgradeBtn}
-              onClick={() => setSubscriptionModalOpen(true)}
+              onClick={() => router.push('/subscription')}
             >
               Upgrade to QLIQ Plus
             </button>
@@ -273,10 +271,6 @@ export default function ProfilePage() {
       <LocationModal 
         open={locationModalOpen}
         onClose={() => setLocationModalOpen(false)}
-      />
-      <SubscriptionModal 
-        open={subscriptionModalOpen}
-        onClose={() => setSubscriptionModalOpen(false)}
       />
     </div>
   )
