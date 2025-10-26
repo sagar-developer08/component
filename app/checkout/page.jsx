@@ -25,27 +25,40 @@ import {
   clearAddressError,
   clearOrderError,
   clearPaymentIntentError,
-  clearStripeData
+  clearStripeData,
+  validateQoynRedemption
 } from '@/store/slices/checkoutSlice'
 import { fetchProfile } from '@/store/slices/profileSlice'
+import { fetchUserBalance } from '@/store/slices/walletSlice'
 import { payment as paymentEndpoints } from '@/store/api/endpoints'
 import { loadStripe } from '@stripe/stripe-js'
 import StripeCheckout from '@/components/StripeCheckout'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHome, faBriefcase, faMapMarkerAlt, faCheck, faPlus, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons'
+import { useToast } from '@/contexts/ToastContext'
 import styles from './checkout.module.css'
 
 export default function CheckoutPage() {
   const dispatch = useDispatch()
+  const { show: showToast } = useToast()
 
   // State to control address display
   const [showAllAddresses, setShowAllAddresses] = useState(false)
+  
+  // Promo code input state
+  const [promoCodeInput, setPromoCodeInput] = useState('')
+  
+  // Applied discount state
+  const [appliedDiscount, setAppliedDiscount] = useState(null)
 
   // Cart state
   const { items: cartItems, total: cartTotal, loading: cartLoading } = useSelector(state => state.cart)
 
   // Profile state - for user data
   const { user, addresses: profileAddresses } = useSelector(state => state.profile)
+  
+  // Wallet state
+  const { userQoynBalance, userBalance, storeCurrency, loading: walletLoading } = useSelector(state => state.wallet)
 
   // Checkout state
   const {
@@ -64,7 +77,8 @@ export default function CheckoutPage() {
     stripeClientSecret,
     stripePaymentIntentId,
     isCreatingPaymentIntent,
-    paymentIntentError
+    paymentIntentError,
+    qoynValidation
   } = useSelector(state => state.checkout)
 
   // Combine addresses from both sources to ensure we get all available addresses
@@ -116,6 +130,9 @@ export default function CheckoutPage() {
     const loadCheckoutData = async () => {
       // Load profile data for user info (name, email, phone)
       dispatch(fetchProfile())
+      
+      // Load wallet balance
+      dispatch(fetchUserBalance())
 
       // Load addresses
       dispatch(fetchUserAddresses())
@@ -154,6 +171,16 @@ export default function CheckoutPage() {
 
     loadCheckoutData()
   }, [dispatch, cartItems.length])
+
+  // Auto-validate Qoyn redemption when cart total changes
+  useEffect(() => {
+    if (finalTotal > 0 && cartItems.length > 0) {
+      // Auto-validate with cart total amount
+      dispatch(validateQoynRedemption({
+        totalAmount: finalTotal
+      }))
+    }
+  }, [finalTotal, cartItems.length, dispatch])
 
   // Auto-populate address form with user data when form is shown
   useEffect(() => {
@@ -305,12 +332,12 @@ export default function CheckoutPage() {
 
       // Validation checks
       if (cartItems.length === 0) {
-        alert('Your cart is empty. Please add items before checkout.')
+        showToast('Your cart is empty. Please add items before checkout.', 'error')
         return
       }
 
       if (!selectedAddress) {
-        alert('Please select a delivery address.')
+        showToast('Please select a delivery address.', 'error')
         return
       }
 
@@ -320,7 +347,7 @@ export default function CheckoutPage() {
       console.log('🔑 Checking Stripe key...')
       if (!publishableKey) {
         console.error('❌ Stripe publishable key is missing!')
-        alert('Payment system not configured. Please contact support.')
+        showToast('Payment system not configured. Please contact support.', 'error')
         return
       }
 
@@ -340,7 +367,7 @@ export default function CheckoutPage() {
       const token = await getAuthToken()
       if (!token) {
         console.error('❌ No auth token')
-        alert('Please log in to continue with checkout.')
+        showToast('Please log in to continue with checkout.', 'error')
         return
       }
 
@@ -352,7 +379,7 @@ export default function CheckoutPage() {
       const invalidItems = cartItems.filter(item => !item.productId && !item.id)
       if (invalidItems.length > 0) {
         console.error('❌ Some cart items are missing product IDs:', invalidItems)
-        alert('Some items in your cart are missing product information. Please refresh and try again.')
+        showToast('Some items in your cart are missing product information. Please refresh and try again.', 'error')
         return
       }
 
@@ -417,13 +444,61 @@ export default function CheckoutPage() {
 
       if (result.error) {
         console.error('❌ Redirect error:', result.error)
-        alert(`Checkout failed: ${result.error.message}`)
+        showToast(`Checkout failed: ${result.error.message}`, 'error')
       }
 
     } catch (e) {
       console.error('❌ Hosted checkout error:', e)
-      alert(`Checkout error: ${e.message || 'Unknown error'}`)
+      showToast(`Checkout error: ${e.message || 'Unknown error'}`, 'error')
     }
+  }
+
+  // Qoyn validation handlers
+  const handleQoynValidation = async () => {
+    if (!qoynValidation.walletUnlocked || !qoynValidation.eligibleForDiscount) {
+      showToast('Qoyn redemption is not available for this order', 'error')
+      return
+    }
+
+    if (qoynValidation.currentDiscountQoyn <= 0) {
+      showToast('No Qoyns available to apply', 'error')
+      return
+    }
+
+    try {
+      const result = await dispatch(validateQoynRedemption({
+        totalAmount: finalTotal
+      }))
+      
+      if (result.payload && result.payload.data && result.payload.data.order) {
+        const orderData = result.payload.data.order
+        setAppliedDiscount({
+          type: 'qoyn',
+          discountAmount: orderData.discountAmountStoreCurrency,
+          totalAfterDiscount: orderData.totalAmountAfterDiscount,
+          qoynAmount: qoynValidation.currentDiscountQoyn
+        })
+        showToast(`Applied ${qoynValidation.currentDiscountQoyn} Qoyns successfully!`, 'success')
+      }
+    } catch (error) {
+      console.error('Qoyn validation error:', error)
+      showToast('Failed to apply Qoyns. Please try again.', 'error')
+    }
+  }
+
+  // Remove applied discount
+  const handleRemoveDiscount = () => {
+    setAppliedDiscount(null)
+  }
+
+  const handlePromoCodeValidation = async () => {
+    if (!promoCodeInput.trim()) {
+      showToast('Please enter a promo code', 'error')
+      return
+    }
+
+    // For now, just show a toast - you can implement promo code validation later
+    showToast(`Promo code "${promoCodeInput}" validation not implemented yet`, 'error')
   }
 
   const handlePaymentSuccess = () => {
@@ -502,7 +577,7 @@ export default function CheckoutPage() {
                 <div className={styles.walletTitle}>My Qoyns Wallet</div>
               </div>
               <div className={styles.walletInfo}>
-                <div className={styles.walletBalance}>5000</div>
+                <div className={styles.walletBalance}>{userQoynBalance.toLocaleString()}</div>
               </div>
               <div className={styles.walletExpiry}>Expires in 29 Days</div>
             </div>
@@ -1051,15 +1126,35 @@ export default function CheckoutPage() {
                 </div>
               )}
               <div className={styles.orderSummaryMessage}>
-                <div className={styles.walletExpiry}>Minimum order value is AED 100 — you must spend at least AED 100 to apply Qoyns.</div>
+                <div className={styles.walletExpiry}>
+                  {qoynValidation.walletUnlocked && qoynValidation.eligibleForDiscount 
+                    ? `You can get Maximum of ${qoynValidation.maxDiscountInStoreCurrency} ${qoynValidation.storeCurrency} Discount if you spend ${qoynValidation.maxDiscountSpendInStoreCurrency} ${qoynValidation.storeCurrency}. Avail this Offer Now!`
+                    : 'Minimum order value is AED 100 — you must spend at least AED 100 to apply Qoyns.'
+                  }
+                </div>
               </div>
-              <div className={styles.orderSummaryMessage1}>
-                <div className={styles.walletExpiry}>You can get Maximum of 1650 AED Discount if you spend 3300 AED. Avail this Offer Now!</div>
-              </div>
-              {/* Qoyns Slider */}
+              {qoynValidation.walletUnlocked && qoynValidation.eligibleForDiscount && (
+                <div className={styles.orderSummaryMessage1}>
+                  <div className={styles.walletExpiry}>
+                    Minimum order value is AED 100 — you must spend at least AED 100 to apply Qoyns.
+                  </div>
+                </div>
+              )}
+              {/* Qoyns Input */}
               <div className={styles.promoCode}>
-                <input className={styles.promoInput} value="" placeholder='250 Qoyns' readOnly />
-                <button className={styles.promoApplyBtn}>Apply</button>
+                <input 
+                  className={styles.promoInput} 
+                  value={`${qoynValidation.currentDiscountQoyn || 0} Qoyns`}
+                  readOnly
+                  disabled={!qoynValidation.walletUnlocked || !qoynValidation.eligibleForDiscount}
+                />
+                <button 
+                  className={styles.promoApplyBtn}
+                  onClick={appliedDiscount ? handleRemoveDiscount : handleQoynValidation}
+                  disabled={!qoynValidation.walletUnlocked || !qoynValidation.eligibleForDiscount || qoynValidation.isValidationLoading}
+                >
+                  {qoynValidation.isValidationLoading ? 'Validating...' : appliedDiscount ? '✕' : 'Apply'}
+                </button>
               </div>
               {/* <div className={styles.qoynsSliderSection}>
                 <div className={styles.qoynsSliderLabel}>Choose Qoyns to use</div>
@@ -1076,8 +1171,18 @@ export default function CheckoutPage() {
               </div> */}
               {/* Promo Code */}
               <div className={styles.promoCode}>
-                <input className={styles.promoInput} value="" placeholder='OFF500' readOnly />
-                <button className={styles.promoApplyBtn}>Apply</button>
+                <input 
+                  className={styles.promoInput} 
+                  value={promoCodeInput} 
+                  placeholder='OFF500' 
+                  onChange={(e) => setPromoCodeInput(e.target.value)}
+                />
+                <button 
+                  className={styles.promoApplyBtn}
+                  onClick={handlePromoCodeValidation}
+                >
+                  Apply
+                </button>
               </div>
               {/* Totals */}
               {cartItems.length > 0 && (
@@ -1094,13 +1199,15 @@ export default function CheckoutPage() {
                     <span>Shipping</span>
                     <span>FREE</span>
                   </div>
-                  <div className={styles.totalRowDiscount}>
-                    <span>Discount</span>
-                    <span>- AED 0.00</span>
-                  </div>
+                  {appliedDiscount && (
+                    <div className={styles.totalRowDiscount}>
+                      <span>Discount</span>
+                      <span>- AED {appliedDiscount.discountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className={styles.totalRowFinal}>
                     <span>Order Total</span>
-                    <span>AED {finalTotal.toFixed(2)}</span>
+                    <span>AED {appliedDiscount ? appliedDiscount.totalAfterDiscount.toFixed(2) : finalTotal.toFixed(2)}</span>
                   </div>
                 </div>
               )}

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { getAuthToken, getUserFromCookies } from '../../utils/userUtils'
-import { addresses, payment } from '../api/endpoints'
+import { addresses, payment, wallet } from '../api/endpoints'
  
 
 // Async thunks for checkout operations
@@ -210,6 +210,39 @@ export const placeOrder = createAsyncThunk(
   }
 )
 
+// Qoyn validation async thunk
+export const validateQoynRedemption = createAsyncThunk(
+  'checkout/validateQoynRedemption',
+  async (redemptionData, { rejectWithValue }) => {
+    try {
+      const token = await getAuthToken()
+      
+      if (!token) {
+        throw new Error('Authentication required')
+      }
+
+      const response = await fetch(wallet.validateRedemption, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(redemptionData)
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to validate Qoyn redemption')
+      }
+
+      const responseData = await response.json()
+      return responseData
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const checkoutSlice = createSlice({
   name: 'checkout',
   initialState: {
@@ -254,6 +287,20 @@ const checkoutSlice = createSlice({
     // Order placement
     isPlacingOrder: false,
     orderError: null,
+    
+    // Qoyn validation
+    qoynValidation: {
+      walletUnlocked: false,
+      eligibleForDiscount: false,
+      maxDiscountInStoreCurrency: 0,
+      maxDiscountSpendInStoreCurrency: 0,
+      currentDiscountQoyn: 0,
+      totalQoynBalance: 0,
+      qoynExpiryDate: null,
+      storeCurrency: 'AED',
+      isValidationLoading: false,
+      validationError: null
+    },
     
     // General
     loading: false,
@@ -432,6 +479,32 @@ const checkoutSlice = createSlice({
       .addCase(placeOrder.rejected, (state, action) => {
         state.isPlacingOrder = false
         state.orderError = action.payload
+      })
+      
+      // Qoyn validation
+      .addCase(validateQoynRedemption.pending, (state) => {
+        state.qoynValidation.isValidationLoading = true
+        state.qoynValidation.validationError = null
+      })
+      .addCase(validateQoynRedemption.fulfilled, (state, action) => {
+        state.qoynValidation.isValidationLoading = false
+        const data = action.payload.data
+        if (data) {
+          state.qoynValidation.walletUnlocked = data.walletUnlocked
+          state.qoynValidation.eligibleForDiscount = data.eligibleForDiscount
+          if (data.qoyn) {
+            state.qoynValidation.maxDiscountInStoreCurrency = data.qoyn.maxDiscountInStoreCurrency
+            state.qoynValidation.maxDiscountSpendInStoreCurrency = data.qoyn.maxDiscountSpendInStoreCurrency
+            state.qoynValidation.currentDiscountQoyn = data.qoyn.currentDiscountQoyn
+            state.qoynValidation.totalQoynBalance = data.qoyn.totalQoynBalance
+            state.qoynValidation.qoynExpiryDate = data.qoyn.qoynExpiryDate
+            state.qoynValidation.storeCurrency = data.qoyn.storeCurrency
+          }
+        }
+      })
+      .addCase(validateQoynRedemption.rejected, (state, action) => {
+        state.qoynValidation.isValidationLoading = false
+        state.qoynValidation.validationError = action.payload
       })
   }
 })

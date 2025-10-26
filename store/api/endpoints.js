@@ -10,6 +10,7 @@ export const BASES = {
   upload: process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || 'http://localhost:5005/api',
   review: process.env.NEXT_PUBLIC_REVIEW_BASE_URL || 'http://localhost:8008/api',
   subscription: process.env.NEXT_PUBLIC_SUBSCRIPTION_BASE_URL || 'https://backendamp.qliq.ae/api',
+  wallet: process.env.NEXT_PUBLIC_WALLET_BASE_URL || 'https://backendwallet.qliq.ae/api',
 }
 
 
@@ -149,8 +150,15 @@ export const review = {
 export const subscription = {
   base: BASES.subscription,
   details: `${BASES.subscription}/users/subscription-details`,
+  webSubscription: `https://backendpayment.qliq.ae/api/wallet/web-subscription`,
 }
 
-export default { catalog, search, auth, cart, addresses, orders, upload, review, subscription }
+export const wallet = {
+  base: BASES.wallet,
+  userBalance: `${BASES.wallet}/wallet/qoyn/user-balance`,
+  validateRedemption: `${BASES.wallet}/wallet/qoyn/validate-redemption`,
+}
+
+export default { catalog, search, auth, cart, addresses, orders, upload, review, subscription, wallet }
 
 
