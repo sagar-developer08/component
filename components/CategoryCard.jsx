@@ -19,7 +19,7 @@ export default function CategoryCard({ name, image, onClick }) {
   return (
     <div className="category-card" onClick={onClick}>
       <Image
-        src="https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412"
+        src={image}
         alt={name}
         width={isMobile ? 160 : 206}
         height={isMobile ? 160 : 206}

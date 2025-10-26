@@ -162,15 +162,22 @@ export default function ProductPage({ params }) {
 
   // Map API products to the format expected by ProductSections
   const relatedProducts = products && products.length > 0 
-    ? products.map(product => ({
-        id: product._id || product.id,
-        slug: product.slug || product._id || product.id,
-        title: product.name || product.title || 'Product',
-        price: product.price ? `AED ${product.price}` : 'AED 0',
-        rating: product.rating || '4.0',
-        deliveryTime: product.deliveryTime || '30 Min',
-        image: product.image || product.images?.[0] || '/shoes.jpg'
-      }))
+    ? products.map(product => {
+        // Get the primary image or first available image
+        const primaryImage = product.images?.find(img => img.is_primary) || product.images?.[0];
+        const imageUrl = primaryImage?.url || product.image || product.images?.[0]?.url || 'https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644';
+        
+        return {
+          id: product._id || product.id,
+          slug: product.slug || product._id || product.id,
+          title: product.title || product.name || 'Product',
+          price: product.discount_price || product.price ? `AED ${product.discount_price || product.price}` : 'AED 0',
+          originalPrice: product.price ? `AED ${product.price}` : null,
+          rating: product.average_rating || product.rating || '4.0',
+          deliveryTime: product.deliveryTime || '30 Min',
+          image: imageUrl
+        };
+      })
     : [] // Always return an array, even if empty
 
   return (

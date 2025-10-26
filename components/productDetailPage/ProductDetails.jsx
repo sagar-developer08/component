@@ -9,6 +9,9 @@ import { getUserFromCookies } from '../../utils/userUtils';
 import { useToast } from '../../contexts/ToastContext';
 
 export default function ProductDetails({ product }) {
+  console.log('🔍 ProductDetails component received product:', product);
+  console.log('🔍 Product ID:', product.id);
+  
   const [selectedColor, setSelectedColor] = useState(product.selectedColor || product.colors?.[0]);
   const [selectedSize, setSelectedSize] = useState(product.selectedSize || product.sizes?.[0]);
   const [quantity, setQuantity] = useState(1);
@@ -127,29 +130,6 @@ export default function ProductDetails({ product }) {
     });
   };
 
-  // Example sellers data
-  const sellers = [
-    {
-      price: "1,200",
-      discount: 25,
-      orderTime: "21h 20m",
-      deliveryDate: "23 Aug",
-      rating: "4.8",
-      positive: "97%",
-      sellerName: "TeleGX",
-      warranty: "1 Year Warranty"
-    },
-    {
-      price: "1,000",
-      discount: 25,
-      orderTime: "21h 20m",
-      deliveryDate: "23 Aug",
-      rating: "4.8",
-      positive: "97%",
-      sellerName: "TeleGX",
-      warranty: "1 Year Warranty"
-    }
-  ];
 
   return (
     <div className="product-details">
@@ -312,7 +292,11 @@ export default function ProductDetails({ product }) {
           </div>
 
           {/* Other Sellers */}
-          <div className="other-sellers" onClick={() => setDrawerOpen(true)}>
+          <div className="other-sellers" onClick={() => {
+            console.log('🖱️ Other Sellers button clicked');
+            console.log('🖱️ Product ID being passed:', product.id);
+            setDrawerOpen(true);
+          }}>
             <span>Other Sellers</span>
             <button className="arrow-right">→</button>
           </div>
@@ -363,7 +347,11 @@ export default function ProductDetails({ product }) {
         </div>
       </div>
 
-      <OtherSellersDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} sellers={sellers} />
+      <OtherSellersDrawer 
+        open={drawerOpen} 
+        onClose={() => setDrawerOpen(false)} 
+        productId={product.id} 
+      />
 
       <style jsx>{`
         .product-details {

@@ -41,7 +41,7 @@ const transformProductData = (apiProduct) => {
 
 // Helper function to transform API category data to match CategoryCard component format
 const transformCategoryData = (apiCategory) => {
-  // Use a placeholder image since the API doesn't provide category images
+  // Use placeholder images as fallback if icon is not provided
   const placeholderImages = [
     'https://api.builder.io/api/v1/image/assets/TEMP/b96c7d3062a93a3b6d8e9a2a4bd11acfa542dced?width=412',
     'https://api.builder.io/api/v1/image/assets/TEMP/81e3ee1beeaa2c8941600c27d3ec9733bac0869c?width=412',
@@ -51,17 +51,23 @@ const transformCategoryData = (apiCategory) => {
     'https://api.builder.io/api/v1/image/assets/TEMP/f291940d1feaf8e5cb0a7335f629e12091d26a73?width=412'
   ]
 
-  // Use a simple hash of the category name to consistently assign the same image
-  const hash = apiCategory.name.split('').reduce((a, b) => {
-    a = ((a << 5) - a) + b.charCodeAt(0)
-    return a & a
-  }, 0)
-  const imageIndex = Math.abs(hash) % placeholderImages.length
+  // Use icon from database if available, otherwise use placeholder
+  let categoryImage = apiCategory.icon;
+  
+  // If no icon from database, use hash-based placeholder assignment
+  if (!categoryImage) {
+    const hash = apiCategory.name.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0)
+      return a & a
+    }, 0)
+    const imageIndex = Math.abs(hash) % placeholderImages.length
+    categoryImage = placeholderImages[imageIndex]
+  }
 
   return {
     id: apiCategory._id,
     name: apiCategory.name || 'Category Name',
-    image: placeholderImages[imageIndex],
+    image: categoryImage,
     slug: apiCategory.slug || apiCategory.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
     level: apiCategory.level
   }

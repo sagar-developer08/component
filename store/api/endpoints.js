@@ -2,10 +2,10 @@
 // Configure base URLs via environment variables if available
 
 export const BASES = {
-  catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'http://localhost:8001/api',
+  catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'http://localhost:8082/api',
   search: process.env.NEXT_PUBLIC_SEARCH_BASE_URL || 'https://search.qliq.ae/api',
   auth: process.env.NEXT_PUBLIC_AUTH_BASE_URL || 'https://backendauth.qliq.ae/api',
-  cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'https://backendcart.qliq.ae/api',
+  cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'http://localhost:8084/api',
   payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'https://backendcart.qliq.ae/api',
   upload: process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || 'http://localhost:5005/api',
   review: process.env.NEXT_PUBLIC_REVIEW_BASE_URL || 'http://localhost:8008/api',
@@ -31,6 +31,7 @@ export const catalog = {
   productsByBrand: (brandSlug) => `${BASES.catalog}/products/brand/${brandSlug}`,
   productsByStore: (storeId) => `${BASES.catalog}/products/store/${storeId}`,
   productsByLevel4Category: (categorySlug) => `${BASES.catalog}/products/level4/${categorySlug}`,
+  similarProducts: (productId, limit = 10) => `${BASES.catalog}/products/similar/${productId}?limit=${limit}`,
   stores: `${BASES.catalog}/stores`,
   storesDiscovery: `${BASES.catalog}/stores/discovery`,
   popularCategories: `${BASES.catalog}/categories/level3`,

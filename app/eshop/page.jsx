@@ -62,11 +62,14 @@ const transformBrandData = (apiBrand) => {
 
 // Helper function to transform API category data to match CategoryCard component format
 const transformCategoryData = (apiCategory) => {
+  // Use icon from API if available, otherwise use default placeholder
+  const imageUrl = apiCategory.icon || 'https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412';
+  
   return {
     id: apiCategory._id,
     name: apiCategory.name || 'Category Name',
     slug: apiCategory.slug,
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/12ba4121022e746495773eb8df2e6b4add90148f?width=412' // Default image since API doesn't provide images
+    image: imageUrl
   }
 }
 
