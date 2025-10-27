@@ -121,6 +121,16 @@ export default function CheckoutPage() {
   const vatRate = getVatRate();
   const vatAmount = subtotal * vatRate;
   const finalTotal = subtotal + vatAmount;
+  
+  // Calculate the actual total to be charged (after discounts)
+  const getActualTotal = () => {
+    if (appliedDiscount) {
+      return appliedDiscount.totalAfterDiscount;
+    }
+    return finalTotal;
+  };
+  
+  const actualTotal = getActualTotal();
 
   // Combined error state
   const error = addressError || orderError || paymentIntentError
@@ -286,7 +296,7 @@ export default function CheckoutPage() {
       deliveryAddress: selectedAddress,
       shippingAddress: shippingSameAsDelivery ? selectedAddress : null,
       paymentMethod: selectedPaymentMethod,
-      total: finalTotal,
+      total: actualTotal,
       subtotal: subtotal,
       vat: vatAmount,
       shipping: 0,
@@ -314,7 +324,7 @@ export default function CheckoutPage() {
       deliveryAddress: selectedAddress,
       shippingAddress: shippingSameAsDelivery ? selectedAddress : null,
       paymentMethod: selectedPaymentMethod,
-      total: finalTotal,
+      total: actualTotal,
       subtotal: subtotal,
       vat: vatAmount,
       shipping: 0,
@@ -397,7 +407,11 @@ export default function CheckoutPage() {
             image: item.image || undefined
           }
         }),
-        total: finalTotal,
+        total: actualTotal,
+        subtotal: subtotal,
+        vat: vatAmount,
+        discount: appliedDiscount ? appliedDiscount.discountAmount : 0,
+        discountType: appliedDiscount ? appliedDiscount.type : null,
         currency: 'usd',
         userId: mongoUserId, // MongoDB user ID
         cognitoUserId: cognitoUserId, // Cognito user ID
@@ -467,7 +481,7 @@ export default function CheckoutPage() {
 
     try {
       const result = await dispatch(validateQoynRedemption({
-        totalAmount: finalTotal
+        totalAmount: actualTotal
       }))
       
       if (result.payload && result.payload.data && result.payload.data.order) {
