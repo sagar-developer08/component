@@ -264,7 +264,7 @@ export default function OtherSellersDrawer({ open, onClose, productId }) {
         }
         .other-sellers-drawer {
           background: #fff;
-          width: 480px;
+          width: 600px;
           max-width: 100vw;
           height: 100vh;
           box-shadow: -2px 0 16px rgba(0,0,0,0.08);
@@ -391,8 +391,7 @@ export default function OtherSellersDrawer({ open, onClose, productId }) {
         .seller-row {
           display: flex;
           align-items: center;
-          justify-content: flex-start;
-          gap: 24px;
+          justify-content: space-between;
           margin-bottom: 4px;
         }
         .seller-price {
