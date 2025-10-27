@@ -131,7 +131,12 @@ const subscriptionSlice = createSlice({
         state.success = action.payload.success
         
         if (action.payload.success && action.payload.data) {
-          state.subscriptionDetails = action.payload.data
+          // Check if data is directly an array or nested under tiers
+          if (Array.isArray(action.payload.data)) {
+            state.subscriptionDetails = action.payload.data
+          } else if (action.payload.data.tiers && Array.isArray(action.payload.data.tiers)) {
+            state.subscriptionDetails = action.payload.data.tiers
+          }
         }
         state.error = null
       })

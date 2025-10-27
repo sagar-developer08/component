@@ -8,7 +8,6 @@ import Footer from '@/components/Footer'
 import styles from './subscription.module.css'
 
 export default function SubscriptionPage() {
-  const [selectedPlan, setSelectedPlan] = useState('plus')
   const dispatch = useDispatch()
   const { show: showToast } = useToast()
   const { 
@@ -38,15 +37,25 @@ export default function SubscriptionPage() {
     }
   }, [webSubscriptionError, showToast])
 
-  const handleUpgrade = async (plan) => {
+  const handleUpgrade = async (planTier) => {
     try {
       // Clear any previous errors
       dispatch(clearWebSubscriptionError())
       
-      // Create subscription data based on the plan
+      // Find the plan data from API to get the correct price and tier
+      const planData = subscriptionDetails.find(plan => 
+        plan.tier.toLowerCase() === planTier.toLowerCase()
+      )
+      
+      if (!planData) {
+        showToast('Plan not found. Please try again.', 'error')
+        return
+      }
+      
+      // Create subscription data based on the plan from API
       const subscriptionData = {
-        amount: 100, // Default amount for plus plan
-        tier: plan
+        amount: planData.price,
+        tier: planData.tier
       }
       
       // Dispatch the create web subscription action
@@ -124,14 +133,13 @@ export default function SubscriptionPage() {
               {subscriptionDetails.map((plan) => {
                 const tierName = plan.tier.toLowerCase()
                 const tierColor = getTierColor(tierName)
-                const isSelected = selectedPlan === tierName
                 const canUpgrade = plan.upgrade
                 const userAlreadyHas = plan.userAlreadyHas
                 
                 return (
                   <div 
                     key={plan.tier}
-                    className={`${styles.subscriptionPlan} ${tierName} ${isSelected ? 'selected' : ''}` } 
+                    className={`${styles.subscriptionPlan} ${tierName}`} 
                     style={{ borderColor: tierColor }}
                   >
                     <div className={styles.planHeader}>
@@ -163,7 +171,7 @@ export default function SubscriptionPage() {
                     
                     <button 
                       className={`${styles.upgradeBtn} ${tierName} ${!canUpgrade ? 'disabled' : ''}`}
-                      onClick={() => handleUpgrade(tierName)}
+                      onClick={() => handleUpgrade(plan.tier)}
                       disabled={!canUpgrade || userAlreadyHas || webSubscriptionLoading}
                       style={{ backgroundColor: tierColor }}
                     >
