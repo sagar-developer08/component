@@ -139,7 +139,8 @@ export const createProductReview = createAsyncThunk(
         images: imageUrls,
         pros: [],
         cons: [],
-        userId: userId // Include user ID in the payload
+        userId: userId, // Include user ID in the payload
+        orderId: reviewData.orderId || undefined // Include orderId if provided
       }
 
       // Use direct endpoint by product ID (bypasses validation and auth)
