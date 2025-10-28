@@ -56,152 +56,121 @@ const OrderHistoryPage = () => {
 
         console.log('🔍 Checking for existing review for product:', actualProductId);
 
-        // Call the product reviews API to get reviews for this specific product
-        const response = await fetch(`https://backendreview.qliq.ae/api/product-reviews/product/${actualProductId}`);
-        const data = await response.json();
+        // Get auth token to identify current user
+        const token = await getAuthToken();
+        let foundReview = null;
         
-        console.log('📝 Product reviews response:', data);
-        console.log('📝 All reviews found:', data.data?.reviews);
-        console.log('📝 Number of reviews:', data.data?.reviews?.length);
+        if (token) {
+          try {
+            // Get MongoDB user ID from encrypted cookies (this is the correct way)
+            const mongoUserId = await getUserFromCookies();
+            console.log('🔍 Looking for review with MongoDB user ID:', mongoUserId);
+            
+            if (mongoUserId) {
+              // Call the API using POST method with body parameters
+              const response = await fetch(`https://backendreview.qliq.ae/api/product-reviews/user/product-reviews`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  userId: mongoUserId,
+                  productId: actualProductId,
+                  orderId: orderId || undefined
+                })
+              });
+              const data = await response.json();
+              
+              console.log('📝 User product reviews response:', data);
+              
+              if (data.success && data.data && data.data.reviews && Array.isArray(data.data.reviews)) {
+                // The API now returns only the user's reviews for this product
+                foundReview = data.data.reviews.length > 0 ? data.data.reviews[0] : null;
+                console.log('🔍 Found review by MongoDB ID:', foundReview ? 'YES' : 'NO');
+              }
+            }
+            
+            // If no review found with MongoDB user ID, try JWT token sub
+            if (!foundReview) {
+              const tokenParts = token.split('.');
+              if (tokenParts.length === 3) {
+                const payload = JSON.parse(atob(tokenParts[1]));
+                const currentUserId = payload.sub;
+                console.log('🔍 Trying JWT sub:', currentUserId);
+                
+                // Try the API again with JWT sub as userId
+                const response = await fetch(`https://backendreview.qliq.ae/api/product-reviews/user/product-reviews`, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    userId: currentUserId,
+                    productId: actualProductId,
+                    orderId: orderId || undefined
+                  })
+                });
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data.reviews && Array.isArray(data.data.reviews)) {
+                  foundReview = data.data.reviews.length > 0 ? data.data.reviews[0] : null;
+                  console.log('🔍 Found review by JWT sub:', foundReview ? 'YES' : 'NO');
+                }
+              }
+            }
+          } catch (error) {
+            console.error('❌ Error getting user review:', error);
+          }
+        } else {
+          console.log('⚠️ No auth token available');
+        }
         
-         if (data.success && data.data && data.data.reviews && Array.isArray(data.data.reviews)) {
-           // Get auth token to identify current user
-           const token = await getAuthToken();
-           let foundReview = null;
-           
-           if (token) {
-             try {
-               // Get MongoDB user ID from encrypted cookies (this is the correct way)
-               const mongoUserId = await getUserFromCookies();
-               console.log('🔍 Looking for review with MongoDB user ID:', mongoUserId);
-               
-               if (mongoUserId) {
-                 // First try to find review by MongoDB user ID
-                 foundReview = data.data.reviews.find(r => r.userId === mongoUserId);
-                 console.log('🔍 Found review by MongoDB ID:', foundReview ? 'YES' : 'NO');
-               }
-               
-               // If no review found with MongoDB user ID, try JWT token sub
-               if (!foundReview) {
-                 const tokenParts = token.split('.');
-                 if (tokenParts.length === 3) {
-                   const payload = JSON.parse(atob(tokenParts[1]));
-                   const currentUserId = payload.sub;
-                   console.log('🔍 Trying JWT sub:', currentUserId);
-                   foundReview = data.data.reviews.find(r => r.userId === currentUserId);
-                   console.log('🔍 Found review by JWT sub:', foundReview ? 'YES' : 'NO');
-                 }
-               }
-               
-               // If still no review found, check for anonymous reviews
-               if (!foundReview) {
-                 foundReview = data.data.reviews.find(r => r.userId === 'anonymous');
-                 console.log('🔍 Found anonymous review:', foundReview ? 'YES' : 'NO');
-               }
-             } catch (error) {
-               console.error('❌ Error getting user ID:', error);
-               // Fallback to anonymous review check
-               foundReview = data.data.reviews.find(r => r.userId === 'anonymous');
-             }
-           } else {
-             // No auth token, check for anonymous reviews
-             foundReview = data.data.reviews.find(r => r.userId === 'anonymous');
-           }
-           
-           if (foundReview) {
-             console.log('✅ Found existing review:', foundReview);
-             
-             // Map the review data to match our expected structure
-             const mappedReview = {
-               id: foundReview.id,
-               _id: foundReview.id, // Add _id for compatibility
-               userId: foundReview.userId,
-               productId: foundReview.productId,
-               rating: foundReview.rating,
-               title: foundReview.title,
-               comment: foundReview.comment,
-               images: foundReview.images || [],
-               pros: foundReview.pros || [],
-               cons: foundReview.cons || [],
-               isVerified: foundReview.isVerified || false,
-               isHelpful: foundReview.isHelpful || 0,
-               status: foundReview.status || 'pending',
-               createdAt: foundReview.createdAt,
-               updatedAt: foundReview.updatedAt
-             };
-             
-             setExistingReview(mappedReview);
-             setIsEditMode(true);
-             setShowEditForm(false); // Show view mode first
-             
-             // Populate form data (but don't show form yet)
-             setRating(mappedReview.rating);
-             setReviewData({
-               name: mappedReview.title || '',
-               review: mappedReview.comment || ''
-             });
-             
-             if (mappedReview.images && mappedReview.images.length > 0) {
-               setImagePreviews(mappedReview.images);
-             }
-             
-             console.log('📋 Review data loaded - showing review with edit button');
-           } else {
-             console.log('ℹ️ No existing review found for this product');
-             
-             // FALLBACK: If we have reviews but couldn't match user ID, show the first review
-             // This is a temporary solution to help debug the issue
-             if (data.data.reviews && data.data.reviews.length > 0) {
-               console.log('⚠️ FALLBACK: Showing first review for debugging purposes');
-               const fallbackReview = data.data.reviews[0];
-               
-               // Map the review data to match our expected structure
-               const mappedReview = {
-                 id: fallbackReview.id,
-                 _id: fallbackReview.id,
-                 userId: fallbackReview.userId,
-                 productId: fallbackReview.productId,
-                 rating: fallbackReview.rating,
-                 title: fallbackReview.title,
-                 comment: fallbackReview.comment,
-                 images: fallbackReview.images || [],
-                 pros: fallbackReview.pros || [],
-                 cons: fallbackReview.cons || [],
-                 isVerified: fallbackReview.isVerified || false,
-                 isHelpful: fallbackReview.isHelpful || 0,
-                 status: fallbackReview.status || 'pending',
-                 createdAt: fallbackReview.createdAt,
-                 updatedAt: fallbackReview.updatedAt
-               };
-               
-               setExistingReview(mappedReview);
-               setIsEditMode(true);
-               setShowEditForm(false);
-               
-               // Populate form data
-               setRating(mappedReview.rating);
-               setReviewData({
-                 name: mappedReview.title || '',
-                 review: mappedReview.comment || ''
-               });
-               
-               if (mappedReview.images && mappedReview.images.length > 0) {
-                 setImagePreviews(mappedReview.images);
-               }
-               
-               console.log('📋 FALLBACK: Review data loaded for debugging');
-             } else {
-               setExistingReview(null);
-               setIsEditMode(false);
-               setShowEditForm(true); // Show form to create new review
-             }
-           }
-         } else {
-           console.log('ℹ️ No reviews found - showing create form');
-           setExistingReview(null);
-           setIsEditMode(false);
-           setShowEditForm(true); // No reviews, show form
-         }
+        if (foundReview) {
+          console.log('✅ Found existing review:', foundReview);
+          
+          // Map the review data to match our expected structure
+          const mappedReview = {
+            id: foundReview.id,
+            _id: foundReview.id, // Add _id for compatibility
+            userId: foundReview.userId,
+            productId: foundReview.productId,
+            rating: foundReview.rating,
+            title: foundReview.title,
+            comment: foundReview.comment,
+            images: foundReview.images || [],
+            pros: foundReview.pros || [],
+            cons: foundReview.cons || [],
+            isVerified: foundReview.isVerified || false,
+            isHelpful: foundReview.isHelpful || 0,
+            status: foundReview.status || 'pending',
+            createdAt: foundReview.createdAt,
+            updatedAt: foundReview.updatedAt
+          };
+          
+          setExistingReview(mappedReview);
+          setIsEditMode(true);
+          setShowEditForm(false); // Show view mode first
+          
+          // Populate form data (but don't show form yet)
+          setRating(mappedReview.rating);
+          setReviewData({
+            name: mappedReview.title || '',
+            review: mappedReview.comment || ''
+          });
+          
+          if (mappedReview.images && mappedReview.images.length > 0) {
+            setImagePreviews(mappedReview.images);
+          }
+          
+          console.log('📋 Review data loaded - showing review with edit button');
+        } else {
+          console.log('ℹ️ No existing review found for this product');
+          setExistingReview(null);
+          setIsEditMode(false);
+          setShowEditForm(true); // Show form to create new review
+        }
       } catch (err) {
         console.error('❌ Error checking for existing review:', err);
         setShowEditForm(true); // On error, show form
@@ -396,7 +365,8 @@ const OrderHistoryPage = () => {
         rating: rating,
         name: reviewData.name,
         comment: reviewData.review,
-        imageFiles: imageFiles
+        imageFiles: imageFiles,
+        orderId: orderId // Include orderId when creating review
       }));
     }
   };
