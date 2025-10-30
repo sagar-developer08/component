@@ -29,19 +29,19 @@ export const fetchProducts = createAsyncThunk(
   }
 )
 
-// Async thunk for fetching store products
+// Async thunk for fetching store products with pagination
 export const fetchStoreProducts = createAsyncThunk(
   'products/fetchStoreProducts',
-  async (storeId, { rejectWithValue }) => {
+  async ({ storeId, page = 1, limit = 20 } = {}, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${catalog.base}/products/store/${storeId}`)
-      
+      const response = await fetch(search.storeProducts(storeId, { page, limit }))
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      
+
       const data = await response.json()
-      return data
+      return { ...data, page }
     } catch (error) {
       return rejectWithValue(error.message)
     }
@@ -188,6 +188,8 @@ const productsSlice = createSlice({
     qliqPlusDeals: [],
     featured: [],
     storeProducts: [],
+    storePagination: {},
+    storeLoadingMore: false,
     searchResults: [],
     searchQuery: '',
     searchPagination: {},
@@ -215,7 +217,13 @@ const productsSlice = createSlice({
       state.qliqPlusDeals = []
       state.featured = []
       state.storeProducts = []
+      state.storePagination = {}
       state.pagination = {}
+    },
+    clearStoreProducts: (state) => {
+      state.storeProducts = []
+      state.storePagination = {}
+      state.storeLoadingMore = false
     },
     clearSuggestions: (state) => {
       state.searchSuggestions = []
@@ -250,21 +258,30 @@ const productsSlice = createSlice({
         state.error = action.payload
         state.success = false
       })
-      .addCase(fetchStoreProducts.pending, (state) => {
-        state.loading = true
+      .addCase(fetchStoreProducts.pending, (state, action) => {
+        const isInitialPage = !action.meta?.arg?.page || action.meta.arg.page === 1
+        state.loading = isInitialPage
+        state.storeLoadingMore = !isInitialPage
         state.error = null
         state.success = false
       })
       .addCase(fetchStoreProducts.fulfilled, (state, action) => {
         state.loading = false
+        state.storeLoadingMore = false
         state.success = action.payload.success
         if (action.payload.success && action.payload.data) {
-          state.storeProducts = action.payload.data.products || action.payload.data || []
+          const newProducts = action.payload.data.products || []
+          state.storeProducts = Array.isArray(newProducts) ? newProducts : []
+          // Update pagination info
+          if (action.payload.data.pagination) {
+            state.storePagination = action.payload.data.pagination
+          }
         }
         state.error = null
       })
       .addCase(fetchStoreProducts.rejected, (state, action) => {
         state.loading = false
+        state.storeLoadingMore = false
         state.error = action.payload
         state.success = false
       })
@@ -311,5 +328,5 @@ const productsSlice = createSlice({
   }
 })
 
-export const { clearError, clearProducts, clearSuggestions } = productsSlice.actions
+export const { clearError, clearProducts, clearSuggestions, clearStoreProducts } = productsSlice.actions
 export default productsSlice.reducer

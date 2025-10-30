@@ -50,6 +50,49 @@ export default function SearchPage() {
   const dispatch = useDispatch()
   
   const { searchResults, searchQuery, searchLoading, searchError, searchPagination } = useSelector(state => state.products)
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 20
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [query, searchResults])
+
+  const totalResults = useMemo(() => {
+    if (typeof searchPagination?.total === 'number') {
+      return searchPagination.total
+    }
+    return Array.isArray(searchResults) ? searchResults.length : 0
+  }, [searchResults, searchPagination?.total])
+
+  const totalPages = useMemo(() => {
+    if (!totalResults) {
+      return 1
+    }
+    return Math.max(1, Math.ceil(totalResults / pageSize))
+  }, [totalResults, pageSize])
+
+  const paginatedResults = useMemo(() => {
+    if (!Array.isArray(searchResults)) {
+      return []
+    }
+
+    const start = (currentPage - 1) * pageSize
+    return searchResults.slice(start, start + pageSize)
+  }, [searchResults, currentPage, pageSize])
+
+  const pageNumbers = useMemo(() => {
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+  }, [totalPages])
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > totalPages || page === currentPage) {
+      return
+    }
+    setCurrentPage(page)
+  }
+
+  const handlePreviousPage = () => handlePageChange(currentPage - 1)
+  const handleNextPage = () => handlePageChange(currentPage + 1)
 
   // Debounce filter changes to allow multiple selections
   useEffect(() => {
@@ -199,7 +242,7 @@ export default function SearchPage() {
 
             {/* Main Content Area with Scrollable Products */}
             <div className="content-area">
-              <div className="section-header">
+              <div className="section-header sticky-header">
                 <h2 className="section-title">
                   {query ? `Search Results for "${query}"` : "Search Results"}
                 </h2>
@@ -214,23 +257,23 @@ export default function SearchPage() {
               <div className="products-scroll-container">
                 <div className="grid-3">
                   {searchLoading ? (
-                    searchResults.slice(0,6).map((product, index) => (
+                    Array.from({ length: Math.min(pageSize, 6) }).map((_, index) => (
                       <div key={`skeleton-${index}`} className="grid-item">
                         <ProductCard 
-                          id={product._id || product.id}
-                          slug={product.slug || product._id || product.id}
-                          title={product.title || product.name || 'Product'}
-                          price={product.price ? `AED ${product.price}` : 'AED 0'}
-                          rating={product.average_rating || product.rating || '4.0'}
-                          deliveryTime={product.deliveryTime || '30 Min'}
-                          image={product.images?.[0]?.url || product.image || '/iphone.jpg'}
+                          id={`placeholder-${index}`}
+                          slug={`placeholder-${index}`}
+                          title="Loading..."
+                          price="AED 0"
+                          rating="0"
+                          deliveryTime="30 Min"
+                          image="/iphone.jpg"
                         />
                       </div>
                     ))
                   ) : searchError ? (
                     <div style={{ gridColumn: '1 / -1', color: 'red' }}>Failed to load search results: {searchError}</div>
-                  ) : (
-                    (Array.isArray(searchResults) && searchResults.length > 0 ? searchResults : []).map((product, index) => (
+                  ) : paginatedResults.length > 0 ? (
+                    paginatedResults.map((product, index) => (
                       <div key={product._id || product.id || `p-${index}`} className="grid-item">
                         <ProductCard 
                           id={product._id || product.id}
@@ -243,9 +286,45 @@ export default function SearchPage() {
                         />
                       </div>
                     ))
+                  ) : (
+                    <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px 0', color: '#6b7280' }}>
+                      No products found for this search.
+                    </div>
                   )}
                 </div>
               </div>
+
+              {!searchLoading && !searchError && paginatedResults.length > 0 && totalPages > 1 && (
+                <div className="pagination-controls" role="navigation" aria-label="Search results pagination">
+                  <button
+                    type="button"
+                    className="pagination-button"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </button>
+                  {pageNumbers.map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      className={`pagination-button ${page === currentPage ? 'active' : ''}`}
+                      onClick={() => handlePageChange(page)}
+                      aria-current={page === currentPage ? 'page' : undefined}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="pagination-button"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -307,6 +386,52 @@ export default function SearchPage() {
           justify-content: center; 
         }
 
+        .pagination-controls {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 8px;
+          margin-top: 32px;
+          flex-wrap: wrap;
+        }
+
+        .pagination-button {
+          min-width: 40px;
+          padding: 8px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 8px;
+          background: #ffffff;
+          color: #111827;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .pagination-button:hover:not(:disabled) {
+          border-color: #111827;
+          color: #111827;
+          background: #f9fafb;
+        }
+
+        .pagination-button:disabled {
+          cursor: not-allowed;
+          opacity: 0.5;
+        }
+
+        .pagination-button.active {
+          background: #111827;
+          color: #ffffff;
+          border-color: #111827;
+        }
+
+        .sticky-header {
+          position: sticky;
+          top: 0;
+          z-index: 5;
+          background: #ffffff;
+        }
+
         @media (max-width: 1024px) {
           .listing-layout { 
             flex-direction: column; 
@@ -320,12 +445,6 @@ export default function SearchPage() {
             z-index: 1;
             max-height: none;
             overflow-y: visible;
-          }
-          
-          .products-scroll-container {
-            max-height: none;
-            overflow-y: visible;
-            padding-right: 0;
           }
           
           .grid-3 { 

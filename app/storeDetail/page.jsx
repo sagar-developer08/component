@@ -11,7 +11,7 @@ import FilterDrawer from '@/components/FilterDrawer'
 import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'next/navigation'
-import { fetchStoreProducts } from '@/store/slices/productsSlice'
+import { fetchStoreProducts, clearStoreProducts } from '@/store/slices/productsSlice'
 
 const productData = [
   {
@@ -50,16 +50,66 @@ const productData = [
 
 export default function StoreDetail() {
   const [filterOpen, setFilterOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
   const searchParams = useSearchParams()
   const storeId = useMemo(() => searchParams.get('storeId'), [searchParams])
   const dispatch = useDispatch()
-  const { storeProducts, loading, error } = useSelector(state => state.products)
+  const { storeProducts, loading, error, storePagination } = useSelector(state => state.products)
+  const limit = 20
 
+  // Reset state whenever the store changes and on unmount
   useEffect(() => {
-    if (storeId) {
-      dispatch(fetchStoreProducts(storeId))
+    if (!storeId) {
+      return
+    }
+
+    setCurrentPage(1)
+    dispatch(clearStoreProducts())
+
+    return () => {
+      dispatch(clearStoreProducts())
     }
   }, [dispatch, storeId])
+
+  // Fetch products for the current store and page
+  useEffect(() => {
+    if (!storeId) {
+      return
+    }
+
+    dispatch(fetchStoreProducts({ storeId, page: currentPage, limit }))
+  }, [dispatch, storeId, currentPage])
+
+  const totalPages = useMemo(() => {
+    if (storePagination?.pages) {
+      return storePagination.pages
+    }
+
+    if (storePagination?.total) {
+      return Math.max(1, Math.ceil(storePagination.total / limit))
+    }
+
+    return 1
+  }, [storePagination, limit])
+
+  const pageNumbers = useMemo(() => {
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+  }, [totalPages])
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > totalPages || page === currentPage) {
+      return
+    }
+    setCurrentPage(page)
+  }
+
+  const handlePrevious = () => {
+    handlePageChange(currentPage - 1)
+  }
+
+  const handleNext = () => {
+    handlePageChange(currentPage + 1)
+  }
   return (
     <main className="home-page">
       <Navigation />
@@ -74,13 +124,15 @@ export default function StoreDetail() {
 
             {/* Main Content Area with Scrollable Products */}
             <div className="content-area">
-              <SectionHeader
-                title="Products"
-                showNavigation={false}
-                showButton={true}
-                buttonText="Sort By"
-                onButtonClick={() => {}}
-              />
+              <div className="sticky-header">
+                <SectionHeader
+                  title="Products"
+                  showNavigation={false}
+                  showButton={true}
+                  buttonText="Sort By"
+                  onButtonClick={() => {}}
+                />
+              </div>
 
               <div className="products-scroll-container">
                 <div className="grid-3">
@@ -93,22 +145,60 @@ export default function StoreDetail() {
                   ) : error ? (
                     <div style={{ gridColumn: '1 / -1', color: 'red' }}>Failed to load products: {error}</div>
                   ) : (
-                    (Array.isArray(storeProducts) && storeProducts.length > 0 ? storeProducts : []).map((product, index) => (
-                      <div key={product._id || product.id || `p-${index}`} className="grid-item">
-                        <ProductCard 
-                          id={product._id || product.id}
-                          slug={product.slug || product._id || product.id}
-                          title={product.title || product.name || 'Product'}
-                          price={product.price ? `AED ${product.price}` : 'AED 0'}
-                          rating={product.average_rating || product.rating || '4.0'}
-                          deliveryTime={product.deliveryTime || '30 Min'}
-                          image={product.images?.[0]?.url || product.image || '/iphone.jpg'}
-                        />
+                    (Array.isArray(storeProducts) && storeProducts.length > 0 ? (
+                      storeProducts.map((product, index) => (
+                        <div key={product._id || product.id || `p-${index}`} className="grid-item">
+                          <ProductCard 
+                            id={product._id || product.id}
+                            slug={product.slug || product._id || product.id}
+                            title={product.title || product.name || 'Product'}
+                            price={product.discount_price ? `AED ${product.discount_price}` : product.price ? `AED ${product.price}` : 'AED 0'}
+                            rating={product.average_rating || product.rating || '4.0'}
+                            deliveryTime={product.deliveryTime || '30 Min'}
+                            image={product.images?.[0]?.url || product.image || '/iphone.jpg'}
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '24px 0', color: '#6b7280' }}>
+                        No products found for this store.
                       </div>
                     ))
                   )}
                 </div>
               </div>
+
+              {!loading && totalPages > 1 && (
+                <div className="pagination-controls" role="navigation" aria-label="Store products pagination">
+                  <button
+                    type="button"
+                    className="pagination-button"
+                    onClick={handlePrevious}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </button>
+                  {pageNumbers.map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      className={`pagination-button ${page === currentPage ? 'active' : ''}`}
+                      onClick={() => handlePageChange(page)}
+                      aria-current={page === currentPage ? 'page' : undefined}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="pagination-button"
+                    onClick={handleNext}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -170,6 +260,52 @@ export default function StoreDetail() {
           justify-content: center; 
         }
 
+        .sticky-header {
+          position: sticky;
+          top: 0;
+          z-index: 5;
+          background: #ffffff;
+        }
+
+        .pagination-controls {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 8px;
+          margin-top: 32px;
+          flex-wrap: wrap;
+        }
+
+        .pagination-button {
+          min-width: 40px;
+          padding: 8px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 8px;
+          background: #0082FF;
+          color: #111827;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .pagination-button:hover:not(:disabled) {
+          border-color: #111827;
+          color: #0082FF;
+          background: #0082FF;
+        }
+
+        .pagination-button:disabled {
+          cursor: not-allowed;
+          opacity: 0.5;
+        }
+
+        .pagination-button.active {
+          background: #0082FF;
+          color: #ffffff;
+          border-color: none;
+        }
+
         @media (max-width: 1024px) {
           .listing-layout { 
             flex-direction: column; 
@@ -183,12 +319,6 @@ export default function StoreDetail() {
             z-index: 1;
             max-height: none;
             overflow-y: visible;
-          }
-          
-          .products-scroll-container {
-            max-height: none;
-            overflow-y: visible;
-            padding-right: 0;
           }
           
           .grid-3 { 
