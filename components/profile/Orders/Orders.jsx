@@ -20,8 +20,10 @@ export default function Orders({ orders }) {
         return '#4CAF50'
       case 'pending':
         return '#FF9800'
-      case 'cancelled':
+      case 'rejected':
         return '#F44336'
+        case 'accepted':
+        return '#0082FF'
       case 'processing':
         return '#2196F3'
       case 'shipped':
@@ -102,7 +104,7 @@ export default function Orders({ orders }) {
             <div className={styles.orderImageSection}>
               {item ? (
                 <Image
-                  src="/iphone.jpg"
+                  src={item.image || '/iphone.jpg'}
                   alt={item.name || 'Product'}
                   width={120}
                   height={80}
@@ -124,13 +126,13 @@ export default function Orders({ orders }) {
                   Qty: {item.quantity}
                 </div>
               )}
-              {item?.vendorName && item.vendorName !== 'Unknown Vendor' && (
+              {/* {item?.vendorName && item.vendorName !== 'Unknown Vendor' && (
                 <div className={styles.orderVendor} style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
                   {item.vendorName}
                 </div>
-              )}
+              )} */}
               <div className={styles.orderPrice}>
-                {order.currency || "USD"} {item?.price ?? order.totalAmount}
+                {"AED"} {order.totalAmount}
               </div>
               <div 
                 className={styles.orderStatus}

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchProfile } from '../../store/slices/profileSlice';
+import { fetchOrders } from '../../store/slices/profileSlice';
 import { createProductReview, updateProductReview, clearReviewState } from '../../store/slices/reviewSlice';
 import { addToCart } from '../../store/slices/cartSlice';
 import { getAuthToken, getUserFromCookies } from '../../utils/userUtils';
@@ -18,7 +18,7 @@ const OrderHistoryPage = () => {
   const orderId = searchParams.get('orderId');
   const productId = searchParams.get('productId');
   const dispatch = useDispatch();
-  const { orders, loading, error } = useSelector(state => state.profile);
+  const { orders, ordersLoading, error } = useSelector(state => state.profile);
   const { loading: reviewLoading, error: reviewError, success: reviewSuccess, reviews } = useSelector(state => state.review);
   const { show: showToast } = useToast();
   
@@ -34,10 +34,10 @@ const OrderHistoryPage = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
 
-  // Fetch profile data if not already loaded
+  // Fetch orders data if not already loaded
   useEffect(() => {
     if (!orders || orders.length === 0) {
-      dispatch(fetchProfile());
+      dispatch(fetchOrders());
     }
   }, [dispatch, orders]);
 
@@ -578,7 +578,7 @@ const OrderHistoryPage = () => {
     return Number(sum.toFixed(2));
   };
 
-  if (loading) {
+  if (ordersLoading) {
     return (
       <div>
         <Navigation />
@@ -623,7 +623,7 @@ const OrderHistoryPage = () => {
       <div className={styles.container}>
       {/* Header Section */}
       <div className={styles.header}>
-        <button className={styles.backButton} onClick={() => router.push('/profile?tab=orders')}>
+        <button className={styles.backButton} onClick={() => router.back()}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -972,7 +972,7 @@ const OrderHistoryPage = () => {
               <div key={index} className={styles.productSection}>
                 <div className={styles.productImage}>
                   <Image
-                    src="/iphone.jpg"
+                    src={item.image || '/iphone.jpg'}
                     alt={item.name}
                     width={60}
                     height={60}

@@ -8,7 +8,9 @@ import { addToWishlist } from '../../store/slices/wishlistSlice';
 import { getUserFromCookies } from '../../utils/userUtils';
 import { useToast } from '../../contexts/ToastContext';
 
-export default function ProductDetails({ product }) {
+import { getAvailableOptions } from '../../utils/productUtils';
+
+export default function ProductDetails({ product, variants = [], selectedAttributes: selectedAttributesFromStore = {} }) {
   console.log('🔍 ProductDetails component received product:', product);
   console.log('🔍 Product ID:', product.id);
   
@@ -56,6 +58,20 @@ export default function ProductDetails({ product }) {
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
+  };
+
+  // Compute available sizes given selected color (and other selected attributes if any)
+  const effectiveSelected = {
+    ...(selectedAttributesFromStore || {}),
+    color: selectedColor,
+  };
+  const availableSizes = getAvailableOptions(variants || [], effectiveSelected, 'storage');
+  const isSizeAvailable = (size) => {
+    if (!size) return false;
+    // some data could be like "512 GB" vs "512"; normalize to include both simple contains checks
+    const normalizedAvailable = availableSizes.map(v => String(v).toLowerCase());
+    const norm = String(size).toLowerCase();
+    return normalizedAvailable.includes(norm);
   };
 
   const prevImage = () => {
@@ -229,13 +245,15 @@ export default function ProductDetails({ product }) {
                 {product.sizes.map((size) => (
                   <button
                     key={size}
-                    className={`size-btn ${selectedSize === size ? 'selected' : ''}`}
+                    className={`size-btn ${selectedSize === size ? 'selected' : ''} ${!isSizeAvailable(size) ? 'unavailable' : ''}`}
                     onClick={() => {
+                      if (!isSizeAvailable(size)) return;
                       setSelectedSize(size);
                       if (product.onSizeChange) {
                         product.onSizeChange(size);
                       }
                     }}
+                    disabled={!isSizeAvailable(size)}
                   >
                     {size}
                   </button>
@@ -577,6 +595,25 @@ export default function ProductDetails({ product }) {
           border-color: #0082FF;
           background: #0082FF;
           color: white;
+        }
+
+        /* Unavailable size styling with diagonal cross */
+        .size-btn.unavailable {
+          position: relative;
+          color: #bbb;
+          border-color: #e5e7eb;
+          background: #fafafa;
+          cursor: not-allowed;
+        }
+        .size-btn.unavailable::after {
+          content: '';
+          position: absolute;
+          left: 6px;
+          right: 6px;
+          top: 50%;
+          height: 2px;
+          background: #bbb;
+          transform: rotate(-20deg);
         }
 
         /* Quantity and Share Container */
