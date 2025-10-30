@@ -85,6 +85,10 @@ export default function ProfilePage() {
     handleTabChange('qoyns-wallet')
   }
 
+  const handleGoLiveClick = () => {
+    window.open('https://dev.qliq.ae/', '_blank')
+  }
+
   const tabs = [
     { id: 'personal-info', label: 'Personal Info' },
     // { id: 'cash-wallet', label: 'Cash Wallet' },
@@ -105,7 +109,7 @@ export default function ProfilePage() {
             </p>
           </div>
           <div className={styles.actionTop}>
-            <button className={styles.goLiveBtn}>Go to QLIQ Live</button>
+            <button className={styles.goLiveBtn} onClick={handleGoLiveClick}>Go to QLIQ Live</button>
             <button 
               className={styles.upgradeBtn}
               onClick={() => router.push('/subscription')}

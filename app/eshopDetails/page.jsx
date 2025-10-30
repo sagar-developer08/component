@@ -8,7 +8,7 @@ import StoreCard from '@/components/StoreCard'
 import SectionHeader from '@/components/SectionHeader'
 import Footer from '@/components/Footer'
 import FilterDrawer from '@/components/FilterDrawer'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 const productData = [
   {
@@ -47,6 +47,36 @@ const productData = [
 
 export default function EshopDetails() {
   const [filterOpen, setFilterOpen] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 20
+
+  const products = useMemo(() => productData.concat(productData), [])
+
+  const totalPages = useMemo(() => {
+    if (!products.length) {
+      return 1
+    }
+    return Math.max(1, Math.ceil(products.length / pageSize))
+  }, [products.length, pageSize])
+
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return products.slice(start, start + pageSize)
+  }, [products, currentPage, pageSize])
+
+  const pageNumbers = useMemo(() => {
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+  }, [totalPages])
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > totalPages || page === currentPage) {
+      return
+    }
+    setCurrentPage(page)
+  }
+
+  const handlePrevious = () => handlePageChange(currentPage - 1)
+  const handleNext = () => handlePageChange(currentPage + 1)
   return (
     <main className="home-page">
       <Navigation />
@@ -61,22 +91,56 @@ export default function EshopDetails() {
 
             {/* Main Content Area with Scrollable Products */}
             <div className="content-area">
-              <SectionHeader
-                title="Products"
-                showNavigation={false}
-                showButton={true}
-                buttonText="Sort By"
-                onButtonClick={() => { }}
-              />
+              <div className="sticky-header">
+                <SectionHeader
+                  title="Products"
+                  showNavigation={false}
+                  showButton={true}
+                  buttonText="Sort By"
+                  onButtonClick={() => { }}
+                />
+              </div>
               <div className="products-scroll-container">
                 <div className="grid-3">
-                  {productData.concat(productData).map((product, index) => (
-                    <div key={index} className="grid-item">
+                  {paginatedProducts.map((product, index) => (
+                    <div key={`${product.id}-${index}`} className="grid-item">
                       <ProductCard {...product} />
                     </div>
                   ))}
                 </div>
               </div>
+
+              {totalPages > 1 && (
+                <div className="pagination-controls" role="navigation" aria-label="Products pagination">
+                  <button
+                    type="button"
+                    className="pagination-button"
+                    onClick={handlePrevious}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </button>
+                  {pageNumbers.map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      className={`pagination-button ${page === currentPage ? 'active' : ''}`}
+                      onClick={() => handlePageChange(page)}
+                      aria-current={page === currentPage ? 'page' : undefined}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="pagination-button"
+                    onClick={handleNext}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -138,6 +202,52 @@ export default function EshopDetails() {
           justify-content: center; 
         }
 
+        .sticky-header {
+          position: sticky;
+          top: 0;
+          z-index: 5;
+          background: #ffffff;
+        }
+
+        .pagination-controls {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 8px;
+          margin-top: 32px;
+          flex-wrap: wrap;
+        }
+
+        .pagination-button {
+          min-width: 40px;
+          padding: 8px 12px;
+          border: 1px solid #d1d5db;
+          border-radius: 8px;
+          background: #ffffff;
+          color: #111827;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .pagination-button:hover:not(:disabled) {
+          border-color: #111827;
+          color: #111827;
+          background: #f9fafb;
+        }
+
+        .pagination-button:disabled {
+          cursor: not-allowed;
+          opacity: 0.5;
+        }
+
+        .pagination-button.active {
+          background: #111827;
+          color: #ffffff;
+          border-color: #111827;
+        }
+
         @media (max-width: 1024px) {
           .listing-layout { 
             flex-direction: column; 
@@ -151,12 +261,6 @@ export default function EshopDetails() {
             z-index: 1;
             max-height: none;
             overflow-y: visible;
-          }
-          
-          .products-scroll-container {
-            max-height: none;
-            overflow-y: visible;
-            padding-right: 0;
           }
           
           .grid-3 { 
