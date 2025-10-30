@@ -54,8 +54,7 @@ export default function BrandPage() {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
-  const [hasMoreProducts, setHasMoreProducts] = useState(true)
-  const [loadingMore, setLoadingMore] = useState(false)
+  const [paginationInfo, setPaginationInfo] = useState(null)
   
   // Ref to track if fetch is in progress
   const isFetchingRef = useRef(false)
@@ -190,7 +189,7 @@ export default function BrandPage() {
   // Reset pagination when debounced filters change
   useEffect(() => {
     setCurrentPage(1)
-    setHasMoreProducts(true)
+    setPaginationInfo(null)
     setBrandProducts([])
     isFetchingRef.current = false // Reset fetch lock when filters change
   }, [debouncedFilters, slug, storeId, categoryLevel])
@@ -221,7 +220,7 @@ export default function BrandPage() {
             
             // Add pagination params
             params.append('page', currentPage.toString())
-            params.append('limit', '10')
+            params.append('limit', '20')
             
             // Add sort parameter
             params.append('sort', sortBy)
@@ -290,18 +289,10 @@ export default function BrandPage() {
                 }
                 
                 const newProducts = data.data.products || []
-                
-                if (currentPage === 1) {
-                  // First page - replace products
-                  setBrandProducts(newProducts)
-                } else {
-                  // Subsequent pages - append products
-                  setBrandProducts(prev => [...prev, ...newProducts])
-                }
-                
-                // Check if there are more products
+                setBrandProducts(newProducts)
+
                 const pagination = data.data.pagination
-                setHasMoreProducts(pagination && currentPage < pagination.pages)
+                setPaginationInfo(pagination || null)
               }
             }
           } else if (categoryLevel) {
@@ -313,7 +304,7 @@ export default function BrandPage() {
             
             // Add pagination params
             params.append('page', currentPage.toString())
-            params.append('limit', '10')
+            params.append('limit', '20')
             
             // Add sort parameter
             params.append('sort', sortBy)
@@ -385,18 +376,10 @@ export default function BrandPage() {
                 }
                 
                 const newProducts = data.data.products || []
-                
-                if (currentPage === 1) {
-                  // First page - replace products
-                  setBrandProducts(newProducts)
-                } else {
-                  // Subsequent pages - append products
-                  setBrandProducts(prev => [...prev, ...newProducts])
-                }
-                
-                // Check if there are more products
+                setBrandProducts(newProducts)
+
                 const pagination = data.data.pagination
-                setHasMoreProducts(pagination && currentPage < pagination.pages)
+                setPaginationInfo(pagination || null)
               }
             }
           } else {
@@ -408,7 +391,7 @@ export default function BrandPage() {
             
             // Add pagination params
             params.append('page', currentPage.toString())
-            params.append('limit', '10')
+            params.append('limit', '20')
             
             // Add sort parameter
             params.append('sort', sortBy)
@@ -475,18 +458,10 @@ export default function BrandPage() {
                 }
                 
                 const newProducts = data.data.products || []
-                
-                if (currentPage === 1) {
-                  // First page - replace products
-                  setBrandProducts(newProducts)
-                } else {
-                  // Subsequent pages - append products
-                  setBrandProducts(prev => [...prev, ...newProducts])
-                }
-                
-                // Check if there are more products
+                setBrandProducts(newProducts)
+
                 const pagination = data.data.pagination
-                setHasMoreProducts(pagination && currentPage < pagination.pages)
+                setPaginationInfo(pagination || null)
               }
             }
           }
@@ -525,6 +500,32 @@ export default function BrandPage() {
     return []
   }, [isCategory, isStore, filterData])
 
+  const totalPages = useMemo(() => {
+    if (paginationInfo?.pages) {
+      return Math.max(1, paginationInfo.pages)
+    }
+
+    if (paginationInfo?.total) {
+      return Math.max(1, Math.ceil(paginationInfo.total / 20))
+    }
+
+    return 1
+  }, [paginationInfo])
+
+  const pageNumbers = useMemo(() => {
+    return Array.from({ length: totalPages }, (_, index) => index + 1)
+  }, [totalPages])
+
+  const handlePageChangeLocal = (page) => {
+    if (page < 1 || page > totalPages || page === currentPage) {
+      return
+    }
+    setCurrentPage(page)
+  }
+
+  const handlePreviousPage = () => handlePageChangeLocal(currentPage - 1)
+  const handleNextPage = () => handlePageChangeLocal(currentPage + 1)
+
   const handleFilterChange = (key, value) => {
     console.log('Filter changed:', key, value)
     setSelectedFilters(prev => {
@@ -546,34 +547,6 @@ export default function BrandPage() {
   const handleBack = () => {
     router.push('/')
   }
-
-  // Load more products function
-  const loadMoreProducts = () => {
-    if (!loadingMore && hasMoreProducts) {
-      setLoadingMore(true)
-      setCurrentPage(prev => prev + 1)
-    }
-  }
-
-  // Infinite scroll effect
-  useEffect(() => {
-    const handleScroll = () => {
-      if (loadingMore || !hasMoreProducts) return
-      
-      if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 1000) {
-        setLoadingMore(true)
-        setCurrentPage(prev => prev + 1)
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [loadingMore, hasMoreProducts])
-
-  // Reset loading more when page changes
-  useEffect(() => {
-    setLoadingMore(false)
-  }, [currentPage])
 
   return (
     <main className="home-page">
@@ -597,9 +570,9 @@ export default function BrandPage() {
               />
             </aside>
 
-            {/* Main Content Area with Scrollable Products */}
+            {/* Main Content Area */}
             <div className="content-area">
-              <div className="section-header">
+              <div className="section-header sticky-header">
                 <h2 className="section-title">
                   {`${brandInfo?.name || (isStore ? 'Store' : isCategory ? 'Category' : 'Brand')} Products`}
                 </h2>
@@ -625,21 +598,42 @@ export default function BrandPage() {
                       </div>
                     ))}
                   </div>
-                  {loadingMore && (
-                    <div className="loading-more">
-                      <div className="loading-spinner"></div>
-                      <p>Loading more products...</p>
-                    </div>
-                  )}
-                  {!hasMoreProducts && transformedProducts.length > 0 && (
-                    <div className="no-more-products">
-                      <p>No more products to load</p>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="no-products">
                   <p>No products found for this {isStore ? 'store' : isCategory ? 'category' : 'brand'}.</p>
+                </div>
+              )}
+
+              {!loadingProducts && transformedProducts.length > 0 && totalPages > 1 && (
+                <div className="pagination-controls" role="navigation" aria-label="Products pagination">
+                  <button
+                    type="button"
+                    className="pagination-button"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </button>
+                  {pageNumbers.map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      className={`pagination-button ${page === currentPage ? 'active' : ''}`}
+                      onClick={() => handlePageChangeLocal(page)}
+                      aria-current={page === currentPage ? 'page' : undefined}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    className="pagination-button"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
                 </div>
               )}
             </div>
@@ -702,7 +696,7 @@ export default function BrandPage() {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 24px;
-          padding-bottom: 40px; /* extra space at bottom */
+          padding-bottom: 0; /* extra space at bottom */
         }
         
         .grid-item { 
@@ -710,34 +704,72 @@ export default function BrandPage() {
           justify-content: center; 
         }
 
-        .loading-more {
+        .loading-container {
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 20px;
-          margin-top: 20px;
+          gap: 12px;
+          padding: 48px 0;
+          color: #6b7280;
         }
 
-        .loading-more .loading-spinner {
-          width: 24px;
-          height: 24px;
-          border: 2px solid #f3f3f3;
-          border-top: 2px solid #007bff;
+        .loading-container .loading-spinner {
+          width: 32px;
+          height: 32px;
+          border: 3px solid #e5e7eb;
+          border-top: 3px solid #111827;
           border-radius: 50%;
           animation: spin 1s linear infinite;
-          margin-bottom: 10px;
         }
 
-        .no-more-products {
+        .no-products {
           text-align: center;
-          padding: 20px;
-          color: #666;
-          font-style: italic;
+          padding: 48px 0;
+          color: #6b7280;
         }
 
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        .pagination-controls {
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          gap: 8px;
+          margin-top: 32px;
+          flex-wrap: wrap;
+        }
+
+        .pagination-button {
+          min-width: 40px;
+          padding: 8px 12px;
+          border: 1px solid #0082FF;
+          border-radius: 8px;
+          background: #ffffff;
+          color: #0082FF;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .pagination-button:hover:not(:disabled) {
+          border-color: #0082FF;
+          color: #0082FF;
+          background: #f9fafb;
+        }
+
+        .pagination-button:disabled {
+          cursor: not-allowed;
+          opacity: 0.5;
+        }
+
+        .pagination-button.active {
+          background: #0082FF;
+          color: #ffffff;
+          border-color: none;
         }
 
         @media (max-width: 1024px) {
@@ -753,12 +785,6 @@ export default function BrandPage() {
             z-index: 1;
             max-height: none;
             overflow-y: visible;
-          }
-          
-          .products-scroll-container {
-            max-height: none;
-            overflow-y: visible;
-            padding-right: 0;
           }
           
           .grid-3 { 
@@ -798,6 +824,13 @@ export default function BrandPage() {
           display: flex;
           align-items: center;
           gap: 16px;
+        }
+
+        .sticky-header {
+          position: sticky;
+          top: 0;
+          z-index: 5;
+          background: #ffffff;
         }
 
         @media (max-width: 768px) {
