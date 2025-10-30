@@ -141,7 +141,7 @@ export default function CartDrawer({ open, onClose }) {
                 <div key={item.productId} className="cart-item">
                   <div className="cart-image-wrap">
                     <Image
-                      src="/iphone.jpg"
+                      src={item.image || '/iphone.jpg'}
                       alt={item.name}
                       width={120}
                       height={100}

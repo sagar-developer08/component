@@ -1,5 +1,7 @@
 'use client'
 import ProductDetails from '../../../components/productDetailPage/ProductDetails'
+import ProductDetailsSkeleton from '../../../components/productDetailPage/ProductDetailsSkeleton'
+import { ProductCardSkeleton } from '@/components/SkeletonLoader'
 import ProductSections from '../../../components/productDetailPage/ProductSections'
 import Navigation from '../../../components/Navigation'
 import Footer from '../../../components/Footer'
@@ -186,14 +188,21 @@ export default function ProductPage({ params }) {
 
       <main className="main-content">
         {productDetailLoading ? (
-          <div style={{ padding: '40px', textAlign: 'center' }}>Loading product...</div>
+          <>
+            <ProductDetailsSkeleton />
+            <div className="related-skeletons">
+              {[...Array(6)].map((_, index) => (
+                <ProductCardSkeleton key={`skeleton-${index}`} />
+              ))}
+            </div>
+          </>
         ) : productDetailError ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'red' }}>
             Error loading product: {productDetailError}
           </div>
         ) : (
           <>
-            <ProductDetails product={mappedProduct} />
+            <ProductDetails product={mappedProduct} variants={variants} selectedAttributes={selectedAttributes} />
             <ProductSections 
               relatedProducts={relatedProducts}
               productData={product}
@@ -213,6 +222,14 @@ export default function ProductPage({ params }) {
         .main-content {
           margin-top: 20px;
     
+        }
+        .related-skeletons {
+          max-width: 1392px;
+          margin: 0 auto;
+          padding: 0 20px 40px;
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 16px;
         }
       `}</style>
     </div>

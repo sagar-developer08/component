@@ -24,15 +24,44 @@ export default function ProfilePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const dispatch = useDispatch()
-  const { user, addresses, orders, loading, error } = useSelector(state => state.profile)
-  const [activeTab, setActiveTab] = useState('personal-info')
+  const { user, addresses, orders, loading, ordersLoading, error } = useSelector(state => state.profile)
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'personal-info')
   const [isEditing, setIsEditing] = useState(false)
   const [locationModalOpen, setLocationModalOpen] = useState(false)
+  const [selectedStatus, setSelectedStatus] = useState('all')
 
-  // Fetch profile data once when component mounts
+  const normalizeStatus = (value) => {
+    if (!value) return ''
+    const v = String(value).toLowerCase().trim()
+    if (v === 'delivered' || v === 'completed') return 'delivered'
+    if (v === 'pending') return 'pending'
+    if (v === 'rejected' || v === 'reject' || v === 'cancelled' || v === 'canceled') return 'rejected'
+    if (v === 'accepted' || v === 'processing' || v === 'in-transit' || v === 'in transit' || v === 'shipped') return 'accepted'
+    return v
+  }
+
+  const labelizeStatus = (value) => {
+    const v = normalizeStatus(value)
+    switch (v) {
+      case 'delivered': return 'Delivered'
+      case 'pending': return 'Pending'
+      case 'rejected': return 'Rejected'
+      case 'accepted': return 'Accepted'
+      default:
+        return String(value || '').replace(/-/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase())
+    }
+  }
+
+  const uniqueStatuses = Array.from(new Set((orders || []).map(o => normalizeStatus(o?.status)).filter(Boolean)))
+  const filteredOrders = selectedStatus === 'all' ? orders : (orders || []).filter(o => normalizeStatus(o?.status) === selectedStatus)
+
+  // Fetch profile data only when on tabs that require it
   useEffect(() => {
-    dispatch(fetchProfile())
-  }, [dispatch])
+    const tabsThatDoNotNeedProfile = new Set(['orders', 'qoyns-wallet', 'qoyns-history', 'send-qoyn'])
+    if (!tabsThatDoNotNeedProfile.has(activeTab)) {
+      dispatch(fetchProfile())
+    }
+  }, [dispatch, activeTab])
 
   // Fetch orders when orders tab becomes active
   useEffect(() => {
@@ -41,13 +70,13 @@ export default function ProfilePage() {
     }
   }, [activeTab, dispatch])
 
-  // Initialize active tab from URL parameter
+  // Initialize active tab from URL parameter (and react to changes)
   useEffect(() => {
     const tabFromUrl = searchParams.get('tab')
-    if (tabFromUrl) {
+    if (tabFromUrl && tabFromUrl !== activeTab) {
       setActiveTab(tabFromUrl)
     }
-  }, [searchParams])
+  }, [searchParams, activeTab])
 
   // Update URL when tab changes
   const handleTabChange = (tabId) => {
@@ -164,11 +193,24 @@ export default function ProfilePage() {
             {activeTab === 'orders' && (
               <div className={styles.qoynsActionsRow}>
                 <div className={styles.statusDropdownWrapper}>
-                  <select className={styles.statusDropdown}>
-                    <option value="all">Status</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="in-transit">In Transit</option>
-                    <option value="processing">Processing</option>
+                  <select 
+                    className={styles.statusDropdown}
+                    value={selectedStatus}
+                    onChange={(e) => setSelectedStatus(e.target.value)}
+                  >
+                    <option value="all">All Statuses</option>
+                    {/* Ensure primary statuses are available in the dropdown if present */}
+                    {['delivered','pending','rejected','accepted']
+                      .filter(s => uniqueStatuses.includes(s))
+                      .map(s => (
+                        <option key={s} value={s}>{labelizeStatus(s)}</option>
+                      ))}
+                    {/* Include any other unknown statuses */}
+                    {uniqueStatuses
+                      .filter(s => !['delivered','pending','rejected','accepted'].includes(s))
+                      .map(s => (
+                        <option key={s} value={s}>{labelizeStatus(s)}</option>
+                      ))}
                   </select>
                   <span className={styles.dropdownArrow}>
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -196,22 +238,49 @@ export default function ProfilePage() {
             )}
           </div>
           <div className={styles.mainContent}>
-            {loading && (
+            {activeTab === 'orders' ? (
               <div className={styles.sectionContent}>
-                <div style={{ textAlign: 'center', padding: '40px' }}>
-                  Loading profile data...
-                </div>
+                {ordersLoading ? (
+                  <div style={{ textAlign: 'center', padding: '40px' }}>
+                    Loading orders...
+                  </div>
+                ) : (
+                  <Orders orders={filteredOrders} />
+                )}
               </div>
-            )}
-            {error && (
+            ) : activeTab === 'qoyns-wallet' ? (
               <div className={styles.sectionContent}>
-                <div style={{ textAlign: 'center', padding: '40px', color: 'red' }}>
-                  Error loading profile: {error}
-                </div>
+                <QoynsWallet user={user} />
               </div>
-            )}
-            {!loading && !error && (
+            ) : activeTab === 'qoyns-history' ? (
+              <div className={styles.sectionContent}>
+                <QoynsHistory user={user} />
+              </div>
+            ) : activeTab === 'send-qoyn' ? (
+              <div className={styles.sectionContent}>
+                <SendQoyn
+                  onCancel={handleSendQoynCancel}
+                  onSave={handleSendQoynSave}
+                />
+              </div>
+            ) : (
               <>
+                {loading && (
+                  <div className={styles.sectionContent}>
+                    <div style={{ textAlign: 'center', padding: '40px' }}>
+                      Loading profile data...
+                    </div>
+                  </div>
+                )}
+                {error && (
+                  <div className={styles.sectionContent}>
+                    <div style={{ textAlign: 'center', padding: '40px', color: 'red' }}>
+                      Error loading profile: {error}
+                    </div>
+                  </div>
+                )}
+                {!loading && !error && (
+                  <>
                 {activeTab === 'personal-info' && (
                   <div className={styles.sectionContent}>
                     <PersonalInfo user={user} />
@@ -230,29 +299,10 @@ export default function ProfilePage() {
                     />
                   </div>
                 )}
-                {activeTab === 'qoyns-wallet' && (
-                  <div className={styles.sectionContent}>
-                    <QoynsWallet user={user} />
-                  </div>
-                )}
-                {activeTab === 'qoyns-history' && (
-                  <div className={styles.sectionContent}>
-                    <QoynsHistory user={user} />
-                  </div>
-                )}
-                {activeTab === 'send-qoyn' && (
-                  <div className={styles.sectionContent}>
-                    <SendQoyn
-                      onCancel={handleSendQoynCancel}
-                      onSave={handleSendQoynSave}
-                    />
-                  </div>
-                )}
-                {activeTab === 'orders' && (
-                  <div className={styles.sectionContent}>
-                    <Orders orders={orders} />
-                  </div>
-                )}
+                {activeTab === 'qoyns-wallet' && null}
+                {activeTab === 'qoyns-history' && null}
+                {activeTab === 'send-qoyn' && null}
+                {activeTab === 'orders' && null}
                 {activeTab === 'addresses' && (
                   <div className={styles.sectionContent}>
                     <Addresses addresses={addresses} />
@@ -265,6 +315,8 @@ export default function ProfilePage() {
                       onSave={handleNewAddressSave}
                     />
                   </div>
+                )}
+                  </>
                 )}
               </>
             )}

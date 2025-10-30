@@ -362,7 +362,7 @@
 }
 .qoynsActionsRow {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   align-items: center;
 }
 .ordersList {
@@ -486,7 +486,7 @@
   color: #000;
   border: 1px solid #0082FF;
   border-radius: 100px;
-  padding: 12px 0px 12px 16px;
+  padding: 12px 48px 12px 16px; /* leave space for arrow and 16px gap */
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
@@ -498,7 +498,7 @@
 
 .dropdownArrow {
   position: absolute;
-  right: 18px;
+  right: 16px; /* 16px gap from text edge */
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;

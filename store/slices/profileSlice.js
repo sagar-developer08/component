@@ -121,6 +121,7 @@ const initialState = {
   addresses: [],
   orders: [],
   loading: false,
+  ordersLoading: false,
   error: null,
   settingDefault: false,
   defaultAddressError: null,
@@ -154,7 +155,9 @@ const profileSlice = createSlice({
         const responseData = action.payload.data || action.payload
         state.user = responseData.profile || null
         state.addresses = responseData.addresses?.data || []
-        state.orders = responseData.orders?.data || []
+        // Don't map orders from aggregate API - they don't have order details
+        // Orders will be fetched separately via fetchOrders() when needed
+        state.orders = [] 
         state.error = null
       })
       .addCase(fetchProfile.rejected, (state, action) => {
@@ -183,17 +186,17 @@ const profileSlice = createSlice({
       })
       // Fetch orders
       .addCase(fetchOrders.pending, (state) => {
-        state.loading = true
+        state.ordersLoading = true
         state.error = null
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
-        state.loading = false
+        state.ordersLoading = false
         // Handle both direct orders array and nested data structure
         state.orders = action.payload.data?.orders || action.payload.orders || []
         state.error = null
       })
       .addCase(fetchOrders.rejected, (state, action) => {
-        state.loading = false
+        state.ordersLoading = false
         state.error = action.payload
         state.orders = []
       })
