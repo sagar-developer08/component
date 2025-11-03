@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import OtherSellersDrawer from './OtherSellersDrawer';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,13 +7,17 @@ import { addToCart, fetchCart } from '../../store/slices/cartSlice';
 import { addToWishlist } from '../../store/slices/wishlistSlice';
 import { getUserFromCookies } from '../../utils/userUtils';
 import { useToast } from '../../contexts/ToastContext';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation as SwiperNavigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
 
 import { getAvailableOptions } from '../../utils/productUtils';
 
 export default function ProductDetails({ product, variants = [], selectedAttributes: selectedAttributesFromStore = {} }) {
   console.log('🔍 ProductDetails component received product:', product);
   console.log('🔍 Product ID:', product.id);
-  
+
   const [selectedColor, setSelectedColor] = useState(product.selectedColor || product.colors?.[0]);
   const [selectedSize, setSelectedSize] = useState(product.selectedSize || product.sizes?.[0]);
   const [quantity, setQuantity] = useState(1);
@@ -21,14 +25,18 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [isAddedToWishlist, setIsAddedToWishlist] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const colorSwiperRef = useRef(null);
+  const sizeSwiperRef = useRef(null);
+  const promoCardsSwiperRef = useRef(null);
   const { requireAuth } = useAuth();
   const dispatch = useDispatch();
   const { show } = useToast();
-  
+
   // Check if product is in cart or wishlist
   const { items: cartItems } = useSelector(state => state.cart);
   const { items: wishlistItems } = useSelector(state => state.wishlist);
-  
+
   const isInCart = cartItems.some(item => item.productId === product.id);
   const isInWishlist = wishlistItems.some(item => item.productId === product.id);
 
@@ -40,7 +48,7 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
     if (product.selectedSize) {
       setSelectedSize(product.selectedSize);
     }
-    
+
     // Update button states based on cart and wishlist
     setIsAddedToCart(isInCart);
     setIsAddedToWishlist(isInWishlist);
@@ -55,6 +63,22 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
       setSelectedSize(product.selectedSize);
     }
   }, [product.selectedColor, product.selectedSize]);
+
+  // Check screen size for mobile detection
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Initial check
+    checkScreenSize();
+
+    // Add event listener
+    window.addEventListener('resize', checkScreenSize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % product.images.length);
@@ -86,7 +110,7 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
       show('Item already in cart')
       return
     }
-    
+
     requireAuth(() => {
       ; (async () => {
         const userId = await getUserFromCookies()
@@ -106,7 +130,7 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
         if (addToCart.fulfilled.match(result)) {
           show('Added to cart')
           setIsAddedToCart(true)
-          
+
           // Refresh cart data
           dispatch(fetchCart(userId))
         } else if (addToCart.rejected.match(result)) {
@@ -122,7 +146,7 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
       show('Item already in wishlist')
       return
     }
-    
+
     requireAuth(() => {
       ; (async () => {
         const userId = await getUserFromCookies()
@@ -162,8 +186,8 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
             <Image
               src={product.images[currentImageIndex]}
               alt={product.name}
-              width={600}
-              height={650}
+              width={isMobile ? 350 : 600}
+              height={isMobile ? 350 : 650}
               className="main-image"
             />
 
@@ -190,13 +214,13 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
           {/* First row: Brand name and bought count */}
           <div className="first-row">
             <div className="brand-name">{product.brand}</div>
-            <span className="bought-count">{product.boughtCount}</span>
+            {/* <span className="bought-count">{product.boughtCount}</span> */}
           </div>
 
           {/* Second row: Product name and delivery time */}
           <div className="stats">
             <h1 className="product-name">{product.name}</h1>
-            <span className="delivery-time">{product.deliveryTime}</span>
+            {/* <span className="delivery-time">{product.deliveryTime}</span> */}
           </div>
           <div className="second-row-stats">
             <div className="stock-status">{product.stock}</div>
@@ -218,22 +242,52 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
           {product.colors && product.colors.length > 1 && (
             <div className="selection-group">
               <label>Color:</label>
-              <div className="color-options">
-                {product.colors.map((color) => (
-                  <button
-                    key={color}
-                    className={`color-btn ${selectedColor === color ? 'selected' : ''}`}
-                    onClick={() => {
-                      setSelectedColor(color);
-                      if (product.onColorChange) {
-                        product.onColorChange(color);
-                      }
-                    }}
+              {isMobile ? (
+                <div className="color-swiper-wrapper">
+                  <Swiper
+                    ref={colorSwiperRef}
+                    modules={[SwiperNavigation]}
+                    slidesPerView="auto"
+                    spaceBetween={10}
+                    grabCursor={true}
+                    freeMode={true}
+                    className="color-swiper"
                   >
-                    {color}
-                  </button>
-                ))}
-              </div>
+                    {product.colors.map((color) => (
+                      <SwiperSlide key={color} style={{ width: 'auto' }}>
+                        <button
+                          className={`color-btn ${selectedColor === color ? 'selected' : ''}`}
+                          onClick={() => {
+                            setSelectedColor(color);
+                            if (product.onColorChange) {
+                              product.onColorChange(color);
+                            }
+                          }}
+                        >
+                          {color}
+                        </button>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                </div>
+              ) : (
+                <div className="color-options">
+                  {product.colors.map((color) => (
+                    <button
+                      key={color}
+                      className={`color-btn ${selectedColor === color ? 'selected' : ''}`}
+                      onClick={() => {
+                        setSelectedColor(color);
+                        if (product.onColorChange) {
+                          product.onColorChange(color);
+                        }
+                      }}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -241,24 +295,56 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
           {product.sizes && product.sizes.length > 1 && (
             <div className="selection-group">
               <label>Size:</label>
-              <div className="size-options">
-                {product.sizes.map((size) => (
-                  <button
-                    key={size}
-                    className={`size-btn ${selectedSize === size ? 'selected' : ''} ${!isSizeAvailable(size) ? 'unavailable' : ''}`}
-                    onClick={() => {
-                      if (!isSizeAvailable(size)) return;
-                      setSelectedSize(size);
-                      if (product.onSizeChange) {
-                        product.onSizeChange(size);
-                      }
-                    }}
-                    disabled={!isSizeAvailable(size)}
+              {isMobile ? (
+                <div className="size-swiper-wrapper">
+                  <Swiper
+                    ref={sizeSwiperRef}
+                    modules={[SwiperNavigation]}
+                    slidesPerView="auto"
+                    spaceBetween={10}
+                    grabCursor={true}
+                    freeMode={true}
+                    className="size-swiper"
                   >
-                    {size}
-                  </button>
-                ))}
-              </div>
+                    {product.sizes.map((size) => (
+                      <SwiperSlide key={size} style={{ width: 'auto' }}>
+                        <button
+                          className={`size-btn ${selectedSize === size ? 'selected' : ''} ${!isSizeAvailable(size) ? 'unavailable' : ''}`}
+                          onClick={() => {
+                            if (!isSizeAvailable(size)) return;
+                            setSelectedSize(size);
+                            if (product.onSizeChange) {
+                              product.onSizeChange(size);
+                            }
+                          }}
+                          disabled={!isSizeAvailable(size)}
+                        >
+                          {size}
+                        </button>
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                </div>
+              ) : (
+                <div className="size-options">
+                  {product.sizes.map((size) => (
+                    <button
+                      key={size}
+                      className={`size-btn ${selectedSize === size ? 'selected' : ''} ${!isSizeAvailable(size) ? 'unavailable' : ''}`}
+                      onClick={() => {
+                        if (!isSizeAvailable(size)) return;
+                        setSelectedSize(size);
+                        if (product.onSizeChange) {
+                          product.onSizeChange(size);
+                        }
+                      }}
+                      disabled={!isSizeAvailable(size)}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -293,15 +379,15 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
 
           {/* Action Buttons */}
           <div className="action-buttons">
-            <button 
-              className={`add-to-cart ${(isAddedToCart || isInCart) ? 'added' : ''}`} 
+            <button
+              className={`add-to-cart ${(isAddedToCart || isInCart) ? 'added' : ''}`}
               onClick={handleAddToCart}
               disabled={isAddedToCart || isInCart}
             >
               {(isAddedToCart || isInCart) ? 'Added To Cart' : 'Add To Cart'}
             </button>
-            <button 
-              className={`add-to-favourite ${(isAddedToWishlist || isInWishlist) ? 'added' : ''}`} 
+            <button
+              className={`add-to-favourite ${(isAddedToWishlist || isInWishlist) ? 'added' : ''}`}
               onClick={handleAddToFavourite}
               disabled={isAddedToWishlist || isInWishlist}
             >
@@ -321,24 +407,63 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
 
           {/* Promo Cards - Two in one row */}
           <div className="promo-cards-row">
-            <div className="promo-card promo-card-outline">
-              <div className="promo-card-icon">
-                <Image src="/discount.svg" alt="Return Policy" width={32} height={32} />
+            {isMobile ? (
+              <div className="promo-cards-swiper-wrapper">
+                <Swiper
+                  ref={promoCardsSwiperRef}
+                  modules={[SwiperNavigation]}
+                  slidesPerView="auto"
+                  spaceBetween={16}
+                  grabCursor={true}
+                  freeMode={true}
+                  className="promo-cards-swiper"
+                >
+                  <SwiperSlide style={{ width: 'auto' }}>
+                    <div className="promo-card promo-card-outline">
+                      <div className="promo-card-icon">
+                        <Image src="/discount.svg" alt="Return Policy" width={32} height={32} />
+                      </div>
+                      <div className="promo-card-content">
+                        <div className="promo-card-title">Pay in 3 interest-free payments</div>
+                        <div className="promo-card-link">Learn More</div>
+                      </div>
+                    </div>
+                  </SwiperSlide>
+                  <SwiperSlide style={{ width: 'auto' }}>
+                    <div className="promo-card promo-card-outline">
+                      <div className="promo-card-icon">
+                        <Image src="/discount.svg" alt="Return Policy" width={32} height={32} />
+                      </div>
+                      <div className="promo-card-content">
+                        <div className="promo-card-title">Pay in 3 interest-free payments</div>
+                        <div className="promo-card-link">Learn More</div>
+                      </div>
+                    </div>
+                  </SwiperSlide>
+                </Swiper>
               </div>
-              <div className="promo-card-content">
-                <div className="promo-card-title">Pay in 3 interest-free payments</div>
-                <div className="promo-card-link">Learn More</div>
-              </div>
-            </div>
-            <div className="promo-card promo-card-outline">
-              <div className="promo-card-icon">
-                <Image src="/discount.svg" alt="Return Policy" width={32} height={32} />
-              </div>
-              <div className="promo-card-content">
-                <div className="promo-card-title">Pay in 3 interest-free payments</div>
-                <div className="promo-card-link">Learn More</div>
-              </div>
-            </div>
+            ) : (
+              <>
+                <div className="promo-card promo-card-outline">
+                  <div className="promo-card-icon">
+                    <Image src="/discount.svg" alt="Return Policy" width={32} height={32} />
+                  </div>
+                  <div className="promo-card-content">
+                    <div className="promo-card-title">Pay in 3 interest-free payments</div>
+                    <div className="promo-card-link">Learn More</div>
+                  </div>
+                </div>
+                <div className="promo-card promo-card-outline">
+                  <div className="promo-card-icon">
+                    <Image src="/discount.svg" alt="Return Policy" width={32} height={32} />
+                  </div>
+                  <div className="promo-card-content">
+                    <div className="promo-card-title">Pay in 3 interest-free payments</div>
+                    <div className="promo-card-link">Learn More</div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Additional Info */}
@@ -365,10 +490,10 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
         </div>
       </div>
 
-      <OtherSellersDrawer 
-        open={drawerOpen} 
-        onClose={() => setDrawerOpen(false)} 
-        productId={product.id} 
+      <OtherSellersDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        productId={product.id}
       />
 
       <style jsx>{`
@@ -828,43 +953,112 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
         }
 
         @media (max-width: 768px) {
+         .product-details {
+         max-width: 382px;
+         padding: 16px 4px;
+         width: 100%;
+        }
           .product-main {
             grid-template-columns: 1fr;
-            gap: 40px;
+            gap: 24px;
           }
-
           .main-image-container {
-            width: 100%;
-            height: 400px;
+            width: 350px;
+            height: 350px;
+            margin: 0 auto;
           }
-
+          .main-image-container .main-image {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            object-fit: cover;
+          }
+          .image-dots {
+          display: flex;
+          gap: 4px;
+        }
+          .product-info {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          padding: 0 8px;
+        }
           .product-name {
             font-size: 24px;
           }
-
           .stats {
             flex-direction: column;
             align-items: flex-start;
             gap: 10px;
           }
-          
           .first-row {
             flex-direction: column;
             align-items: flex-start;
             gap: 10px;
           }
-
           .action-buttons {
             flex-direction: column;
+            width: 100%;
           }
-          
+          .add-to-cart,
+          .add-to-favourite {
+            width: 100%;
+            max-width: 100%;
+          }
           .quantity-share-container {
             flex-direction: column;
             align-items: flex-start;
           }
-          
+          .selection-group {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+          .quantity-share-container .selection-group {
+            flex-direction: row;
+            align-items: center;
+          }
+          .color-swiper-wrapper,
+          .size-swiper-wrapper {
+            width: 100%;
+            max-width: 350px;
+            overflow: hidden;
+          }
+          .color-swiper,
+          .size-swiper {
+            width: 100%;
+            padding: 0;
+          }
+          .color-swiper .swiper-slide,
+          .size-swiper .swiper-slide {
+            width: auto;
+          }
+          .color-swiper .color-btn,
+          .size-swiper .size-btn {
+            flex-shrink: 0;
+          }
           .promo-cards-row {
             flex-direction: column;
+          }
+          .promo-cards-swiper-wrapper {
+            width: 100%;
+            max-width: 350px;
+            overflow: hidden;
+          }
+          .promo-cards-swiper {
+            width: 100%;
+            max-width: 350px;
+            padding: 0;
+          }
+          .promo-cards-swiper .swiper-slide {
+            width: auto;
+          }
+          .promo-cards-swiper .promo-card {
+            flex: none;
+            width: auto;
+            min-width: 280px;
           }
         }
       `}</style>

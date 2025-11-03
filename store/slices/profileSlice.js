@@ -2,6 +2,47 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { auth, addresses, orders } from '../api/endpoints'
 import { decryptText } from '../../utils/crypto'
 
+// Fetch user addresses directly from addresses API (same as checkout)
+export const fetchUserAddresses = createAsyncThunk(
+  'profile/fetchUserAddresses',
+  async (_, { rejectWithValue }) => {
+    try {
+      let token = ''
+      if (typeof document !== 'undefined') {
+        const cookies = document.cookie.split(';').map(c => c.trim())
+        const tokenCookie = cookies.find(c => c.startsWith('accessToken='))
+        if (tokenCookie) {
+          try {
+            const enc = decodeURIComponent(tokenCookie.split('=')[1] || '')
+            token = await decryptText(enc)
+          } catch {}
+        }
+      }
+
+      if (!token) {
+        throw new Error('Authentication required')
+      }
+
+      const response = await fetch(addresses.get, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to fetch addresses')
+      }
+
+      const responseData = await response.json()
+      return responseData.data?.addresses || []
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 // Fetch user profile data with aggregated information
 export const fetchProfile = createAsyncThunk(
   'profile/fetchProfile',
@@ -121,8 +162,10 @@ const initialState = {
   addresses: [],
   orders: [],
   loading: false,
+  loadingAddresses: false,
   ordersLoading: false,
   error: null,
+  addressError: null,
   settingDefault: false,
   defaultAddressError: null,
 }
@@ -136,6 +179,7 @@ const profileSlice = createSlice({
       state.addresses = []
       state.orders = []
       state.error = null
+      state.addressError = null
       state.settingDefault = false
       state.defaultAddressError = null
     },
@@ -154,7 +198,7 @@ const profileSlice = createSlice({
         // Handle the aggregated response structure
         const responseData = action.payload.data || action.payload
         state.user = responseData.profile || null
-        state.addresses = responseData.addresses?.data || []
+        // Don't map addresses from aggregate API - they will be fetched separately via fetchUserAddresses()
         // Don't map orders from aggregate API - they don't have order details
         // Orders will be fetched separately via fetchOrders() when needed
         state.orders = [] 
@@ -164,8 +208,22 @@ const profileSlice = createSlice({
         state.loading = false
         state.error = action.payload
         state.user = null
-        state.addresses = []
         state.orders = []
+      })
+      // Fetch addresses
+      .addCase(fetchUserAddresses.pending, (state) => {
+        state.loadingAddresses = true
+        state.addressError = null
+      })
+      .addCase(fetchUserAddresses.fulfilled, (state, action) => {
+        state.loadingAddresses = false
+        state.addresses = action.payload
+        state.addressError = null
+      })
+      .addCase(fetchUserAddresses.rejected, (state, action) => {
+        state.loadingAddresses = false
+        state.addressError = action.payload
+        state.addresses = []
       })
       // Set default address
       .addCase(setDefaultAddress.pending, (state) => {
@@ -174,7 +232,7 @@ const profileSlice = createSlice({
       })
       .addCase(setDefaultAddress.fulfilled, (state, action) => {
         state.settingDefault = false
-        // Update addresses to mark the selected one as default
+        // Update addresses to mark only the selected one as default
         state.addresses = state.addresses.map(addr => ({
           ...addr,
           isDefault: addr._id === action.payload || addr.id === action.payload

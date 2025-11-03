@@ -441,7 +441,7 @@ export default function Home() {
         </section>
 
         {/* Special Deals Section */}
-        <section className="section">
+        {/* <section className="section">
           <div className="container">
             <SectionHeader
               title="Special Deals For QLIQ+"
@@ -467,7 +467,7 @@ export default function Home() {
               ))}
             </Swiper>
           </div>
-        </section>
+        </section> */}
 
         {/* Top Brands Section */}
         <section className="section">
@@ -512,9 +512,7 @@ export default function Home() {
             <SectionHeader
               title="Featured Offers"
               showNavigation={true}
-              showButton={true}
-              buttonText="See All"
-              onButtonClick={handleSeeAllFeaturedOffers}
+              showButton={false}
               onPrev={handleFeaturedOffersPrev}
               onNext={handleFeaturedOffersNext}
             />
@@ -542,9 +540,7 @@ export default function Home() {
             <SectionHeader
               title="Top Stores"
               showNavigation={true}
-              showButton={true}
-              buttonText={"See All"}
-              onButtonClick={handleSeeAllStores}
+              showButton={false}
               onPrev={handleTopStoresPrev}
               onNext={handleTopStoresNext}
             />

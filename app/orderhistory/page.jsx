@@ -68,7 +68,7 @@ const OrderHistoryPage = () => {
             
             if (mongoUserId) {
               // Call the API using POST method with body parameters
-              const response = await fetch(`http://localhost:8083/api/product-reviews/user/product-reviews`, {
+              const response = await fetch(`https://backendreview.qliq.ae/api/product-reviews/user/product-reviews`, {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${token}`,
@@ -100,7 +100,7 @@ const OrderHistoryPage = () => {
                 console.log('🔍 Trying JWT sub:', currentUserId);
                 
                 // Try the API again with JWT sub as userId
-                const response = await fetch(`http://localhost:8083/api/product-reviews/user/product-reviews`, {
+                const response = await fetch(`https://backendreview.qliq.ae/api/product-reviews/user/product-reviews`, {
                   method: 'POST',
                   headers: {
                     'Authorization': `Bearer ${token}`,

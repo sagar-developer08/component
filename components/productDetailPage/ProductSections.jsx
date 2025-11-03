@@ -1,9 +1,13 @@
 import ProductCard from '@/components/ProductCard'
 import SectionHeader from '@/components/SectionHeader'
 import ProductInformation from '@/components/productDetailPage/ProductInformation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { getProductReviews } from '@/store/slices/reviewSlice'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Navigation as SwiperNavigation } from 'swiper/modules'
+import 'swiper/css'
+import 'swiper/css/navigation'
 
 export default function ProductSections({ relatedProducts, productData }) {
   const [expandedItem, setExpandedItem] = useState(0)
@@ -14,6 +18,9 @@ export default function ProductSections({ relatedProducts, productData }) {
   const [galleryOpen, setGalleryOpen] = useState(false)
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0)
   const [viewAllOpen, setViewAllOpen] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const relatedProductsSwiperRef = useRef(null)
+  const customerAlsoLikedSwiperRef = useRef(null)
   
   // Redux for reviews
   const dispatch = useDispatch()
@@ -25,6 +32,22 @@ export default function ProductSections({ relatedProducts, productData }) {
       dispatch(getProductReviews(productData._id))
     }
   }, [productData?._id, dispatch])
+
+  // Check screen size for mobile detection
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Initial check
+    checkScreenSize();
+
+    // Add event listener
+    window.addEventListener('resize', checkScreenSize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   // Image lightbox handlers
   const openLightbox = (imageUrl, review = null) => {
@@ -290,6 +313,31 @@ export default function ProductSections({ relatedProducts, productData }) {
   const specifications = createSpecifications()
   const attributes = createAttributes()
 
+  // Handlers for related products swiper navigation
+  const handleRelatedProductsPrev = () => {
+    if (relatedProductsSwiperRef.current && relatedProductsSwiperRef.current.swiper) {
+      relatedProductsSwiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleRelatedProductsNext = () => {
+    if (relatedProductsSwiperRef.current && relatedProductsSwiperRef.current.swiper) {
+      relatedProductsSwiperRef.current.swiper.slideNext();
+    }
+  };
+
+  const handleCustomerAlsoLikedPrev = () => {
+    if (customerAlsoLikedSwiperRef.current && customerAlsoLikedSwiperRef.current.swiper) {
+      customerAlsoLikedSwiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleCustomerAlsoLikedNext = () => {
+    if (customerAlsoLikedSwiperRef.current && customerAlsoLikedSwiperRef.current.swiper) {
+      customerAlsoLikedSwiperRef.current.swiper.slideNext();
+    }
+  };
+
   return (
     <div>
       {/* Related Products Section */}
@@ -298,18 +346,31 @@ export default function ProductSections({ relatedProducts, productData }) {
           <SectionHeader
             title="Related Products"
             showNavigation={true}
-            showButton={true}
-            buttonText="Upgrade"
+            onPrev={handleRelatedProductsPrev}
+            onNext={handleRelatedProductsNext}
+            showButton={false}
           />
-          <div className="products-grid">
-            {Array.isArray(relatedList) && relatedList.length > 0 ? relatedList.slice(0, 4).map((product, index) => (
-              <ProductCard key={product.id || `product-${index}`} {...product} />
-            )) : (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-                No related products available
-              </div>
-            )}
-          </div>
+          {Array.isArray(relatedList) && relatedList.length > 0 ? (
+            <Swiper
+              ref={relatedProductsSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView={isMobile ? 1.2 : 'auto'}
+              spaceBetween={isMobile ? 16 : 24}
+              grabCursor={true}
+              freeMode={true}
+              className="bestsellers-swiper"
+            >
+              {relatedList.map((product, index) => (
+                <SwiperSlide key={product.id || `product-${index}`} className="bestseller-slide">
+                  <ProductCard {...product} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+              No related products available
+            </div>
+          )}
         </div>
       </section>
 
@@ -529,18 +590,32 @@ export default function ProductSections({ relatedProducts, productData }) {
           <SectionHeader
             title="Customer Also Liked These Products"
             showNavigation={true}
+            onPrev={handleCustomerAlsoLikedPrev}
+            onNext={handleCustomerAlsoLikedNext}
             showButton={false}
             buttonText="Upgrade"
           />
-          <div className="products-grid">
-            {Array.isArray(relatedList) && relatedList.length > 0 ? relatedList.slice(0, 4).map((product, index) => (
-              <ProductCard key={product.id || `product-${index}`} {...product} />
-            )) : (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
-                No related products available
-              </div>
-            )}
-          </div>
+          {Array.isArray(relatedList) && relatedList.length > 0 ? (
+            <Swiper
+              ref={customerAlsoLikedSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView={isMobile ? 1.2 : 'auto'}
+              spaceBetween={isMobile ? 16 : 24}
+              grabCursor={true}
+              freeMode={true}
+              className="bestsellers-swiper"
+            >
+              {relatedList.map((product, index) => (
+                <SwiperSlide key={product.id || `product-${index}`} className="bestseller-slide">
+                  <ProductCard {...product} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>
+              No related products available
+            </div>
+          )}
         </div>
       </section>
 
@@ -565,6 +640,16 @@ export default function ProductSections({ relatedProducts, productData }) {
           display: flex;
           align-items: center;
           gap: 20px;
+        }
+
+        .bestsellers-swiper {
+          width: 100%;
+          padding-bottom: 10px;
+        }
+
+        .bestseller-slide {
+          width: auto;
+          height: auto;
         }
 
         .manufacturer-full-width {
@@ -733,7 +818,7 @@ export default function ProductSections({ relatedProducts, productData }) {
 
         .manufacturer-image {
           width: 100%;
-          height: 500px;
+          height: 400px;
           overflow: hidden;
           background: #f0f8ff;
           display: flex;
@@ -745,13 +830,14 @@ export default function ProductSections({ relatedProducts, productData }) {
         .manufacturer-img {
           width: 100%;
           height: 100%;
+          max-height: 600px;
           object-fit: cover;
         }
 
         .specifications-container {
           max-width: 1392px;
-          padding-left: 0;
-          padding-right: 0;
+          padding-left: 0px;
+          padding-right: 0px;
         }
         .specifications-wrapper {
           display: flex;
@@ -789,6 +875,42 @@ export default function ProductSections({ relatedProducts, productData }) {
         .spec-table td {
           color: #222;
         }
+        @media (max-width: 768px) {
+          .spec-table {
+            width: 100%;
+            max-width: 100%;
+          }
+          .spec-table table {
+            width: 100%;
+            max-width: 100%;
+          }
+          .spec-table tr {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            flex-wrap: nowrap;
+          }
+          .spec-table th {
+            text-align: left;
+            align-self: flex-start;
+            flex: 0 0 auto;
+            min-width: 120px;
+            padding: 12px 8px 12px 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+          }
+          .spec-table td {
+            text-align: right;
+            align-self: flex-end;
+            flex: 1;
+            min-width: 0;
+            padding: 12px 0 12px 8px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow: visible;
+          }
+        }
         /* Right table: normal coloring */
         .spec-table-right tr:nth-child(even) td,
         .spec-table-right tr:nth-child(even) th {
@@ -824,7 +946,7 @@ export default function ProductSections({ relatedProducts, productData }) {
           }
 
           .section {
-            margin-bottom: 60px;
+            margin-bottom: 0px;
           }
 
           .accordion-container {
@@ -860,12 +982,13 @@ export default function ProductSections({ relatedProducts, productData }) {
           }
 
           .description-content {
-            padding: 24px;
+            padding: 16px 0px;
           }
 
           .description-content p {
-            font-size: 14px;
-            margin-bottom: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 0px;
           }
 
           .carousel-arrow {
@@ -877,10 +1000,22 @@ export default function ProductSections({ relatedProducts, productData }) {
           .carousel-arrow.left {
             left: 10px;
           }
+          .specifications-container {
+            padding-left: 16px;
+            padding-right: 16px;
+            width: 100%;
+            max-width: 100%;
+          }
+          .specifications-wrapper {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+          }
 
           .carousel-arrow.right {
             right: 10px;
           }
+        }
 
           .manufacturer-image {
             height: 300px;
@@ -892,21 +1027,24 @@ export default function ProductSections({ relatedProducts, productData }) {
             font-size: 24px;
             margin-bottom: 24px;
           }
-
+          .specifications-wrapper {
+          width: 100%;
+          padding-left: 0px;
+          padding-right: 0px;
+        }
           .accordion-header {
             padding: 16px 20px;
           }
-
           .accordion-content {
             padding: 16px 20px;
           }
 
           .description-content {
-            padding: 20px;
+            padding: 16px 0px;
           }
 
           .manufacturer-image {
-            height: 200px;
+            height: 180px;
           }
 
           .carousel-arrow {
@@ -1204,28 +1342,39 @@ export default function ProductSections({ relatedProducts, productData }) {
             margin-bottom: 18px;
           }
           .reviews-ratings-container {
-            padding: 0 4px;
+            padding: 0 16px;
           }
           .customer-photo {
-            width: 54px;
-            height: 54px;
+            width: 60px;
+            height: 60px;
           }
           .review-photo {
-            width: 36px;
-            height: 36px;
+            width: 48px;
+            height: 48px;
           }
         }
         @media (max-width: 480px) {
           .reviews-title {
             font-size: 1.1rem;
           }
+          .reviews-ratings-container {
+            padding: 0 16px;
+          }
           .customer-photo {
-            width: 38px;
-            height: 38px;
+            width: 100px;
+            height: 100px;
           }
           .review-photo {
-            width: 28px;
-            height: 28px;
+            width: 80px;
+            height: 80px;
+          }
+            .review-left {
+            max-width: 350px;
+            width: 100%;
+          }
+          .reviews-right {
+            min-width: 350px;
+            width: 100%;
           }
         }
       `}</style>

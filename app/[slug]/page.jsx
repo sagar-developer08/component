@@ -22,7 +22,7 @@ const transformProductData = (apiProduct) => {
     id: apiProduct._id,
     slug: apiProduct.slug,
     title: apiProduct.title,
-    price: apiProduct.discount_price || apiProduct.price,
+    price: `AED ${apiProduct.discount_price || apiProduct.price || '0'}`,
     originalPrice: apiProduct.price,
     rating: apiProduct.average_rating || 4.5,
     deliveryTime: "30 Min",
@@ -58,6 +58,8 @@ export default function BrandPage() {
   
   // Ref to track if fetch is in progress
   const isFetchingRef = useRef(false)
+  // Ref for the scrollable products container
+  const productsScrollContainerRef = useRef(null)
 
   // Fetch products when component mounts
   useEffect(() => {
@@ -209,6 +211,9 @@ export default function BrandPage() {
       
       try {
         setLoadingProducts(true)
+        // Clear products immediately when starting to fetch new page
+        // This ensures old products don't show while new ones are loading
+        setBrandProducts([])
 
         // Check if this is a store (has storeId parameter), category (has categoryLevel), or a brand
         if (storeId) {
@@ -521,7 +526,28 @@ export default function BrandPage() {
       return
     }
     setCurrentPage(page)
+    // Scroll window to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    // Scroll the products container to top as well
+    if (productsScrollContainerRef.current) {
+      productsScrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
+
+  // Scroll to top when page changes and after products load
+  useEffect(() => {
+    if (!loadingProducts && brandProducts.length > 0) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        // Scroll window to top
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        // Scroll the products container to top
+        if (productsScrollContainerRef.current) {
+          productsScrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+      }, 100)
+    }
+  }, [currentPage, loadingProducts, brandProducts.length])
 
   const handlePreviousPage = () => handlePageChangeLocal(currentPage - 1)
   const handleNextPage = () => handlePageChangeLocal(currentPage + 1)
@@ -590,7 +616,7 @@ export default function BrandPage() {
                   <p>Loading products...</p>
                 </div>
               ) : transformedProducts.length > 0 ? (
-                <div className="products-scroll-container">
+                <div className="products-scroll-container" ref={productsScrollContainerRef}>
                   <div className="grid-3">
                     {transformedProducts.map((product, index) => (
                       <div key={product.id || index} className="grid-item">

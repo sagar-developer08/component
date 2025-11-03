@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 export default function FilterDrawer({ open, onClose, inline = false, sticky = false, stickyTop = 112, facets = [], selected = {}, onChange, onClear }) {
   // Initialize with all facets expanded by default
@@ -10,116 +10,8 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
   const [localPriceRange, setLocalPriceRange] = useState({});
   const [priceDebounceTimer, setPriceDebounceTimer] = useState(null);
   const [activeSlider, setActiveSlider] = useState(null);
+  const activeSliderDataRef = useRef(null);
   
-  // Handle click on track to determine which slider to activate
-  const handleTrackClick = (facetKey, event, facetMin, facetMax, currentMin, currentMax) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const trackWidth = rect.width;
-    const clickPercent = clickX / trackWidth;
-    const clickValue = facetMin + (clickPercent * (facetMax - facetMin));
-    
-    // Determine which slider thumb is closer
-    const minDistance = Math.abs(clickValue - currentMin);
-    const maxDistance = Math.abs(clickValue - currentMax);
-    
-    if (minDistance < maxDistance) {
-      // Closer to min thumb, activate min slider
-      setActiveSlider('min');
-      const newMin = Math.min(Math.max(clickValue, facetMin), currentMax);
-      handleRangeChange(facetKey, 'min', Math.round(newMin).toString(), facetMin, facetMax);
-    } else {
-      // Closer to max thumb, activate max slider
-      setActiveSlider('max');
-      const newMax = Math.max(Math.min(clickValue, facetMax), currentMin);
-      handleRangeChange(facetKey, 'max', Math.round(newMax).toString(), facetMin, facetMax);
-    }
-  };
-  
-  // Handle slider input to ensure proper activation
-  const handleSliderInput = (facetKey, field, value, facetMin, facetMax) => {
-    if (field === 'min') {
-      setActiveSlider('min');
-    } else {
-      setActiveSlider('max');
-    }
-    handleRangeChange(facetKey, field, value, facetMin, facetMax);
-  };
-  
-  // Handle mouse move to determine which slider should be active based on position
-  const handleSliderMouseMove = (event, facetKey, facetMin, facetMax, currentMin, currentMax) => {
-    if (activeSlider) return; // Don't change if already dragging
-    
-    const rect = event.currentTarget.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const trackWidth = rect.width;
-    const mousePercent = mouseX / trackWidth;
-    const mouseValue = facetMin + (mousePercent * (facetMax - facetMin));
-    
-    // Determine which thumb is closer and activate it
-    const minDistance = Math.abs(mouseValue - currentMin);
-    const maxDistance = Math.abs(mouseValue - currentMax);
-    
-    if (minDistance <= maxDistance) {
-      setActiveSlider('min');
-    } else {
-      setActiveSlider('max');
-    }
-  };
-
-  useEffect(() => {
-    if (inline) return; // Do not alter body scroll in inline mode
-    if (open) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = '';
-    return () => { document.body.style.overflow = ''; };
-  }, [open, inline]);
-
-  // Global mouse up handler to reset active slider
-  useEffect(() => {
-    const handleGlobalMouseUp = () => {
-      setActiveSlider(null);
-    };
-    if (activeSlider) {
-      document.addEventListener('mouseup', handleGlobalMouseUp);
-      document.addEventListener('touchend', handleGlobalMouseUp);
-      return () => {
-        document.removeEventListener('mouseup', handleGlobalMouseUp);
-        document.removeEventListener('touchend', handleGlobalMouseUp);
-      };
-    }
-  }, [activeSlider]);
-
-  // Update expanded facets when facets change (new filter data loaded)
-  useEffect(() => {
-    if (facets.length > 0) {
-      setExpandedFacets(new Set(facets.map(facet => facet.key)));
-    }
-  }, [facets]);
-
-  const toggleFacetExpansion = (facetKey) => {
-    setExpandedFacets(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(facetKey)) {
-        newSet.delete(facetKey);
-      } else {
-        newSet.add(facetKey);
-      }
-      return newSet;
-    });
-  };
-
-  if (!open) return null;
-
-  const handleCheckboxToggle = (facetKey, value) => {
-    if (!onChange) return
-    const current = selected[facetKey] instanceof Set
-      ? new Set(Array.from(selected[facetKey]))
-      : new Set(Array.isArray(selected[facetKey]) ? selected[facetKey] : [])
-    if (current.has(value)) current.delete(value)
-    else current.add(value)
-    onChange(facetKey, current)
-  }
-
   // Debounced price range handler
   const debouncedPriceChange = useCallback((facetKey, newRange) => {
     if (priceDebounceTimer) {
@@ -135,7 +27,7 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
     setPriceDebounceTimer(timer);
   }, [onChange, priceDebounceTimer]);
 
-  const handleRangeChange = (facetKey, field, value, facetMin, facetMax) => {
+  const handleRangeChange = useCallback((facetKey, field, value, facetMin, facetMax) => {
     if (!onChange) return
     
     // Get current values
@@ -177,6 +69,133 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
     
     // Debounce the actual API call
     debouncedPriceChange(facetKey, newRange);
+  }, [onChange, localPriceRange, selected, debouncedPriceChange]);
+  
+  // Handle click on track to determine which slider to activate
+  const handleTrackClick = (facetKey, event, facetMin, facetMax, currentMin, currentMax) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const trackWidth = rect.width;
+    const clickPercent = clickX / trackWidth;
+    const clickValue = facetMin + (clickPercent * (facetMax - facetMin));
+    
+    // Determine which slider thumb is closer
+    const minDistance = Math.abs(clickValue - currentMin);
+    const maxDistance = Math.abs(clickValue - currentMax);
+    
+    if (minDistance < maxDistance) {
+      // Closer to min thumb, activate min slider
+      setActiveSlider('min');
+      const newMin = Math.min(Math.max(clickValue, facetMin), currentMax);
+      handleRangeChange(facetKey, 'min', Math.round(newMin).toString(), facetMin, facetMax);
+    } else {
+      // Closer to max thumb, activate max slider
+      setActiveSlider('max');
+      const newMax = Math.max(Math.min(clickValue, facetMax), currentMin);
+      handleRangeChange(facetKey, 'max', Math.round(newMax).toString(), facetMin, facetMax);
+    }
+  };
+  
+  // Handle slider input to ensure proper activation
+  const handleSliderInput = (facetKey, field, value, facetMin, facetMax) => {
+    if (field === 'min') {
+      setActiveSlider('min');
+    } else {
+      setActiveSlider('max');
+    }
+    handleRangeChange(facetKey, field, value, facetMin, facetMax);
+  };
+
+  // Global mouse move handler for dragging
+  useEffect(() => {
+    const handleGlobalMouseMove = (event) => {
+      if (!activeSlider || !activeSliderDataRef.current) return;
+      
+      const { wrapper, facetKey, facetMin, facetMax } = activeSliderDataRef.current;
+      if (!wrapper) return;
+      
+      // Get current values dynamically from state
+      const currentRange = localPriceRange[facetKey] || selected[facetKey] || {};
+      const currentMin = currentRange.min ?? facetMin;
+      const currentMax = currentRange.max ?? facetMax;
+      
+      const rect = wrapper.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const trackWidth = rect.width;
+      const mousePercent = Math.max(0, Math.min(1, mouseX / trackWidth));
+      const mouseValue = facetMin + (mousePercent * (facetMax - facetMin));
+      
+      if (activeSlider === 'min') {
+        const newValue = Math.min(Math.max(Math.round(mouseValue), facetMin), currentMax);
+        handleRangeChange(facetKey, 'min', newValue.toString(), facetMin, facetMax);
+      } else if (activeSlider === 'max') {
+        const newValue = Math.max(Math.min(Math.round(mouseValue), facetMax), currentMin);
+        handleRangeChange(facetKey, 'max', newValue.toString(), facetMin, facetMax);
+      }
+    };
+
+    if (activeSlider) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('touchmove', handleGlobalMouseMove);
+      return () => {
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+        document.removeEventListener('touchmove', handleGlobalMouseMove);
+      };
+    }
+  }, [activeSlider, localPriceRange, selected, handleRangeChange]);
+
+  useEffect(() => {
+    if (inline) return; // Do not alter body scroll in inline mode
+    if (open) document.body.style.overflow = 'hidden';
+    else document.body.style.overflow = '';
+    return () => { document.body.style.overflow = ''; };
+  }, [open, inline]);
+
+  // Global mouse up handler to reset active slider
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      setActiveSlider(null);
+      activeSliderDataRef.current = null;
+    };
+    if (activeSlider) {
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      document.addEventListener('touchend', handleGlobalMouseUp);
+      return () => {
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+        document.removeEventListener('touchend', handleGlobalMouseUp);
+      };
+    }
+  }, [activeSlider]);
+
+  // Update expanded facets when facets change (new filter data loaded)
+  useEffect(() => {
+    if (facets.length > 0) {
+      setExpandedFacets(new Set(facets.map(facet => facet.key)));
+    }
+  }, [facets]);
+
+  const toggleFacetExpansion = (facetKey) => {
+    setExpandedFacets(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(facetKey)) {
+        newSet.delete(facetKey);
+      } else {
+        newSet.add(facetKey);
+      }
+      return newSet;
+    });
+  };
+
+  if (!open) return null;
+
+  const handleCheckboxToggle = (facetKey, value) => {
+    if (!onChange) return
+    const current = selected[facetKey] instanceof Set
+      ? new Set(Array.from(selected[facetKey]))
+      : new Set(Array.isArray(selected[facetKey]) ? selected[facetKey] : [])
+    if (current.has(value)) current.delete(value)
+    else current.add(value)
+    onChange(facetKey, current)
   }
 
   // Sync local price range with selected filters when they change externally
@@ -341,11 +360,40 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                             onInput={(e) => handleSliderInput(facet.key, 'min', e.target.value, facetMin, facetMax)}
                             onMouseDown={(e) => {
                               setActiveSlider('min');
-                              handleSliderMouseMove(e, facet.key, facetMin, facetMax, currentMin, currentMax);
+                              const wrapper = e.currentTarget.closest('.range-slider-wrapper');
+                              if (wrapper) {
+                                activeSliderDataRef.current = {
+                                  wrapper,
+                                  facetKey: facet.key,
+                                  facetMin,
+                                  facetMax,
+                                  currentMin,
+                                  currentMax
+                                };
+                              }
                             }}
-                            onMouseUp={() => setActiveSlider(null)}
-                            onTouchStart={() => setActiveSlider('min')}
-                            onTouchEnd={() => setActiveSlider(null)}
+                            onMouseUp={() => {
+                              setActiveSlider(null);
+                              activeSliderDataRef.current = null;
+                            }}
+                            onTouchStart={(e) => {
+                              setActiveSlider('min');
+                              const wrapper = e.currentTarget.closest('.range-slider-wrapper');
+                              if (wrapper) {
+                                activeSliderDataRef.current = {
+                                  wrapper,
+                                  facetKey: facet.key,
+                                  facetMin,
+                                  facetMax,
+                                  currentMin,
+                                  currentMax
+                                };
+                              }
+                            }}
+                            onTouchEnd={() => {
+                              setActiveSlider(null);
+                              activeSliderDataRef.current = null;
+                            }}
                             onClick={(e) => e.stopPropagation()}
                             style={{ pointerEvents: 'auto' }}
                             className={`range-slider min-slider ${activeSlider === 'min' ? 'active' : ''}`}
@@ -360,11 +408,40 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                             onInput={(e) => handleSliderInput(facet.key, 'max', e.target.value, facetMin, facetMax)}
                             onMouseDown={(e) => {
                               setActiveSlider('max');
-                              handleSliderMouseMove(e, facet.key, facetMin, facetMax, currentMin, currentMax);
+                              const wrapper = e.currentTarget.closest('.range-slider-wrapper');
+                              if (wrapper) {
+                                activeSliderDataRef.current = {
+                                  wrapper,
+                                  facetKey: facet.key,
+                                  facetMin,
+                                  facetMax,
+                                  currentMin,
+                                  currentMax
+                                };
+                              }
                             }}
-                            onMouseUp={() => setActiveSlider(null)}
-                            onTouchStart={() => setActiveSlider('max')}
-                            onTouchEnd={() => setActiveSlider(null)}
+                            onMouseUp={() => {
+                              setActiveSlider(null);
+                              activeSliderDataRef.current = null;
+                            }}
+                            onTouchStart={(e) => {
+                              setActiveSlider('max');
+                              const wrapper = e.currentTarget.closest('.range-slider-wrapper');
+                              if (wrapper) {
+                                activeSliderDataRef.current = {
+                                  wrapper,
+                                  facetKey: facet.key,
+                                  facetMin,
+                                  facetMax,
+                                  currentMin,
+                                  currentMax
+                                };
+                              }
+                            }}
+                            onTouchEnd={() => {
+                              setActiveSlider(null);
+                              activeSliderDataRef.current = null;
+                            }}
                             onClick={(e) => e.stopPropagation()}
                             style={{ pointerEvents: 'auto' }}
                             className={`range-slider max-slider ${activeSlider === 'max' ? 'active' : ''}`}

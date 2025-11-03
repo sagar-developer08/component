@@ -1,25 +1,52 @@
 'use client'
-import { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { setDefaultAddress } from '../../../store/slices/profileSlice'
-import { useToast } from '../../../contexts/ToastContext'
+import { useEffect, useState, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCheck, faHome, faBriefcase, faMapMarkerAlt } from '@fortawesome/free-solid-svg-icons'
 import styles from './addresses.module.css'
 
 export default function Addresses({ addresses }) {
-  const dispatch = useDispatch()
-  const { show } = useToast()
-  const { settingDefault, defaultAddressError } = useSelector(state => state.profile)
-  const [selectedAddress, setSelectedAddress] = useState(null)
+  // Store the selected address ID in state so it persists
+  const [selectedAddressId, setSelectedAddressId] = useState(null)
+  const initialized = useRef(false)
 
-  // Set initial selected address to default address
+  // Set initial selected address to default address only once when addresses are first loaded
   useEffect(() => {
-    if (addresses.length > 0 && !selectedAddress) {
-      const defaultAddr = addresses.find(addr => addr.isDefault)
-      setSelectedAddress(defaultAddr || addresses[0])
+    if (addresses.length > 0) {
+      if (!initialized.current) {
+        // First load: set to default address or first address
+        const defaultAddr = addresses.find(addr => addr.isDefault)
+        const initialId = defaultAddr ? (defaultAddr._id || defaultAddr.id) : (addresses[0]?._id || addresses[0]?.id)
+        if (initialId) {
+          setSelectedAddressId(initialId)
+        }
+        initialized.current = true
+      } else {
+        // After initialization: maintain selection, but verify it still exists
+        // Use a callback to access current selectedAddressId without adding it to dependencies
+        setSelectedAddressId(currentId => {
+          if (currentId) {
+            const stillExists = addresses.some(addr => {
+              const addrId = addr._id || addr.id
+              return addrId === currentId
+            })
+            // If selected address no longer exists, reset to default or first
+            if (!stillExists) {
+              const defaultAddr = addresses.find(addr => addr.isDefault)
+              const newId = defaultAddr ? (defaultAddr._id || defaultAddr.id) : (addresses[0]?._id || addresses[0]?.id)
+              return newId || currentId
+            }
+          }
+          return currentId
+        })
+      }
     }
-  }, [addresses, selectedAddress])
+  }, [addresses])
+
+  // Sync with addresses array - find the address object based on stored ID
+  const selectedAddress = addresses.find(addr => {
+    const addrId = addr._id || addr.id
+    return addrId === selectedAddressId
+  }) || null
 
   const formatAddress = (address) => {
     const parts = [
@@ -35,7 +62,11 @@ export default function Addresses({ addresses }) {
   }
 
   const handleSelectAddress = (address) => {
-    setSelectedAddress(address)
+    const addressId = address._id || address.id
+    if (!addressId) return
+
+    // Just update UI state - store the ID in state (no API call)
+    setSelectedAddressId(addressId)
   }
 
   // Loading and error states are now handled in the parent ProfilePage component
@@ -53,12 +84,17 @@ export default function Addresses({ addresses }) {
   return (
     <div className={styles.addressesContainer}>
       <div className={styles.addressesGrid}>
-        {addresses.map((address) => (
-          <div 
-            key={address._id} 
-            className={`${styles.addressCard} ${selectedAddress?._id === address._id ? styles.selectedAddress : ''}`}
+        {addresses.map((address) => {
+          const addressId = address._id || address.id
+          // Icon shows only on the selected address - check if this address ID matches the stored selected ID
+          const isSelected = selectedAddressId === addressId
+          
+          return (
+          <button
+            key={addressId} 
+            className={`${styles.addressCard} ${isSelected ? styles.selectedAddress : ''}`}
             onClick={() => handleSelectAddress(address)}
-            style={{ cursor: 'pointer' }}
+            type="button"
           >
             <div className={styles.addressType}>
               <div className={styles.addressTypeInfo}>
@@ -77,7 +113,7 @@ export default function Addresses({ addresses }) {
                   <span className={styles.defaultBadge}>Default</span>
                 )} */}
               </div>
-              {selectedAddress?._id === address._id && (
+              {isSelected && (
                 <div className={styles.selectedIndicator}>
                   <FontAwesomeIcon icon={faCheck} className={styles.checkIcon} />
                 </div>
@@ -100,8 +136,8 @@ export default function Addresses({ addresses }) {
               <div className={styles.addressContact}>{address.email}</div>
               <div className={styles.addressContact}>Contact: {address.fullName}</div>
             </div>
-          </div>
-        ))}
+          </button>
+        )})}
       </div>
     </div>
   )
