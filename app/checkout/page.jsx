@@ -206,13 +206,26 @@ export default function CheckoutPage() {
 
   // Apply coupon discount to subtotal if coupon is applied
   let couponDiscountAmount = 0
-  let subtotal = originalSubtotal
+  let subtotalAfterCoupon = originalSubtotal
   if (appliedCoupon && appliedCoupon.customerDiscountPercentage) {
     const discountPercentage = appliedCoupon.customerDiscountPercentage
     // Calculate discount amount based on percentage
     couponDiscountAmount = (originalSubtotal * discountPercentage) / 100
     // Apply discount to subtotal
-    subtotal = originalSubtotal - couponDiscountAmount
+    subtotalAfterCoupon = originalSubtotal - couponDiscountAmount
+  }
+
+  // Apply Qoyns discount to subtotal (after coupon discount)
+  let qoynsDiscountAmount = 0
+  let subtotalAfterDiscounts = subtotalAfterCoupon
+  if (appliedDiscount && appliedDiscount.discountAmount) {
+    qoynsDiscountAmount = appliedDiscount.discountAmount
+    // Apply Qoyns discount to subtotal
+    subtotalAfterDiscounts = subtotalAfterCoupon - qoynsDiscountAmount
+    // Ensure subtotal doesn't go negative
+    if (subtotalAfterDiscounts < 0) {
+      subtotalAfterDiscounts = 0
+    }
   }
 
   // VAT Calculation - use product VAT percentage or default to 5%
@@ -226,18 +239,15 @@ export default function CheckoutPage() {
   }
   
   const vatRate = getVatRate();
-  const vatAmount = subtotal * vatRate;
-  const finalTotal = subtotal + vatAmount;
+  // Calculate VAT on subtotal after both coupon and Qoyns discounts
+  const vatAmount = subtotalAfterDiscounts * vatRate;
+  const finalTotal = subtotalAfterDiscounts + vatAmount;
   
-  // Calculate the actual total to be charged (after discounts)
-  const getActualTotal = () => {
-    if (appliedDiscount) {
-      return appliedDiscount.totalAfterDiscount;
-    }
-    return finalTotal;
-  };
+  // Use the calculated final total (subtotal after discounts + VAT)
+  const actualTotal = finalTotal;
   
-  const actualTotal = getActualTotal();
+  // For display purposes, use subtotalAfterDiscounts as the subtotal
+  const subtotal = subtotalAfterDiscounts;
 
   // Combined error state
   const error = addressError || orderError || paymentIntentError
@@ -293,14 +303,15 @@ export default function CheckoutPage() {
   }, [dispatch, cartItems.length])
 
   // Auto-validate Qoyn redemption when cart total changes
+  // Use subtotal after coupon discount since Qoyns are applied to subtotal
   useEffect(() => {
-    if (finalTotal > 0 && cartItems.length > 0) {
-      // Auto-validate with cart total amount
+    if (subtotalAfterCoupon > 0 && cartItems.length > 0) {
+      // Auto-validate with subtotal after coupon discount
       dispatch(validateQoynRedemption({
-        totalAmount: finalTotal
+        totalAmount: subtotalAfterCoupon
       }))
     }
-  }, [finalTotal, cartItems.length, dispatch])
+  }, [subtotalAfterCoupon, cartItems.length, dispatch])
 
   // Auto-populate address form with user data when form is shown
   useEffect(() => {
@@ -417,7 +428,7 @@ export default function CheckoutPage() {
       subtotal: subtotal,
       vat: vatAmount,
       shipping: 0,
-      discount: appliedDiscount ? appliedDiscount.discountAmount : couponDiscountAmount,
+      discount: qoynsDiscountAmount + couponDiscountAmount,
       couponCode: appliedCoupon ? appliedCoupon.discountCode : null
     }
 
@@ -446,7 +457,7 @@ export default function CheckoutPage() {
       subtotal: subtotal,
       vat: vatAmount,
       shipping: 0,
-      discount: appliedDiscount ? appliedDiscount.discountAmount : couponDiscountAmount,
+      discount: qoynsDiscountAmount + couponDiscountAmount,
       couponCode: appliedCoupon ? appliedCoupon.discountCode : null
     }
 
@@ -526,6 +537,16 @@ export default function CheckoutPage() {
       const { mongoUserId, cognitoUserId } = await getUserIds()
       console.log('👤 User IDs:', { mongoUserId, cognitoUserId })
 
+      // Determine discount type - can be 'qoyn', 'coupon', 'both', or null
+      let finalDiscountType = null
+      if (appliedDiscount && appliedCoupon) {
+        finalDiscountType = 'both'
+      } else if (appliedDiscount) {
+        finalDiscountType = 'qoyn'
+      } else if (appliedCoupon) {
+        finalDiscountType = 'coupon'
+      }
+
       const body = {
         items: cartItems.map(item => {
           return {
@@ -539,9 +560,15 @@ export default function CheckoutPage() {
         total: actualTotal,
         subtotal: subtotal,
         vat: vatAmount,
-        discount: appliedDiscount ? appliedDiscount.discountAmount : couponDiscountAmount,
-        discountType: appliedDiscount ? appliedDiscount.type : (appliedCoupon ? 'coupon' : null),
+        discount: qoynsDiscountAmount + couponDiscountAmount,
+        discountType: finalDiscountType,
+        // Qoyns discount information
+        qoynsUsed: appliedDiscount && appliedDiscount.type === 'qoyn' ? appliedDiscount.qoynAmount : undefined,
+        qoynsDiscountAmount: qoynsDiscountAmount > 0 ? qoynsDiscountAmount : undefined,
+        // Coupon discount information
         couponCode: appliedCoupon ? appliedCoupon.discountCode : null,
+        couponDiscountAmount: appliedCoupon ? couponDiscountAmount : undefined,
+        couponDiscountPercentage: appliedCoupon ? appliedCoupon.customerDiscountPercentage : undefined,
         currency: 'usd',
         userId: mongoUserId, // MongoDB user ID
         cognitoUserId: cognitoUserId, // Cognito user ID
@@ -612,8 +639,9 @@ export default function CheckoutPage() {
     }
 
     try {
+      // Use subtotal after coupon discount since Qoyns are applied to subtotal
       const result = await dispatch(validateQoynRedemption({
-        totalAmount: actualTotal
+        totalAmount: subtotalAfterCoupon
       }))
       
       if (result.payload && result.payload.data && result.payload.data.order) {
@@ -1345,7 +1373,7 @@ export default function CheckoutPage() {
                   {cartItems.map((item, index) => (
                     <div key={index} className={styles.productItem}>
                       <Image
-                        src="/iphone.jpg"
+                        src={item.image || '/iphone.jpg'}
                         alt={item.name || "Product"}
                         width={60}
                         height={60}
@@ -1477,27 +1505,27 @@ export default function CheckoutPage() {
                       <span>- AED {couponDiscountAmount.toFixed(2)}</span>
                     </div>
                   )}
+                  {appliedDiscount && qoynsDiscountAmount > 0 && (
+                    <div className={styles.totalRowDiscount}>
+                      <span>Qoyns Discount</span>
+                      <span>- AED {qoynsDiscountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className={styles.totalRow}>
                     <span>Subtotal after discount</span>
                     <span>AED {subtotal.toFixed(2)}</span>
                   </div>
                   <div className={styles.totalRow}>
-                    <span>VAT (5%)</span>
+                    <span>VAT ({(vatRate * 100).toFixed(0)}%)</span>
                     <span>AED {vatAmount.toFixed(2)}</span>
                   </div>
                   <div className={styles.totalRow}>
                     <span>Shipping</span>
                     <span>FREE</span>
                   </div>
-                  {appliedDiscount && (
-                    <div className={styles.totalRowDiscount}>
-                      <span>Discount</span>
-                      <span>- AED {appliedDiscount.discountAmount.toFixed(2)}</span>
-                    </div>
-                  )}
                   <div className={styles.totalRowFinal}>
                     <span>Order Total</span>
-                    <span>AED {appliedDiscount ? appliedDiscount.totalAfterDiscount.toFixed(2) : finalTotal.toFixed(2)}</span>
+                    <span>AED {finalTotal.toFixed(2)}</span>
                   </div>
                 </div>
               )}
