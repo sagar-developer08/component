@@ -178,6 +178,29 @@ export const fetchSearchSuggestions = createAsyncThunk(
   }
 )
 
+// Async thunk for fetching products by category
+export const fetchProductsByCategory = createAsyncThunk(
+  'products/fetchProductsByCategory',
+  async (categoryId, { rejectWithValue }) => {
+    try {
+      if (!categoryId) {
+        throw new Error('Category ID is required')
+      }
+      
+      const response = await fetch(catalog.productsByCategory(categoryId))
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      return { ...data, categoryId }
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 
 const productsSlice = createSlice({
   name: 'products',
@@ -196,6 +219,9 @@ const productsSlice = createSlice({
     searchSuggestions: [],
     suggestionsLoading: false,
     suggestionsError: null,
+    categoryProducts: [],
+    categoryProductsLoading: false,
+    categoryProductsError: null,
     pagination: {},
     loading: false,
     searchLoading: false,
@@ -324,6 +350,25 @@ const productsSlice = createSlice({
         state.suggestionsLoading = false
         state.suggestionsError = action.payload
         state.searchSuggestions = []
+      })
+      // Fetch products by category cases
+      .addCase(fetchProductsByCategory.pending, (state) => {
+        state.categoryProductsLoading = true
+        state.categoryProductsError = null
+      })
+      .addCase(fetchProductsByCategory.fulfilled, (state, action) => {
+        state.categoryProductsLoading = false
+        if (action.payload.success && action.payload.data) {
+          state.categoryProducts = Array.isArray(action.payload.data) ? action.payload.data : []
+        } else {
+          state.categoryProducts = []
+        }
+        state.categoryProductsError = null
+      })
+      .addCase(fetchProductsByCategory.rejected, (state, action) => {
+        state.categoryProductsLoading = false
+        state.categoryProductsError = action.payload
+        state.categoryProducts = []
       })
   }
 })
