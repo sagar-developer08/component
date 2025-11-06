@@ -8,10 +8,15 @@ import StoreCard from '@/components/StoreCard'
 import SectionHeader from '@/components/SectionHeader'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchGeneralStores } from '@/store/slices/storesSlice'
+import { fetchProductsByCategory } from '@/store/slices/productsSlice'
 import { useRouter } from 'next/navigation'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Navigation as SwiperNavigation } from 'swiper/modules'
+import 'swiper/css'
+import 'swiper/css/navigation'
 
 const productData = [
   {
@@ -80,33 +85,54 @@ const transformProductData = (apiProduct) => {
 
 export default function Home() {
   const [filterOpen, setFilterOpen] = useState(false)
-  const [products, setProducts] = useState([])
-  const [productsLoading, setProductsLoading] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const fastestDeliverySwiperRef = useRef(null)
   const dispatch = useDispatch()
   const { generalStores, loading, error } = useSelector(state => state.stores)
+  const { categoryProducts = [], categoryProductsLoading } = useSelector(state => state.products)
   const router = useRouter()
+
+  // Check screen size for mobile detection
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    // Initial check
+    checkScreenSize()
+
+    // Add event listener
+    window.addEventListener('resize', checkScreenSize)
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
 
   useEffect(() => {
     dispatch(fetchGeneralStores())
-    
-    // Fetch products by category
-    const fetchProductsByCategory = async () => {
-      setProductsLoading(true)
-      try {
-        const response = await fetch(`http://localhost:8082/api/products/category?categoryId=${StoreCategoryId}`)
-        const data = await response.json()
-        if (data.success && data.data) {
-          setProducts(data.data)
-        }
-      } catch (error) {
-        console.error('Error fetching products:', error)
-      } finally {
-        setProductsLoading(false)
-      }
-    }
-    
-    fetchProductsByCategory()
+    dispatch(fetchProductsByCategory(StoreCategoryId))
   }, [dispatch])
+
+  // Transform category products
+  const transformedCategoryProducts = useMemo(() => {
+    if (!Array.isArray(categoryProducts) || categoryProducts.length === 0) {
+      return []
+    }
+    return categoryProducts.map(transformProductData)
+  }, [categoryProducts])
+
+  // Navigation handlers
+  const handleFastestDeliveryPrev = () => {
+    if (fastestDeliverySwiperRef.current && fastestDeliverySwiperRef.current.swiper) {
+      fastestDeliverySwiperRef.current.swiper.slidePrev()
+    }
+  }
+
+  const handleFastestDeliveryNext = () => {
+    if (fastestDeliverySwiperRef.current && fastestDeliverySwiperRef.current.swiper) {
+      fastestDeliverySwiperRef.current.swiper.slideNext()
+    }
+  }
   return (
     <main className="home-page">
       <Navigation />
@@ -117,22 +143,41 @@ export default function Home() {
       {/* Fastest Delivery */}
       <section className="section">
         <div className="container">
-          <SectionHeader title="Fastest Delivery" showNavigation={true} />
-          <div className="products-grid">
-            {productsLoading ? (
-              productData.map((product, index) => (
+          <SectionHeader 
+            title="Fastest Delivery" 
+            showNavigation={true}
+            onPrev={handleFastestDeliveryPrev}
+            onNext={handleFastestDeliveryNext}
+          />
+          {categoryProductsLoading ? (
+            <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {productData.map((product, index) => (
                 <ProductCard key={index} {...product} />
-              ))
-            ) : products.length > 0 ? (
-              products.map((product, index) => (
-                <ProductCard key={product._id || index} {...transformProductData(product)} />
-              ))
-            ) : (
-              productData.map((product, index) => (
+              ))}
+            </div>
+          ) : transformedCategoryProducts.length > 0 ? (
+            <Swiper
+              ref={fastestDeliverySwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView={isMobile ? 1.2 : 'auto'}
+              spaceBetween={isMobile ? 16 : 24}
+              grabCursor={true}
+              freeMode={true}
+              className="bestsellers-swiper"
+            >
+              {transformedCategoryProducts.map((product, index) => (
+                <SwiperSlide key={product.id || index} className="bestseller-slide">
+                  <ProductCard {...product} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {productData.map((product, index) => (
                 <ProductCard key={index} {...product} />
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
