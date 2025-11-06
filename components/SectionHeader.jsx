@@ -117,6 +117,7 @@ export default function SectionHeader({
             gap: 8px;
             align-items: flex-start;
             padding: 0 0;
+            margin-bottom: 0px;
           }
 
           .section-title {

@@ -48,14 +48,64 @@ const productData = [
   }
 ]
 
+const StoreCategoryId = '68e775f44f4cbd5c2fa2e9c7';
+
+// Helper function to transform API product data to match ProductCard component format
+const transformProductData = (apiProduct) => {
+  // Get the primary image or first available image
+  const primaryImage = apiProduct.images?.find(img => img.is_primary) || apiProduct.images?.[0];
+
+  // Use placeholder image if no valid image URL
+  const imageUrl = primaryImage?.url || '/iphone.jpg';
+
+  // Calculate savings for offer badge
+  const savings = apiProduct.is_offer && apiProduct.price && apiProduct.discount_price
+    ? apiProduct.price - apiProduct.discount_price
+    : 0;
+
+  // Format savings to 2 decimal places
+  const formattedSavings = savings > 0 ? savings.toFixed(2) : 0;
+
+  return {
+    id: apiProduct._id || apiProduct.slug,
+    slug: apiProduct.slug,
+    title: apiProduct.title || 'Product Title',
+    price: `AED ${apiProduct.discount_price || apiProduct.price || '0'}`,
+    rating: apiProduct.average_rating?.toString() || '0',
+    deliveryTime: '30 Min', // Default delivery time since it's not in API
+    image: imageUrl,
+    badge: apiProduct.is_offer && savings > 0 ? `Save AED ${formattedSavings}` : null
+  }
+}
+
 export default function Home() {
   const [filterOpen, setFilterOpen] = useState(false)
+  const [products, setProducts] = useState([])
+  const [productsLoading, setProductsLoading] = useState(false)
   const dispatch = useDispatch()
   const { generalStores, loading, error } = useSelector(state => state.stores)
   const router = useRouter()
 
   useEffect(() => {
     dispatch(fetchGeneralStores())
+    
+    // Fetch products by category
+    const fetchProductsByCategory = async () => {
+      setProductsLoading(true)
+      try {
+        const response = await fetch(`http://localhost:8082/api/products/category?categoryId=${StoreCategoryId}`)
+        const data = await response.json()
+        if (data.success && data.data) {
+          setProducts(data.data)
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error)
+      } finally {
+        setProductsLoading(false)
+      }
+    }
+    
+    fetchProductsByCategory()
   }, [dispatch])
   return (
     <main className="home-page">
@@ -69,9 +119,19 @@ export default function Home() {
         <div className="container">
           <SectionHeader title="Fastest Delivery" showNavigation={true} />
           <div className="products-grid">
-            {productData.map((product, index) => (
-              <ProductCard key={index} {...product} />
-            ))}
+            {productsLoading ? (
+              productData.map((product, index) => (
+                <ProductCard key={index} {...product} />
+              ))
+            ) : products.length > 0 ? (
+              products.map((product, index) => (
+                <ProductCard key={product._id || index} {...transformProductData(product)} />
+              ))
+            ) : (
+              productData.map((product, index) => (
+                <ProductCard key={index} {...product} />
+              ))
+            )}
           </div>
         </div>
       </section>

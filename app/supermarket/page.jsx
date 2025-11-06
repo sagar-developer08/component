@@ -21,6 +21,8 @@ import { fetchProducts } from '@/store/slices/productsSlice'
 import { useRouter } from 'next/navigation'
 import { buildFacetsFromProducts, applyFiltersToProducts } from '@/utils/facets'
 
+const supermarketCategoryId = '68e775f44f4cbd5c2fa2e9c4';
+
 // Helper function to transform API product data to match ProductCard component format
 const transformProductData = (apiProduct) => {
   // Get the primary image or first available image
@@ -34,14 +36,18 @@ const transformProductData = (apiProduct) => {
     ? apiProduct.price - apiProduct.discount_price
     : 0;
 
+  // Format savings to 2 decimal places
+  const formattedSavings = savings > 0 ? savings.toFixed(2) : 0;
+
   return {
     id: apiProduct._id || apiProduct.slug,
+    slug: apiProduct.slug,
     title: apiProduct.title || 'Product Title',
     price: `AED ${apiProduct.discount_price || apiProduct.price || '0'}`,
     rating: apiProduct.average_rating?.toString() || '0',
     deliveryTime: '30 Min', // Default delivery time since it's not in API
     image: imageUrl,
-    badge: apiProduct.is_offer && savings > 0 ? `Save AED ${savings}` : null
+    badge: apiProduct.is_offer && savings > 0 ? `Save AED ${formattedSavings}` : null
   }
 }
 
@@ -83,6 +89,8 @@ const productData = [
 export default function Home() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [selectedFilters, setSelectedFilters] = useState({})
+  const [fastestProducts, setFastestProducts] = useState([])
+  const [fastestProductsLoading, setFastestProductsLoading] = useState(false)
   const dispatch = useDispatch()
   const router = useRouter()
   const { supermarketStores, loading, error } = useSelector(state => state.stores)
@@ -91,6 +99,24 @@ export default function Home() {
   useEffect(() => {
     dispatch(fetchSupermarketStores())
     dispatch(fetchProducts())
+    
+    // Fetch products by category for Fastest Delivery section
+    const fetchProductsByCategory = async () => {
+      setFastestProductsLoading(true)
+      try {
+        const response = await fetch(`http://localhost:8082/api/products/category?categoryId=${supermarketCategoryId}`)
+        const data = await response.json()
+        if (data.success && data.data) {
+          setFastestProducts(data.data)
+        }
+      } catch (error) {
+        console.error('Error fetching fastest products:', error)
+      } finally {
+        setFastestProductsLoading(false)
+      }
+    }
+    
+    fetchProductsByCategory()
   }, [dispatch])
 
   // Build facets from products for proper filter display
@@ -129,9 +155,19 @@ export default function Home() {
         <div className="container">
           <SectionHeader title="Fastest Delivery" showNavigation={true} />
           <div className="products-grid">
-            {productData.map((product, index) => (
-              <ProductCard key={index} {...product} />
-            ))}
+            {fastestProductsLoading ? (
+              productData.map((product, index) => (
+                <ProductCard key={index} {...product} />
+              ))
+            ) : fastestProducts.length > 0 ? (
+              fastestProducts.map((product, index) => (
+                <ProductCard key={product._id || index} {...transformProductData(product)} />
+              ))
+            ) : (
+              productData.map((product, index) => (
+                <ProductCard key={index} {...product} />
+              ))
+            )}
           </div>
         </div>
       </section>

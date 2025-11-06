@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchProfile, fetchOrders } from '@/store/slices/profileSlice'
+import { fetchProfile, fetchOrders, fetchUserAddresses } from '@/store/slices/profileSlice'
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
@@ -24,7 +24,7 @@ export default function ProfilePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const dispatch = useDispatch()
-  const { user, addresses, orders, loading, ordersLoading, error } = useSelector(state => state.profile)
+  const { user, addresses, orders, loading, loadingAddresses, ordersLoading, error, addressError } = useSelector(state => state.profile)
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'personal-info')
   const [isEditing, setIsEditing] = useState(false)
   const [locationModalOpen, setLocationModalOpen] = useState(false)
@@ -67,6 +67,13 @@ export default function ProfilePage() {
   useEffect(() => {
     if (activeTab === 'orders') {
       dispatch(fetchOrders())
+    }
+  }, [activeTab, dispatch])
+
+  // Fetch addresses when addresses tab becomes active
+  useEffect(() => {
+    if (activeTab === 'addresses') {
+      dispatch(fetchUserAddresses())
     }
   }, [activeTab, dispatch])
 
@@ -305,7 +312,17 @@ export default function ProfilePage() {
                 {activeTab === 'orders' && null}
                 {activeTab === 'addresses' && (
                   <div className={styles.sectionContent}>
-                    <Addresses addresses={addresses} />
+                    {loadingAddresses ? (
+                      <div style={{ textAlign: 'center', padding: '40px' }}>
+                        Loading addresses...
+                      </div>
+                    ) : addressError ? (
+                      <div style={{ textAlign: 'center', padding: '40px', color: 'red' }}>
+                        Error loading addresses: {addressError}
+                      </div>
+                    ) : (
+                      <Addresses addresses={addresses} />
+                    )}
                   </div>
                 )}
                 {activeTab === 'new-address' && (

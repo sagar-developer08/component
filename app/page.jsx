@@ -657,7 +657,7 @@ export default function Home() {
         </section>
 
         {/* Special Deals Section */}
-        <section className="section">
+        {/* <section className="section">
           <div className="container">
             <SectionHeader
               title="Special Deals For QLIQ+"
@@ -681,7 +681,7 @@ export default function Home() {
               ))}
             </Swiper>
           </div>
-        </section>
+        </section> */}
 
         {/* Banner 2 */}
         <Banner

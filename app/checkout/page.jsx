@@ -3,7 +3,7 @@
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { getAuthToken, getUserFromCookies, getUserIds } from '@/utils/userUtils'
 import { fetchCart } from '@/store/slices/cartSlice'
@@ -26,7 +26,10 @@ import {
   clearOrderError,
   clearPaymentIntentError,
   clearStripeData,
-  validateQoynRedemption
+  validateQoynRedemption,
+  fetchAcceptedPurchaseGigs,
+  setAppliedCoupon,
+  clearAppliedCoupon
 } from '@/store/slices/checkoutSlice'
 import { fetchProfile } from '@/store/slices/profileSlice'
 import { fetchUserBalance } from '@/store/slices/walletSlice'
@@ -48,8 +51,17 @@ export default function CheckoutPage() {
   // Promo code input state
   const [promoCodeInput, setPromoCodeInput] = useState('')
   
+  // State to track address validation error
+  const [addressValidationError, setAddressValidationError] = useState(false)
+  
+  // Ref for address section to scroll to
+  const addressSectionRef = useRef(null)
+  
   // Applied discount state
   const [appliedDiscount, setAppliedDiscount] = useState(null)
+  
+  // Selected coupon state
+  const [selectedCouponId, setSelectedCouponId] = useState('')
 
   // Cart state
   const { items: cartItems, total: cartTotal, loading: cartLoading } = useSelector(state => state.cart)
@@ -78,7 +90,11 @@ export default function CheckoutPage() {
     stripePaymentIntentId,
     isCreatingPaymentIntent,
     paymentIntentError,
-    qoynValidation
+    qoynValidation,
+    coupons,
+    loadingCoupons,
+    couponsError,
+    appliedCoupon
   } = useSelector(state => state.checkout)
 
   // Combine addresses from both sources to ensure we get all available addresses
@@ -106,7 +122,98 @@ export default function CheckoutPage() {
 
   // Calculate total if not provided by API
   const calculatedTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-  const subtotal = cartTotal || calculatedTotal
+  const originalSubtotal = cartTotal || calculatedTotal
+
+  // Helper function to extract pid from productUrl
+  const extractPidFromUrl = (productUrl) => {
+    if (!productUrl) return null
+    try {
+      const url = new URL(productUrl)
+      const pid = url.searchParams.get('pid')
+      return pid ? String(pid).trim() : null
+    } catch (error) {
+      // If URL parsing fails, try regex extraction
+      const match = productUrl.match(/[?&]pid=([^&]+)/)
+      return match ? String(match[1]).trim() : null
+    }
+  }
+
+  // Filter coupons that match cart items by productId - ONLY show matching ones
+  // Compare: cart item productId with coupon pid (extracted from productUrl)
+  const availableCoupons = coupons.filter(coupon => {
+    // Extract pid from productUrl
+    const couponPid = coupon.pid || extractPidFromUrl(coupon.productUrl)
+    
+    if (!couponPid) {
+      console.log('Coupon missing pid:', coupon)
+      return false
+    }
+    
+    return cartItems.some(item => {
+      // Get productId from cart item (from data.cart.items[].productId)
+      const itemProductId = String(item.productId || item.id || '').trim()
+      // Get pid from coupon (from productUrl query parameter or direct pid field)
+      const pid = String(couponPid).trim()
+      
+      // Exact string comparison (case-sensitive)
+      const isMatch = itemProductId === pid && itemProductId !== '' && pid !== ''
+      
+      // Debug logging for all comparisons
+      console.log('🔍 Comparing:', {
+        couponCode: coupon.discountCode,
+        couponPid: pid,
+        itemProductId: itemProductId,
+        isMatch: isMatch,
+        matchType: isMatch ? '✅ MATCH' : '❌ NO MATCH',
+        itemName: item.name || 'N/A',
+        productUrl: coupon.productUrl || 'N/A'
+      })
+      
+      return isMatch
+    })
+  })
+  
+  // Debug: Log available coupons
+  useEffect(() => {
+    if (coupons.length > 0) {
+      console.log('📦 === Coupon Matching Debug ===')
+      console.log('🎫 All coupons from API:', coupons.map(c => {
+        const pid = c.pid || extractPidFromUrl(c.productUrl)
+        return {
+          _id: c._id,
+          discountCode: c.discountCode,
+          pid: pid,
+          productUrl: c.productUrl,
+          percentage: c.customerDiscountPercentage
+        }
+      }))
+      console.log('🛒 Cart items:', cartItems.map(item => ({
+        productId: item.productId || item.id,
+        name: item.name,
+        quantity: item.quantity
+      })))
+      console.log('✅ Available coupons (matched):', availableCoupons.map(c => {
+        const pid = c.pid || extractPidFromUrl(c.productUrl)
+        return {
+          discountCode: c.discountCode,
+          pid: pid
+        }
+      }))
+      console.log('📊 Match count:', availableCoupons.length, 'out of', coupons.length)
+      console.log('===============================')
+    }
+  }, [coupons, cartItems, availableCoupons])
+
+  // Apply coupon discount to subtotal if coupon is applied
+  let couponDiscountAmount = 0
+  let subtotal = originalSubtotal
+  if (appliedCoupon && appliedCoupon.customerDiscountPercentage) {
+    const discountPercentage = appliedCoupon.customerDiscountPercentage
+    // Calculate discount amount based on percentage
+    couponDiscountAmount = (originalSubtotal * discountPercentage) / 100
+    // Apply discount to subtotal
+    subtotal = originalSubtotal - couponDiscountAmount
+  }
 
   // VAT Calculation - use product VAT percentage or default to 5%
   const getVatRate = () => {
@@ -146,6 +253,9 @@ export default function CheckoutPage() {
 
       // Load addresses
       dispatch(fetchUserAddresses())
+      
+      // Load coupons
+      dispatch(fetchAcceptedPurchaseGigs())
 
       // Check if cart data is already available in Redux
       if (cartItems.length > 0) {
@@ -210,6 +320,13 @@ export default function CheckoutPage() {
       dispatch(setSelectedAddress(defaultAddr || displayAddresses[0]))
     }
   }, [displayAddresses, selectedAddress, dispatch])
+  
+  // Clear validation error when address is selected
+  useEffect(() => {
+    if (selectedAddress && addressValidationError) {
+      setAddressValidationError(false)
+    }
+  }, [selectedAddress, addressValidationError])
 
   // Set Stripe as default payment method
   useEffect(() => {
@@ -300,7 +417,8 @@ export default function CheckoutPage() {
       subtotal: subtotal,
       vat: vatAmount,
       shipping: 0,
-      discount: 0
+      discount: appliedDiscount ? appliedDiscount.discountAmount : couponDiscountAmount,
+      couponCode: appliedCoupon ? appliedCoupon.discountCode : null
     }
 
     dispatch(createStripePaymentIntent(orderData))
@@ -328,7 +446,8 @@ export default function CheckoutPage() {
       subtotal: subtotal,
       vat: vatAmount,
       shipping: 0,
-      discount: 0
+      discount: appliedDiscount ? appliedDiscount.discountAmount : couponDiscountAmount,
+      couponCode: appliedCoupon ? appliedCoupon.discountCode : null
     }
 
     dispatch(placeOrder(orderData))
@@ -347,9 +466,19 @@ export default function CheckoutPage() {
       }
 
       if (!selectedAddress) {
-        showToast('Please select a delivery address.', 'error')
+        setAddressValidationError(true)
+        showToast('Add a address first', 'error')
+        // Scroll to address section
+        setTimeout(() => {
+          if (addressSectionRef.current) {
+            addressSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 100)
         return
       }
+      
+      // Clear validation error if address is selected
+      setAddressValidationError(false)
 
       const key = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY : undefined
       const publishableKey = (typeof key === 'string' && key.trim()) ? key : ''
@@ -410,8 +539,9 @@ export default function CheckoutPage() {
         total: actualTotal,
         subtotal: subtotal,
         vat: vatAmount,
-        discount: appliedDiscount ? appliedDiscount.discountAmount : 0,
-        discountType: appliedDiscount ? appliedDiscount.type : null,
+        discount: appliedDiscount ? appliedDiscount.discountAmount : couponDiscountAmount,
+        discountType: appliedDiscount ? appliedDiscount.type : (appliedCoupon ? 'coupon' : null),
+        couponCode: appliedCoupon ? appliedCoupon.discountCode : null,
         currency: 'usd',
         userId: mongoUserId, // MongoDB user ID
         cognitoUserId: cognitoUserId, // Cognito user ID
@@ -506,6 +636,81 @@ export default function CheckoutPage() {
   const handleRemoveDiscount = () => {
     setAppliedDiscount(null)
   }
+  
+  // Handle coupon selection - populate the promo code input and apply
+  const handleCouponSelect = (couponId) => {
+    if (!couponId) {
+      setSelectedCouponId('')
+      setPromoCodeInput('')
+      return
+    }
+    
+    const selectedCoupon = availableCoupons.find(c => c._id === couponId)
+    if (selectedCoupon) {
+      setSelectedCouponId(couponId)
+      setPromoCodeInput(selectedCoupon.discountCode)
+      // Automatically apply the coupon when selected
+      handleApplyCouponDirectly(selectedCoupon)
+    }
+  }
+  
+  // Apply coupon directly (used when clicking from dropdown)
+  const handleApplyCouponDirectly = (coupon) => {
+    // Clear any existing discount first
+    if (appliedDiscount) {
+      setAppliedDiscount(null)
+    }
+    
+    // Apply the coupon
+    dispatch(setAppliedCoupon(coupon))
+    setSelectedCouponId(coupon._id)
+    setPromoCodeInput(coupon.discountCode)
+    showToast(`Coupon ${coupon.discountCode} applied successfully!`, 'success')
+  }
+  
+  // Handle coupon application from promo code input
+  const handleApplyCoupon = () => {
+    if (!promoCodeInput.trim()) {
+      showToast('Please enter or select a coupon code', 'error')
+      return
+    }
+    
+    // First check available coupons (matching cart items)
+    let selectedCoupon = availableCoupons.find(c => 
+      c.discountCode.toLowerCase() === promoCodeInput.trim().toLowerCase()
+    )
+    
+    // If not found in available coupons, check all coupons from API
+    if (!selectedCoupon && coupons.length > 0) {
+      selectedCoupon = coupons.find(c => 
+        c.discountCode.toLowerCase() === promoCodeInput.trim().toLowerCase()
+      )
+    }
+    
+    if (!selectedCoupon) {
+      showToast('Invalid coupon code or coupon not available for items in cart', 'error')
+      return
+    }
+    
+    // Clear any existing discount first
+    if (appliedDiscount) {
+      setAppliedDiscount(null)
+    }
+    
+    // Apply the coupon
+    dispatch(setAppliedCoupon(selectedCoupon))
+    setSelectedCouponId(selectedCoupon._id)
+    setPromoCodeInput(selectedCoupon.discountCode) // Ensure the code is displayed
+    showToast(`Coupon ${selectedCoupon.discountCode} applied successfully!`, 'success')
+  }
+  
+  // Handle coupon removal
+  const handleRemoveCoupon = () => {
+    dispatch(clearAppliedCoupon())
+    setSelectedCouponId('')
+    setPromoCodeInput('')
+    showToast('Coupon removed', 'success')
+  }
 
   const handlePromoCodeValidation = async () => {
     if (!promoCodeInput.trim()) {
@@ -513,7 +718,18 @@ export default function CheckoutPage() {
       return
     }
 
-    // For now, just show a toast - you can implement promo code validation later
+    // Check if it's a coupon code first
+    const couponMatch = coupons.find(c => 
+      c.discountCode.toLowerCase() === promoCodeInput.trim().toLowerCase()
+    )
+    
+    if (couponMatch) {
+      // It's a coupon, try to apply it
+      handleApplyCoupon()
+      return
+    }
+
+    // For other promo codes, show not implemented message
     showToast(`Promo code "${promoCodeInput}" validation not implemented yet`, 'error')
   }
 
@@ -599,8 +815,8 @@ export default function CheckoutPage() {
             </div>
 
             {/* Delivery Address */}
-            <div className={styles.section}>
-              <div className={styles.sectionHeader}>Delivery Address</div>
+            <div ref={addressSectionRef} className={`${styles.section} ${addressValidationError ? styles.addressError : ''}`}>
+              <div className={`${styles.sectionHeader} ${addressValidationError ? styles.sectionHeaderError : ''}`}>Delivery Address</div>
 
               {loadingAddresses ? (
                 <div className={styles.loadingText}>Loading addresses...</div>
@@ -682,7 +898,10 @@ export default function CheckoutPage() {
 
                     <button
                       className={styles.addAddressBtn}
-                      onClick={() => dispatch(setShowAddressForm(!showAddressForm))}
+                      onClick={() => {
+                        setAddressValidationError(false)
+                        dispatch(setShowAddressForm(!showAddressForm))
+                      }}
                     >
                       <FontAwesomeIcon icon={faPlus} className={styles.addIcon} />
                       Add New Address
@@ -694,7 +913,10 @@ export default function CheckoutPage() {
                   <p>No addresses found. Please add an address to continue.</p>
                   <button
                     className={styles.addAddressBtn}
-                    onClick={() => dispatch(setShowAddressForm(true))}
+                    onClick={() => {
+                      setAddressValidationError(false)
+                      dispatch(setShowAddressForm(true))
+                    }}
                   >
                     <FontAwesomeIcon icon={faPlus} className={styles.addIcon} />
                     Add Address
@@ -846,7 +1068,10 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       className={styles.cancelBtn}
-                      onClick={() => dispatch(setShowAddressForm(false))}
+                      onClick={() => {
+                        setAddressValidationError(false)
+                        dispatch(setShowAddressForm(false))
+                      }}
                     >
                       Cancel
                     </button>
@@ -1150,28 +1375,30 @@ export default function CheckoutPage() {
                 </div>
               </div>
               {qoynValidation.walletUnlocked && qoynValidation.eligibleForDiscount && (
-                <div className={styles.orderSummaryMessage1}>
-                  <div className={styles.walletExpiry}>
-                    Minimum order value is AED 100 — you must spend at least AED 100 to apply Qoyns.
+                <>
+                  <div className={styles.orderSummaryMessage1}>
+                    <div className={styles.walletExpiry}>
+                      Minimum order value is AED 100 — you must spend at least AED 100 to apply Qoyns.
+                    </div>
                   </div>
-                </div>
+                  {/* Qoyns Input */}
+                  <div className={styles.promoCode}>
+                    <input 
+                      className={styles.promoInput} 
+                      value={`${qoynValidation.currentDiscountQoyn || 0} Qoyns`}
+                      readOnly
+                      disabled={!qoynValidation.walletUnlocked || !qoynValidation.eligibleForDiscount}
+                    />
+                    <button 
+                      className={styles.promoApplyBtn}
+                      onClick={appliedDiscount ? handleRemoveDiscount : handleQoynValidation}
+                      disabled={!qoynValidation.walletUnlocked || !qoynValidation.eligibleForDiscount || qoynValidation.isValidationLoading}
+                    >
+                      {qoynValidation.isValidationLoading ? 'Validating...' : appliedDiscount ? '✕' : 'Apply'}
+                    </button>
+                  </div>
+                </>
               )}
-              {/* Qoyns Input */}
-              <div className={styles.promoCode}>
-                <input 
-                  className={styles.promoInput} 
-                  value={`${qoynValidation.currentDiscountQoyn || 0} Qoyns`}
-                  readOnly
-                  disabled={!qoynValidation.walletUnlocked || !qoynValidation.eligibleForDiscount}
-                />
-                <button 
-                  className={styles.promoApplyBtn}
-                  onClick={appliedDiscount ? handleRemoveDiscount : handleQoynValidation}
-                  disabled={!qoynValidation.walletUnlocked || !qoynValidation.eligibleForDiscount || qoynValidation.isValidationLoading}
-                >
-                  {qoynValidation.isValidationLoading ? 'Validating...' : appliedDiscount ? '✕' : 'Apply'}
-                </button>
-              </div>
               {/* <div className={styles.qoynsSliderSection}>
                 <div className={styles.qoynsSliderLabel}>Choose Qoyns to use</div>
                 <div className={styles.qoynsSliderTrack}>
@@ -1185,26 +1412,73 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               </div> */}
-              {/* Promo Code */}
-              <div className={styles.promoCode}>
-                <input 
-                  className={styles.promoInput} 
-                  value={promoCodeInput} 
-                  placeholder='OFF500' 
-                  onChange={(e) => setPromoCodeInput(e.target.value)}
-                />
-                <button 
-                  className={styles.promoApplyBtn}
-                  onClick={handlePromoCodeValidation}
-                >
-                  Apply
-                </button>
-              </div>
+              {/* Coupon Dropdown - Select and apply discount code - ONLY show matching coupons */}
+              {availableCoupons.length > 0 && (
+                <div className={styles.couponDropdownSection}>
+                  {/* <div className={styles.couponDropdownLabel}>Select Coupon:</div> */}
+                  <div className={styles.couponSelectWrapper}>
+                    <select
+                      className={styles.couponSelect}
+                      value={appliedCoupon ? appliedCoupon._id : selectedCouponId}
+                      onChange={(e) => {
+                        const couponId = e.target.value
+                        if (couponId) {
+                          // Only allow selection from availableCoupons (matching ones)
+                          const selectedCoupon = availableCoupons.find(c => c._id === couponId)
+                          if (selectedCoupon) {
+                            // Automatically apply the coupon when selected
+                            handleApplyCouponDirectly(selectedCoupon)
+                          }
+                        } else {
+                          // If "Choose a coupon code" is selected, remove applied coupon
+                          if (appliedCoupon) {
+                            handleRemoveCoupon()
+                          }
+                          setSelectedCouponId('')
+                        }
+                      }}
+                      disabled={!!appliedCoupon}
+                    >
+                      <option value="">{appliedCoupon ? appliedCoupon.discountCode : 'Choose a coupon code'}</option>
+                      {/* Only show coupons that match cart items (productId === pid) */}
+                      {availableCoupons.map((coupon) => (
+                        <option key={coupon._id} value={coupon._id}>
+                          {coupon.discountCode} ({coupon.customerDiscountPercentage}% off)
+                        </option>
+                      ))}
+                    </select>
+                    {appliedCoupon && (
+                      <button 
+                        className={styles.couponRemoveBtn}
+                        onClick={handleRemoveCoupon}
+                        title="Remove coupon"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              {appliedCoupon && (
+                <div className={styles.couponDiscountInfo}>
+                  <span>Coupon {appliedCoupon.discountCode} ({appliedCoupon.customerDiscountPercentage}% off) applied: -AED {couponDiscountAmount.toFixed(2)}</span>
+                </div>
+              )}
               {/* Totals */}
               {cartItems.length > 0 && (
                 <div className={styles.orderTotals}>
                   <div className={styles.totalRow}>
                     <span>Subtotal</span>
+                    <span>AED {originalSubtotal.toFixed(2)}</span>
+                  </div>
+                  {appliedCoupon && (
+                    <div className={styles.totalRowDiscount}>
+                      <span>Coupon Discount ({appliedCoupon.discountCode})</span>
+                      <span>- AED {couponDiscountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className={styles.totalRow}>
+                    <span>Subtotal after discount</span>
                     <span>AED {subtotal.toFixed(2)}</span>
                   </div>
                   <div className={styles.totalRow}>
@@ -1230,7 +1504,7 @@ export default function CheckoutPage() {
               <button
                 className={styles.placeOrderBtn}
                 onClick={handleHostedCheckout}
-                disabled={cartItems.length === 0 || !selectedAddress}
+                disabled={cartItems.length === 0}
               >
                 Pay with Stripe
               </button>

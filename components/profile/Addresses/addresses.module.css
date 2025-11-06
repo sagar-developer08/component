@@ -47,6 +47,14 @@
   cursor: pointer;
   transition: all 0.2s ease;
   min-height: 200px;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+}
+
+.addressCard:disabled {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 .addressCard:hover {
@@ -58,6 +66,7 @@
   border-color: #0082FF;
   background: #fff;
   border-width: 2px;
+  box-shadow: 0 4px 12px rgba(0, 130, 255, 0.15);
 }
 
 .addressType {

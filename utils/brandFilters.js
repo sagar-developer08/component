@@ -45,6 +45,9 @@ export function buildFacetsFromBrandFilters(filterData) {
   //   }
   // }
 
+  // Brand filter - NOT mapped on brand pages (user is already viewing a specific brand)
+  // Even if filterData.brands or filterData.brand exists, we don't include it as a filter option
+
   // Stores
   if (filterData.stores && Array.isArray(filterData.stores) && filterData.stores.length > 0) {
     facets.push({
@@ -62,6 +65,9 @@ export function buildFacetsFromBrandFilters(filterData) {
   // Attributes (dynamic)
   if (filterData.attributes && typeof filterData.attributes === 'object') {
     for (const [attrKey, values] of Object.entries(filterData.attributes)) {
+      // Skip brand attribute on brand pages (user is already viewing a specific brand)
+      if (attrKey === 'brand') continue
+      
       if (Array.isArray(values) && values.length > 0) {
         const options = values.map(v => ({
           value: v.value,
@@ -82,6 +88,9 @@ export function buildFacetsFromBrandFilters(filterData) {
   // Specifications (dynamic)
   if (filterData.specifications && typeof filterData.specifications === 'object') {
     for (const [specKey, values] of Object.entries(filterData.specifications)) {
+      // Skip brand specification on brand pages (user is already viewing a specific brand)
+      if (specKey === 'brand') continue
+      
       if (Array.isArray(values) && values.length > 0) {
         const options = values.map(v => ({
           value: v.value,

@@ -166,9 +166,11 @@ export default function SortDropdown({
 
         @media (max-width: 768px) {
           .sort-button {
-            padding: 10px 24px;
-            font-size: 12px;
-            min-width: 150px;
+            padding: 8px 16px;
+            font-size: 14px;
+            min-width: 120px;
+            height: 40px;
+            border-radius: 8px;
           }
 
           .sort-dropdown-menu {
