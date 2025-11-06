@@ -243,6 +243,38 @@ export const validateQoynRedemption = createAsyncThunk(
   }
 )
 
+// Fetch accepted purchase gigs (coupons) async thunk
+export const fetchAcceptedPurchaseGigs = createAsyncThunk(
+  'checkout/fetchAcceptedPurchaseGigs',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = await getAuthToken()
+      
+      if (!token) {
+        throw new Error('Authentication required')
+      }
+
+      const response = await fetch('https://backendgigs.qliq.ae/api/gig-completions/accepted-purchase-gigs', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to fetch coupons')
+      }
+
+      const responseData = await response.json()
+      return responseData.data || []
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const checkoutSlice = createSlice({
   name: 'checkout',
   initialState: {
@@ -301,6 +333,12 @@ const checkoutSlice = createSlice({
       isValidationLoading: false,
       validationError: null
     },
+    
+    // Coupons
+    coupons: [],
+    loadingCoupons: false,
+    couponsError: null,
+    appliedCoupon: null,
     
     // General
     loading: false,
@@ -368,6 +406,14 @@ const checkoutSlice = createSlice({
       state.stripeClientSecret = null
       state.stripePaymentIntentId = null
       state.paymentIntentError = null
+    },
+    
+    // Coupon management
+    setAppliedCoupon: (state, action) => {
+      state.appliedCoupon = action.payload
+    },
+    clearAppliedCoupon: (state) => {
+      state.appliedCoupon = null
     }
   },
   extraReducers: (builder) => {
@@ -506,6 +552,20 @@ const checkoutSlice = createSlice({
         state.qoynValidation.isValidationLoading = false
         state.qoynValidation.validationError = action.payload
       })
+      
+      // Fetch accepted purchase gigs (coupons)
+      .addCase(fetchAcceptedPurchaseGigs.pending, (state) => {
+        state.loadingCoupons = true
+        state.couponsError = null
+      })
+      .addCase(fetchAcceptedPurchaseGigs.fulfilled, (state, action) => {
+        state.loadingCoupons = false
+        state.coupons = action.payload || []
+      })
+      .addCase(fetchAcceptedPurchaseGigs.rejected, (state, action) => {
+        state.loadingCoupons = false
+        state.couponsError = action.payload
+      })
   }
 })
 
@@ -521,7 +581,9 @@ export const {
   clearAddressError,
   clearOrderError,
   clearPaymentIntentError,
-  clearStripeData
+  clearStripeData,
+  setAppliedCoupon,
+  clearAppliedCoupon
 } = checkoutSlice.actions
 
 export default checkoutSlice.reducer

@@ -6,7 +6,10 @@
 .checkoutContainer {
   max-width: 1392px;
   margin: 0 auto;
-  padding: 24px;
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-top: 24px;
+  padding-bottom: 24px;
 }
 
 .checkoutTitle {
@@ -24,6 +27,7 @@
   font-size: 16px;
   font-weight: 600;
   max-width: 604px;
+  width: 100%;
 }
 
 .checkoutContent {
@@ -31,8 +35,10 @@
   grid-template-columns: 604px 714px;
   gap: 32px;
   align-items: flex-start;
-  width: 1392px;
+  width: 100%;
+  max-width: 1392px;
   margin: 0 auto;
+  justify-content: center;
 }
 
 .checkoutLeft {
@@ -40,6 +46,7 @@
   flex-direction: column;
   gap: 32px;
   max-width: 604px;
+  width: 100%;
 }
 
 .walletCard {
@@ -134,12 +141,23 @@
 
 }
 
+.section.addressError {
+  border: 2px solid #FF3B30;
+  border-radius: 12px;
+  padding: 16px;
+  background-color: rgba(255, 59, 48, 0.05);
+}
+
 .sectionHeader {
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 8px;
   line-height: 140%;
   color: #000;
+}
+
+.sectionHeaderError {
+  color: #FF3B30 !important;
 }
 
 .addressCard {
@@ -315,6 +333,12 @@
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+  .addressFormGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .addressInput {
@@ -590,7 +614,7 @@
 .promoCode {
   position: relative;
   display: flex;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .promoInput {
@@ -602,6 +626,136 @@
   background: #fff;
   color: #000;
   font-weight: 600;
+}
+
+.promoInput:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.couponSection {
+  margin-bottom: 4px;
+}
+
+.couponSelectWrapper {
+  position: relative;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.couponSelect {
+  width: 100%;
+  border: 1px solid #666;
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 15px;
+  background: #fff;
+  color: #000;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23000' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+
+.couponSelect:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.7;
+  padding-right: 60px;
+}
+
+.couponRemoveBtn {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #000;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.couponRemoveBtn:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.couponSelect option {
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.couponDropdownSection {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+.couponDropdownLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 8px;
+}
+
+.couponDropdownList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.couponDropdownItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #F8F9FA;
+  border: 1px solid #0082FF;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.couponDropdownItem:hover {
+  background: rgba(0, 130, 255, 0.1);
+  border-color: #0082FF;
+}
+
+.couponCode {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0082FF;
+}
+
+.couponDiscount {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+}
+
+.couponDiscountInfo {
+ padding: 12px;
+  background: rgba(0, 130, 255, 0.1);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0082FF;
 }
 
 .promoApplyBtn {
@@ -675,27 +829,163 @@
   margin-top: 8px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1500px) {
   .checkoutContent {
     grid-template-columns: 1fr;
     gap: 24px;
   }
 
+  .checkoutLeft {
+    max-width: 100%;
+  }
+
   .checkoutRight {
     max-width: 100%;
+    width: 100%;
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .checkoutContainer {
-    padding: 8px;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-top: 16px;
+    padding-bottom: 16px;
   }
 
   .checkoutTitle {
-    font-size: 22px;
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+
+  .checkoutSubtitle {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .checkoutContent {
+    gap: 20px;
+  }
+
+  .checkoutLeft {
+    gap: 20px;
+  }
+
+  .sectionHeader {
+    font-size: 20px;
+  }
+
+  .walletCard {
+    padding: 20px;
+  }
+
+  .orderSummaryMessage,
+  .orderSummaryMessage1 {
+    padding: 20px;
+    font-size: 14px;
+  }
+
+  .checkoutRight {
+    padding: 20px;
+    border-radius: 16px;
   }
 
   .orderSummary {
+    gap: 16px;
+  }
+
+  .productItem {
+    gap: 12px;
+  }
+
+  .productImage {
+    width: 60px;
+    height: 60px;
+  }
+
+  .productName,
+  .productQuantity,
+  .productPrice {
+    font-size: 14px;
+  }
+
+  .productBrand {
+    font-size: 11px;
+  }
+
+  .addressForm {
+    padding: 16px;
+  }
+
+  .addressCard {
+    padding: 16px;
+  }
+
+  .addressButtonsRow {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .addressButtonsRow .viewMoreBtn,
+  .addressButtonsRow .addAddressBtn {
+    width: 100%;
+  }
+
+  .addressFormTabs {
+    flex-wrap: wrap;
+    padding: 0;
+  }
+
+  .addressLabelInput {
+    margin-left: 0;
+    margin-top: 8px;
+    width: 100%;
+  }
+
+  .promoInput {
+    padding: 14px 90px 14px 14px;
+    font-size: 14px;
+  }
+
+  .promoApplyBtn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .totalRow,
+  .totalRowDiscount,
+  .totalRowFinal {
+    font-size: 14px;
+  }
+
+  .placeOrderBtn {
+    padding: 14px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkoutTitle {
+    font-size: 24px;
+  }
+
+  .sectionHeader {
+    font-size: 18px;
+  }
+
+  .walletCard {
+    padding: 16px;
+  }
+
+  .checkoutRight {
+    padding: 16px;
+  }
+
+  .addressForm {
+    padding: 12px;
+  }
+
+  .addressCard {
     padding: 12px;
   }
 }

@@ -4,7 +4,7 @@ import OtherSellersDrawer from './OtherSellersDrawer';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCart, fetchCart } from '../../store/slices/cartSlice';
-import { addToWishlist } from '../../store/slices/wishlistSlice';
+import { addToWishlist, removeFromWishlist } from '../../store/slices/wishlistSlice';
 import { getUserFromCookies } from '../../utils/userUtils';
 import { useToast } from '../../contexts/ToastContext';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -39,6 +39,8 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
 
   const isInCart = cartItems.some(item => item.productId === product.id);
   const isInWishlist = wishlistItems.some(item => item.productId === product.id);
+  const cartItem = cartItems.find(item => item.productId === product.id);
+  const cartQuantity = cartItem?.quantity || 0;
 
   // Sync local state with props when they change
   useEffect(() => {
@@ -141,30 +143,40 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
   };
 
   const handleAddToFavourite = () => {
-    // If already in wishlist, don't add again
-    if (isAddedToWishlist || isInWishlist) {
-      show('Item already in wishlist')
-      return
-    }
-
     requireAuth(() => {
       ; (async () => {
         const userId = await getUserFromCookies()
-        const wishlistItem = {
-          userId,
-          productId: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.images[0]
-        }
 
-        const result = await dispatch(addToWishlist(wishlistItem))
-        if (addToWishlist.fulfilled.match(result)) {
-          const isDuplicate = result.payload?.isDuplicate
-          show(isDuplicate ? 'Already in wishlist' : 'Added to wishlist')
-          setIsAddedToWishlist(true)
-        } else if (addToWishlist.rejected.match(result)) {
-          show('Failed to add to wishlist', 'error')
+        if (isInWishlist) {
+          // Remove from wishlist
+          const result = await dispatch(removeFromWishlist({
+            userId,
+            productId: product.id
+          }))
+          if (removeFromWishlist.fulfilled.match(result)) {
+            show('Removed from wishlist')
+            setIsAddedToWishlist(false)
+          } else if (removeFromWishlist.rejected.match(result)) {
+            show('Failed to remove from wishlist', 'error')
+          }
+        } else {
+          // Add to wishlist
+          const wishlistItem = {
+            userId,
+            productId: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.images[0]
+          }
+
+          const result = await dispatch(addToWishlist(wishlistItem))
+          if (addToWishlist.fulfilled.match(result)) {
+            const isDuplicate = result.payload?.isDuplicate
+            show(isDuplicate ? 'Already in wishlist' : 'Added to wishlist')
+            setIsAddedToWishlist(true)
+          } else if (addToWishlist.rejected.match(result)) {
+            show('Failed to add to wishlist', 'error')
+          }
         }
       })()
     });
@@ -349,17 +361,17 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
           )}
 
           {/* Quantity Selector and Share Section */}
-          <div className="quantity-share-container">
-            <div className="selection-group">
-              <label>Quantity:</label>
+          <div className={`quantity-share-container ${isMobile ? 'quantity-share-container-mobile' : ''}`}>
+            <div className={`selection-group ${isMobile ? 'selection-group-mobile' : ''}`}>
+              {!isMobile && <label>Quantity:</label>}
               <div className="quantity-selector">
                 <button onClick={() => setQuantity(Math.max(1, quantity - 1))}>-</button>
                 <span>{quantity}</span>
                 <button onClick={() => setQuantity(quantity + 1)}>+</button>
               </div>
             </div>
-            <div className="share-section">
-              <span>Share:</span>
+            <div className={`share-section ${isMobile ? 'share-section-mobile' : ''}`}>
+              {!isMobile && <span>Share:</span>}
               <div className="share-icons">
                 <svg width="24" height="24" viewBox="0 0 24 22" fill="none">
                   <path fillRule="evenodd" clipRule="evenodd" d="M16 3.24268H8C5.23858 3.24268 3 5.48126 3 8.24268V16.2427C3 19.0041 5.23858 21.2427 8 21.2427H16C18.7614 21.2427 21 19.0041 21 16.2427V8.24268C21 5.48126 18.7614 3.24268 16 3.24268ZM19.25 16.2427C19.2445 18.0353 17.7926 19.4872 16 19.4927H8C6.20735 19.4872 4.75549 18.0353 4.75 16.2427V8.24268C4.75549 6.45003 6.20735 4.99817 8 4.99268H16C17.7926 4.99817 19.2445 6.45003 19.25 8.24268V16.2427ZM16.75 8.49268C17.3023 8.49268 17.75 8.04496 17.75 7.49268C17.75 6.9404 17.3023 6.49268 16.75 6.49268C16.1977 6.49268 15.75 6.9404 15.75 7.49268C15.75 8.04496 16.1977 8.49268 16.75 8.49268ZM12 7.74268C9.51472 7.74268 7.5 9.7574 7.5 12.2427C7.5 14.728 9.51472 16.7427 12 16.7427C14.4853 16.7427 16.5 14.728 16.5 12.2427C16.5027 11.0484 16.0294 9.90225 15.1849 9.05776C14.3404 8.21327 13.1943 7.74002 12 7.74268ZM9.25 12.2427C9.25 13.7615 10.4812 14.9927 12 14.9927C13.5188 14.9927 14.75 13.7615 14.75 12.2427C14.75 10.7239 13.5188 9.49268 12 9.49268C10.4812 9.49268 9.25 10.7239 9.25 12.2427Z" fill="black" />
@@ -378,21 +390,49 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
           </div>
 
           {/* Action Buttons */}
-          <div className="action-buttons">
-            <button
-              className={`add-to-cart ${(isAddedToCart || isInCart) ? 'added' : ''}`}
-              onClick={handleAddToCart}
-              disabled={isAddedToCart || isInCart}
-            >
-              {(isAddedToCart || isInCart) ? 'Added To Cart' : 'Add To Cart'}
-            </button>
-            <button
-              className={`add-to-favourite ${(isAddedToWishlist || isInWishlist) ? 'added' : ''}`}
-              onClick={handleAddToFavourite}
-              disabled={isAddedToWishlist || isInWishlist}
-            >
-              {(isAddedToWishlist || isInWishlist) ? 'Added To Wishlist' : 'Add To Wishlist'}
-            </button>
+          <div className={`action-buttons ${isMobile ? 'action-buttons-mobile' : ''}`}>
+            {isMobile ? (
+              <>
+                <button
+                  className={`add-to-cart-mobile ${(isAddedToCart || isInCart) ? 'added' : ''}`}
+                  onClick={handleAddToCart}
+                  disabled={isAddedToCart || isInCart}
+                >
+                  {(isAddedToCart || isInCart) ? 'Added To Cart' : 'Add To Cart'}
+                  {cartQuantity > 0 && <span className="quantity-badge-mobile">{cartQuantity}</span>}
+                </button>
+                <button
+                  className={`add-to-favourite-mobile ${(isAddedToWishlist || isInWishlist) ? 'added' : ''}`}
+                  onClick={handleAddToFavourite}
+                  aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+                >
+                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+                    <rect width="40" height="40" rx="20" fill="#0082FF" />
+                    {isInWishlist ? (
+                      <path d="M20 28L18.695 26.849C14.06 22.7771 11 20.0828 11 16.7956C11 14.1014 13.178 12 15.95 12C17.516 12 19.019 12.7063 20 13.8136C20.981 12.7063 22.484 12 24.05 12C26.822 12 29 14.1014 29 16.7956C29 20.0828 25.94 22.7771 21.305 26.849L20 28Z" fill="#001F3F" />
+                    ) : (
+                      <path d="M20.09 25.5586L20 25.6458L19.901 25.5586C15.626 21.8005 12.8 19.3155 12.8 16.7956C12.8 15.0518 14.15 13.7439 15.95 13.7439C17.336 13.7439 18.686 14.6158 19.163 15.8016H20.837C21.314 14.6158 22.664 13.7439 24.05 13.7439C25.85 13.7439 27.2 15.0518 27.2 16.7956C27.2 19.3155 24.374 21.8005 20.09 25.5586ZM24.05 12C22.484 12 20.981 12.7063 20 13.8136C19.019 12.7063 17.516 12 15.95 12C13.178 12 11 14.1014 11 16.7956C11 20.0828 14.06 22.7771 18.695 26.849L20 28L21.305 26.849C25.94 22.7771 29 20.0828 29 16.7956C29 14.1014 26.822 12 24.05 12Z" fill="white" />
+                    )}
+                  </svg>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className={`add-to-cart ${(isAddedToCart || isInCart) ? 'added' : ''}`}
+                  onClick={handleAddToCart}
+                  disabled={isAddedToCart || isInCart}
+                >
+                  {(isAddedToCart || isInCart) ? 'Added To Cart' : 'Add To Cart'}
+                </button>
+                <button
+                  className={`add-to-favourite ${(isAddedToWishlist || isInWishlist) ? 'added' : ''}`}
+                  onClick={handleAddToFavourite}
+                >
+                  {(isAddedToWishlist || isInWishlist) ? 'Added To Wishlist' : 'Add To Wishlist'}
+                </button>
+              </>
+            )}
           </div>
 
           {/* Other Sellers */}
@@ -749,6 +789,29 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
           gap: 20px;
         }
 
+        /* Mobile quantity and share - one row, no labels */
+        .quantity-share-container-mobile {
+          flex-direction: row;
+          gap: 12px;
+          align-items: center;
+        }
+
+        .selection-group-mobile {
+          gap: 0;
+        }
+
+        .selection-group-mobile label {
+          display: none;
+        }
+
+        .share-section-mobile {
+          gap: 0;
+        }
+
+        .share-section-mobile > span {
+          display: none;
+        }
+
         .quantity-selector {
           display: flex;
           align-items: center;
@@ -781,6 +844,14 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
           gap: 16px;
         }
 
+        /* Mobile-specific action buttons layout */
+        .action-buttons-mobile {
+          flex-direction: row;
+          align-items: center;
+          gap: 12px;
+          width: 100%;
+        }
+
         .add-to-cart {
           width: 100%;
           max-width: 342px;
@@ -803,6 +874,47 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
         .add-to-cart:disabled {
           cursor: default;
           opacity: 0.9;
+        }
+
+        /* Mobile add to cart button */
+        .add-to-cart-mobile {
+          flex: 1;
+          padding: 12px 20px;
+          background: rgba(0, 130, 255, 0.24); 
+          border: none;
+          border-radius: 50px;
+          color: #0082FF;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s ease;
+          position: relative;
+        }
+        
+        .add-to-cart-mobile.added {
+          background: rgba(0, 204, 102, 0.24);
+          color: #00CC66;
+        }
+        
+        .add-to-cart-mobile:disabled {
+          cursor: default;
+          opacity: 0.9;
+        }
+
+        .quantity-badge-mobile {
+          position: absolute;
+          top: -8px;
+          right: 8px;
+          background: #0082FF;
+          color: white;
+          border-radius: 50%;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+          font-weight: 700;
         }
 
         .add-to-favourite {
@@ -828,6 +940,54 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
         .add-to-favourite:disabled {
           cursor: default;
           opacity: 0.9;
+        }
+
+        /* Mobile favorite button - heart shape like product card */
+        .add-to-favourite-mobile {
+          width: 40px;
+          height: 40px;
+          padding: 0;
+          border: none;
+          background: none;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform 0.2s ease;
+        }
+
+        .add-to-favourite-mobile:hover {
+          transform: scale(1.05);
+        }
+
+        .add-to-favourite-mobile svg {
+          display: block;
+        }
+
+        /* Ensure desktop buttons remain unchanged */
+        @media (min-width: 768px) {
+          .action-buttons-mobile {
+            flex-direction: row;
+            gap: 16px;
+          }
+          
+          .add-to-cart-mobile,
+          .add-to-favourite-mobile {
+            display: none;
+          }
+        }
+
+        /* Mobile-specific styles */
+        @media (max-width: 767px) {
+          .add-to-cart,
+          .add-to-favourite {
+            display: none;
+          }
+
+          .action-buttons-mobile {
+            display: flex;
+            flex-direction: row;
+          }
         }
 
         .share-section {
@@ -998,7 +1158,7 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
             gap: 10px;
           }
           .action-buttons {
-            flex-direction: column;
+            flex-direction: row;
             width: 100%;
           }
           .add-to-cart,
@@ -1007,8 +1167,8 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
             max-width: 100%;
           }
           .quantity-share-container {
-            flex-direction: column;
-            align-items: flex-start;
+            flex-direction: row;
+            align-items: flex-end;
           }
           .selection-group {
           display: flex;

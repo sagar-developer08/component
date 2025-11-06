@@ -51,6 +51,7 @@ export default function BrandPage() {
   const [selectedFilters, setSelectedFilters] = useState({})
   const [debouncedFilters, setDebouncedFilters] = useState({})
   const [sortBy, setSortBy] = useState('relevance')
+  const [isMobile, setIsMobile] = useState(false)
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -60,6 +61,22 @@ export default function BrandPage() {
   const isFetchingRef = useRef(false)
   // Ref for the scrollable products container
   const productsScrollContainerRef = useRef(null)
+
+  // Check screen size for mobile detection
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Initial check
+    checkScreenSize();
+
+    // Add event listener
+    window.addEventListener('resize', checkScreenSize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   // Fetch products when component mounts
   useEffect(() => {
@@ -518,8 +535,32 @@ export default function BrandPage() {
   }, [paginationInfo])
 
   const pageNumbers = useMemo(() => {
-    return Array.from({ length: totalPages }, (_, index) => index + 1)
-  }, [totalPages])
+    // Show only 3 buttons at a time with sliding window
+    if (totalPages <= 3) {
+      // If total pages is 3 or less, show all
+      return Array.from({ length: totalPages }, (_, index) => index + 1)
+    }
+    
+    // Calculate which 3 pages to show based on current page
+    let startPage
+    
+    if (currentPage <= 2) {
+      // On page 1 or 2, show 1, 2, 3
+      startPage = 1
+    } else {
+      // On page 3 or more, show current-1, current, current+1
+      // But if we're near the end, adjust to show the last 3 pages
+      startPage = Math.min(currentPage - 1, totalPages - 2)
+    }
+    
+    // Generate the 3 page numbers
+    const pages = []
+    for (let i = 0; i < 3 && (startPage + i) <= totalPages; i++) {
+      pages.push(startPage + i)
+    }
+    
+    return pages
+  }, [totalPages, currentPage])
 
   const handlePageChangeLocal = (page) => {
     if (page < 1 || page > totalPages || page === currentPage) {
@@ -603,6 +644,17 @@ export default function BrandPage() {
                   {`${brandInfo?.name || (isStore ? 'Store' : isCategory ? 'Category' : 'Brand')} Products`}
                 </h2>
                 <div className="section-actions">
+                  {isMobile && (
+                    <button 
+                      className="filter-button-mobile"
+                      onClick={() => setFilterOpen(true)}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M2.5 5H17.5M5 10H15M7.5 15H12.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                      Filter
+                    </button>
+                  )}
                   <SortDropdown 
                     currentSort={sortBy}
                     onSortChange={handleSortChange}
@@ -617,7 +669,7 @@ export default function BrandPage() {
                 </div>
               ) : transformedProducts.length > 0 ? (
                 <div className="products-scroll-container" ref={productsScrollContainerRef}>
-                  <div className="grid-3">
+                  <div className={`grid-3 ${isMobile ? 'grid-mobile-column' : ''}`}>
                     {transformedProducts.map((product, index) => (
                       <div key={product.id || index} className="grid-item">
                         <ProductCard {...product} />
@@ -702,6 +754,91 @@ export default function BrandPage() {
         }
          .filters-sidebar::-webkit-scrollbar { display: none; }
 
+        /* Mobile styles */
+        @media (max-width: 767px) {
+          .filters-sidebar {
+            display: none;
+          }
+          .section-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+          }
+
+          .filter-button-mobile {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #0082FF;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            height: 40px;
+            min-width: 120px;
+            flex: 1;
+          }
+
+          .filter-button-mobile:hover {
+            background: #0066CC;
+          }
+
+          .filter-button-mobile svg {
+            width: 18px;
+            height: 18px;
+          }
+
+          /* Make SortDropdown button match filter button size */
+          .section-actions :global(.sort-dropdown) {
+            flex: 1;
+          }
+
+          .section-actions :global(.sort-dropdown .sort-button) {
+            height: 40px !important;
+            width: 100% !important;
+            min-width: 150px !important;
+            padding: 8px 16px !important;
+            font-size: 14px !important;
+            border-radius: 25px !important;
+          }
+
+          .grid-mobile-column {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            align-items: center;
+            width: 100%;
+            padding: 0;
+          }
+          .grid-mobile-column .grid-item { 
+            width: 100%;
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+          }
+
+          /* Center align container content in mobile with equal padding */
+          .container {
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+          }
+            .products-scroll-container{
+              padding-right: 0px !important;
+            }
+          .listing-layout {
+            padding: 0;
+          }
+
+          .content-area {
+            padding: 0;
+          }
+        }
+
         .content-area { 
           flex: 1;
           min-width: 0; /* allows flex item to shrink below content size */
@@ -761,7 +898,7 @@ export default function BrandPage() {
 
         .pagination-controls {
           display: flex;
-          justify-content: flex-end;
+          justify-content: center;
           align-items: center;
           gap: 8px;
           margin-top: 32px;

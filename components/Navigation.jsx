@@ -297,8 +297,8 @@ const Navigation = memo(function Navigation() {
                   src="/logo.png"
                   alt="QLIQ Logo"
                   width={100}
-                  height={44}
-                  style={{ aspectRatio: '49/22' }}
+                  height={60}
+                  style={{ aspectRatio: 'contain' }}
                 />
               </div>
 
@@ -450,8 +450,8 @@ const Navigation = memo(function Navigation() {
                       src="/logo.png"
                       alt="QLIQ Logo"
                       width={100}
-                      height={44}
-                      style={{ aspectRatio: '49/22' }}
+                      height={80}
+                      style={{ aspectRatio: 'contain' }}
                     />
                   </div>
                   <button className="mobile-nav-close" onClick={() => setMobileMenuOpen(false)}>
@@ -544,7 +544,6 @@ const Navigation = memo(function Navigation() {
               </div>
             </div>
           )}
-
           <style jsx>{`
         .navbar {
           position: fixed; /* changed from sticky to fixed */
@@ -576,6 +575,7 @@ const Navigation = memo(function Navigation() {
           flex-direction: column;
           align-items: flex-start;
           gap: 10px;
+          object-fit: contain;
           flex-shrink: 0;
         }
 
@@ -590,11 +590,15 @@ const Navigation = memo(function Navigation() {
 
         .mobile-menu-toggle {
           display: none;
+          flex-direction: row;
           cursor: pointer;
           transition: all 0.2s ease;
-          width: 40px;
-          height: 40px;
+          width: 32px;
+          height: 32px;
           position: relative;
+          flex-shrink: 0;
+          align-items: center;
+          justify-content: center;
         }
 
         .mobile-menu-toggle:hover {
@@ -643,7 +647,7 @@ const Navigation = memo(function Navigation() {
           display: flex;
           justify-content: center;
           align-items: center;
-          gap: 16px;
+          gap: 8px;
         }
         .badge-count {
           position: absolute;
@@ -670,8 +674,9 @@ const Navigation = memo(function Navigation() {
           gap: 8px;
           cursor: pointer;
           transition: all 0.2s ease;
-          padding: 4px 0;
+          padding: 0;
           border-radius: 8px;
+          height: 40px;
         }
         
         .location-container:hover {
@@ -682,7 +687,9 @@ const Navigation = memo(function Navigation() {
           display: flex;
           flex-direction: column;
           align-items: flex-start;
+          justify-content: center;
           max-width: 120px;
+          height: 100%;
         }
         
         .location-city {
@@ -724,6 +731,7 @@ const Navigation = memo(function Navigation() {
           width: 40px;
           height: 40px;
           position: relative;
+          flex-shrink: 0;
         }
 
         .action-btn:hover {

@@ -186,8 +186,6 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
     });
   };
 
-  if (!open) return null;
-
   const handleCheckboxToggle = (facetKey, value) => {
     if (!onChange) return
     const current = selected[facetKey] instanceof Set
@@ -210,6 +208,8 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
       return newLocal;
     });
   }, [selected]);
+
+  if (!open) return null;
 
   const handleMinSelect = (facetKey, value) => {
     if (!onChange) return
