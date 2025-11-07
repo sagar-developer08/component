@@ -683,6 +683,10 @@ const OrderHistoryPage = () => {
                   {orderData.deliveryAddress?.email || 'Email not provided'}
                 </span>
               </div>
+              <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e0e0e0' }}>
+                <span style={{ fontSize: '14px', color: '#666', fontWeight: '500' }}>Shipping Cost: </span>
+                <span style={{ fontSize: '16px', color: '#000', fontWeight: '600' }}>AED 9.00</span>
+              </div>
             </div>
           </div>
 
@@ -996,7 +1000,7 @@ const OrderHistoryPage = () => {
               <div className={styles.costItem}>
                 <span className={styles.costLabel}>Shipping</span>
                 <span className={styles.costValue}>
-                  {orderData.shippingCost === 0 ? 'FREE' : `${'AED'} ${orderData.shippingCost}`}
+                  AED 9.00
                 </span>
               </div>
               {/* {getItemsTax(orderData) > 0 && (
@@ -1011,17 +1015,56 @@ const OrderHistoryPage = () => {
                   <span className={styles.costValue}>{'AED'} {getItemsVat(orderData)}</span>
                 </div>
               )}
-              {orderData.discount !== undefined && orderData.discount !== null && (
-                <div className={styles.costItem}>
-                  <span className={styles.costLabel}>Discount</span>
-                  <span className={`${styles.costValue}`}>
-                    {orderData.discount > 0 ? '-' : ''} {"AED"} {Number(orderData.discount).toFixed(2)}
-                  </span>
-                </div>
+              {/* Discount Breakdown */}
+              {((orderData.couponDiscountAmount && orderData.couponDiscountAmount > 0) || 
+                (orderData.qoynsDiscountAmount && orderData.qoynsDiscountAmount > 0) || 
+                (orderData.discount !== undefined && orderData.discount !== null && orderData.discount > 0)) && (
+                <>
+                  {orderData.couponDiscountAmount && orderData.couponDiscountAmount > 0 && (
+                    <div className={styles.costItem}>
+                      <span className={styles.costLabel}>
+                        Coupon Discount {orderData.couponCode ? `(${orderData.couponCode})` : ''}
+                        {orderData.couponDiscountPercentage ? ` - ${orderData.couponDiscountPercentage}%` : ''}
+                      </span>
+                      <span className={styles.costValue} style={{ color: '#4CAF50' }}>
+                        - {"AED"} {Number(orderData.couponDiscountAmount).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {orderData.qoynsDiscountAmount && orderData.qoynsDiscountAmount > 0 && (
+                    <div className={styles.costItem}>
+                      <span className={styles.costLabel}>
+                        Qoyns Discount {orderData.qoynsUsed ? `(${Number(orderData.qoynsUsed).toLocaleString()} Qoyns)` : ''}
+                      </span>
+                      <span className={styles.costValue} style={{ color: '#4CAF50' }}>
+                        - {"AED"} {Number(orderData.qoynsDiscountAmount).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {orderData.discount !== undefined && orderData.discount !== null && orderData.discount > 0 && 
+                   !((orderData.couponDiscountAmount && orderData.couponDiscountAmount > 0) || 
+                     (orderData.qoynsDiscountAmount && orderData.qoynsDiscountAmount > 0)) && (
+                    <div className={styles.costItem}>
+                      <span className={styles.costLabel}>Discount</span>
+                      <span className={styles.costValue} style={{ color: '#4CAF50' }}>
+                        - {"AED"} {Number(orderData.discount).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
               <div className={`${styles.costItem} ${styles.totalItem}`}>
                 <span className={styles.costLabel}>Order Total</span>
-                <span className={styles.totalValue}>{'AED'} {Number(getItemsSubtotal(orderData) + getItemsVat(orderData) ).toFixed(2)}</span>
+                <span className={styles.totalValue}>
+                  {'AED'} {orderData.totalAmount ? (Number(orderData.totalAmount) + 9).toFixed(2) : 
+                    Number(
+                      getItemsSubtotal(orderData) + 
+                      getItemsVat(orderData) + 
+                      9 - 
+                      (orderData.discount || 0)
+                    ).toFixed(2)
+                  }
+                </span>
               </div>
             </div>
 

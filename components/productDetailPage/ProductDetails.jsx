@@ -399,7 +399,7 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
                   disabled={isAddedToCart || isInCart}
                 >
                   {(isAddedToCart || isInCart) ? 'Added To Cart' : 'Add To Cart'}
-                  {cartQuantity > 0 && <span className="quantity-badge-mobile">{cartQuantity}</span>}
+                  {/* {cartQuantity > 0 && <span className="quantity-badge-mobile">{cartQuantity}</span>} */}
                 </button>
                 <button
                   className={`add-to-favourite-mobile ${(isAddedToWishlist || isInWishlist) ? 'added' : ''}`}
@@ -446,7 +446,7 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
           </div>
 
           {/* Promo Cards - Two in one row */}
-          <div className="promo-cards-row">
+          {/* <div className="promo-cards-row">
             {isMobile ? (
               <div className="promo-cards-swiper-wrapper">
                 <Swiper
@@ -504,7 +504,7 @@ export default function ProductDetails({ product, variants = [], selectedAttribu
                 </div>
               </>
             )}
-          </div>
+          </div> */}
 
           {/* Additional Info */}
           <div className="additional-info">
