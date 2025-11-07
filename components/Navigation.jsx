@@ -292,7 +292,7 @@ const Navigation = memo(function Navigation() {
         <div className="navbar" ref={navRef}>
           <div className="container">
             <div className="navbar-content">
-              <div className="logo">
+              <div className="logo" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
                 <Image
                   src="/logo.png"
                   alt="QLIQ Logo"
@@ -445,7 +445,10 @@ const Navigation = memo(function Navigation() {
             <div className="mobile-nav-overlay" onClick={() => setMobileMenuOpen(false)}>
               <div className="mobile-nav-content" onClick={(e) => e.stopPropagation()}>
                 <div className="mobile-nav-header">
-                  <div className="logo">
+                  <div className="logo" onClick={() => {
+                    router.push('/')
+                    setMobileMenuOpen(false)
+                  }} style={{ cursor: 'pointer' }}>
                     <Image
                       src="/logo.png"
                       alt="QLIQ Logo"

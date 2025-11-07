@@ -88,9 +88,66 @@ export default function BrandPage() {
     const fetchFilterData = async () => {
       console.log('Fetching filter data for:', { slug, categoryLevel, storeId, selectedFilters })
       if (categoryLevel && slug) {
-        // Fetch category filters
+        // Fetch category filters with selected filters for accurate counts
         try {
-          const response = await fetch(search.categoryFilters(slug, categoryLevel))
+          // Build filter params for the category filters API
+          const filterParams = new URLSearchParams()
+          
+          // Price filter
+          if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
+            filterParams.append('min_price', selectedFilters.price.min)
+          }
+          if (selectedFilters.price?.max !== undefined && selectedFilters.price?.max !== '') {
+            filterParams.append('max_price', selectedFilters.price.max)
+          }
+          
+          // Availability filter
+          if (selectedFilters.availability instanceof Set) {
+            if (selectedFilters.availability.has('in') && !selectedFilters.availability.has('out')) {
+              filterParams.append('in_stock', 'true')
+            } else if (selectedFilters.availability.has('out') && !selectedFilters.availability.has('in')) {
+              filterParams.append('in_stock', 'false')
+            }
+          }
+          
+          // Rating filter
+          if (typeof selectedFilters.rating === 'number') {
+            filterParams.append('min_rating', selectedFilters.rating)
+          }
+          
+          // Brand filter (multiple)
+          if (selectedFilters.brand instanceof Set && selectedFilters.brand.size > 0) {
+            Array.from(selectedFilters.brand).forEach(b => filterParams.append('brand_id', b))
+          }
+          
+          // Store filter (multiple)
+          if (selectedFilters.store instanceof Set && selectedFilters.store.size > 0) {
+            Array.from(selectedFilters.store).forEach(s => filterParams.append('store_id', s))
+          }
+          
+          // Dynamic attribute filters (attr.*)
+          Object.keys(selectedFilters).forEach(key => {
+            if (key.startsWith('attr.')) {
+              const attrKey = key.substring(5)
+              const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+              values.forEach(v => filterParams.append(`attr_${attrKey}`, v))
+            }
+          })
+          
+          // Dynamic specification filters (spec.*)
+          Object.keys(selectedFilters).forEach(key => {
+            if (key.startsWith('spec.')) {
+              const specKey = key.substring(5)
+              const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+              values.forEach(v => filterParams.append(`spec_${specKey}`, v))
+            }
+          })
+          
+          const url = filterParams.toString() 
+            ? `${search.categoryFilters(slug, categoryLevel)}&${filterParams.toString()}`
+            : search.categoryFilters(slug, categoryLevel)
+          
+          const response = await fetch(url)
           if (response.ok) {
             const data = await response.json()
             console.log('Category Filter API Response:', data)
@@ -383,7 +440,7 @@ export default function BrandPage() {
             
             // Fetch category products with filters
             const url = params.toString() 
-              ? `${catalog.productsByLevel4Category(slug)}${params.toString() ? '&' + params.toString() : ''}`
+              ? `${catalog.productsByLevel4Category(slug)}?${params.toString()}`
               : catalog.productsByLevel4Category(slug)
             
             const response = await fetch(url)

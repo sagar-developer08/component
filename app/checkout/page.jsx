@@ -241,7 +241,8 @@ export default function CheckoutPage() {
   const vatRate = getVatRate();
   // Calculate VAT on subtotal after both coupon and Qoyns discounts
   const vatAmount = subtotalAfterDiscounts * vatRate;
-  const finalTotal = subtotalAfterDiscounts + vatAmount;
+  const shippingCost = 9; // Static shipping cost
+  const finalTotal = subtotalAfterDiscounts + vatAmount + shippingCost;
   
   // Use the calculated final total (subtotal after discounts + VAT)
   const actualTotal = finalTotal;
@@ -427,7 +428,7 @@ export default function CheckoutPage() {
       total: actualTotal,
       subtotal: subtotal,
       vat: vatAmount,
-      shipping: 0,
+      shipping: 9,
       discount: qoynsDiscountAmount + couponDiscountAmount,
       couponCode: appliedCoupon ? appliedCoupon.discountCode : null
     }
@@ -456,7 +457,7 @@ export default function CheckoutPage() {
       total: actualTotal,
       subtotal: subtotal,
       vat: vatAmount,
-      shipping: 0,
+      shipping: 9,
       discount: qoynsDiscountAmount + couponDiscountAmount,
       couponCode: appliedCoupon ? appliedCoupon.discountCode : null
     }
@@ -1487,11 +1488,11 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               )}
-              {appliedCoupon && (
+              {/* {appliedCoupon && (
                 <div className={styles.couponDiscountInfo}>
                   <span>Coupon {appliedCoupon.discountCode} ({appliedCoupon.customerDiscountPercentage}% off) applied: -AED {couponDiscountAmount.toFixed(2)}</span>
                 </div>
-              )}
+              )} */}
               {/* Totals */}
               {cartItems.length > 0 && (
                 <div className={styles.orderTotals}>
@@ -1521,7 +1522,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className={styles.totalRow}>
                     <span>Shipping</span>
-                    <span>FREE</span>
+                    <span>AED 9.00</span>
                   </div>
                   <div className={styles.totalRowFinal}>
                     <span>Order Total</span>

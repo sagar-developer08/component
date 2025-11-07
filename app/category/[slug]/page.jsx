@@ -73,34 +73,6 @@ const transformCategoryData = (apiCategory) => {
   }
 }
 
-// Static category data for fallback
-const categoryData = [
-  {
-    name: "Pet Supplies",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/b96c7d3062a93a3b6d8e9a2a4bd11acfa542dced?width=412"
-  },
-  {
-    name: "Health n Beauty",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/81e3ee1beeaa2c8941600c27d3ec9733bac0869c?width=412"
-  },
-  {
-    name: "Books",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/5839901b9e3641626fef47388dc1036c852a0aa5?width=412"
-  },
-  {
-    name: "Computers",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/4a25e8a2b689f4d8cf2f809de9e46f2c26c36d46?width=412"
-  },
-  {
-    name: "Electronics",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/bb3de20fdb53760293d946ca033adbf4489bed56?width=412"
-  },
-  {
-    name: "Home Appliances",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/f291940d1feaf8e5cb0a7335f629e12091d26a73?width=412"
-  }
-]
-
 // Static product data for fallback
 const productData = [
   {
@@ -145,12 +117,29 @@ export default function CategoryPage() {
 
   const { categoryChildren, loading, error } = useSelector(state => state.categories)
   const [categoryInfo, setCategoryInfo] = useState(null)
+  const [isMobile, setIsMobile] = useState(false)
 
   // Swiper refs
   const bestsellersSwiperRef = useRef(null)
   const offersSwiperRef = useRef(null)
   const newArrivalsSwiperRef = useRef(null)
   const otherCategoriesSwiperRef = useRef(null)
+
+  // Check screen size for mobile detection
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    // Initial check
+    checkScreenSize()
+
+    // Add event listener
+    window.addEventListener('resize', checkScreenSize)
+
+    // Cleanup
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
 
   // Fetch category children when component mounts or slug changes
   useEffect(() => {
@@ -170,7 +159,7 @@ export default function CategoryPage() {
   const transformedBestsellers = categoryChildren?.data?.products?.bestsellers?.map(transformProductData) || productData
   const transformedOffers = categoryChildren?.data?.products?.offers?.map(transformProductData) || productData
   const transformedNewArrivals = categoryChildren?.data?.products?.newArrivals?.map(transformProductData) || productData
-  const transformedCategories = categoryChildren?.data?.level4Categories?.map(transformCategoryData) || categoryData
+  const transformedCategories = categoryChildren?.data?.level4Categories?.map(transformCategoryData) || []
 
   const handleBack = () => {
     router.push('/')
@@ -287,17 +276,17 @@ export default function CategoryPage() {
              <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
                Error loading categories: {error}
              </div>
-          ) : (transformedCategories.length > 0 || categoryData.length > 0) ? (
+          ) : transformedCategories.length > 0 ? (
             <Swiper
               ref={otherCategoriesSwiperRef}
               modules={[SwiperNavigation]}
-              slidesPerView="auto"
-              spaceBetween={24}
+              slidesPerView={isMobile ? 2.08 : 'auto'}
+              spaceBetween={isMobile ? 12 : 24}
               grabCursor={true}
               freeMode={true}
-              style={{ width: '1360px' }}
+              className="other-categories-swiper"
             >
-              {(transformedCategories.length > 0 ? transformedCategories : categoryData).map((category, index) => (
+              {transformedCategories.map((category, index) => (
                 <SwiperSlide key={category.name || index} style={{ width: 'auto' }}>
                   <CategoryCard {...category} onClick={() => handleCategoryClick(category)} />
                 </SwiperSlide>
@@ -305,7 +294,7 @@ export default function CategoryPage() {
             </Swiper>
           ) : (
             <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-              No categories available at the moment.
+              No categories to Display
             </div>
           )}
         </div>

@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function Footer() {
+  const router = useRouter()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
 
@@ -20,7 +22,7 @@ export default function Footer() {
         {/* Top Section - Branding and Newsletter */}
         <div className="footer-top">
           <div className="footer-branding">
-            <div className="footer-logo">
+            <div className="footer-logo" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
               <span className="logo-text">QLIQ</span>
             </div>
             <p className="footer-description">
