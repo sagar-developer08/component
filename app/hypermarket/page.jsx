@@ -2,6 +2,7 @@
 
 import Navigation from '@/components/Navigation'
 import Categories from '@/components/Categories'
+import HypermarketCard from '@/components/hypermarketcard'
 import ImageSlider from '@/components/ImageSlider'
 import ProductCard from '@/components/ProductCard'
 import StoreCard from '@/components/StoreCard'
@@ -173,24 +174,24 @@ export default function Home() {
       <Navigation />
       {/* <QuickNav /> */}
 
-      <Categories />
+      <HypermarketCard />
 
       {/* Fastest Delivery */}
       <section className="section">
         <div className="container">
-          <SectionHeader 
-            title="Fastest Delivery" 
+          <SectionHeader
+            title="Fastest Delivery"
             showNavigation={true}
             onPrev={handleFastestDeliveryPrev}
             onNext={handleFastestDeliveryNext}
           />
-          {categoryProductsLoading ? (
+          {loading && (!hypermarketStores || hypermarketStores.length === 0) ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
               {productData.map((product, index) => (
-                <ProductCard key={index} {...product} />
+                <StoreCard key={`skeleton-${index}`} {...product} />
               ))}
             </div>
-          ) : transformedCategoryProducts.length > 0 ? (
+          ) : (hypermarketStores && hypermarketStores.length > 0) ? (
             <Swiper
               ref={fastestDeliverySwiperRef}
               modules={[SwiperNavigation]}
@@ -200,66 +201,192 @@ export default function Home() {
               freeMode={true}
               className="bestsellers-swiper"
             >
-              {transformedCategoryProducts.map((product, index) => (
-                <SwiperSlide key={product.id || index} className="bestseller-slide">
-                  <ProductCard {...product} />
+              {hypermarketStores.map((store, index) => (
+                <SwiperSlide key={store._id || store.id || `store-${index}`} className="bestseller-slide">
+                  <StoreCard
+                    id={store._id || store.id}
+                    title={store.name || 'Store'}
+                    category={store.category?.name || store.category || 'General'}
+                    rating={store.rating || '4.0'}
+                    deliveryTime={store.deliveryTime || '30 Min'}
+                    image='/iphone.jpg'
+                    location={(store.address && store.address.city) || 'Dubai, UAE'}
+                    onClick={() => {
+                      const slug = store.slug || store.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                      router.push(`/${slug}?storeId=${store._id || store.id}`);
+                    }}
+                  />
                 </SwiperSlide>
               ))}
             </Swiper>
           ) : (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
               {productData.map((product, index) => (
-                <ProductCard key={index} {...product} />
+                <StoreCard key={index} {...product} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+      {/* Best & Cheap Deals */}
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="Best & Cheap Deals"
+            showNavigation={true}
+            onPrev={handleFastestDeliveryPrev}
+            onNext={handleFastestDeliveryNext}
+          />
+          {loading && (!hypermarketStores || hypermarketStores.length === 0) ? (
+            <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {productData.map((product, index) => (
+                <StoreCard key={`skeleton-${index}`} {...product} />
+              ))}
+            </div>
+          ) : (hypermarketStores && hypermarketStores.length > 0) ? (
+            <Swiper
+              ref={fastestDeliverySwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView={isMobile ? 1.2 : 'auto'}
+              spaceBetween={isMobile ? 16 : 24}
+              grabCursor={true}
+              freeMode={true}
+              className="bestsellers-swiper"
+            >
+              {hypermarketStores.map((store, index) => (
+                <SwiperSlide key={store._id || store.id || `store-${index}`} className="bestseller-slide">
+                  <StoreCard
+                    id={store._id || store.id}
+                    title={store.name || 'Store'}
+                    category={store.category?.name || store.category || 'General'}
+                    rating={store.rating || '4.0'}
+                    deliveryTime={store.deliveryTime || '30 Min'}
+                    image='/iphone.jpg'
+                    location={(store.address && store.address.city) || 'Dubai, UAE'}
+                    onClick={() => {
+                      const slug = store.slug || store.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                      router.push(`/${slug}?storeId=${store._id || store.id}`);
+                    }}
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {productData.map((product, index) => (
+                <StoreCard key={index} {...product} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+      {/* Best Bundles Deals */}
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="Best Bundles Deals"
+            showNavigation={true}
+            onPrev={handleFastestDeliveryPrev}
+            onNext={handleFastestDeliveryNext}
+          />
+          {loading && (!hypermarketStores || hypermarketStores.length === 0) ? (
+            <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {productData.map((product, index) => (
+                <StoreCard key={`skeleton-${index}`} {...product} />
+              ))}
+            </div>
+          ) : (hypermarketStores && hypermarketStores.length > 0) ? (
+            <Swiper
+              ref={fastestDeliverySwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView={isMobile ? 1.2 : 'auto'}
+              spaceBetween={isMobile ? 16 : 24}
+              grabCursor={true}
+              freeMode={true}
+              className="bestsellers-swiper"
+            >
+              {hypermarketStores.map((store, index) => (
+                <SwiperSlide key={store._id || store.id || `store-${index}`} className="bestseller-slide">
+                  <StoreCard
+                    id={store._id || store.id}
+                    title={store.name || 'Store'}
+                    category={store.category?.name || store.category || 'General'}
+                    rating={store.rating || '4.0'}
+                    deliveryTime={store.deliveryTime || '30 Min'}
+                    image='/iphone.jpg'
+                    location={(store.address && store.address.city) || 'Dubai, UAE'}
+                    onClick={() => {
+                      const slug = store.slug || store.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                      router.push(`/${slug}?storeId=${store._id || store.id}`);
+                    }}
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {productData.map((product, index) => (
+                <StoreCard key={index} {...product} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+      {/* Best Cashback */}
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="Best Cashback"
+            showNavigation={true}
+            onPrev={handleFastestDeliveryPrev}
+            onNext={handleFastestDeliveryNext}
+          />
+          {loading && (!hypermarketStores || hypermarketStores.length === 0) ? (
+            <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {productData.map((product, index) => (
+                <StoreCard key={`skeleton-${index}`} {...product} />
+              ))}
+            </div>
+          ) : (hypermarketStores && hypermarketStores.length > 0) ? (
+            <Swiper
+              ref={fastestDeliverySwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView={isMobile ? 1.2 : 'auto'}
+              spaceBetween={isMobile ? 16 : 24}
+              grabCursor={true}
+              freeMode={true}
+              className="bestsellers-swiper"
+            >
+              {hypermarketStores.map((store, index) => (
+                <SwiperSlide key={store._id || store.id || `store-${index}`} className="bestseller-slide">
+                  <StoreCard
+                    id={store._id || store.id}
+                    title={store.name || 'Store'}
+                    category={store.category?.name || store.category || 'General'}
+                    rating={store.rating || '4.0'}
+                    deliveryTime={store.deliveryTime || '30 Min'}
+                    image='/iphone.jpg'
+                    location={(store.address && store.address.city) || 'Dubai, UAE'}
+                    onClick={() => {
+                      const slug = store.slug || store.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                      router.push(`/${slug}?storeId=${store._id || store.id}`);
+                    }}
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {productData.map((product, index) => (
+                <StoreCard key={index} {...product} />
               ))}
             </div>
           )}
         </div>
       </section>
 
-
-      {/* Fastest Delivery */}
-
-      <section className="section">
-        <div className="container">
-          <SectionHeader
-            title="Hypermarket"
-            showNavigation={false}
-            showButton={false}
-            buttonText="Filter"
-            onButtonClick={() => setFilterOpen(true)}
-          />
-          {error && (
-            <div style={{ margin: '16px 0', color: 'red' }}>{error}</div>
-          )}
-          <div className="stores-grid">
-            {(loading && (!hypermarketStores || hypermarketStores.length === 0)) ? (
-              productData.map((product, index) => (
-                <StoreCard key={`skeleton-${index}`} {...product} />
-              ))
-            ) : (
-              (hypermarketStores || []).map((store, index) => (
-                <StoreCard
-                  key={store._id || store.id || `store-${index}`}
-                  id={store._id || store.id}
-                  title={store.name || 'Store'}
-                  category={store.category?.name || store.category || 'General'}
-                  rating={store.rating || '4.0'}
-                  deliveryTime={store.deliveryTime || '30 Min'}
-                  image= '/iphone.jpg'
-                  location={(store.address && store.address.city) || 'Dubai, UAE'}
-                  onClick={() => {
-                    const slug = store.slug || store.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                    router.push(`/${slug}?storeId=${store._id || store.id}`);
-                  }}
-                />
-              ))
-            )}
-          </div>
-        </div>
-      </section>
-
-      <FilterDrawer 
-        open={filterOpen} 
+      <FilterDrawer
+        open={filterOpen}
         onClose={() => setFilterOpen(false)}
         facets={facets}
         selected={selectedFilters}
