@@ -41,6 +41,41 @@ import { faHome, faBriefcase, faMapMarkerAlt, faCheck, faPlus, faEdit, faTrash }
 import { useToast } from '@/contexts/ToastContext'
 import styles from './checkout.module.css'
 
+const GOOGLE_API_KEY = 'AIzaSyBOtUcOe4ht6vrX4BIQFubL1ei3LyRSf-w'
+
+// Get coordinates from address using Google Geocoding API
+const getCoordinatesFromAddress = async (addressData) => {
+  try {
+    const addressString = [
+      addressData.addressLine1,
+      addressData.addressLine2,
+      addressData.city,
+      addressData.state,
+      addressData.postalCode,
+      addressData.country
+    ].filter(Boolean).join(', ')
+    
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressString)}&key=${GOOGLE_API_KEY}`
+    )
+    
+    const data = await response.json()
+    
+    if (data.status === 'OK' && data.results && data.results.length > 0) {
+      const location = data.results[0].geometry.location
+      return {
+        latitude: location.lat,
+        longitude: location.lng
+      }
+    }
+    
+    return null
+  } catch (error) {
+    console.error('Error getting coordinates:', error)
+    return null
+  }
+}
+
 export default function CheckoutPage() {
   const dispatch = useDispatch()
   const { show: showToast } = useToast()
@@ -62,6 +97,11 @@ export default function CheckoutPage() {
   
   // Selected coupon state
   const [selectedCouponId, setSelectedCouponId] = useState('')
+
+  // Shipping methods state
+  const [shippingMethods, setShippingMethods] = useState([])
+  const [selectedShippingMethod, setSelectedShippingMethod] = useState(null)
+  const [loadingShippingMethods, setLoadingShippingMethods] = useState(false)
 
   // Cart state
   const { items: cartItems, total: cartTotal, loading: cartLoading } = useSelector(state => state.cart)
@@ -241,7 +281,8 @@ export default function CheckoutPage() {
   const vatRate = getVatRate();
   // Calculate VAT on subtotal after both coupon and Qoyns discounts
   const vatAmount = subtotalAfterDiscounts * vatRate;
-  const shippingCost = 9; // Static shipping cost
+  // Get shipping cost from selected shipping method (from Jibly API)
+  const shippingCost = selectedShippingMethod?.cost || selectedShippingMethod?.shippingMethodCost || 9; // Default to 9 if no method selected
   const finalTotal = subtotalAfterDiscounts + vatAmount + shippingCost;
   
   // Use the calculated final total (subtotal after discounts + VAT)
@@ -332,6 +373,71 @@ export default function CheckoutPage() {
       dispatch(setSelectedAddress(defaultAddr || displayAddresses[0]))
     }
   }, [displayAddresses, selectedAddress, dispatch])
+
+  // Fetch shipping methods when address is selected
+  useEffect(() => {
+    const fetchShippingMethods = async () => {
+      if (!selectedAddress || !selectedAddress.latitude || !selectedAddress.longitude) {
+        setShippingMethods([])
+        setSelectedShippingMethod(null)
+        return
+      }
+
+      setLoadingShippingMethods(true)
+      try {
+        const { delivery } = await import('@/store/api/endpoints')
+        const params = new URLSearchParams({
+          latitude: selectedAddress.latitude.toString(),
+          longitude: selectedAddress.longitude.toString(),
+          ...(selectedAddress.city && { city: selectedAddress.city }),
+          ...(selectedAddress.state && { state: selectedAddress.state }),
+          ...(selectedAddress.country && { country: selectedAddress.country }),
+          ...(selectedAddress.postalCode && { postalCode: selectedAddress.postalCode })
+        })
+
+        const token = await getAuthToken()
+        const response = await fetch(`${delivery.getShippingMethods}?${params.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch shipping methods')
+        }
+
+        const data = await response.json()
+        const methods = data.data?.shippingMethods || []
+        setShippingMethods(methods)
+
+        // Auto-select first method if available
+        if (methods.length > 0 && !selectedShippingMethod) {
+          setSelectedShippingMethod(methods[0])
+        }
+      } catch (error) {
+        console.error('Error fetching shipping methods:', error)
+        showToast('Failed to load shipping methods', 'error')
+        // Fallback to default shipping method
+        setShippingMethods([{
+          id: 'standard',
+          name: 'Standard',
+          deliveryTime: '3 - 5 Days',
+          cost: 9
+        }])
+        setSelectedShippingMethod({
+          id: 'standard',
+          name: 'Standard',
+          deliveryTime: '3 - 5 Days',
+          cost: 9
+        })
+      } finally {
+        setLoadingShippingMethods(false)
+      }
+    }
+
+    fetchShippingMethods()
+  }, [selectedAddress, showToast])
   
   // Clear validation error when address is selected
   useEffect(() => {
@@ -395,11 +501,31 @@ export default function CheckoutPage() {
 
   const handleAddressSubmit = async (e) => {
     e.preventDefault()
-    const result = await dispatch(createAddress(addressForm))
+    
+    try {
+      // Get coordinates from address
+      const coordinates = await getCoordinatesFromAddress(addressForm)
+      
+      // Prepare address data with coordinates (only if coordinates exist)
+      const addressData = {
+        ...addressForm
+      }
+      
+      // Only add coordinates if they exist
+      if (coordinates && coordinates.latitude && coordinates.longitude) {
+        addressData.latitude = coordinates.latitude
+        addressData.longitude = coordinates.longitude
+      }
 
-    // Refetch addresses to ensure we have the latest data
-    if (createAddress.fulfilled.match(result)) {
-      await dispatch(fetchUserAddresses())
+      const result = await dispatch(createAddress(addressData))
+
+      // Refetch addresses to ensure we have the latest data
+      if (createAddress.fulfilled.match(result)) {
+        await dispatch(fetchUserAddresses())
+      }
+    } catch (error) {
+      console.error('Error submitting address:', error)
+      showToast('Failed to save address. Please try again.', 'error')
     }
   }
 
@@ -428,9 +554,14 @@ export default function CheckoutPage() {
       total: actualTotal,
       subtotal: subtotal,
       vat: vatAmount,
-      shipping: 9,
+      shipping: shippingCost,
       discount: qoynsDiscountAmount + couponDiscountAmount,
-      couponCode: appliedCoupon ? appliedCoupon.discountCode : null
+      couponCode: appliedCoupon ? appliedCoupon.discountCode : null,
+      // Shipping method information (from Jibly API)
+      shippingMethod: selectedShippingMethod?.id || selectedShippingMethod?.methodId,
+      shippingMethodName: selectedShippingMethod?.name || selectedShippingMethod?.methodName,
+      shippingMethodTime: selectedShippingMethod?.deliveryTime || selectedShippingMethod?.estimatedDelivery || selectedShippingMethod?.time,
+      shippingMethodCost: shippingCost
     }
 
     dispatch(createStripePaymentIntent(orderData))
@@ -457,9 +588,14 @@ export default function CheckoutPage() {
       total: actualTotal,
       subtotal: subtotal,
       vat: vatAmount,
-      shipping: 9,
+      shipping: shippingCost,
       discount: qoynsDiscountAmount + couponDiscountAmount,
-      couponCode: appliedCoupon ? appliedCoupon.discountCode : null
+      couponCode: appliedCoupon ? appliedCoupon.discountCode : null,
+      // Shipping method information (from Jibly API)
+      shippingMethod: selectedShippingMethod?.id || selectedShippingMethod?.methodId,
+      shippingMethodName: selectedShippingMethod?.name || selectedShippingMethod?.methodName,
+      shippingMethodTime: selectedShippingMethod?.deliveryTime || selectedShippingMethod?.estimatedDelivery || selectedShippingMethod?.time,
+      shippingMethodCost: shippingCost
     }
 
     dispatch(placeOrder(orderData))
@@ -1299,10 +1435,49 @@ export default function CheckoutPage() {
             {/* Shipping Method */}
             <div className={styles.section}>
               <div className={styles.sectionHeader}>Shipping Method</div>
-              <div className={styles.shippingMethodCard}>
-                <span>Standard</span>
-                <span className={styles.shippingTime}>3 - 5 Days</span>
-              </div>
+              {loadingShippingMethods ? (
+                <div className={styles.shippingMethodCard}>
+                  <span>Loading shipping methods...</span>
+                </div>
+              ) : shippingMethods.length > 0 ? (
+                <div className={styles.shippingMethodsList}>
+                  {shippingMethods.map((method) => (
+                    <div
+                      key={method.id || method.name}
+                      className={`${styles.shippingMethodCard} ${
+                        selectedShippingMethod?.id === method.id || 
+                        selectedShippingMethod?.name === method.name 
+                          ? styles.shippingMethodSelected 
+                          : ''
+                      }`}
+                      onClick={() => setSelectedShippingMethod(method)}
+                      style={{ cursor: 'pointer', marginBottom: '8px' }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <div>
+                          <span style={{ fontWeight: 600 }}>{method.name || method.methodName || 'Standard'}</span>
+                          {method.cost && (
+                            <span style={{ marginLeft: '8px', color: '#666', fontSize: '14px' }}>
+                              (AED {method.cost})
+                            </span>
+                          )}
+                        </div>
+                        <span className={styles.shippingTime}>
+                          {method.deliveryTime || method.estimatedDelivery || method.time || '3 - 5 Days'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : selectedAddress ? (
+                <div className={styles.shippingMethodCard}>
+                  <span>No shipping methods available</span>
+                </div>
+              ) : (
+                <div className={styles.shippingMethodCard}>
+                  <span>Please select an address to see shipping methods</span>
+                </div>
+              )}
             </div>
 
             {/* Payment Method */}
@@ -1522,7 +1697,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className={styles.totalRow}>
                     <span>Shipping</span>
-                    <span>AED 9.00</span>
+                    <span>AED {shippingCost.toFixed(2)}</span>
                   </div>
                   <div className={styles.totalRowFinal}>
                     <span>Order Total</span>

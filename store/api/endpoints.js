@@ -7,6 +7,7 @@ export const BASES = {
   auth: process.env.NEXT_PUBLIC_AUTH_BASE_URL || 'https://backendauth.qliq.ae/api',
   cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'http://localhost:8084/api',
   payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'https://backendcart.qliq.ae/api',
+  delivery: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'https://backendcart.qliq.ae/api', // Same as payment service
   upload: process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || 'http://localhost:5005/api',
   review: process.env.NEXT_PUBLIC_REVIEW_BASE_URL || 'http://localhost:8008/api',
   subscription: process.env.NEXT_PUBLIC_SUBSCRIPTION_BASE_URL || 'https://backendamp.qliq.ae/api',
@@ -160,6 +161,11 @@ export const wallet = {
   validateRedemption: `${BASES.wallet}/wallet/qoyn/validate-redemption`,
 }
 
-export default { catalog, search, auth, cart, addresses, orders, upload, review, subscription, wallet }
+export const delivery = {
+  base: BASES.delivery,
+  getShippingMethods: `${BASES.delivery}/delivery/shipping/methods`,
+}
+
+export default { catalog, search, auth, cart, addresses, orders, upload, review, subscription, wallet, delivery }
 
 

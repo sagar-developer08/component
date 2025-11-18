@@ -129,6 +129,38 @@ export default function NewAddress({ onCancel, onSave }) {
         isDefault: false
       }
 
+      // Get coordinates from address using Google Geocoding API
+      const GOOGLE_API_KEY = 'AIzaSyBOtUcOe4ht6vrX4BIQFubL1ei3LyRSf-w'
+      try {
+        const addressString = [
+          addressData.addressLine1,
+          addressData.addressLine2,
+          addressData.city,
+          addressData.state,
+          addressData.postalCode,
+          addressData.country
+        ].filter(Boolean).join(', ')
+        
+        if (addressString) {
+          const response = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressString)}&key=${GOOGLE_API_KEY}`
+          )
+          
+          const data = await response.json()
+          
+          if (data.status === 'OK' && data.results && data.results.length > 0) {
+            const location = data.results[0].geometry.location
+            if (location && location.lat && location.lng) {
+              addressData.latitude = location.lat
+              addressData.longitude = location.lng
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error getting coordinates:', error)
+        // Continue without coordinates - address will be saved without lat/long
+      }
+
       const result = await dispatch(createAddress(addressData))
       
       if (createAddress.fulfilled.match(result)) {
