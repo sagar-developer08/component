@@ -41,7 +41,44 @@ import { faHome, faBriefcase, faMapMarkerAlt, faCheck, faPlus, faEdit, faTrash }
 import { useToast } from '@/contexts/ToastContext'
 import styles from './checkout.module.css'
 
-const GOOGLE_API_KEY = 'AIzaSyBOtUcOe4ht6vrX4BIQFubL1ei3LyRSf-w'
+const GOOGLE_API_KEY = ''
+
+// Load Google Maps API with Places library
+const loadGoogleMaps = () => {
+  return new Promise((resolve, reject) => {
+    // Check if Google Maps is already loaded
+    if (window.google && window.google.maps && window.google.maps.places) {
+      resolve()
+      return
+    }
+
+    // Check if script is already being loaded
+    const existingScript = document.querySelector(`script[src*="maps.googleapis.com"]`)
+    if (existingScript) {
+      const checkLoaded = setInterval(() => {
+        if (window.google && window.google.maps && window.google.maps.places) {
+          clearInterval(checkLoaded)
+          resolve()
+        }
+      }, 100)
+      return
+    }
+
+    // Load Google Maps script
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_API_KEY}&libraries=places`
+    script.async = true
+    script.defer = true
+    script.onload = () => {
+      resolve()
+    }
+    script.onerror = () => {
+      console.error('Failed to load Google Maps')
+      reject(new Error('Failed to load Google Maps'))
+    }
+    document.head.appendChild(script)
+  })
+}
 
 // Get coordinates from address using Google Geocoding API
 const getCoordinatesFromAddress = async (addressData) => {
@@ -76,6 +113,65 @@ const getCoordinatesFromAddress = async (addressData) => {
   }
 }
 
+// Get address from coordinates using Google Places API (Reverse Geocoding)
+const getAddressFromCoordinates = async (latitude, longitude) => {
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`
+    )
+    
+    const data = await response.json()
+    
+    if (data.status === 'OK' && data.results && data.results.length > 0) {
+      const result = data.results[0]
+      const addressComponents = result.address_components
+      
+      let addressData = {
+        addressLine1: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: ''
+      }
+      
+      // Extract address components
+      addressComponents.forEach(component => {
+        const types = component.types
+        
+        if (types.includes('street_number') || types.includes('route')) {
+          if (types.includes('street_number')) {
+            addressData.addressLine1 = component.long_name
+          } else if (types.includes('route')) {
+            addressData.addressLine1 = addressData.addressLine1 
+              ? `${addressData.addressLine1} ${component.long_name}` 
+              : component.long_name
+          }
+        } else if (types.includes('locality')) {
+          addressData.city = component.long_name
+        } else if (types.includes('administrative_area_level_1')) {
+          addressData.state = component.long_name
+        } else if (types.includes('postal_code')) {
+          addressData.postalCode = component.long_name
+        } else if (types.includes('country')) {
+          addressData.country = component.short_name
+        }
+      })
+      
+      // If addressLine1 is empty, use formatted address
+      if (!addressData.addressLine1 && result.formatted_address) {
+        addressData.addressLine1 = result.formatted_address.split(',')[0]
+      }
+      
+      return addressData
+    }
+    
+    return null
+  } catch (error) {
+    console.error('Error getting address from coordinates:', error)
+    return null
+  }
+}
+
 export default function CheckoutPage() {
   const dispatch = useDispatch()
   const { show: showToast } = useToast()
@@ -102,6 +198,12 @@ export default function CheckoutPage() {
   const [shippingMethods, setShippingMethods] = useState([])
   const [selectedShippingMethod, setSelectedShippingMethod] = useState(null)
   const [loadingShippingMethods, setLoadingShippingMethods] = useState(false)
+
+  // Google Places Autocomplete refs
+  const addressLine1InputRef = useRef(null)
+  const autocompleteRef = useRef(null)
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false)
+  const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false)
 
   // Cart state
   const { items: cartItems, total: cartTotal, loading: cartLoading } = useSelector(state => state.cart)
@@ -366,6 +468,106 @@ export default function CheckoutPage() {
     }
   }, [showAddressForm, user, dispatch])
 
+  // Load Google Maps API when address form is shown
+  useEffect(() => {
+    if (showAddressForm && !googleMapsLoaded) {
+      loadGoogleMaps()
+        .then(() => {
+          setGoogleMapsLoaded(true)
+        })
+        .catch((error) => {
+          console.error('Failed to load Google Maps:', error)
+          showToast('Failed to load location services', 'error')
+        })
+    }
+  }, [showAddressForm, googleMapsLoaded, showToast])
+
+  // Initialize Google Places Autocomplete when form is shown and Google Maps is loaded
+  useEffect(() => {
+    if (showAddressForm && googleMapsLoaded && addressLine1InputRef.current && window.google && window.google.maps && window.google.maps.places) {
+      // Clean up previous autocomplete instance
+      if (autocompleteRef.current) {
+        window.google.maps.event.clearInstanceListeners(autocompleteRef.current)
+        autocompleteRef.current = null
+      }
+
+      // Initialize autocomplete
+      const autocomplete = new window.google.maps.places.Autocomplete(
+        addressLine1InputRef.current,
+        {
+          types: ['address'],
+          componentRestrictions: { country: ['ae', 'sa', 'kw', 'qa'] } // Restrict to UAE, Saudi Arabia, Kuwait, Qatar
+        }
+      )
+
+      autocompleteRef.current = autocomplete
+
+      // Handle place selection
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace()
+        
+        if (!place.geometry) {
+          console.log('No details available for input: ' + place.name)
+          return
+        }
+
+        // Extract address components
+        let addressData = {
+          addressLine1: '',
+          city: '',
+          state: '',
+          postalCode: '',
+          country: ''
+        }
+
+        // Get formatted address
+        if (place.formatted_address) {
+          addressData.addressLine1 = place.formatted_address.split(',')[0]
+        }
+
+        // Extract components
+        place.address_components.forEach(component => {
+          const types = component.types
+          
+          if (types.includes('street_number') || types.includes('route')) {
+            if (types.includes('street_number')) {
+              addressData.addressLine1 = component.long_name
+            } else if (types.includes('route')) {
+              addressData.addressLine1 = addressData.addressLine1 
+                ? `${addressData.addressLine1} ${component.long_name}` 
+                : component.long_name
+            }
+          } else if (types.includes('locality')) {
+            addressData.city = component.long_name
+          } else if (types.includes('administrative_area_level_1')) {
+            addressData.state = component.long_name
+          } else if (types.includes('postal_code')) {
+            addressData.postalCode = component.long_name
+          } else if (types.includes('country')) {
+            addressData.country = component.short_name
+          }
+        })
+
+        // Update form with address data
+        dispatch(updateAddressForm({
+          addressLine1: addressData.addressLine1,
+          city: addressData.city || addressForm.city,
+          state: addressData.state || addressForm.state,
+          postalCode: addressData.postalCode || addressForm.postalCode,
+          country: addressData.country || addressForm.country
+        }))
+      })
+
+      // Cleanup on unmount
+      return () => {
+        if (autocompleteRef.current) {
+          window.google.maps.event.clearInstanceListeners(autocompleteRef.current)
+          autocompleteRef.current = null
+        }
+      }
+    }
+  }, [showAddressForm, googleMapsLoaded, addressForm.city, addressForm.state, addressForm.postalCode, addressForm.country, dispatch])
+
   // Ensure a selected address when addresses are available (prefer default)
   useEffect(() => {
     if (!selectedAddress && displayAddresses.length > 0) {
@@ -497,6 +699,62 @@ export default function CheckoutPage() {
   // Address form handlers
   const handleAddressFormChange = (field, value) => {
     dispatch(updateAddressForm({ [field]: value }))
+  }
+
+  // Handle "Use Current Location" button click
+  const handleUseCurrentLocation = async () => {
+    if (!navigator.geolocation) {
+      showToast('Geolocation is not supported by your browser', 'error')
+      return
+    }
+
+    setIsLoadingLocation(true)
+
+    try {
+      // Get user's current location
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000 // 5 minutes
+          }
+        )
+      })
+
+      const { latitude, longitude } = position.coords
+
+      // Get address from coordinates using Google Places API
+      const addressData = await getAddressFromCoordinates(latitude, longitude)
+
+      if (addressData) {
+        // Update form with fetched address data
+        dispatch(updateAddressForm({
+          addressLine1: addressData.addressLine1 || addressForm.addressLine1,
+          city: addressData.city || addressForm.city,
+          state: addressData.state || addressForm.state,
+          postalCode: addressData.postalCode || addressForm.postalCode,
+          country: addressData.country || addressForm.country,
+          latitude: latitude,
+          longitude: longitude
+        }))
+
+        showToast('Location fetched successfully!', 'success')
+      } else {
+        showToast('Could not fetch address details. Please enter manually.', 'error')
+      }
+    } catch (error) {
+      console.error('Error getting current location:', error)
+      if (error.code === 1) {
+        showToast('Location access denied. Please enable location permissions.', 'error')
+      } else {
+        showToast('Failed to get your location. Please try again.', 'error')
+      }
+    } finally {
+      setIsLoadingLocation(false)
+    }
   }
 
   const handleAddressSubmit = async (e) => {
@@ -1202,13 +1460,62 @@ export default function CheckoutPage() {
                       onChange={(e) => handleAddressFormChange('postalCode', e.target.value)}
                       required
                     />
-                    <input
-                      className={styles.addressInput}
-                      placeholder="Address Line 1"
-                      value={addressForm.addressLine1}
-                      onChange={(e) => handleAddressFormChange('addressLine1', e.target.value)}
-                      required
-                    />
+                    <div style={{ position: 'relative', width: '100%', gridColumn: 'span 1' }}>
+                      <input
+                        ref={addressLine1InputRef}
+                        className={styles.addressInput}
+                        placeholder="Address Line 1 (Start typing to search)"
+                        value={addressForm.addressLine1}
+                        onChange={(e) => handleAddressFormChange('addressLine1', e.target.value)}
+                        required
+                        style={{ paddingRight: '120px' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleUseCurrentLocation}
+                        disabled={isLoadingLocation}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: '#0082FF',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          fontWeight: '600',
+                          cursor: isLoadingLocation ? 'not-allowed' : 'pointer',
+                          opacity: isLoadingLocation ? 0.6 : 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          whiteSpace: 'nowrap'
+                        }}
+                        title="Use your current location"
+                      >
+                        {isLoadingLocation ? (
+                          <>
+                            <span style={{ 
+                              display: 'inline-block',
+                              width: '12px',
+                              height: '12px',
+                              border: '2px solid rgba(255,255,255,0.3)',
+                              borderTop: '2px solid white',
+                              borderRadius: '50%',
+                              animation: 'spin 1s linear infinite'
+                            }}></span>
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            <FontAwesomeIcon icon={faMapMarkerAlt} style={{ fontSize: '12px' }} />
+                            Use Location
+                          </>
+                        )}
+                      </button>
+                    </div>
                     <input
                       className={styles.addressInput}
                       placeholder="Address Line 2"

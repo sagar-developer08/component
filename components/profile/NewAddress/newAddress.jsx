@@ -130,7 +130,7 @@ export default function NewAddress({ onCancel, onSave }) {
       }
 
       // Get coordinates from address using Google Geocoding API
-      const GOOGLE_API_KEY = 'AIzaSyBOtUcOe4ht6vrX4BIQFubL1ei3LyRSf-w'
+      const GOOGLE_API_KEY = ''
       try {
         const addressString = [
           addressData.addressLine1,

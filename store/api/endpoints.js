@@ -37,6 +37,24 @@ export const catalog = {
   similarProducts: (productId, limit = 10) => `${BASES.catalog}/products/similar/${productId}?limit=${limit}`,
   stores: `${BASES.catalog}/stores`,
   storesDiscovery: `${BASES.catalog}/stores/discovery`,
+  fastestDelivery: (latitude, longitude, storeType) => `${BASES.catalog}/stores/deals/fastest-delivery?latitude=${latitude}&longitude=${longitude}${storeType ? `&storeType=${storeType}` : ''}`,
+  bestCheapDeals: (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.storeType) queryParams.append('storeType', params.storeType);
+    if (params.categoryId) queryParams.append('categoryId', params.categoryId);
+    if (params.minPrice) queryParams.append('minPrice', params.minPrice);
+    if (params.maxPrice) queryParams.append('maxPrice', params.maxPrice);
+    return `${BASES.catalog}/stores/deals/best-cheap?${queryParams.toString()}`;
+  },
+  bestBundleDeals: (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.storeType) queryParams.append('storeType', params.storeType);
+    return `${BASES.catalog}/stores/deals/best-bundles?${queryParams.toString()}`;
+  },
   popularCategories: `${BASES.catalog}/categories/level3`,
   level2Categories: `${BASES.catalog}/categories/level2`,
   categoryChildren: (slug) => `${BASES.catalog}/categories/level2/${slug}/children`,

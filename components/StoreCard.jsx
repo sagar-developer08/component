@@ -7,6 +7,7 @@ export default function StoreCard({
   rating,
   deliveryTime,
   image,
+  logo,
   location,
   isTopStore = false,
   isNewStore = false,
@@ -40,6 +41,17 @@ export default function StoreCard({
 
       <div className="store-info">
         <div className="store-title-row">
+          {logo && (
+            <div className="store-logo">
+              <Image
+                src={logo}
+                alt={`${title} logo`}
+                width={40}
+                height={40}
+                style={{ borderRadius: '8px', objectFit: 'contain' }}
+              />
+            </div>
+          )}
           <h3 className="store-title">{title}</h3>
           <div className="delivery-time">
             {deliveryTime}
@@ -115,6 +127,18 @@ export default function StoreCard({
           align-items: center;
           gap: 8px;
           align-self: stretch;
+        }
+
+        .store-logo {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 40px;
+          height: 40px;
+          border-radius: 8px;
+          background: #fff;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          flex-shrink: 0;
         }
 
         .store-title {

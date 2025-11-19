@@ -37,6 +37,60 @@ export const fetchHypermarketStores = createAsyncThunk(
   }
 )
 
+// Fetch Fastest Delivery stores
+export const fetchFastestDeliveryStores = createAsyncThunk(
+  'stores/fetchFastestDeliveryStores',
+  async ({ latitude, longitude, storeType = 'hypermarket' }, { rejectWithValue }) => {
+    try {
+      const url = catalog.fastestDelivery(latitude, longitude, storeType)
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+// Fetch Best Cheap Deals
+export const fetchBestCheapDeals = createAsyncThunk(
+  'stores/fetchBestCheapDeals',
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const url = catalog.bestCheapDeals(params)
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+// Fetch Best Bundle Deals
+export const fetchBestBundleDeals = createAsyncThunk(
+  'stores/fetchBestBundleDeals',
+  async (params = {}, { rejectWithValue }) => {
+    try {
+      const url = catalog.bestBundleDeals(params)
+      const response = await fetch(url)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      return data
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 // Fetch Supermarket stores
 export const fetchSupermarketStores = createAsyncThunk(
   'stores/fetchSupermarketStores',
@@ -100,6 +154,9 @@ const storesSlice = createSlice({
     eshopStores: [],
     eshopNewStores: [],
     eshopTopStores: [],
+    fastestDeliveryStores: [],
+    bestCheapDeals: [],
+    bestBundleDeals: [],
     pagination: {},
     loading: false,
     error: null,
@@ -215,6 +272,50 @@ const storesSlice = createSlice({
         state.loading = false
         state.error = action.payload
         state.success = false
+      })
+      // Fastest Delivery
+      .addCase(fetchFastestDeliveryStores.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchFastestDeliveryStores.fulfilled, (state, action) => {
+        state.loading = false
+        const responseData = action.payload?.data || action.payload
+        state.fastestDeliveryStores = Array.isArray(responseData?.stores) ? responseData.stores : []
+      })
+      .addCase(fetchFastestDeliveryStores.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      // Best Cheap Deals
+      .addCase(fetchBestCheapDeals.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchBestCheapDeals.fulfilled, (state, action) => {
+        state.loading = false
+        const responseData = action.payload?.data || action.payload
+        state.bestCheapDeals = Array.isArray(responseData?.deals) ? responseData.deals : []
+        state.pagination = responseData?.pagination || {}
+      })
+      .addCase(fetchBestCheapDeals.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+      // Best Bundle Deals
+      .addCase(fetchBestBundleDeals.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchBestBundleDeals.fulfilled, (state, action) => {
+        state.loading = false
+        const responseData = action.payload?.data || action.payload
+        state.bestBundleDeals = Array.isArray(responseData?.bundleDeals) ? responseData.bundleDeals : []
+        state.pagination = responseData?.pagination || {}
+      })
+      .addCase(fetchBestBundleDeals.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
       })
   }
 })

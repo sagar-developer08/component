@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 
-const GOOGLE_API_KEY = 'AIzaSyBOtUcOe4ht6vrX4BIQFubL1ei3LyRSf-w'
+const GOOGLE_API_KEY = ''
 
 export default function LocationModal({ open, onClose, onLocationSelect }) {
   const [currentLocation, setCurrentLocation] = useState('')
