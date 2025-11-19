@@ -1,5 +1,7 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
+const GOOGLE_API_KEY = ''
 
 export default function LocationModal({ open, onClose, onLocationSelect }) {
   const [currentLocation, setCurrentLocation] = useState('')
@@ -10,22 +12,52 @@ export default function LocationModal({ open, onClose, onLocationSelect }) {
   const [mapLoaded, setMapLoaded] = useState(false)
   const [permissionGranted, setPermissionGranted] = useState(false)
   const [permissionRequested, setPermissionRequested] = useState(false)
+  const mapInstanceRef = useRef(null)
+  const markerRef = useRef(null)
 
   useEffect(() => {
     if (open) {
-      loadMap()
+      loadGoogleMaps()
     }
   }, [open])
 
   useEffect(() => {
-    if (mapLoaded && open && permissionGranted) {
-      getCurrentLocation()
+    if (mapLoaded && open && permissionGranted && coordinates) {
+      initializeMap()
     }
-  }, [mapLoaded, open, permissionGranted])
+  }, [mapLoaded, open, permissionGranted, coordinates])
 
-  const loadMap = () => {
-    // No need to load external scripts for OpenStreetMap
-    setMapLoaded(true)
+  const loadGoogleMaps = () => {
+    // Check if Google Maps is already loaded
+    if (window.google && window.google.maps) {
+      setMapLoaded(true)
+      return
+    }
+
+    // Check if script is already being loaded
+    if (document.querySelector(`script[src*="maps.googleapis.com"]`)) {
+      const checkLoaded = setInterval(() => {
+        if (window.google && window.google.maps) {
+          setMapLoaded(true)
+          clearInterval(checkLoaded)
+        }
+      }, 100)
+      return
+    }
+
+    // Load Google Maps script
+    const script = document.createElement('script')
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_API_KEY}&libraries=places`
+    script.async = true
+    script.defer = true
+    script.onload = () => {
+      setMapLoaded(true)
+    }
+    script.onerror = () => {
+      console.error('Failed to load Google Maps')
+      setMapLoaded(false)
+    }
+    document.head.appendChild(script)
   }
 
   const requestLocationPermission = () => {
@@ -45,11 +77,6 @@ export default function LocationModal({ open, onClose, onLocationSelect }) {
         
         // Get location name first
         await getLocationName(latitude, longitude)
-        
-        // Then initialize map
-        setTimeout(() => {
-          initializeMap(latitude, longitude)
-        }, 100)
       },
       (error) => {
         console.error('Error getting location:', error)
@@ -66,61 +93,94 @@ export default function LocationModal({ open, onClose, onLocationSelect }) {
     )
   }
 
-  const initializeMap = (latitude, longitude) => {
-    const mapElement = document.getElementById('map')
-    if (mapElement) {
-      // Create OpenStreetMap iframe
-      const mapUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${longitude-0.01},${latitude-0.01},${longitude+0.01},${latitude+0.01}&layer=mapnik&marker=${latitude},${longitude}`
-      
-      mapElement.innerHTML = `
-        <iframe 
-          src="${mapUrl}" 
-          width="100%" 
-          height="100%" 
-          style="border: none; border-radius: 12px;"
-          title="Location Map"
-        ></iframe>
-      `
+  const initializeMap = () => {
+    if (!window.google || !window.google.maps || !coordinates) {
+      return
     }
+
+    const mapElement = document.getElementById('map')
+    if (!mapElement) {
+      return
+    }
+
+    // Clear previous map instance
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current = null
+    }
+
+    // Initialize Google Map
+    const map = new window.google.maps.Map(mapElement, {
+      center: { lat: coordinates.lat, lng: coordinates.lng },
+      zoom: 15,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false,
+      styles: [
+        {
+          featureType: 'poi',
+          elementType: 'labels',
+          stylers: [{ visibility: 'off' }]
+        }
+      ]
+    })
+
+    mapInstanceRef.current = map
+
+    // Add marker
+    if (markerRef.current) {
+      markerRef.current.setMap(null)
+    }
+
+    markerRef.current = new window.google.maps.Marker({
+      position: { lat: coordinates.lat, lng: coordinates.lng },
+      map: map,
+      title: 'Your Location',
+      animation: window.google.maps.Animation.DROP
+    })
   }
 
   const getLocationName = async (latitude, longitude) => {
     try {
-      // Use a free reverse geocoding service instead of Google
-      const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`)
+      // Use Google Geocoding API for reverse geocoding
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`
+      )
       const data = await response.json()
       
-      if (data.city || data.locality || data.principalSubdivision) {
-        const cityName = data.city || data.locality || data.principalSubdivision
-        const countryName = data.countryName || ''
-        const fullLocation = countryName ? `${cityName}, ${countryName}` : cityName
+      if (data.status === 'OK' && data.results && data.results.length > 0) {
+        const result = data.results[0]
+        const addressComponents = result.address_components
         
-        setCityName(cityName)
+        let cityName = ''
+        let countryName = ''
+        let locality = ''
+        let administrativeArea = ''
+        
+        // Extract location details from address components
+        addressComponents.forEach(component => {
+          const types = component.types
+          if (types.includes('locality')) {
+            cityName = component.long_name
+            locality = component.long_name
+          } else if (types.includes('administrative_area_level_1')) {
+            administrativeArea = component.long_name
+          } else if (types.includes('country')) {
+            countryName = component.long_name
+          }
+        })
+        
+        // Use city name or fallback to administrative area
+        const finalCityName = cityName || locality || administrativeArea || 'Unknown Location'
+        const fullLocation = countryName ? `${finalCityName}, ${countryName}` : finalCityName
+        
+        setCityName(finalCityName)
         setCurrentLocation(fullLocation)
-        
-        // Store country name for passing to parent component
         setCountryName(countryName)
       } else {
-        // Fallback: try to get any location info
-        const locationParts = []
-        if (data.localityInfo?.administrative?.[0]?.name) {
-          locationParts.push(data.localityInfo.administrative[0].name)
-        }
-        if (data.countryName) {
-          locationParts.push(data.countryName)
-        }
-        
-        if (locationParts.length > 0) {
-          const locationName = locationParts.join(', ')
-          setCityName(locationParts[0])
-          setCurrentLocation(locationName)
-          setCountryName(data.countryName || '')
-        } else {
-          // Last resort: show coordinates
-          setCityName(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
-          setCurrentLocation(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)
-          setCountryName('')
-        }
+        // Fallback to coordinates if API fails
+        setCityName(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`)
+        setCurrentLocation(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`)
+        setCountryName('')
       }
     } catch (error) {
       console.error('Error getting location name:', error)

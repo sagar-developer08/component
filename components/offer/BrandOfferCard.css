@@ -1,0 +1,131 @@
+:root{
+  --card-w: 322px;
+  --card-h: 404px;
+  --pad: 24px;
+  --radius: 16px;
+  --badge-size: 110px;
+  --gap: 24px;
+  --muted: #666;
+  --border: rgba(0,0,0,0.06);
+}
+
+.boc-card{
+  width: var(--card-w);
+  height: var(--card-h);
+  padding: var(--pad);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: none;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.boc-title{
+  margin: 0 0 32px 0;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  color: #000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* grid for 2x2 badges */
+.boc-grid{
+  display: grid;
+  grid-template-columns: repeat(2, var(--badge-size));
+  grid-template-rows: repeat(2, var(--badge-size));
+  gap: var(--gap);
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* base badge */
+.boc-badge{
+  width: var(--badge-size);
+  height: var(--badge-size);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  overflow: hidden;
+  border: none;
+  box-shadow: none;
+}
+
+/* For logo images inside badge */
+.boc-badge img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Samsung: black circle with white bold text */
+.boc-badge--samsung{
+  background: #000;
+  border: 1px solid #0082FF;
+}
+.boc-badge--samsung .boc-badge__text{
+  color: #fff;
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  text-transform: uppercase;
+}
+
+/* Nike: white circle with swoosh image */
+.boc-badge--nike{
+  background: #fff;
+  border: 1px solid #0082FF;
+}
+.boc-nike-swoosh{
+  width: 60px;
+  height: 28px;
+  color: #000;
+  transform: none;
+}
+
+/* Apple: black circle with apple logo image */
+.boc-badge--apple{
+  background: #000;
+  border: 1px solid #0082FF;
+}
+.boc-apple{
+  color: #fff;
+  font-size: 42px;
+  line-height: 1;
+  transform: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Sony: white circle with blue SONY text or logo image */
+.boc-badge--sony{
+  background: #fff;
+  border: 1px solid #0082FF;
+}
+.boc-badge__text--sony{
+  color: #003087;
+  font-weight: 400;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  text-transform: uppercase;
+}
+
+/* small responsive tweak */
+@media (max-width: 340px){
+  :root{
+    --card-w: 240px;
+    --card-h: 330px;
+    --badge-size: 72px;
+    --gap: 14px;
+  }
+}
