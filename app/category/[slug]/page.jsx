@@ -12,7 +12,7 @@ import ProductCard from '@/components/ProductCard'
 import CategoryCard from '@/components/CategoryCard'
 import SectionHeader from '@/components/SectionHeader'
 import Footer from '@/components/Footer'
-import { fetchCategoryChildren } from '@/store/slices/categoriesSlice'
+import { fetchCategoryChildren, fetchHypermarketLevel2Categories, fetchSupermarketLevel2Categories } from '@/store/slices/categoriesSlice'
 import { ProductCardSkeleton, CategoryCardSkeleton } from '@/components/SkeletonLoader'
 
 // Helper function to transform API product data to match ProductCard component format
@@ -115,7 +115,7 @@ export default function CategoryPage() {
   const dispatch = useDispatch()
   const slug = params.slug
 
-  const { categoryChildren, loading, error } = useSelector(state => state.categories)
+  const { categoryChildren, hypermarketLevel2Categories, supermarketLevel2Categories, loading, error } = useSelector(state => state.categories)
   const [categoryInfo, setCategoryInfo] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -145,6 +145,9 @@ export default function CategoryPage() {
   useEffect(() => {
     if (slug) {
       dispatch(fetchCategoryChildren(slug))
+      // Also fetch hypermarket and supermarket level 2 categories
+      dispatch(fetchHypermarketLevel2Categories())
+      dispatch(fetchSupermarketLevel2Categories())
     }
   }, [dispatch, slug])
 
@@ -159,7 +162,15 @@ export default function CategoryPage() {
   const transformedBestsellers = categoryChildren?.data?.products?.bestsellers?.map(transformProductData) || productData
   const transformedOffers = categoryChildren?.data?.products?.offers?.map(transformProductData) || productData
   const transformedNewArrivals = categoryChildren?.data?.products?.newArrivals?.map(transformProductData) || productData
-  const transformedCategories = categoryChildren?.data?.level4Categories?.map(transformCategoryData) || []
+  
+  // Use hypermarket or supermarket level 2 categories if available, otherwise use category children level4Categories
+  const categoriesToDisplay = (hypermarketLevel2Categories && hypermarketLevel2Categories.length > 0)
+    ? hypermarketLevel2Categories.map(transformCategoryData)
+    : (supermarketLevel2Categories && supermarketLevel2Categories.length > 0)
+    ? supermarketLevel2Categories.map(transformCategoryData)
+    : (categoryChildren?.data?.level4Categories?.map(transformCategoryData) || [])
+  
+  const transformedCategories = categoriesToDisplay
 
   const handleBack = () => {
     router.push('/')
@@ -168,7 +179,13 @@ export default function CategoryPage() {
   const handleCategoryClick = (category) => {
     // Use the slug from the API data or create a slug from the name
     const slug = category.slug || category.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    router.push(`/${slug}?categoryLevel=4`);
+    // For level 2 categories (hypermarket), navigate to category page
+    // For level 4 categories, navigate to the slug page
+    if (category.level === 2) {
+      router.push(`/category/${slug}`);
+    } else {
+      router.push(`/${slug}?categoryLevel=4`);
+    }
   }
 
   // Navigation handlers for swipers

@@ -41,7 +41,7 @@ export default function StoreCard({
 
       <div className="store-info">
         <div className="store-title-row">
-          {logo && (
+          {/* {logo && (
             <div className="store-logo">
               <Image
                 src={logo}
@@ -51,11 +51,11 @@ export default function StoreCard({
                 style={{ borderRadius: '8px', objectFit: 'contain' }}
               />
             </div>
-          )}
+          )} */}
           <h3 className="store-title">{title}</h3>
-          <div className="delivery-time">
+          {/* <div className="delivery-time">
             {deliveryTime}
-          </div>
+          </div> */}
         </div>
 
         <div className="store-bottom">
