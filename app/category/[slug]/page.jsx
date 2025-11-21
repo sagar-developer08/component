@@ -13,6 +13,7 @@ import CategoryCard from '@/components/CategoryCard'
 import SectionHeader from '@/components/SectionHeader'
 import Footer from '@/components/Footer'
 import { fetchCategoryChildren, fetchHypermarketLevel2Categories, fetchSupermarketLevel2Categories } from '@/store/slices/categoriesSlice'
+import { fetchProductsByStoreSlug, clearStoreSlugProducts } from '@/store/slices/productsSlice'
 import { ProductCardSkeleton, CategoryCardSkeleton } from '@/components/SkeletonLoader'
 
 // Helper function to transform API product data to match ProductCard component format
@@ -116,8 +117,20 @@ export default function CategoryPage() {
   const slug = params.slug
 
   const { categoryChildren, hypermarketLevel2Categories, supermarketLevel2Categories, loading, error } = useSelector(state => state.categories)
+  const { storeSlugProducts, storeSlugProductsLoading, storeSlugProductsError } = useSelector(state => state.products)
+  
   const [categoryInfo, setCategoryInfo] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [isStoreSlug, setIsStoreSlug] = useState(false)
+  
+  // Determine if this is actually a store slug based on data presence
+  // Note: Redux stores action.payload.data directly in storeSlugProducts
+  const isActuallyStoreSlug = !!storeSlugProducts?.store
+  
+  // Determine loading state - loading if either category or store is loading
+  const isLoading = loading || storeSlugProductsLoading
+  // Determine error state - show error if category failed and it's not a store, or if store failed and it is a store
+  const hasError = (isActuallyStoreSlug && storeSlugProductsError) || (!isActuallyStoreSlug && error)
 
   // Swiper refs
   const bestsellersSwiperRef = useRef(null)
@@ -141,27 +154,91 @@ export default function CategoryPage() {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
-  // Fetch category children when component mounts or slug changes
+  // First, try to fetch products by store slug
   useEffect(() => {
     if (slug) {
-      dispatch(fetchCategoryChildren(slug))
+      // Try to fetch products by store slug first
+      dispatch(fetchProductsByStoreSlug({ storeSlug: slug, limit: 100 }))
+        .then((result) => {
+          if (result.meta.requestStatus === 'fulfilled' && result.payload?.success && result.payload?.data?.store) {
+            // It's a store slug
+            setIsStoreSlug(true)
+            setCategoryInfo({
+              name: result.payload.data.store.name,
+              description: result.payload.data.store.description || 'Browse all products from this store'
+            })
+          } else {
+            // Not a store slug, fetch category children
+            setIsStoreSlug(false)
+            dispatch(fetchCategoryChildren(slug))
+          }
+        })
+        .catch(() => {
+          // Error fetching store, try category instead
+          setIsStoreSlug(false)
+          dispatch(fetchCategoryChildren(slug))
+        })
+      
       // Also fetch hypermarket and supermarket level 2 categories
       dispatch(fetchHypermarketLevel2Categories())
       dispatch(fetchSupermarketLevel2Categories())
     }
+
+    // Cleanup on unmount
+    return () => {
+      dispatch(clearStoreSlugProducts())
+    }
   }, [dispatch, slug])
 
-  // Update category info when data is loaded
+  // Update isStoreSlug when storeSlugProducts data loads
   useEffect(() => {
-    if (categoryChildren?.data?.category) {
+    if (storeSlugProducts?.store) {
+      setIsStoreSlug(true)
+      setCategoryInfo({
+        name: storeSlugProducts.store.name,
+        description: storeSlugProducts.store.description || 'Browse all products from this store'
+      })
+    }
+  }, [storeSlugProducts])
+
+  // Update category info when category children data is loaded (only if not a store)
+  useEffect(() => {
+    if (!isStoreSlug && categoryChildren?.data?.category) {
       setCategoryInfo(categoryChildren.data.category)
     }
-  }, [categoryChildren])
+  }, [categoryChildren, isStoreSlug])
 
-  // Transform API data
-  const transformedBestsellers = categoryChildren?.data?.products?.bestsellers?.map(transformProductData) || productData
-  const transformedOffers = categoryChildren?.data?.products?.offers?.map(transformProductData) || productData
-  const transformedNewArrivals = categoryChildren?.data?.products?.newArrivals?.map(transformProductData) || productData
+  // Transform API data - use store products if it's a store slug, otherwise use category children
+  // Note: Redux stores action.payload.data directly in storeSlugProducts, so we access it directly
+  const getProductsForSection = (sectionName) => {
+    // Check if we have store slug products (storeSlugProducts is already the data object)
+    if (storeSlugProducts?.store && storeSlugProducts?.productsByCategory) {
+      // Use products from store slug
+      const sectionProducts = storeSlugProducts.productsByCategory[sectionName] || []
+      if (sectionProducts.length > 0) {
+        return sectionProducts.map(transformProductData)
+      }
+    }
+    
+    // Fall back to category children if no store products
+    if (categoryChildren?.data?.products) {
+      const sectionProducts = categoryChildren.data.products[sectionName] || []
+      if (sectionProducts.length > 0) {
+        return sectionProducts.map(transformProductData)
+      }
+    }
+    
+    return []
+  }
+
+  const transformedBestsellers = getProductsForSection('bestsellers') || []
+  const transformedOffers = getProductsForSection('offers') || []
+  const transformedNewArrivals = getProductsForSection('newArrivals') || []
+
+  // Get all products if it's a store slug for displaying in a grid
+  const allStoreProducts = (storeSlugProducts?.success && storeSlugProducts?.data?.products)
+    ? storeSlugProducts.data.products.map(transformProductData)
+    : []
   
   // Use hypermarket or supermarket level 2 categories if available, otherwise use category children level4Categories
   const categoriesToDisplay = (hypermarketLevel2Categories && hypermarketLevel2Categories.length > 0)
@@ -262,10 +339,10 @@ export default function CategoryPage() {
               </button> */}
               <div className="banner-info">
                 <div className="banner-title">
-                  {categoryInfo?.name || slug?.toUpperCase() || 'CATEGORY'}
+                  {categoryInfo?.name || storeSlugProducts?.store?.name || slug?.toUpperCase() || 'CATEGORY'}
                 </div>
                 <div className="banner-desc">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.
+                  {categoryInfo?.description || storeSlugProducts?.store?.description || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.'}
                 </div>
               </div>
               {/* <button className="banner-follow-btn">Follow</button> */}
@@ -283,16 +360,16 @@ export default function CategoryPage() {
             onPrev={handleOtherCategoriesPrev}
             onNext={handleOtherCategoriesNext}
           />
-           {loading ? (
+           {isLoading ? (
              <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
                {[...Array(6)].map((_, index) => (
                  <CategoryCardSkeleton key={`skeleton-${index}`} />
                ))}
              </div>
-           ) : error ? (
-             <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
-               Error loading categories: {error}
-             </div>
+           ) : hasError ? (
+            <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+              Error loading {isActuallyStoreSlug ? 'store' : 'categories'}: {hasError}
+            </div>
           ) : transformedCategories.length > 0 ? (
             <Swiper
               ref={otherCategoriesSwiperRef}
@@ -326,17 +403,17 @@ export default function CategoryPage() {
             onPrev={handleBestsellersPrev}
             onNext={handleBestsellersNext}
           />
-          {loading ? (
+          {isLoading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
               {[...Array(4)].map((_, index) => (
                 <ProductCardSkeleton key={`skeleton-${index}`} />
               ))}
             </div>
-          ) : error ? (
+          ) : hasError ? (
             <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
               Error loading products: {error}
             </div>
-          ) : transformedBestsellers.length > 0 ? (
+          ) : (transformedBestsellers.length > 0 || allStoreProducts.length > 0) ? (
             <Swiper
               ref={bestsellersSwiperRef}
               modules={[SwiperNavigation]}
@@ -346,7 +423,7 @@ export default function CategoryPage() {
               freeMode={true}
               style={{ width: '1360px' }}
             >
-              {transformedBestsellers.map((product, index) => (
+              {(transformedBestsellers.length > 0 ? transformedBestsellers : allStoreProducts.slice(0, 20)).map((product, index) => (
                 <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
                   <ProductCard {...product} />
                 </SwiperSlide>
@@ -369,17 +446,17 @@ export default function CategoryPage() {
             onPrev={handleOffersPrev}
             onNext={handleOffersNext}
           />
-          {loading ? (
+          {isLoading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
               {[...Array(4)].map((_, index) => (
                 <ProductCardSkeleton key={`skeleton-${index}`} />
               ))}
             </div>
-          ) : error ? (
+          ) : hasError ? (
             <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
               Error loading products: {error}
             </div>
-          ) : transformedOffers.length > 0 ? (
+          ) : (transformedOffers.length > 0 || allStoreProducts.length > 0) ? (
             <Swiper
               ref={offersSwiperRef}
               modules={[SwiperNavigation]}
@@ -389,7 +466,7 @@ export default function CategoryPage() {
               freeMode={true}
               style={{ width: '1360px' }}
             >
-              {transformedOffers.map((product, index) => (
+              {(transformedOffers.length > 0 ? transformedOffers : allStoreProducts.slice(20, 40)).map((product, index) => (
                 <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
                   <ProductCard {...product} />
                 </SwiperSlide>
@@ -412,17 +489,17 @@ export default function CategoryPage() {
             onPrev={handleNewArrivalsPrev}
             onNext={handleNewArrivalsNext}
           />
-          {loading ? (
+          {isLoading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
               {[...Array(4)].map((_, index) => (
                 <ProductCardSkeleton key={`skeleton-${index}`} />
               ))}
             </div>
-          ) : error ? (
+          ) : hasError ? (
             <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
-              Error loading products: {error}
+              Error loading products: {hasError}
             </div>
-          ) : transformedNewArrivals.length > 0 ? (
+          ) : (transformedNewArrivals.length > 0 || allStoreProducts.length > 0) ? (
             <Swiper
               ref={newArrivalsSwiperRef}
               modules={[SwiperNavigation]}
@@ -432,7 +509,7 @@ export default function CategoryPage() {
               freeMode={true}
               style={{ width: '1360px' }}
             >
-              {transformedNewArrivals.map((product, index) => (
+              {(transformedNewArrivals.length > 0 ? transformedNewArrivals : allStoreProducts.slice(40, 60)).map((product, index) => (
                 <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
                   <ProductCard {...product} />
                 </SwiperSlide>

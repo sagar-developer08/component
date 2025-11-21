@@ -32,6 +32,13 @@ export const catalog = {
   productBySlugOnly: (slug) => `${BASES.catalog}/products/slug/${slug}`,
   productsByBrand: (brandSlug) => `${BASES.catalog}/products/brand/${brandSlug}`,
   productsByStore: (storeId) => `${BASES.catalog}/products/store/${storeId}`,
+  productsByStoreSlug: (storeSlug, params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    const queryString = queryParams.toString();
+    return `${BASES.catalog}/products/store-slug/${storeSlug}${queryString ? `?${queryString}` : ''}`;
+  },
   productsByLevel4Category: (categorySlug) => `${BASES.catalog}/products/level4/${categorySlug}`,
   productsByCategory: (categoryId) => `${BASES.catalog}/products/category?categoryId=${categoryId}`,
   similarProducts: (productId, limit = 10) => `${BASES.catalog}/products/similar/${productId}?limit=${limit}`,

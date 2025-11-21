@@ -48,6 +48,25 @@ export const fetchStoreProducts = createAsyncThunk(
   }
 )
 
+// Async thunk for fetching products by store slug
+export const fetchProductsByStoreSlug = createAsyncThunk(
+  'products/fetchProductsByStoreSlug',
+  async ({ storeSlug, page = 1, limit = 100 } = {}, { rejectWithValue }) => {
+    try {
+      const response = await fetch(catalog.productsByStoreSlug(storeSlug, { page, limit }))
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return { ...data, storeSlug, page }
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 // Async thunk for searching products with filters
 export const searchProducts = createAsyncThunk(
   'products/searchProducts',
@@ -213,6 +232,9 @@ const productsSlice = createSlice({
     storeProducts: [],
     storePagination: {},
     storeLoadingMore: false,
+    storeSlugProducts: null,
+    storeSlugProductsLoading: false,
+    storeSlugProductsError: null,
     searchResults: [],
     searchQuery: '',
     searchPagination: {},
@@ -250,6 +272,10 @@ const productsSlice = createSlice({
       state.storeProducts = []
       state.storePagination = {}
       state.storeLoadingMore = false
+    },
+    clearStoreSlugProducts: (state) => {
+      state.storeSlugProducts = null
+      state.storeSlugProductsError = null
     },
     clearSuggestions: (state) => {
       state.searchSuggestions = []
@@ -309,6 +335,27 @@ const productsSlice = createSlice({
         state.loading = false
         state.storeLoadingMore = false
         state.error = action.payload
+        state.success = false
+      })
+      // Fetch products by store slug cases
+      .addCase(fetchProductsByStoreSlug.pending, (state) => {
+        state.storeSlugProductsLoading = true
+        state.storeSlugProductsError = null
+      })
+      .addCase(fetchProductsByStoreSlug.fulfilled, (state, action) => {
+        state.storeSlugProductsLoading = false
+        state.success = action.payload.success
+        if (action.payload.success && action.payload.data) {
+          state.storeSlugProducts = action.payload.data
+        } else {
+          state.storeSlugProducts = null
+        }
+        state.storeSlugProductsError = null
+      })
+      .addCase(fetchProductsByStoreSlug.rejected, (state, action) => {
+        state.storeSlugProductsLoading = false
+        state.storeSlugProductsError = action.payload
+        state.storeSlugProducts = null
         state.success = false
       })
       // Search products cases
@@ -373,5 +420,5 @@ const productsSlice = createSlice({
   }
 })
 
-export const { clearError, clearProducts, clearSuggestions, clearStoreProducts } = productsSlice.actions
+export const { clearError, clearProducts, clearSuggestions, clearStoreProducts, clearStoreSlugProducts } = productsSlice.actions
 export default productsSlice.reducer
