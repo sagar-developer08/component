@@ -1,1 +1,166 @@
+name: Deploy Component to Private EC2
+
+on:
+  push:
+    branches: [feat/stagging]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: me-central-1
+  S3_BUCKET: stag-qliq-my-bucket
+  S3_KEY: ecom-component.zip
+  APP_DIR: /home/ubuntu/ecom-component
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::876017816269:role/GitHubActionsDeployRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies (CI)
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Create .env
+        run: |
+          cat <<EOF > .env
+          PORT=6006
+          EOF
+
+      - name: Package artifact (exclude node_modules)
+        run: |
+          zip -r ${S3_KEY} \
+            .next \
+            public \
+            package.json \
+            package-lock.json \
+            .env \
+            next.config.js \
+            *.js
+
+      - name: Upload artifact to S3
+        run: aws s3 cp ${S3_KEY} s3://${S3_BUCKET}/${S3_KEY} --acl bucket-owner-full-control --region $AWS_REGION
+
+      - name: Deploy to EC2s by tag (Name=Ecommerce-backend-prod)
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          S3_BUCKET: ${{ env.S3_BUCKET }}
+          S3_KEY: ${{ env.S3_KEY }}
+          APP_DIR: ${{ env.APP_DIR }}
+        run: |
+          set -euo pipefail
+          set -x
+
+          echo "🔍 Finding EC2 instances with tag Name=Ecommerce-backend-prod..."
+          INSTANCE_IDS=$(aws ec2 describe-instances \
+            --filters "Name=tag:Name,Values=Ecommerce-backend-prod" "Name=instance-state-name,Values=running" \
+            --query "Reservations[].Instances[].InstanceId" \
+            --output text --region "${AWS_REGION}")
+
+          if [ -z "$INSTANCE_IDS" ]; then
+            echo "❌ No running instances found with tag Name=Ecommerce-backend-prod"
+            exit 1
+          fi
+
+          echo "✅ Found instances: $INSTANCE_IDS"
+
+          cat > /tmp/ecom-component.sh <<'SCRIPT'
+          #!/bin/bash
+          set -euo pipefail
+          AWS_REGION="__AWS_REGION__"
+          S3_BUCKET="__S3_BUCKET__"
+          S3_KEY="__S3_KEY__"
+          APP_DIR="__APP_DIR__"
+          APP_USER="ubuntu"
+          APP_HOME="/home/${APP_USER}"
+
+          echo "=== 🚀 Starting deployment on EC2 at $(date) ==="
+
+          RELEASE_DIR="${APP_DIR}-release-$(date +%s)"
+          mkdir -p "$RELEASE_DIR"
+          cd "$RELEASE_DIR"
+
+          echo "📦 Downloading artifact from S3..."
+          aws s3 cp "s3://${S3_BUCKET}/${S3_KEY}" /tmp/ecom-component.zip --region "$AWS_REGION"
+
+          echo "📂 Unzipping artifact..."
+          unzip -qo /tmp/ecom-component.zip -d "$RELEASE_DIR"
+
+          echo "👤 Setting ownership to ${APP_USER}"
+          chown -R ${APP_USER}:${APP_USER} "$RELEASE_DIR"
+
+          echo "♻️ Swapping in new release..."
+          if [ -d "$APP_DIR" ]; then
+            mv "$APP_DIR" "${APP_DIR}.bak.$(date +%s)" || true
+          fi
+          mv "$RELEASE_DIR" "$APP_DIR"
+
+          echo "🧹 Cleaning old backups (keeping 2 latest)..."
+          cd "$(dirname "$APP_DIR")"
+          ls -dt "$(basename "$APP_DIR").bak."* 2>/dev/null | tail -n +3 | xargs -r rm -rf --
+
+          echo "👨‍💻 Deploying as ubuntu..."
+          sudo bash -c 'runuser -l ubuntu -c "
+            set -e
+            export APP_DIR=/home/ubuntu/ecom-component
+            export PATH=/home/ubuntu/.npm-global/bin:/usr/local/bin:/usr/bin:/bin
+            export PM2_HOME=/home/ubuntu/.pm2
+
+            echo \"Node version: \$(node -v || echo not found)\"
+            echo \"PM2 version: \$(pm2 -v || echo not found)\"
+
+            cd \$APP_DIR
+            echo \"Installing dependencies...\"
+            npm ci --only=production --no-audit --no-fund
+
+            echo \"Restarting PM2...\"
+            pm2 delete ecom-component || true
+            NODE_ENV=production PORT=6006 pm2 start npm --name ecom-component -- start
+            pm2 save
+            pm2 list
+          "'
+
+          echo "🧽 Cleaning temp files..."
+          rm -f /tmp/ecom-component.zip
+
+          echo "✅ Deployment done at $(date)"
+          SCRIPT
+
+          sed -i "s|__AWS_REGION__|${AWS_REGION}|g" /tmp/ecom-component.sh
+          sed -i "s|__S3_BUCKET__|${S3_BUCKET}|g" /tmp/ecom-component.sh
+          sed -i "s|__S3_KEY__|${S3_KEY}|g" /tmp/ecom-component.sh
+          sed -i "s|__APP_DIR__|${APP_DIR}|g" /tmp/ecom-component.sh
+
+          BASE64_SCRIPT=$(base64 -w 0 /tmp/ecom-component.sh)
+
+          echo "📤 Sending deployment command to instances..."
+          aws ssm send-command \
+            --instance-ids $INSTANCE_IDS \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy E-Commerce Site to ecommerce-ec2 group" \
+            --parameters "commands=['echo ${BASE64_SCRIPT} | base64 -d > /tmp/ecom-component.sh && bash /tmp/ecom-component.sh']" \
+            --region "${AWS_REGION}" \
+            --output-s3-bucket-name "${S3_BUCKET}" \
+            --output-s3-key-prefix "ecom-component-logs"
+
+          echo "✅ Deployment command sent successfully to: $INSTANCE_IDS"
 
