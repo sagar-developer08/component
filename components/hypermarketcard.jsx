@@ -66,11 +66,21 @@ export default function HypermarketCard() {
                     alt={store.name || 'Store'}
                     width={isMobile ? 160 : 160}
                     height={isMobile ? 160 : 160}
-                    style={{ borderRadius: '100px', objectFit: 'contain' }}
+                    style={{ borderRadius: '100px', objectFit: 'contain', border: '1px solid #0082FF' }}
                   />
                 </div>
                 <div className="hypermarket-name">
-                  <h3>{store.name || 'Store'}</h3>
+                  <h3>
+                    {store.name && store.name.includes(' - ') ? (
+                      <>
+                        {store.name.split(' - ')[0]}
+                        <br />
+                        {store.name.split(' - ')[1]}
+                      </>
+                    ) : (
+                      store.name || 'Store'
+                    )}
+                  </h3>
                 </div>
               </div>
             ))
@@ -107,10 +117,6 @@ export default function HypermarketCard() {
             transition: all 0.2s ease;
           }
 
-          .hypermarket-card:hover {
-            transform: scale(1.05);
-          }
-
           .hypermarket-name {
             display: flex;
             padding: 0 8px;
@@ -125,11 +131,13 @@ export default function HypermarketCard() {
             color: #000;
             text-align: center;
             font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-            font-size: 18px;
-            font-weight: 400;
+            font-size: 16px;
+            font-weight: 600;
             line-height: 150%;
             margin: 0;
             word-wrap: break-word;
+            display: block;
+            overflow: hidden;
           }
 
           .loading-placeholder,
