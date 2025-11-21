@@ -10,13 +10,14 @@ import Footer from '@/components/Footer'
 import Image from 'next/image'
 import { useEffect, useState, useMemo, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchGeneralStores } from '@/store/slices/storesSlice'
+import { fetchGeneralStores, fetchFastestDeliveryStores, fetchBestCheapDeals } from '@/store/slices/storesSlice'
 import { fetchProductsByCategory } from '@/store/slices/productsSlice'
 import { useRouter } from 'next/navigation'
 import { Swiper, SwiperSlide } from 'swiper/react'
 import { Navigation as SwiperNavigation } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
+import { StoreCardSkeleton } from '@/components/SkeletonLoader'
 
 const productData = [
   {
@@ -87,10 +88,12 @@ export default function Home() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const fastestDeliverySwiperRef = useRef(null)
+  const bestCheapDealsSwiperRef = useRef(null)
   const dispatch = useDispatch()
-  const { generalStores, loading, error } = useSelector(state => state.stores)
+  const { generalStores, fastestDeliveryStores, bestCheapDeals, loading, error } = useSelector(state => state.stores)
   const { categoryProducts = [], categoryProductsLoading } = useSelector(state => state.products)
   const router = useRouter()
+  const [userLocation, setUserLocation] = useState(null)
 
   // Check screen size for mobile detection
   useEffect(() => {
@@ -108,10 +111,53 @@ export default function Home() {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
+  // Get user location
+  useEffect(() => {
+    const getLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            })
+          },
+          (error) => {
+            console.error('Error getting location:', error)
+            // Default to Dubai Marina if location access denied
+            setUserLocation({
+              latitude: 25.0772,
+              longitude: 55.1398
+            })
+          }
+        )
+      } else {
+        // Default to Dubai Marina if geolocation not supported
+        setUserLocation({
+          latitude: 25.0772,
+          longitude: 55.1398
+        })
+      }
+    }
+    getLocation()
+  }, [])
+
   useEffect(() => {
     dispatch(fetchGeneralStores())
     dispatch(fetchProductsByCategory(StoreCategoryId))
   }, [dispatch])
+
+  // Fetch fastest delivery stores and deals when location is available
+  useEffect(() => {
+    if (userLocation) {
+      dispatch(fetchFastestDeliveryStores({
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        storeType: 'stores'
+      }))
+      dispatch(fetchBestCheapDeals({ storeType: 'stores', page: 1, limit: 20 }))
+    }
+  }, [userLocation, dispatch])
 
   // Transform category products
   const transformedCategoryProducts = useMemo(() => {
@@ -123,14 +169,26 @@ export default function Home() {
 
   // Navigation handlers
   const handleFastestDeliveryPrev = () => {
-    if (fastestDeliverySwiperRef.current && fastestDeliverySwiperRef.current.swiper) {
+    if (fastestDeliverySwiperRef.current?.swiper) {
       fastestDeliverySwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleFastestDeliveryNext = () => {
-    if (fastestDeliverySwiperRef.current && fastestDeliverySwiperRef.current.swiper) {
+    if (fastestDeliverySwiperRef.current?.swiper) {
       fastestDeliverySwiperRef.current.swiper.slideNext()
+    }
+  }
+
+  const handleBestCheapDealsPrev = () => {
+    if (bestCheapDealsSwiperRef.current?.swiper) {
+      bestCheapDealsSwiperRef.current.swiper.slidePrev()
+    }
+  }
+
+  const handleBestCheapDealsNext = () => {
+    if (bestCheapDealsSwiperRef.current?.swiper) {
+      bestCheapDealsSwiperRef.current.swiper.slideNext()
     }
   }
   return (
@@ -140,22 +198,22 @@ export default function Home() {
 
       <Categories />
 
-      {/* Fastest Delivery */}
-      <section className="section">
+      {/* Fastest Delivery Stores */}
+      {/* <section className="section">
         <div className="container">
-          <SectionHeader 
-            title="Fastest Delivery" 
+          <SectionHeader
+            title="Fastest Delivery"
             showNavigation={true}
             onPrev={handleFastestDeliveryPrev}
             onNext={handleFastestDeliveryNext}
           />
-          {categoryProductsLoading ? (
+          {loading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
-              {productData.map((product, index) => (
-                <ProductCard key={index} {...product} />
+              {[...Array(4)].map((_, index) => (
+                <StoreCardSkeleton key={`skeleton-${index}`} />
               ))}
             </div>
-          ) : transformedCategoryProducts.length > 0 ? (
+          ) : (fastestDeliveryStores && fastestDeliveryStores.length > 0) ? (
             <Swiper
               ref={fastestDeliverySwiperRef}
               modules={[SwiperNavigation]}
@@ -165,17 +223,95 @@ export default function Home() {
               freeMode={true}
               className="bestsellers-swiper"
             >
-              {transformedCategoryProducts.map((product, index) => (
-                <SwiperSlide key={product.id || index} className="bestseller-slide">
-                  <ProductCard {...product} />
+              {fastestDeliveryStores.map((store, index) => (
+                <SwiperSlide key={store._id || store.id || `store-${index}`} className="bestseller-slide">
+                  <StoreCard
+                    id={store._id || store.id}
+                    title={store.name || 'Store'}
+                    category={store.category?.name || store.category || store.level1?.name || 'General'}
+                    rating={store.rating || '4.0'}
+                    deliveryTime={store.deliveryTime || '30 Min'}
+                    image={store.banner || store.logo || '/iphone.jpg'}
+                    logo={store.logo}
+                    location={(store.address && store.address.city) || (store.latitude && store.longitude ? 'Dubai, UAE' : 'Dubai, UAE')}
+                    onClick={() => {
+                      const slug = store.slug || (store.name ? store.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : 'store');
+                      router.push(`/${slug}?storeId=${store._id || store.id}`);
+                    }}
+                  />
                 </SwiperSlide>
               ))}
             </Swiper>
           ) : (
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <p>No stores found</p>
+            </div>
+          )}
+        </div>
+      </section> */}
+      {/* Best & Cheap Deals - Only shows stores with cheap deals from API */}
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="Best & Cheap Deals"
+            showNavigation={true}
+            onPrev={handleBestCheapDealsPrev}
+            onNext={handleBestCheapDealsNext}
+          />
+          {loading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
-              {productData.map((product, index) => (
-                <ProductCard key={index} {...product} />
+              {[...Array(4)].map((_, index) => (
+                <StoreCardSkeleton key={`skeleton-${index}`} />
               ))}
+            </div>
+          ) : (bestCheapDeals && bestCheapDeals.length > 0) ? (
+            <Swiper
+              ref={bestCheapDealsSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView={isMobile ? 1.2 : 'auto'}
+              spaceBetween={isMobile ? 16 : 24}
+              grabCursor={true}
+              freeMode={true}
+              className="bestsellers-swiper"
+            >
+              {bestCheapDeals.map((store, index) => {
+                // Map store category - check if level1 is stores
+                let categoryName = 'Stores';
+                if (store.level1) {
+                  const level1Name = store.level1?.name || store.level1;
+                  if (typeof level1Name === 'string') {
+                    categoryName = level1Name.toLowerCase().includes('store') ||
+                      level1Name.toLowerCase().includes('stores')
+                      ? 'Stores'
+                      : level1Name;
+                  }
+                } else if (store.category) {
+                  categoryName = store.category?.name || store.category;
+                }
+
+                return (
+                  <SwiperSlide key={store._id || store.id || `store-${index}`} className="bestseller-slide">
+                    <StoreCard
+                      id={store._id || store.id}
+                      title={store.name || 'Store'}
+                      category={categoryName}
+                      rating={store.rating || '4.0'}
+                      deliveryTime={store.deliveryTime || '30 Min'}
+                      image={store.banner || store.logo || '/iphone.jpg'}
+                      logo={store.logo}
+                      location={(store.address && store.address.city) || (store.latitude && store.longitude ? 'Dubai, UAE' : 'Dubai, UAE')}
+                      onClick={() => {
+                        const slug = store.slug || (store.name ? store.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : 'store');
+                        router.push(`/${slug}?storeId=${store._id || store.id}`);
+                      }}
+                    />
+                  </SwiperSlide>
+                );
+              })}
+            </Swiper>
+          ) : (
+            <div style={{ padding: '20px', textAlign: 'center' }}>
+              <p>No stores with cheap deals found</p>
             </div>
           )}
         </div>

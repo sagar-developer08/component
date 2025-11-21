@@ -295,7 +295,8 @@ const storesSlice = createSlice({
       .addCase(fetchBestCheapDeals.fulfilled, (state, action) => {
         state.loading = false
         const responseData = action.payload?.data || action.payload
-        state.bestCheapDeals = Array.isArray(responseData?.deals) ? responseData.deals : []
+        // API now returns stores instead of deals
+        state.bestCheapDeals = Array.isArray(responseData?.stores) ? responseData.stores : []
         state.pagination = responseData?.pagination || {}
       })
       .addCase(fetchBestCheapDeals.rejected, (state, action) => {
@@ -310,7 +311,8 @@ const storesSlice = createSlice({
       .addCase(fetchBestBundleDeals.fulfilled, (state, action) => {
         state.loading = false
         const responseData = action.payload?.data || action.payload
-        state.bestBundleDeals = Array.isArray(responseData?.bundleDeals) ? responseData.bundleDeals : []
+        // API returns stores instead of bundleDeals
+        state.bestBundleDeals = Array.isArray(responseData?.stores) ? responseData.stores : []
         state.pagination = responseData?.pagination || {}
       })
       .addCase(fetchBestBundleDeals.rejected, (state, action) => {

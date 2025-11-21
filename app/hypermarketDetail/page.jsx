@@ -4,11 +4,52 @@ import Navigation from '@/components/Navigation'
 import Categories from '@/components/Categories'
 import ImageSlider from '@/components/ImageSlider'
 import ProductCard from '@/components/ProductCard'
-import StoreCard from '@/components/StoreCard'
 import SectionHeader from '@/components/SectionHeader'
+import Banner from '@/components/Banner'
+import CategoryCard from '@/components/CategoryCard'
+import InfluencerCard from '@/components/InfluencerCard'
+import FAQ from '@/components/FAQ'
 import Footer from '@/components/Footer'
-import FilterDrawer from '@/components/FilterDrawer'
-import { useMemo, useState } from 'react'
+import QuickNav from '@/components/QuickNav'
+import Image from 'next/image'
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchHypermarketLevel2Categories } from '@/store/slices/categoriesSlice'
+import { useRouter } from 'next/navigation'
+
+// Helper function to transform API category data to match CategoryCard component format
+const transformCategoryData = (apiCategory) => {
+  // Use placeholder images as fallback if icon is not provided
+  const placeholderImages = [
+    'https://api.builder.io/api/v1/image/assets/TEMP/b96c7d3062a93a3b6d8e9a2a4bd11acfa542dced?width=412',
+    'https://api.builder.io/api/v1/image/assets/TEMP/81e3ee1beeaa2c8941600c27d3ec9733bac0869c?width=412',
+    'https://api.builder.io/api/v1/image/assets/TEMP/5839901b9e3641626fef47388dc1036c852a0aa5?width=412',
+    'https://api.builder.io/api/v1/image/assets/TEMP/4a25e8a2b689f4d8cf2f809de9e46f2c26c36d46?width=412',
+    'https://api.builder.io/api/v1/image/assets/TEMP/bb3de20fdb53760293d946ca033adbf4489bed56?width=412',
+    'https://api.builder.io/api/v1/image/assets/TEMP/f291940d1feaf8e5cb0a7335f629e12091d26a73?width=412'
+  ]
+
+  // Use icon from database if available, otherwise use placeholder
+  let categoryImage = apiCategory.icon;
+  
+  // If no icon from database, use hash-based placeholder assignment
+  if (!categoryImage) {
+    const hash = apiCategory.name.split('').reduce((a, b) => {
+      a = ((a << 5) - a) + b.charCodeAt(0)
+      return a & a
+    }, 0)
+    const imageIndex = Math.abs(hash) % placeholderImages.length
+    categoryImage = placeholderImages[imageIndex]
+  }
+
+  return {
+    id: apiCategory._id,
+    name: apiCategory.name || 'Category Name',
+    image: categoryImage,
+    slug: apiCategory.slug || apiCategory.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+    level: apiCategory.level
+  }
+}
 
 const productData = [
   {
@@ -17,7 +58,7 @@ const productData = [
     price: "AED 1,600",
     rating: "4.0",
     deliveryTime: "30 Min",
-    image: "/iphone.jpg"
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
   },
   {
     id: "nike-dunk-low",
@@ -25,7 +66,7 @@ const productData = [
     price: "AED 1,600",
     rating: "4.0",
     deliveryTime: "30 Min",
-    image: "/iphone.jpg"
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
   },
   {
     id: "nike-air-max",
@@ -33,7 +74,7 @@ const productData = [
     price: "AED 1,600",
     rating: "4.0",
     deliveryTime: "30 Min",
-    image: "/iphone.jpg"
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
   },
   {
     id: "nike-airforce-01-black",
@@ -41,238 +82,345 @@ const productData = [
     price: "AED 1,600",
     rating: "4.0",
     deliveryTime: "30 Min",
-    image: "/iphone.jpg"
+    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
   }
 ]
 
-export default function HypermarketDetail() {
-  const [filterOpen, setFilterOpen] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 20
+export default function Home() {
+  const dispatch = useDispatch()
+  const router = useRouter()
+  const { hypermarketLevel2Categories, loading, error } = useSelector(state => state.categories)
 
-  const products = useMemo(() => productData.concat(productData), [])
+  // Fetch hypermarket level 2 categories when component mounts
+  useEffect(() => {
+    dispatch(fetchHypermarketLevel2Categories())
+  }, [dispatch])
 
-  const totalPages = useMemo(() => {
-    if (!products.length) {
-      return 1
-    }
-    return Math.max(1, Math.ceil(products.length / pageSize))
-  }, [products.length, pageSize])
+  // Transform API data
+  const transformedCategories = hypermarketLevel2Categories && hypermarketLevel2Categories.length > 0
+    ? hypermarketLevel2Categories.map(transformCategoryData)
+    : []
 
-  const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * pageSize
-    return products.slice(start, start + pageSize)
-  }, [products, currentPage, pageSize])
-
-  const pageNumbers = useMemo(() => {
-    return Array.from({ length: totalPages }, (_, index) => index + 1)
-  }, [totalPages])
-
-  const handlePageChange = (page) => {
-    if (page < 1 || page > totalPages || page === currentPage) {
-      return
-    }
-    setCurrentPage(page)
+  const handleCategoryClick = (category) => {
+    // Use the slug from the API data or create a slug from the name
+    const slug = category.slug || category.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    router.push(`/category/${slug}`);
   }
 
-  const handlePrevious = () => handlePageChange(currentPage - 1)
-  const handleNext = () => handlePageChange(currentPage + 1)
   return (
     <main className="home-page">
       <Navigation />
+      <div className="banner-container">
+        <div className="banner-section">
+          <div className="banner-content">
+            <button className="banner-back-btn" onClick={() => window.history.back()}>
+              Back
+            </button>
+            <div className="banner-info">
+              <div className="banner-title">Hypermarket</div>
+              <div className="banner-desc">
+                Browse through our wide range of hypermarket categories and find everything you need.
+              </div>
+            </div>
+            {/* <button className="banner-follow-btn">Follow</button> */}
+          </div>
+        </div>
+      </div>
 
       <section className="section">
         <div className="container">
-          <div className="listing-layout">
-            {/* Sticky Filter Sidebar */}
-            <aside className="filters-sidebar">
-              <FilterDrawer open={true} inline sticky stickyTop={112} onClose={() => {}} />
-            </aside>
-
-            {/* Main Content Area with Scrollable Products */}
-            <div className="content-area">
-              <div className="sticky-header">
-                <SectionHeader
-                  title="Products"
-                  showNavigation={false}
-                  showButton={true}
-                  buttonText="Sort By"
-                  onButtonClick={() => {}}
-                />
-              </div>
-              <div className="products-scroll-container">
-                <div className="grid-3">
-                  {paginatedProducts.map((product, index) => (
-                    <div key={`${product.id}-${index}`} className="grid-item">
-                      <ProductCard {...product} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {totalPages > 1 && (
-                <div className="pagination-controls" role="navigation" aria-label="Products pagination">
-                  <button
-                    type="button"
-                    className="pagination-button"
-                    onClick={handlePrevious}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </button>
-                  {pageNumbers.map((page) => (
-                    <button
-                      key={page}
-                      type="button"
-                      className={`pagination-button ${page === currentPage ? 'active' : ''}`}
-                      onClick={() => handlePageChange(page)}
-                      aria-current={page === currentPage ? 'page' : undefined}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    className="pagination-button"
-                    onClick={handleNext}
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                  </button>
-                </div>
-              )}
+          <SectionHeader title="Categories" showNavigation={true} />
+          {loading ? (
+            <div className="categories-grid">
+              {[...Array(6)].map((_, index) => (
+                <div key={`skeleton-${index}`} style={{ width: '200px', height: '200px', background: '#f0f0f0', borderRadius: '12px' }} />
+              ))}
             </div>
+          ) : error ? (
+            <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+              Error loading categories: {error}
+            </div>
+          ) : transformedCategories.length > 0 ? (
+            <div className="categories-grid">
+              {transformedCategories.map((category, index) => (
+                <CategoryCard 
+                  key={category.id || index} 
+                  {...category}
+                  onClick={() => handleCategoryClick(category)}
+                />
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+              No categories available
+            </div>
+          )}
+        </div>
+      </section>
+
+
+      {/* Bestsellers Section */}
+      <section className="section">
+        <div className="container">
+          <SectionHeader title="Our Bestsellers" showNavigation={true} />
+          <div className="products-grid">
+            {productData.map((product, index) => (
+              <ProductCard key={index} {...product} />
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Drawer for small screens or other triggers (unchanged elsewhere) */}
-      <FilterDrawer open={filterOpen} onClose={() => setFilterOpen(false)} />
+      {/* Offers Section */}
+      <section className="section">
+        <div className="container">
+          <SectionHeader title="Offers For You"
+            showNavigation={true} />
+          <div className="products-grid">
+            {productData.map((product, index) => (
+              <ProductCard key={index} {...product} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Special Deals Section */}
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="New Arrivals"
+            showNavigation={true}
+            showButton={false}
+            buttonText="Upgrade"
+          />
+          <div className="products-grid">
+            {productData.map((product, index) => (
+              <ProductCard key={index} {...product} />
+            ))}
+          </div>
+        </div>
+      </section>
 
       <Footer />
-
       <style jsx>{`
-        .listing-layout {
-          display: flex;
-          gap: 24px;
-          align-items: flex-start;
-          min-height: calc(100vh - 200px);
-        }
-        
-        .filters-sidebar {
-          position: sticky;
-          top: 112px; /* below fixed navbar */
-          width: 320px;
-          flex-shrink: 0;
-          z-index: 10;
-          height: fit-content;
-          max-height: calc(100vh - 112px);
-          overflow-y: auto;
-           /* Hide scrollbar, keep scroll functionality */
-           -ms-overflow-style: none; /* IE and Edge */
-           scrollbar-width: none; /* Firefox */
-        }
-         .filters-sidebar::-webkit-scrollbar { display: none; }
-
-        .content-area { 
-          flex: 1;
-          min-width: 0; /* allows flex item to shrink below content size */
-        }
-        
-        .products-scroll-container {
+      .blue-bar-section {
+        width: 100%;
+        background: #CBE6FF;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 56px;
+        margin: 32px 0;
+      }
+      .blue-bar-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        width: 100%;
+        max-width: 1360px;
+        height: 56px;
+      }
+      .blue-bar-item {
+        color: #0082FF;
+        font-size: 16px;
+        font-weight: 600;
+        font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        padding: 0 18px;
+        white-space: nowrap;
+      }
+      .blue-bar-sep {
+        color: #0082FF;
+        font-size: 16px;
+        font-weight: 600;
+        font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        opacity: 0.7;
+      }
+        .promo-cards-container {
           width: 100%;
-          max-height: calc(100vh - 200px);
-          overflow-y: auto;
-          padding-right: 8px; /* space for scrollbar */
-           /* Hide scrollbar, keep scroll functionality */
-           -ms-overflow-style: none; /* IE and Edge */
-           scrollbar-width: none; /* Firefox */
-        }
-         .products-scroll-container::-webkit-scrollbar { display: none; }
-        
-        .grid-3 {
-          display: grid;
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 24px;
-          padding-bottom: 40px; /* extra space at bottom */
-        }
-        
-        .grid-item { 
-          display: flex; 
-          justify-content: center; 
-        }
-
-        .sticky-header {
-          position: sticky;
-          top: 0;
-          z-index: 5;
-          background: #ffffff;
-        }
-
-        .pagination-controls {
           display: flex;
           justify-content: center;
+          padding: 0px 24px;
+          box-sizing: border-box;
+          margin: 32px 0 0 0;
+        }
+        .promo-cards-row {
+          display: flex;
+          gap: 32px;
+          justify-content: flex-start;
+          align-items: flex-start;
+          width: 100%;
+          max-width: 1360px;
+        }
+        .promo-card {
+          display: flex;
           align-items: center;
-          gap: 8px;
-          margin-top: 32px;
-          flex-wrap: wrap;
+          border-radius: 16px;
+          padding: 18px 28px;
+          min-width: 340px;
+          box-sizing: border-box;
+          gap: 18px;
         }
-
-        .pagination-button {
-          min-width: 40px;
-          padding: 8px 12px;
-          border: 1px solid #d1d5db;
-          border-radius: 8px;
-          background: #ffffff;
-          color: #111827;
-          font-size: 14px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
+        .promo-card-outline {
+          border: 2px solid #2196F3;
+          background: #fff;
         }
-
-        .pagination-button:hover:not(:disabled) {
-          border-color: #111827;
-          color: #111827;
-          background: #f9fafb;
+        .promo-card-filled {
+          background: #2196F3;
+          border: none;
         }
-
-        .pagination-button:disabled {
-          cursor: not-allowed;
-          opacity: 0.5;
+        .promo-card-icon {
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-
-        .pagination-button.active {
-          background: #111827;
-          color: #ffffff;
-          border-color: #111827;
+        .promo-card-content {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
         }
-
-        @media (max-width: 1024px) {
-          .listing-layout { 
-            flex-direction: column; 
-            gap: 16px;
-          }
-          
-          .filters-sidebar { 
-            position: relative; 
-            top: 0; 
-            width: 100%; 
-            z-index: 1;
-            max-height: none;
-            overflow-y: visible;
-          }
-          
-          .grid-3 { 
-            grid-template-columns: repeat(2, minmax(0, 1fr)); 
-            gap: 16px;
-          }
+        .promo-card-title {
+          font-size: 18px;
+          font-weight: 600;
+          color: #000;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+        .promo-card-link {
+          font-size: 16px;
+          font-weight: 600;
+          color: #000;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+        .promo-card-title-white {
+          color: #fff;
+        }
+        .promo-card-link-white {
+          color: #fff;
+        }
+        .banner-container {
+          width: 100%;
+          display: flex;
+          justify-content: center;
+          padding: 0px 24px;
+          box-sizing: border-box;
+          position: relative;
         }
         
-        @media (max-width: 640px) {
-          .grid-3 { 
-            grid-template-columns: 1fr; 
-            gap: 16px;
+        .banner-section {
+          width: 100%;
+          max-width: 1360px;
+          height: 324px;
+          position: relative;
+          border-radius: 24px;
+          overflow: hidden;
+        }
+
+        .banner-content {
+          display: flex;
+          width: 100%;
+          height: 324px;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: flex-end;
+          border-radius: 24px;
+          background: linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, rgba(0, 0, 0, 0.60) 100%), 
+                      url('/2.jpg') lightgray 50% / cover no-repeat;
+          padding: 0 48px 40px 48px;
+          box-sizing: border-box;
+          position: relative;
+        }
+        
+        .banner-back-btn {
+          background: #fff;
+          color: #111;
+          font-size: 18px;
+          font-weight: 600;
+          border: none;
+          border-radius: 24px;
+          padding: 12px 36px;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          transition: background 0.2s;
+          position: absolute;
+          top: 24px;
+          left: 48px;
+          z-index: 10;
+        }
+        
+        .banner-back-btn:hover {
+          background: #f0f0f0;
+        }
+        
+        .banner-info {
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+          position: relative;
+        }
+        
+        .banner-title {
+          font-size: 32px;
+          font-weight: 700;
+          color: #fff;
+          margin-bottom: 0;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+        
+        .banner-desc {
+          font-size: 18px;
+          color: #fff;
+          font-weight: 500;
+          max-width: 600px;
+          line-height: 1.5;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+        }
+        
+        .banner-follow-btn {
+          background: #fff;
+          color: #111;
+          font-size: 18px;
+          font-weight: 600;
+          border: none;
+          border-radius: 24px;
+          padding: 12px 36px;
+          cursor: pointer;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          transition: background 0.2s;
+        }
+        
+        .banner-follow-btn:hover {
+          background: #f0f0f0;
+        }
+        
+        @media (max-width: 900px) {
+          .promo-cards-container {
+            padding: 0px 24px;
+          }
+          .promo-cards-row {
+            flex-direction: column;
+            gap: 18px;
+          }
+          .promo-card {
+            min-width: 0;
+            width: 100%;
+            padding: 16px 18px;
+          }
+          
+          .banner-content {
+            flex-direction: column;
+            align-items: flex-start;
+            padding: 0 24px 24px 24px;
+          }
+          
+          .banner-back-btn {
+            left: 24px;
+          }
+          
+          .banner-follow-btn {
+            margin-top: 24px;
           }
         }
       `}</style>

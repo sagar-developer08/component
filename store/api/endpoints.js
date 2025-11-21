@@ -57,6 +57,8 @@ export const catalog = {
   },
   popularCategories: `${BASES.catalog}/categories/level3`,
   level2Categories: `${BASES.catalog}/categories/level2`,
+  hypermarketLevel2Categories: `${BASES.catalog}/categories/hypermarket/level2`,
+  supermarketLevel2Categories: `${BASES.catalog}/categories/supermarket/level2`,
   categoryChildren: (slug) => `${BASES.catalog}/categories/level2/${slug}/children`,
   searchProducts: (query) => `${BASES.catalog}/search/products?q=${encodeURIComponent(query)}`,
 }
