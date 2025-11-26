@@ -41,7 +41,9 @@ export default function HypermarketCard() {
   const handleStoreClick = (store) => {
     const slug = store.slug || store.name?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     // Navigate to category page instead of store detail page
-    router.push(`/category/${slug}`);
+    // Add source query param based on current page
+    const source = isSupermarketPage ? 'supermarket' : (isHypermarketPage ? 'hypermarket' : 'store');
+    router.push(`/category/${slug}?source=${source}`);
   };
 
   // Use the appropriate stores based on the current page
