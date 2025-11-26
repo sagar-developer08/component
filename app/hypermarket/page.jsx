@@ -264,7 +264,7 @@ export default function Home() {
                     location={(store.address && store.address.city) || 'Dubai, UAE'}
                     onClick={() => {
                       const slug = store.slug || store.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-                      router.push(`/category/${slug}`);
+                      router.push(`/category/${slug}?source=hypermarket`);
                     }}
                   />
                 </SwiperSlide>
@@ -330,7 +330,7 @@ export default function Home() {
                       location={(store.address && store.address.city) || (store.latitude && store.longitude ? 'Dubai, UAE' : 'Dubai, UAE')}
                       onClick={() => {
                         const slug = store.slug || (store.name ? store.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : 'store');
-                        router.push(`/category/${slug}`);
+                        router.push(`/category/${slug}?source=hypermarket`);
                       }}
                     />
                   </SwiperSlide>
@@ -397,7 +397,7 @@ export default function Home() {
                       location={(store.address && store.address.city) || (store.latitude && store.longitude ? 'Dubai, UAE' : 'Dubai, UAE')}
                       onClick={() => {
                         const slug = store.slug || (store.name ? store.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : 'store');
-                        router.push(`/category/${slug}`);
+                        router.push(`/category/${slug}?source=hypermarket`);
                       }}
                     />
                   </SwiperSlide>

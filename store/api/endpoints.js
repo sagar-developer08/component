@@ -82,6 +82,7 @@ export const catalog = {
   productsByCategory: (categoryId) => `${BASES.catalog}/products/category?categoryId=${categoryId}`,
   similarProducts: (productId, limit = 10) => `${BASES.catalog}/products/similar/${productId}?limit=${limit}`,
   stores: `${BASES.catalog}/stores`,
+  storeBySlug: (slug) => `${BASES.catalog}/stores/slug/${slug}`,
   storesDiscovery: `${BASES.catalog}/stores/discovery`,
   fastestDelivery: (latitude, longitude, storeType) => `${BASES.catalog}/stores/deals/fastest-delivery?latitude=${latitude}&longitude=${longitude}${storeType ? `&storeType=${storeType}` : ''}`,
   bestCheapDeals: (params = {}) => {
@@ -105,6 +106,7 @@ export const catalog = {
   level2Categories: `${BASES.catalog}/categories/level2`,
   hypermarketLevel2Categories: `${BASES.catalog}/categories/hypermarket/level2`,
   supermarketLevel2Categories: `${BASES.catalog}/categories/supermarket/level2`,
+  storeLevel2Categories: `${BASES.catalog}/categories/store/level2`,
   categoryChildren: (slug) => `${BASES.catalog}/categories/level2/${slug}/children`,
   searchProducts: (query) => `${BASES.catalog}/search/products?q=${encodeURIComponent(query)}`,
 }

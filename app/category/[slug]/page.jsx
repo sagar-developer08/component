@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useDispatch, useSelector } from 'react-redux'
 import { useEffect, useState, useRef } from 'react'
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -12,8 +12,9 @@ import ProductCard from '@/components/ProductCard'
 import CategoryCard from '@/components/CategoryCard'
 import SectionHeader from '@/components/SectionHeader'
 import Footer from '@/components/Footer'
-import { fetchCategoryChildren, fetchHypermarketLevel2Categories, fetchSupermarketLevel2Categories } from '@/store/slices/categoriesSlice'
+import { fetchCategoryChildren, fetchHypermarketLevel2Categories, fetchSupermarketLevel2Categories, fetchStoreLevel2Categories } from '@/store/slices/categoriesSlice'
 import { fetchProductsByStoreSlug, fetchHypermarketProducts, fetchSupermarketProducts, fetchStoreProductsByStoreId, clearStoreSlugProducts, clearHypermarketProducts, clearSupermarketProducts, clearStoreProductsByStoreId } from '@/store/slices/productsSlice'
+import { catalog } from '@/store/api/endpoints'
 import { ProductCardSkeleton, CategoryCardSkeleton } from '@/components/SkeletonLoader'
 
 // Helper function to transform API product data to match ProductCard component format
@@ -121,10 +122,12 @@ const productData = [
 export default function CategoryPage() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const dispatch = useDispatch()
   const slug = params.slug
+  const source = searchParams?.get('source') || null
 
-  const { categoryChildren, hypermarketLevel2Categories, supermarketLevel2Categories, loading, error } = useSelector(state => state.categories)
+  const { categoryChildren, hypermarketLevel2Categories, supermarketLevel2Categories, storeLevel2Categories, loading, error } = useSelector(state => state.categories)
   const { 
     storeSlugProducts, 
     storeSlugProductsLoading, 
@@ -143,6 +146,7 @@ export default function CategoryPage() {
   const [categoryInfo, setCategoryInfo] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
   const [isStoreSlug, setIsStoreSlug] = useState(false)
+  const [storeId, setStoreId] = useState(null)
   
   // Determine if this is actually a store slug based on data presence
   // Check hypermarket, supermarket, store products, and store slug products
@@ -179,75 +183,85 @@ export default function CategoryPage() {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
-  // First, try to fetch hypermarket products, then supermarket, then store products, then store slug, then category
+  // For /category/[slug] pages, fetch appropriate API based on source
   useEffect(() => {
     if (slug) {
-      // Try hypermarket products first
-      dispatch(fetchHypermarketProducts({ storeId: slug, limit: 20 }))
-        .then((result) => {
-          if (result.meta.requestStatus === 'fulfilled' && result.payload?.success && result.payload?.data?.store) {
-            // It's a hypermarket store
-            setIsStoreSlug(true)
-            setCategoryInfo({
-              name: result.payload.data.store.name,
-              description: result.payload.data.store.description || 'Browse all products from this hypermarket'
-            })
-          } else {
-            // Not a hypermarket, try supermarket
-            return dispatch(fetchSupermarketProducts({ storeId: slug, limit: 20 }))
-          }
-        })
-        .then((result) => {
-          if (result && result.meta.requestStatus === 'fulfilled' && result.payload?.success && result.payload?.data?.store) {
-            // It's a supermarket store
-            setIsStoreSlug(true)
-            setCategoryInfo({
-              name: result.payload.data.store.name,
-              description: result.payload.data.store.description || 'Browse all products from this supermarket'
-            })
-          } else if (!hypermarketProducts?.store) {
-            // Not a supermarket, try regular store products
-            return dispatch(fetchStoreProductsByStoreId({ storeId: slug, limit: 20 }))
-          }
-        })
-        .then((result) => {
-          if (result && result.meta.requestStatus === 'fulfilled' && result.payload?.success && result.payload?.data?.store) {
-            // It's a regular store
-            setIsStoreSlug(true)
-            setCategoryInfo({
-              name: result.payload.data.store.name,
-              description: result.payload.data.store.description || 'Browse all products from this store'
-            })
-          } else if (!hypermarketProducts?.store && !supermarketProducts?.store) {
-            // Not a store products API match, try regular store slug
-            return dispatch(fetchProductsByStoreSlug({ storeSlug: slug, limit: 100 }))
-          }
-        })
-        .then((result) => {
-          if (result && result.meta.requestStatus === 'fulfilled' && result.payload?.success && result.payload?.data?.store) {
-            // It's a regular store slug
-            setIsStoreSlug(true)
-            setCategoryInfo({
-              name: result.payload.data.store.name,
-              description: result.payload.data.store.description || 'Browse all products from this store'
-            })
-          } else if (!hypermarketProducts?.store && !supermarketProducts?.store && !storeProductsByStoreId?.store) {
-            // Not a store slug, fetch category children
-            setIsStoreSlug(false)
-            dispatch(fetchCategoryChildren(slug))
-          }
-        })
-        .catch(() => {
-          // Error fetching store, try category instead
-          if (!hypermarketProducts?.store && !supermarketProducts?.store && !storeProductsByStoreId?.store && !storeSlugProducts?.store) {
-            setIsStoreSlug(false)
-            dispatch(fetchCategoryChildren(slug))
-          }
-        })
+      setIsStoreSlug(false)
       
-      // Also fetch hypermarket and supermarket level 2 categories
-      dispatch(fetchHypermarketLevel2Categories())
-      dispatch(fetchSupermarketLevel2Categories())
+      // Check source query parameter to determine which API to call
+      if (source === 'hypermarket') {
+        // From hypermarket page - first get store by slug, then call hypermarket products API
+        const fetchStoreAndProducts = async () => {
+          try {
+            // Fetch store by slug to get storeId
+            const storeResponse = await fetch(catalog.storeBySlug(slug))
+            if (storeResponse.ok) {
+              const storeData = await storeResponse.json()
+              if (storeData.success && storeData.data && storeData.data._id) {
+                const fetchedStoreId = storeData.data._id
+                setStoreId(fetchedStoreId)
+                // Call hypermarket products API with storeId
+                dispatch(fetchHypermarketProducts({ storeId: fetchedStoreId }))
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching store by slug:', error)
+          }
+        }
+        fetchStoreAndProducts()
+        // Also fetch hypermarket level2 categories
+        dispatch(fetchHypermarketLevel2Categories())
+      } else if (source === 'supermarket') {
+        // From supermarket page - first get store by slug, then call supermarket products API
+        const fetchStoreAndProducts = async () => {
+          try {
+            // Fetch store by slug to get storeId
+            const storeResponse = await fetch(catalog.storeBySlug(slug))
+            if (storeResponse.ok) {
+              const storeData = await storeResponse.json()
+              if (storeData.success && storeData.data && storeData.data._id) {
+                const fetchedStoreId = storeData.data._id
+                setStoreId(fetchedStoreId)
+                // Call supermarket products API with storeId
+                dispatch(fetchSupermarketProducts({ storeId: fetchedStoreId }))
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching store by slug:', error)
+          }
+        }
+        fetchStoreAndProducts()
+        // Also fetch supermarket level2 categories
+        dispatch(fetchSupermarketLevel2Categories())
+      } else if (source === 'store') {
+        // From store page - first get store by slug, then call store products API
+        const fetchStoreAndProducts = async () => {
+          try {
+            // Fetch store by slug to get storeId
+            const storeResponse = await fetch(catalog.storeBySlug(slug))
+            if (storeResponse.ok) {
+              const storeData = await storeResponse.json()
+              if (storeData.success && storeData.data && storeData.data._id) {
+                const fetchedStoreId = storeData.data._id
+                setStoreId(fetchedStoreId)
+                // Call store products API with storeId
+                dispatch(fetchStoreProductsByStoreId({ storeId: fetchedStoreId }))
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching store by slug:', error)
+          }
+        }
+        fetchStoreAndProducts()
+        // Also fetch store level2 categories
+        dispatch(fetchStoreLevel2Categories())
+      } else {
+        // From discovery page or no source - call category children API (default behavior)
+        dispatch(fetchCategoryChildren(slug))
+        // Also fetch hypermarket and supermarket level 2 categories for the "Other Categories" section
+        dispatch(fetchHypermarketLevel2Categories())
+        dispatch(fetchSupermarketLevel2Categories())
+      }
     }
 
     // Cleanup on unmount
@@ -256,8 +270,9 @@ export default function CategoryPage() {
       dispatch(clearHypermarketProducts())
       dispatch(clearSupermarketProducts())
       dispatch(clearStoreProductsByStoreId())
+      setStoreId(null)
     }
-  }, [dispatch, slug])
+  }, [dispatch, slug, source])
 
   // Update isStoreSlug when hypermarket, supermarket, store products, or storeSlugProducts data loads
   useEffect(() => {
@@ -365,12 +380,27 @@ export default function CategoryPage() {
     || storeSlugProducts?.store?.banner 
     || '/2.jpg'
   
-  // Use hypermarket or supermarket level 2 categories if available, otherwise use category children level4Categories
-  const categoriesToDisplay = (hypermarketLevel2Categories && hypermarketLevel2Categories.length > 0)
-    ? hypermarketLevel2Categories.map(transformCategoryData)
-    : (supermarketLevel2Categories && supermarketLevel2Categories.length > 0)
-    ? supermarketLevel2Categories.map(transformCategoryData)
-    : (categoryChildren?.data?.level4Categories?.map(transformCategoryData) || [])
+  // Use appropriate categories based on source
+  const categoriesToDisplay = (() => {
+    if (source === 'hypermarket' && hypermarketLevel2Categories && hypermarketLevel2Categories.length > 0) {
+      return hypermarketLevel2Categories.map(transformCategoryData)
+    } else if (source === 'supermarket' && supermarketLevel2Categories && supermarketLevel2Categories.length > 0) {
+      return supermarketLevel2Categories.map(transformCategoryData)
+    } else if (source === 'store' && storeLevel2Categories && storeLevel2Categories.length > 0) {
+      return storeLevel2Categories.map(transformCategoryData)
+    } else if (categoryChildren?.data?.level4Categories) {
+      // Default: use category children level4Categories (from discovery page)
+      return categoryChildren.data.level4Categories.map(transformCategoryData)
+    } else {
+      // Fallback: try hypermarket or supermarket if available
+      if (hypermarketLevel2Categories && hypermarketLevel2Categories.length > 0) {
+        return hypermarketLevel2Categories.map(transformCategoryData)
+      } else if (supermarketLevel2Categories && supermarketLevel2Categories.length > 0) {
+        return supermarketLevel2Categories.map(transformCategoryData)
+      }
+      return []
+    }
+  })()
   
   const transformedCategories = categoriesToDisplay
 

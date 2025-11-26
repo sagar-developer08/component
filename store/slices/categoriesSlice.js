@@ -125,6 +125,27 @@ export const fetchSupermarketLevel2Categories = createAsyncThunk(
   }
 )
 
+// Async thunk for fetching store level 2 categories
+export const fetchStoreLevel2Categories = createAsyncThunk(
+  'categories/fetchStoreLevel2Categories',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(catalog.storeLevel2Categories)
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
+      console.log('Store level 2 categories API response:', data)
+      return data
+    } catch (error) {
+      console.error('Error fetching store level 2 categories:', error)
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 // Async thunk for fetching category children
 export const fetchCategoryChildren = createAsyncThunk(
   'categories/fetchCategoryChildren',
@@ -157,6 +178,7 @@ const categoriesSlice = createSlice({
     level2Categories: [],
     hypermarketLevel2Categories: [],
     supermarketLevel2Categories: [],
+    storeLevel2Categories: [],
     categoryChildren: null,
     loading: false,
     error: null,
@@ -173,6 +195,7 @@ const categoriesSlice = createSlice({
       state.level2Categories = []
       state.hypermarketLevel2Categories = []
       state.supermarketLevel2Categories = []
+      state.storeLevel2Categories = []
       state.categoryChildren = null
     }
   },
@@ -338,6 +361,32 @@ const categoriesSlice = createSlice({
         state.error = null
       })
       .addCase(fetchSupermarketLevel2Categories.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+        state.success = false
+      })
+      // Store Level 2 Categories
+      .addCase(fetchStoreLevel2Categories.pending, (state) => {
+        state.loading = true
+        state.error = null
+        state.success = false
+      })
+      .addCase(fetchStoreLevel2Categories.fulfilled, (state, action) => {
+        state.loading = false
+        state.success = true
+        // Handle the API response structure: { success, message, data: [...] }
+        const responseData = action.payload?.data || action.payload
+        console.log('Store level 2 categories reducer - payload:', action.payload)
+        console.log('Store level 2 categories reducer - responseData:', responseData)
+        if (Array.isArray(responseData)) {
+          state.storeLevel2Categories = responseData
+          console.log('Store level 2 categories set in state:', responseData)
+        } else {
+          console.log('Store level 2 response data is not an array:', responseData)
+        }
+        state.error = null
+      })
+      .addCase(fetchStoreLevel2Categories.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
         state.success = false

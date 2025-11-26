@@ -203,9 +203,9 @@ export default function ProductCard({
         <Image
           src={imageSrc}
           alt={title}
-          width={322}
-          height={400}
-          style={{ borderRadius: '16px', border: '1px solid rgba(0, 0, 0, 0.16)', objectFit: 'cover' }}
+          width={260}
+          height={260}
+          style={{ objectFit: 'contain' }}
           onError={handleImageError}
           unoptimized={true}
         />
@@ -311,10 +311,10 @@ export default function ProductCard({
           display: flex;
           flex-direction: column;
           align-items: center;
-          width: 322px;
+          width: 280px;
           height: auto;
-          max-height: 490px;
-          gap: 16px;
+          max-height: 420px;
+          gap: 12px;
           position: relative;
           cursor: pointer;
           transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -322,18 +322,24 @@ export default function ProductCard({
 
         .product-image {
           width: 100%;
-          height: 400px;
-          border-radius: 16px;
+          height: 280px;
+          border-radius: 12px;
           border: 1px solid rgba(0, 0, 0, 0.16);
           background-size: cover;
           background-position: center;
           position: relative;
           overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: #fff;
         }
         
         .product-image img {
-          width: 300px;
-          height: 300px;
+          width: 100%;
+          height: 100%;
+          max-width: 260px;
+          max-height: 260px;
           object-fit: contain;
         }
 
@@ -363,7 +369,7 @@ export default function ProductCard({
           position: absolute;
           left: 50%;
           transform: translateX(-50%);
-          bottom: 60px;
+          bottom: 45px;
           width: 28px;
           height: 4px;
         }
@@ -474,10 +480,10 @@ export default function ProductCard({
         .product-info {
           display: flex;
           width: 100%;
-          padding: 0 8px 8px 8px;
+          padding: 0 4px 4px 4px;
           flex-direction: column;
           align-items: flex-start;
-          gap: 8px;
+          gap: 6px;
         }
 
         .product-title-row {
@@ -491,10 +497,15 @@ export default function ProductCard({
           flex: 1 0 0;
           color: #000;
           font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 16px;
-          font-weight: 700;
-          line-height: 150%;
+          font-size: 13px;
+          font-weight: 600;
+          line-height: 140%;
           margin: 0;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .delivery-time {
@@ -550,27 +561,33 @@ export default function ProductCard({
           display: flex;
           flex-direction: column;
           align-items: flex-start;
-          width: 322px;
+          width: 240px;
           height: auto;
-          max-height: 490px;
-          gap: 16px;
+          max-height: 380px;
+          gap: 10px;
         }
         
         .product-image {
           width: 100%;
-          height: 400px;
-          border-radius: 16px;
+          height: 240px;
+          border-radius: 12px;
           border: 1px solid rgba(0, 0, 0, 0.16);
           background-size: cover;
           background-position: center;
           position: relative;
           overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: #fff;
         }
         
         .product-image img {
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          max-width: 220px;
+          max-height: 220px;
+          object-fit: contain;
         }
 
         .product-badge {
@@ -599,7 +616,7 @@ export default function ProductCard({
           position: absolute;
           left: 50%;
           transform: translateX(-50%);
-          bottom: 60px;
+          bottom: 45px;
           width: 28px;
           height: 4px;
         }
@@ -710,10 +727,10 @@ export default function ProductCard({
         .product-info {
           display: flex;
           width: 100%;
-          padding: 0 8px 8px 8px;
+          padding: 0 4px 4px 4px;
           flex-direction: column;
           align-items: flex-start;
-          gap: 8px;
+          gap: 6px;
         }
 
         .product-title-row {
@@ -727,10 +744,15 @@ export default function ProductCard({
           flex: 1 0 0;
           color: #000;
           font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 16px;
-          font-weight: 700;
-          line-height: 150%;
+          font-size: 13px;
+          font-weight: 600;
+          line-height: 140%;
           margin: 0;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .delivery-time {
