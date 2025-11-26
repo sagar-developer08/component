@@ -67,6 +67,63 @@ export const fetchProductsByStoreSlug = createAsyncThunk(
   }
 )
 
+// Async thunk for fetching hypermarket products
+export const fetchHypermarketProducts = createAsyncThunk(
+  'products/fetchHypermarketProducts',
+  async ({ storeId, limit = 20 } = {}, { rejectWithValue }) => {
+    try {
+      const response = await fetch(catalog.hypermarketProducts(storeId, { limit }))
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return { ...data, storeId }
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+// Async thunk for fetching supermarket products
+export const fetchSupermarketProducts = createAsyncThunk(
+  'products/fetchSupermarketProducts',
+  async ({ storeId, limit = 20 } = {}, { rejectWithValue }) => {
+    try {
+      const response = await fetch(catalog.supermarketProducts(storeId, { limit }))
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return { ...data, storeId }
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
+// Async thunk for fetching store products
+export const fetchStoreProductsByStoreId = createAsyncThunk(
+  'products/fetchStoreProductsByStoreId',
+  async ({ storeId, limit = 20 } = {}, { rejectWithValue }) => {
+    try {
+      const response = await fetch(catalog.storeProducts(storeId, { limit }))
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return { ...data, storeId }
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 // Async thunk for searching products with filters
 export const searchProducts = createAsyncThunk(
   'products/searchProducts',
@@ -235,6 +292,15 @@ const productsSlice = createSlice({
     storeSlugProducts: null,
     storeSlugProductsLoading: false,
     storeSlugProductsError: null,
+    hypermarketProducts: null,
+    hypermarketProductsLoading: false,
+    hypermarketProductsError: null,
+    supermarketProducts: null,
+    supermarketProductsLoading: false,
+    supermarketProductsError: null,
+    storeProductsByStoreId: null,
+    storeProductsByStoreIdLoading: false,
+    storeProductsByStoreIdError: null,
     searchResults: [],
     searchQuery: '',
     searchPagination: {},
@@ -276,6 +342,18 @@ const productsSlice = createSlice({
     clearStoreSlugProducts: (state) => {
       state.storeSlugProducts = null
       state.storeSlugProductsError = null
+    },
+    clearHypermarketProducts: (state) => {
+      state.hypermarketProducts = null
+      state.hypermarketProductsError = null
+    },
+    clearSupermarketProducts: (state) => {
+      state.supermarketProducts = null
+      state.supermarketProductsError = null
+    },
+    clearStoreProductsByStoreId: (state) => {
+      state.storeProductsByStoreId = null
+      state.storeProductsByStoreIdError = null
     },
     clearSuggestions: (state) => {
       state.searchSuggestions = []
@@ -358,6 +436,69 @@ const productsSlice = createSlice({
         state.storeSlugProducts = null
         state.success = false
       })
+      // Fetch hypermarket products cases
+      .addCase(fetchHypermarketProducts.pending, (state) => {
+        state.hypermarketProductsLoading = true
+        state.hypermarketProductsError = null
+      })
+      .addCase(fetchHypermarketProducts.fulfilled, (state, action) => {
+        state.hypermarketProductsLoading = false
+        state.success = action.payload.success
+        if (action.payload.success && action.payload.data) {
+          state.hypermarketProducts = action.payload.data
+        } else {
+          state.hypermarketProducts = null
+        }
+        state.hypermarketProductsError = null
+      })
+      .addCase(fetchHypermarketProducts.rejected, (state, action) => {
+        state.hypermarketProductsLoading = false
+        state.hypermarketProductsError = action.payload
+        state.hypermarketProducts = null
+        state.success = false
+      })
+      // Fetch supermarket products cases
+      .addCase(fetchSupermarketProducts.pending, (state) => {
+        state.supermarketProductsLoading = true
+        state.supermarketProductsError = null
+      })
+      .addCase(fetchSupermarketProducts.fulfilled, (state, action) => {
+        state.supermarketProductsLoading = false
+        state.success = action.payload.success
+        if (action.payload.success && action.payload.data) {
+          state.supermarketProducts = action.payload.data
+        } else {
+          state.supermarketProducts = null
+        }
+        state.supermarketProductsError = null
+      })
+      .addCase(fetchSupermarketProducts.rejected, (state, action) => {
+        state.supermarketProductsLoading = false
+        state.supermarketProductsError = action.payload
+        state.supermarketProducts = null
+        state.success = false
+      })
+      // Fetch store products cases
+      .addCase(fetchStoreProductsByStoreId.pending, (state) => {
+        state.storeProductsByStoreIdLoading = true
+        state.storeProductsByStoreIdError = null
+      })
+      .addCase(fetchStoreProductsByStoreId.fulfilled, (state, action) => {
+        state.storeProductsByStoreIdLoading = false
+        state.success = action.payload.success
+        if (action.payload.success && action.payload.data) {
+          state.storeProductsByStoreId = action.payload.data
+        } else {
+          state.storeProductsByStoreId = null
+        }
+        state.storeProductsByStoreIdError = null
+      })
+      .addCase(fetchStoreProductsByStoreId.rejected, (state, action) => {
+        state.storeProductsByStoreIdLoading = false
+        state.storeProductsByStoreIdError = action.payload
+        state.storeProductsByStoreId = null
+        state.success = false
+      })
       // Search products cases
       .addCase(searchProducts.pending, (state) => {
         state.searchLoading = true
@@ -420,5 +561,5 @@ const productsSlice = createSlice({
   }
 })
 
-export const { clearError, clearProducts, clearSuggestions, clearStoreProducts, clearStoreSlugProducts } = productsSlice.actions
+export const { clearError, clearProducts, clearSuggestions, clearStoreProducts, clearStoreSlugProducts, clearHypermarketProducts, clearSupermarketProducts, clearStoreProductsByStoreId } = productsSlice.actions
 export default productsSlice.reducer

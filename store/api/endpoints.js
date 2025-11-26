@@ -39,6 +39,45 @@ export const catalog = {
     const queryString = queryParams.toString();
     return `${BASES.catalog}/products/store-slug/${storeSlug}${queryString ? `?${queryString}` : ''}`;
   },
+  hypermarketProducts: (storeId, params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.limit) queryParams.append('limit', params.limit);
+    const queryString = queryParams.toString();
+    return `${BASES.catalog}/products/hypermarket/${storeId}${queryString ? `?${queryString}` : ''}`;
+  },
+  hypermarketCheapDeals: (storeId, params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    const queryString = queryParams.toString();
+    return `${BASES.catalog}/products/hypermarket/${storeId}/cheap-deals${queryString ? `?${queryString}` : ''}`;
+  },
+  supermarketProducts: (storeId, params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.limit) queryParams.append('limit', params.limit);
+    const queryString = queryParams.toString();
+    return `${BASES.catalog}/products/supermarket/${storeId}${queryString ? `?${queryString}` : ''}`;
+  },
+  supermarketCheapDeals: (storeId, params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    const queryString = queryParams.toString();
+    return `${BASES.catalog}/products/supermarket/${storeId}/cheap-deals${queryString ? `?${queryString}` : ''}`;
+  },
+  storeProducts: (storeId, params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.limit) queryParams.append('limit', params.limit);
+    const queryString = queryParams.toString();
+    return `${BASES.catalog}/products/store-products/${storeId}${queryString ? `?${queryString}` : ''}`;
+  },
+  storeCheapDeals: (storeId, params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    const queryString = queryParams.toString();
+    return `${BASES.catalog}/products/store-products/${storeId}/cheap-deals${queryString ? `?${queryString}` : ''}`;
+  },
   productsByLevel4Category: (categorySlug) => `${BASES.catalog}/products/level4/${categorySlug}`,
   productsByCategory: (categoryId) => `${BASES.catalog}/products/category?categoryId=${categoryId}`,
   similarProducts: (productId, limit = 10) => `${BASES.catalog}/products/similar/${productId}?limit=${limit}`,
