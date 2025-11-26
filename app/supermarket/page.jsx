@@ -45,6 +45,14 @@ const transformProductData = (apiProduct) => {
   // Format savings to 2 decimal places
   const formattedSavings = savings > 0 ? savings.toFixed(2) : 0;
 
+  // For cheap deals, show discount percentage if available
+  let badge = null;
+  if (apiProduct.discount_percentage && apiProduct.discount_percentage > 0) {
+    badge = `${Math.round(apiProduct.discount_percentage)}% OFF`;
+  } else if (apiProduct.is_offer && savings > 0) {
+    badge = `Save AED ${formattedSavings}`;
+  }
+
   return {
     id: apiProduct._id || apiProduct.slug,
     slug: apiProduct.slug,
@@ -53,7 +61,7 @@ const transformProductData = (apiProduct) => {
     rating: apiProduct.average_rating?.toString() || '0',
     deliveryTime: '30 Min', // Default delivery time since it's not in API
     image: imageUrl,
-    badge: apiProduct.is_offer && savings > 0 ? `Save AED ${formattedSavings}` : null
+    badge: badge
   }
 }
 
@@ -65,6 +73,7 @@ export default function Home() {
   const bestCheapDealsSwiperRef = useRef(null)
   const bestBundlesSwiperRef = useRef(null)
   const bestCashbackSwiperRef = useRef(null)
+  const cheapDealsProductsSwiperRef = useRef(null)
   const dispatch = useDispatch()
   const router = useRouter()
   const { supermarketStores, fastestDeliveryStores, bestCheapDeals, bestBundleDeals, loading, error } = useSelector(state => state.stores)
@@ -219,6 +228,45 @@ export default function Home() {
     }
   }
 
+  const handleCheapDealsProductsPrev = () => {
+    if (cheapDealsProductsSwiperRef.current?.swiper) {
+      cheapDealsProductsSwiperRef.current.swiper.slidePrev()
+    }
+  }
+
+  const handleCheapDealsProductsNext = () => {
+    if (cheapDealsProductsSwiperRef.current?.swiper) {
+      cheapDealsProductsSwiperRef.current.swiper.slideNext()
+    }
+  }
+
+  // Filter products with cheap deals (discount > 0%)
+  const cheapDealsProducts = useMemo(() => {
+    if (!Array.isArray(categoryProducts) || categoryProducts.length === 0) {
+      return []
+    }
+    return categoryProducts
+      .filter(product => {
+        // Check if product has discount_price and calculate discount percentage
+        if (product.discount_price && product.price && product.price > 0) {
+          const discountPercent = ((product.price - product.discount_price) / product.price) * 100
+          return discountPercent > 0
+        }
+        return false
+      })
+      .map(product => {
+        // Calculate discount percentage for badge
+        const discountPercent = ((product.price - product.discount_price) / product.price) * 100
+        return {
+          ...product,
+          discount_percentage: discountPercent
+        }
+      })
+      .sort((a, b) => (b.discount_percentage || 0) - (a.discount_percentage || 0)) // Sort by highest discount first
+      .slice(0, 20) // Limit to 20 products
+      .map(transformProductData)
+  }, [categoryProducts])
+
   return (
     <main className="home-page">
       <Navigation />
@@ -339,6 +387,45 @@ export default function Home() {
           ) : (
             <div style={{ padding: '20px', textAlign: 'center' }}>
               <p>No stores with cheap deals found</p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Best and Cheap Deals Products Section */}
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="Best and Cheap Deals"
+            showNavigation={true}
+            onPrev={handleCheapDealsProductsPrev}
+            onNext={handleCheapDealsProductsNext}
+          />
+          {categoryProductsLoading ? (
+            <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {[...Array(4)].map((_, index) => (
+                <ProductCardSkeleton key={`skeleton-cheap-${index}`} />
+              ))}
+            </div>
+          ) : cheapDealsProducts.length > 0 ? (
+            <Swiper
+              ref={cheapDealsProductsSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView={isMobile ? 1.2 : 'auto'}
+              spaceBetween={isMobile ? 16 : 24}
+              grabCursor={true}
+              freeMode={true}
+              className="bestsellers-swiper"
+            >
+              {cheapDealsProducts.map((product, index) => (
+                <SwiperSlide key={product.id || index} className="bestseller-slide">
+                  <ProductCard {...product} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+              No cheap deals available at the moment.
             </div>
           )}
         </div>

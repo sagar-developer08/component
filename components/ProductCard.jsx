@@ -204,8 +204,8 @@ export default function ProductCard({
           src={imageSrc}
           alt={title}
           width={322}
-          height={222}
-          style={{ borderRadius: '16px', border: '1px solid rgba(0, 0, 0, 0.16)' }}
+          height={400}
+          style={{ borderRadius: '16px', border: '1px solid rgba(0, 0, 0, 0.16)', objectFit: 'cover' }}
           onError={handleImageError}
           unoptimized={true}
         />
@@ -311,6 +311,9 @@ export default function ProductCard({
           display: flex;
           flex-direction: column;
           align-items: center;
+          width: 322px;
+          height: auto;
+          max-height: 490px;
           gap: 16px;
           position: relative;
           cursor: pointer;
@@ -318,13 +321,20 @@ export default function ProductCard({
         }
 
         .product-image {
-          width: 322px;
-          height: 222px;
+          width: 100%;
+          height: 400px;
           border-radius: 16px;
           border: 1px solid rgba(0, 0, 0, 0.16);
           background-size: cover;
           background-position: center;
           position: relative;
+          overflow: hidden;
+        }
+        
+        .product-image img {
+          width: 300px;
+          height: 300px;
+          object-fit: contain;
         }
 
         .product-badge {
@@ -351,8 +361,9 @@ export default function ProductCard({
           align-items: center;
           gap: 4px;
           position: absolute;
-          left: 147px;
-          top: 204px;
+          left: 50%;
+          transform: translateX(-50%);
+          bottom: 60px;
           width: 28px;
           height: 4px;
         }
@@ -462,7 +473,7 @@ export default function ProductCard({
 
         .product-info {
           display: flex;
-          width: 322px;
+          width: 100%;
           padding: 0 8px 8px 8px;
           flex-direction: column;
           align-items: flex-start;
@@ -539,7 +550,27 @@ export default function ProductCard({
           display: flex;
           flex-direction: column;
           align-items: flex-start;
-          gap: 8px;
+          width: 322px;
+          height: auto;
+          max-height: 490px;
+          gap: 16px;
+        }
+        
+        .product-image {
+          width: 100%;
+          height: 400px;
+          border-radius: 16px;
+          border: 1px solid rgba(0, 0, 0, 0.16);
+          background-size: cover;
+          background-position: center;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .product-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
 
         .product-badge {
@@ -566,8 +597,9 @@ export default function ProductCard({
           align-items: center;
           gap: 4px;
           position: absolute;
-          left: 147px;
-          top: 204px;
+          left: 50%;
+          transform: translateX(-50%);
+          bottom: 60px;
           width: 28px;
           height: 4px;
         }
@@ -677,7 +709,7 @@ export default function ProductCard({
 
         .product-info {
           display: flex;
-          width: 322px;
+          width: 100%;
           padding: 0 8px 8px 8px;
           flex-direction: column;
           align-items: flex-start;

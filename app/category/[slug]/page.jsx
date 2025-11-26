@@ -13,7 +13,7 @@ import CategoryCard from '@/components/CategoryCard'
 import SectionHeader from '@/components/SectionHeader'
 import Footer from '@/components/Footer'
 import { fetchCategoryChildren, fetchHypermarketLevel2Categories, fetchSupermarketLevel2Categories } from '@/store/slices/categoriesSlice'
-import { fetchProductsByStoreSlug, clearStoreSlugProducts } from '@/store/slices/productsSlice'
+import { fetchProductsByStoreSlug, fetchHypermarketProducts, fetchSupermarketProducts, fetchStoreProductsByStoreId, clearStoreSlugProducts, clearHypermarketProducts, clearSupermarketProducts, clearStoreProductsByStoreId } from '@/store/slices/productsSlice'
 import { ProductCardSkeleton, CategoryCardSkeleton } from '@/components/SkeletonLoader'
 
 // Helper function to transform API product data to match ProductCard component format
@@ -29,6 +29,14 @@ const transformProductData = (apiProduct) => {
     ? apiProduct.price - apiProduct.discount_price
     : 0;
 
+  // For cheap deals, show discount percentage if available
+  let badge = null;
+  if (apiProduct.discount_percentage && apiProduct.discount_percentage > 0) {
+    badge = `${Math.round(apiProduct.discount_percentage)}% OFF`;
+  } else if (apiProduct.is_offer && savings > 0) {
+    badge = `Save AED ${savings}`;
+  }
+
   return {
     id: apiProduct._id || apiProduct.slug,
     title: apiProduct.title || 'Product Title',
@@ -36,7 +44,7 @@ const transformProductData = (apiProduct) => {
     rating: apiProduct.average_rating?.toString() || '0',
     deliveryTime: '30 Min', // Default delivery time since it's not in API
     image: imageUrl,
-    badge: apiProduct.is_offer && savings > 0 ? `Save AED ${savings}` : null
+    badge: badge
   }
 }
 
@@ -117,25 +125,42 @@ export default function CategoryPage() {
   const slug = params.slug
 
   const { categoryChildren, hypermarketLevel2Categories, supermarketLevel2Categories, loading, error } = useSelector(state => state.categories)
-  const { storeSlugProducts, storeSlugProductsLoading, storeSlugProductsError } = useSelector(state => state.products)
+  const { 
+    storeSlugProducts, 
+    storeSlugProductsLoading, 
+    storeSlugProductsError, 
+    hypermarketProducts, 
+    hypermarketProductsLoading, 
+    hypermarketProductsError,
+    supermarketProducts,
+    supermarketProductsLoading,
+    supermarketProductsError,
+    storeProductsByStoreId,
+    storeProductsByStoreIdLoading,
+    storeProductsByStoreIdError
+  } = useSelector(state => state.products)
   
   const [categoryInfo, setCategoryInfo] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
   const [isStoreSlug, setIsStoreSlug] = useState(false)
   
   // Determine if this is actually a store slug based on data presence
-  // Note: Redux stores action.payload.data directly in storeSlugProducts
-  const isActuallyStoreSlug = !!storeSlugProducts?.store
+  // Check hypermarket, supermarket, store products, and store slug products
+  const isActuallyStoreSlug = !!(hypermarketProducts?.store || supermarketProducts?.store || storeProductsByStoreId?.store || storeSlugProducts?.store)
+  const isHypermarketStore = !!hypermarketProducts?.store
+  const isSupermarketStore = !!supermarketProducts?.store
+  const isRegularStore = !!storeProductsByStoreId?.store
   
-  // Determine loading state - loading if either category or store is loading
-  const isLoading = loading || storeSlugProductsLoading
-  // Determine error state - show error if category failed and it's not a store, or if store failed and it is a store
-  const hasError = (isActuallyStoreSlug && storeSlugProductsError) || (!isActuallyStoreSlug && error)
+  // Determine loading state - loading if any of category, store, hypermarket, supermarket, or regular store is loading
+  const isLoading = loading || storeSlugProductsLoading || hypermarketProductsLoading || supermarketProductsLoading || storeProductsByStoreIdLoading
+  // Determine error state - show error if category failed and it's not a store, or if any store type failed and it is a store
+  const hasError = (isActuallyStoreSlug && (storeSlugProductsError || hypermarketProductsError || supermarketProductsError || storeProductsByStoreIdError)) || (!isActuallyStoreSlug && error)
 
   // Swiper refs
   const bestsellersSwiperRef = useRef(null)
   const offersSwiperRef = useRef(null)
   const newArrivalsSwiperRef = useRef(null)
+  const cheapDealsSwiperRef = useRef(null)
   const otherCategoriesSwiperRef = useRef(null)
 
   // Check screen size for mobile detection
@@ -154,20 +179,59 @@ export default function CategoryPage() {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
-  // First, try to fetch products by store slug
+  // First, try to fetch hypermarket products, then supermarket, then store products, then store slug, then category
   useEffect(() => {
     if (slug) {
-      // Try to fetch products by store slug first
-      dispatch(fetchProductsByStoreSlug({ storeSlug: slug, limit: 100 }))
+      // Try hypermarket products first
+      dispatch(fetchHypermarketProducts({ storeId: slug, limit: 20 }))
         .then((result) => {
           if (result.meta.requestStatus === 'fulfilled' && result.payload?.success && result.payload?.data?.store) {
-            // It's a store slug
+            // It's a hypermarket store
+            setIsStoreSlug(true)
+            setCategoryInfo({
+              name: result.payload.data.store.name,
+              description: result.payload.data.store.description || 'Browse all products from this hypermarket'
+            })
+          } else {
+            // Not a hypermarket, try supermarket
+            return dispatch(fetchSupermarketProducts({ storeId: slug, limit: 20 }))
+          }
+        })
+        .then((result) => {
+          if (result && result.meta.requestStatus === 'fulfilled' && result.payload?.success && result.payload?.data?.store) {
+            // It's a supermarket store
+            setIsStoreSlug(true)
+            setCategoryInfo({
+              name: result.payload.data.store.name,
+              description: result.payload.data.store.description || 'Browse all products from this supermarket'
+            })
+          } else if (!hypermarketProducts?.store) {
+            // Not a supermarket, try regular store products
+            return dispatch(fetchStoreProductsByStoreId({ storeId: slug, limit: 20 }))
+          }
+        })
+        .then((result) => {
+          if (result && result.meta.requestStatus === 'fulfilled' && result.payload?.success && result.payload?.data?.store) {
+            // It's a regular store
             setIsStoreSlug(true)
             setCategoryInfo({
               name: result.payload.data.store.name,
               description: result.payload.data.store.description || 'Browse all products from this store'
             })
-          } else {
+          } else if (!hypermarketProducts?.store && !supermarketProducts?.store) {
+            // Not a store products API match, try regular store slug
+            return dispatch(fetchProductsByStoreSlug({ storeSlug: slug, limit: 100 }))
+          }
+        })
+        .then((result) => {
+          if (result && result.meta.requestStatus === 'fulfilled' && result.payload?.success && result.payload?.data?.store) {
+            // It's a regular store slug
+            setIsStoreSlug(true)
+            setCategoryInfo({
+              name: result.payload.data.store.name,
+              description: result.payload.data.store.description || 'Browse all products from this store'
+            })
+          } else if (!hypermarketProducts?.store && !supermarketProducts?.store && !storeProductsByStoreId?.store) {
             // Not a store slug, fetch category children
             setIsStoreSlug(false)
             dispatch(fetchCategoryChildren(slug))
@@ -175,8 +239,10 @@ export default function CategoryPage() {
         })
         .catch(() => {
           // Error fetching store, try category instead
-          setIsStoreSlug(false)
-          dispatch(fetchCategoryChildren(slug))
+          if (!hypermarketProducts?.store && !supermarketProducts?.store && !storeProductsByStoreId?.store && !storeSlugProducts?.store) {
+            setIsStoreSlug(false)
+            dispatch(fetchCategoryChildren(slug))
+          }
         })
       
       // Also fetch hypermarket and supermarket level 2 categories
@@ -187,19 +253,40 @@ export default function CategoryPage() {
     // Cleanup on unmount
     return () => {
       dispatch(clearStoreSlugProducts())
+      dispatch(clearHypermarketProducts())
+      dispatch(clearSupermarketProducts())
+      dispatch(clearStoreProductsByStoreId())
     }
   }, [dispatch, slug])
 
-  // Update isStoreSlug when storeSlugProducts data loads
+  // Update isStoreSlug when hypermarket, supermarket, store products, or storeSlugProducts data loads
   useEffect(() => {
-    if (storeSlugProducts?.store) {
+    if (hypermarketProducts?.store) {
+      setIsStoreSlug(true)
+      setCategoryInfo({
+        name: hypermarketProducts.store.name,
+        description: hypermarketProducts.store.description || 'Browse all products from this hypermarket'
+      })
+    } else if (supermarketProducts?.store) {
+      setIsStoreSlug(true)
+      setCategoryInfo({
+        name: supermarketProducts.store.name,
+        description: supermarketProducts.store.description || 'Browse all products from this supermarket'
+      })
+    } else if (storeProductsByStoreId?.store) {
+      setIsStoreSlug(true)
+      setCategoryInfo({
+        name: storeProductsByStoreId.store.name,
+        description: storeProductsByStoreId.store.description || 'Browse all products from this store'
+      })
+    } else if (storeSlugProducts?.store) {
       setIsStoreSlug(true)
       setCategoryInfo({
         name: storeSlugProducts.store.name,
         description: storeSlugProducts.store.description || 'Browse all products from this store'
       })
     }
-  }, [storeSlugProducts])
+  }, [hypermarketProducts, supermarketProducts, storeProductsByStoreId, storeSlugProducts])
 
   // Update category info when category children data is loaded (only if not a store)
   useEffect(() => {
@@ -208,10 +295,33 @@ export default function CategoryPage() {
     }
   }, [categoryChildren, isStoreSlug])
 
-  // Transform API data - use store products if it's a store slug, otherwise use category children
-  // Note: Redux stores action.payload.data directly in storeSlugProducts, so we access it directly
+  // Transform API data - prioritize hypermarket, then supermarket, then store products, then store slug, then category children
   const getProductsForSection = (sectionName) => {
-    // Check if we have store slug products (storeSlugProducts is already the data object)
+    // First check if we have hypermarket products
+    if (hypermarketProducts?.store && hypermarketProducts?.productsByCategory) {
+      const sectionProducts = hypermarketProducts.productsByCategory[sectionName] || []
+      if (sectionProducts.length > 0) {
+        return sectionProducts.map(transformProductData)
+      }
+    }
+    
+    // Then check if we have supermarket products
+    if (supermarketProducts?.store && supermarketProducts?.productsByCategory) {
+      const sectionProducts = supermarketProducts.productsByCategory[sectionName] || []
+      if (sectionProducts.length > 0) {
+        return sectionProducts.map(transformProductData)
+      }
+    }
+    
+    // Then check if we have store products
+    if (storeProductsByStoreId?.store && storeProductsByStoreId?.productsByCategory) {
+      const sectionProducts = storeProductsByStoreId.productsByCategory[sectionName] || []
+      if (sectionProducts.length > 0) {
+        return sectionProducts.map(transformProductData)
+      }
+    }
+    
+    // Then check if we have store slug products (storeSlugProducts is already the data object)
     if (storeSlugProducts?.store && storeSlugProducts?.productsByCategory) {
       // Use products from store slug
       const sectionProducts = storeSlugProducts.productsByCategory[sectionName] || []
@@ -234,11 +344,26 @@ export default function CategoryPage() {
   const transformedBestsellers = getProductsForSection('bestsellers') || []
   const transformedOffers = getProductsForSection('offers') || []
   const transformedNewArrivals = getProductsForSection('newArrivals') || []
+  const transformedCheapDeals = getProductsForSection('cheapDeals') || []
 
   // Get all products if it's a store slug for displaying in a grid
-  const allStoreProducts = (storeSlugProducts?.success && storeSlugProducts?.data?.products)
+  // Check hypermarket, supermarket, store products, then store slug products
+  const allStoreProducts = (hypermarketProducts?.products && hypermarketProducts.products.length > 0)
+    ? hypermarketProducts.products.map(transformProductData)
+    : (supermarketProducts?.products && supermarketProducts.products.length > 0)
+    ? supermarketProducts.products.map(transformProductData)
+    : (storeProductsByStoreId?.products && storeProductsByStoreId.products.length > 0)
+    ? storeProductsByStoreId.products.map(transformProductData)
+    : (storeSlugProducts?.success && storeSlugProducts?.data?.products)
     ? storeSlugProducts.data.products.map(transformProductData)
     : []
+
+  // Get store banner image - prioritize hypermarket, then supermarket, then store products, then store slug
+  const storeBannerImage = hypermarketProducts?.store?.banner 
+    || supermarketProducts?.store?.banner 
+    || storeProductsByStoreId?.store?.banner 
+    || storeSlugProducts?.store?.banner 
+    || '/2.jpg'
   
   // Use hypermarket or supermarket level 2 categories if available, otherwise use category children level4Categories
   const categoriesToDisplay = (hypermarketLevel2Categories && hypermarketLevel2Categories.length > 0)
@@ -302,6 +427,18 @@ export default function CategoryPage() {
     }
   }
 
+  const handleCheapDealsPrev = () => {
+    if (cheapDealsSwiperRef.current && cheapDealsSwiperRef.current.swiper) {
+      cheapDealsSwiperRef.current.swiper.slidePrev()
+    }
+  }
+
+  const handleCheapDealsNext = () => {
+    if (cheapDealsSwiperRef.current && cheapDealsSwiperRef.current.swiper) {
+      cheapDealsSwiperRef.current.swiper.slideNext()
+    }
+  }
+
   const handleProductsPrev = () => {
     if (productsSwiperRef.current && productsSwiperRef.current.swiper) {
       productsSwiperRef.current.swiper.slidePrev()
@@ -333,16 +470,24 @@ export default function CategoryPage() {
       <section className="section">
         <div className="banner-container">
           <div className="banner-section">
-            <div className="banner-content">
+            <div 
+              className="banner-content"
+              style={{
+                backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, rgba(0, 0, 0, 0.60) 100%), url('${storeBannerImage}')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat'
+              }}
+            >
               {/* <button className="banner-back-btn" onClick={handleBack}>
                 Back
               </button> */}
               <div className="banner-info">
                 <div className="banner-title">
-                  {categoryInfo?.name || storeSlugProducts?.store?.name || slug?.toUpperCase() || 'CATEGORY'}
+                  {categoryInfo?.name || hypermarketProducts?.store?.name || supermarketProducts?.store?.name || storeProductsByStoreId?.store?.name || storeSlugProducts?.store?.name || slug?.toUpperCase() || 'CATEGORY'}
                 </div>
                 <div className="banner-desc">
-                  {categoryInfo?.description || storeSlugProducts?.store?.description || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.'}
+                  {categoryInfo?.description || hypermarketProducts?.store?.description || supermarketProducts?.store?.description || storeProductsByStoreId?.store?.description || storeSlugProducts?.store?.description || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.'}
                 </div>
               </div>
               {/* <button className="banner-follow-btn">Follow</button> */}
@@ -432,6 +577,49 @@ export default function CategoryPage() {
           ) : (
             <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
               No bestsellers available at the moment.
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Best and Cheap Deals Section */}
+      <section className="section">
+        <div className="container">
+          <SectionHeader
+            title="Best and Cheap Deals"
+            showNavigation={true}
+            onPrev={handleCheapDealsPrev}
+            onNext={handleCheapDealsNext}
+          />
+          {isLoading ? (
+            <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {[...Array(4)].map((_, index) => (
+                <ProductCardSkeleton key={`skeleton-cheap-${index}`} />
+              ))}
+            </div>
+          ) : hasError ? (
+            <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
+              Error loading products: {error}
+            </div>
+          ) : transformedCheapDeals.length > 0 ? (
+            <Swiper
+              ref={cheapDealsSwiperRef}
+              modules={[SwiperNavigation]}
+              slidesPerView="auto"
+              spaceBetween={24}
+              grabCursor={true}
+              freeMode={true}
+              style={{ width: '1360px' }}
+            >
+              {transformedCheapDeals.map((product, index) => (
+                <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
+                  <ProductCard {...product} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+              No cheap deals available at the moment.
             </div>
           )}
         </div>
@@ -553,8 +741,6 @@ export default function CategoryPage() {
           justify-content: space-between;
           align-items: flex-end;
           border-radius: 24px;
-          background: linear-gradient(180deg, rgba(0, 0, 0, 0.00) 0%, rgba(0, 0, 0, 0.60) 100%), 
-                      url('/2.jpg') lightgray 50% / cover no-repeat;
           padding: 0 48px 40px 48px;
           box-sizing: border-box;
           position: relative;
