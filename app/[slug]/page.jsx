@@ -102,138 +102,90 @@ export default function BrandPage() {
   // Fetch filter data for category, brand, and store pages
   useEffect(() => {
     const fetchFilterData = async () => {
-      console.log('Fetching filter data for:', { slug, categoryLevel, storeId, selectedFilters })
-      if (categoryLevel && slug) {
-        // Fetch category filters with selected filters for accurate counts
+      console.log('Fetching filter data for:', { slug, categoryLevel, storeId, source, debouncedFilters })
+      
+      // Check if this is a store page first (has source or will be determined by slug)
+      const isStorePage = storeId || source;
+      let actualStoreIdForFilters = storeId;
+      
+      // If it's a store page but no storeId, fetch store by slug first
+      if (isStorePage && !storeId && slug) {
         try {
-          // Build filter params for the category filters API
-          const filterParams = new URLSearchParams()
-          
-          // Price filter
-          if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
-            filterParams.append('min_price', selectedFilters.price.min)
-          }
-          if (selectedFilters.price?.max !== undefined && selectedFilters.price?.max !== '') {
-            filterParams.append('max_price', selectedFilters.price.max)
-          }
-          
-          // Availability filter
-          if (selectedFilters.availability instanceof Set) {
-            if (selectedFilters.availability.has('in') && !selectedFilters.availability.has('out')) {
-              filterParams.append('in_stock', 'true')
-            } else if (selectedFilters.availability.has('out') && !selectedFilters.availability.has('in')) {
-              filterParams.append('in_stock', 'false')
-            }
-          }
-          
-          // Rating filter
-          if (typeof selectedFilters.rating === 'number') {
-            filterParams.append('min_rating', selectedFilters.rating)
-          }
-          
-          // Brand filter from filters (multiple) - brands should navigate to their own page, not watches
-          // Only apply brand filter if user manually selects it from filters
-          if (selectedFilters.brand instanceof Set && selectedFilters.brand.size > 0) {
-            // Brand filter from filters (multiple)
-            Array.from(selectedFilters.brand).forEach(b => filterParams.append('brand_id', b))
-          }
-          
-          // Store filter from query params (when clicking icon) - takes priority
-          if (storeId) {
-            filterParams.append('store_id', storeId)
-          } else if (selectedFilters.store instanceof Set && selectedFilters.store.size > 0) {
-            // Store filter from filters (multiple)
-            Array.from(selectedFilters.store).forEach(s => filterParams.append('store_id', s))
-          }
-          
-          // Dynamic attribute filters (attr.*)
-          Object.keys(selectedFilters).forEach(key => {
-            if (key.startsWith('attr.')) {
-              const attrKey = key.substring(5)
-              const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
-              values.forEach(v => filterParams.append(`attr_${attrKey}`, v))
-            }
-          })
-          
-          // Dynamic specification filters (spec.*)
-          Object.keys(selectedFilters).forEach(key => {
-            if (key.startsWith('spec.')) {
-              const specKey = key.substring(5)
-              const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
-              values.forEach(v => filterParams.append(`spec_${specKey}`, v))
-            }
-          })
-          
-          const url = filterParams.toString() 
-            ? `${search.categoryFilters(slug, categoryLevel)}&${filterParams.toString()}`
-            : search.categoryFilters(slug, categoryLevel)
-          
-          const response = await fetch(url)
-          if (response.ok) {
-            const data = await response.json()
-            console.log('Category Filter API Response:', data)
-            if (data.success && data.data) {
-              setFilterData(data.data)
+          console.log('Fetching store by slug for filters:', slug);
+          const storeResponse = await fetch(catalog.storeBySlug(slug));
+          if (storeResponse.ok) {
+            const storeData = await storeResponse.json();
+            if (storeData.success && storeData.data && storeData.data._id) {
+              actualStoreIdForFilters = storeData.data._id;
+              console.log('Fetched store ID for filters:', actualStoreIdForFilters);
             }
           }
         } catch (error) {
-          console.error('Error fetching category filter data:', error)
+          console.error('Error fetching store by slug for filters:', error);
         }
-      } else if (storeId) {
+      }
+      
+      // Priority: Store > Category > Brand
+      if (actualStoreIdForFilters) {
         // Fetch store filters with current selected filters for accurate counts
-        console.log('Fetching store filters for storeId:', storeId)
+        console.log('Fetching store filters for storeId:', actualStoreIdForFilters)
         try {
           // Build filter params for the store filters API
           const filterParams = new URLSearchParams()
           
-          // Price filter
-          if (selectedFilters.price?.min !== undefined && selectedFilters.price?.min !== '') {
-            filterParams.append('min_price', selectedFilters.price.min)
+          // Add categoryId if present (for level4 filtering)
+          if (categoryId) {
+            filterParams.append('categoryId', categoryId)
           }
-          if (selectedFilters.price?.max !== undefined && selectedFilters.price?.max !== '') {
-            filterParams.append('max_price', selectedFilters.price.max)
+          
+          // Price filter
+          if (debouncedFilters.price?.min !== undefined && debouncedFilters.price?.min !== '') {
+            filterParams.append('min_price', debouncedFilters.price.min)
+          }
+          if (debouncedFilters.price?.max !== undefined && debouncedFilters.price?.max !== '') {
+            filterParams.append('max_price', debouncedFilters.price.max)
           }
           
           // Availability filter
-          if (selectedFilters.availability instanceof Set) {
-            if (selectedFilters.availability.has('in') && !selectedFilters.availability.has('out')) {
+          if (debouncedFilters.availability instanceof Set) {
+            if (debouncedFilters.availability.has('in') && !debouncedFilters.availability.has('out')) {
               filterParams.append('in_stock', 'true')
-            } else if (selectedFilters.availability.has('out') && !selectedFilters.availability.has('in')) {
+            } else if (debouncedFilters.availability.has('out') && !debouncedFilters.availability.has('in')) {
               filterParams.append('in_stock', 'false')
             }
           }
           
           // Rating filter
-          if (typeof selectedFilters.rating === 'number') {
-            filterParams.append('min_rating', selectedFilters.rating)
+          if (typeof debouncedFilters.rating === 'number') {
+            filterParams.append('min_rating', debouncedFilters.rating)
           }
           
           // Brand filter (multiple) - send brand names, not IDs
-          if (selectedFilters.brand instanceof Set && selectedFilters.brand.size > 0) {
-            Array.from(selectedFilters.brand).forEach(b => filterParams.append('brand_id', b))
+          if (debouncedFilters.brand instanceof Set && debouncedFilters.brand.size > 0) {
+            Array.from(debouncedFilters.brand).forEach(b => filterParams.append('brand_id', b))
           }
           
           // Dynamic attribute filters (attr.*)
-          Object.keys(selectedFilters).forEach(key => {
+          Object.keys(debouncedFilters).forEach(key => {
             if (key.startsWith('attr.')) {
               const attrKey = key.substring(5)
-              const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+              const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
               values.forEach(v => filterParams.append(`attr_${attrKey}`, v))
             }
           })
           
           // Dynamic specification filters (spec.*)
-          Object.keys(selectedFilters).forEach(key => {
+          Object.keys(debouncedFilters).forEach(key => {
             if (key.startsWith('spec.')) {
               const specKey = key.substring(5)
-              const values = selectedFilters[key] instanceof Set ? Array.from(selectedFilters[key]) : []
+              const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
               values.forEach(v => filterParams.append(`spec_${specKey}`, v))
             }
           })
           
           const url = filterParams.toString() 
-            ? `${search.storeFilters(storeId)}&${filterParams.toString()}`
-            : search.storeFilters(storeId)
+            ? `${search.storeFilters(actualStoreIdForFilters)}&${filterParams.toString()}`
+            : search.storeFilters(actualStoreIdForFilters)
           
           console.log('Fetching store filters with URL:', url)
           const response = await fetch(url)
@@ -254,6 +206,82 @@ export default function BrandPage() {
         } catch (error) {
           console.error('Error fetching store filter data:', error)
         }
+      } else if (categoryLevel && slug && !isStorePage) {
+        // Fetch category filters with selected filters for accurate counts
+        try {
+          // Build filter params for the category filters API
+          const filterParams = new URLSearchParams()
+          
+          // Price filter
+          if (debouncedFilters.price?.min !== undefined && debouncedFilters.price?.min !== '') {
+            filterParams.append('min_price', debouncedFilters.price.min)
+          }
+          if (debouncedFilters.price?.max !== undefined && debouncedFilters.price?.max !== '') {
+            filterParams.append('max_price', debouncedFilters.price.max)
+          }
+          
+          // Availability filter
+          if (debouncedFilters.availability instanceof Set) {
+            if (debouncedFilters.availability.has('in') && !debouncedFilters.availability.has('out')) {
+              filterParams.append('in_stock', 'true')
+            } else if (debouncedFilters.availability.has('out') && !debouncedFilters.availability.has('in')) {
+              filterParams.append('in_stock', 'false')
+            }
+          }
+          
+          // Rating filter
+          if (typeof debouncedFilters.rating === 'number') {
+            filterParams.append('min_rating', debouncedFilters.rating)
+          }
+          
+          // Brand filter from filters (multiple) - brands should navigate to their own page, not watches
+          // Only apply brand filter if user manually selects it from filters
+          if (debouncedFilters.brand instanceof Set && debouncedFilters.brand.size > 0) {
+            // Brand filter from filters (multiple)
+            Array.from(debouncedFilters.brand).forEach(b => filterParams.append('brand_id', b))
+          }
+          
+          // Store filter from query params (when clicking icon) - takes priority
+          if (storeId) {
+            filterParams.append('store_id', storeId)
+          } else if (debouncedFilters.store instanceof Set && debouncedFilters.store.size > 0) {
+            // Store filter from filters (multiple)
+            Array.from(debouncedFilters.store).forEach(s => filterParams.append('store_id', s))
+          }
+          
+          // Dynamic attribute filters (attr.*)
+          Object.keys(debouncedFilters).forEach(key => {
+            if (key.startsWith('attr.')) {
+              const attrKey = key.substring(5)
+              const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
+              values.forEach(v => filterParams.append(`attr_${attrKey}`, v))
+            }
+          })
+          
+          // Dynamic specification filters (spec.*)
+          Object.keys(debouncedFilters).forEach(key => {
+            if (key.startsWith('spec.')) {
+              const specKey = key.substring(5)
+              const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
+              values.forEach(v => filterParams.append(`spec_${specKey}`, v))
+            }
+          })
+          
+          const url = filterParams.toString() 
+            ? `${search.categoryFilters(slug, categoryLevel)}&${filterParams.toString()}`
+            : search.categoryFilters(slug, categoryLevel)
+          
+          const response = await fetch(url)
+          if (response.ok) {
+            const data = await response.json()
+            console.log('Category Filter API Response:', data)
+            if (data.success && data.data) {
+              setFilterData(data.data)
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching category filter data:', error)
+        }
       } else if (slug) {
         // Fetch brand filters (when it's not a store and not a category)
         try {
@@ -272,7 +300,7 @@ export default function BrandPage() {
     }
 
     fetchFilterData()
-  }, [slug, categoryLevel, storeId, categoryId, debouncedFilters])
+  }, [slug, categoryLevel, storeId, categoryId, source, debouncedFilters])
 
   // Debounce filter changes to allow multiple selections
   useEffect(() => {
@@ -578,8 +606,25 @@ export default function BrandPage() {
               }
               
               // Use search service API for filtered store products (fallback when no level4)
-              const url = params.toString()
-                ? `${search.storeProducts(actualStoreId, Object.fromEntries(params))}`
+              // Convert URLSearchParams to plain object for the API function
+              // Handle multiple values for the same key (e.g., multiple brand_id)
+              const paramsObj = {};
+              params.forEach((value, key) => {
+                if (paramsObj[key]) {
+                  // If key already exists, make it an array
+                  if (Array.isArray(paramsObj[key])) {
+                    paramsObj[key].push(value);
+                  } else {
+                    paramsObj[key] = [paramsObj[key], value];
+                  }
+                } else {
+                  paramsObj[key] = value;
+                }
+              });
+              
+              console.log('Store products params object:', paramsObj);
+              const url = Object.keys(paramsObj).length > 0
+                ? search.storeProducts(actualStoreId, paramsObj)
                 : search.storeProducts(actualStoreId)
               
               console.log('Fetching store products from URL:', url);
