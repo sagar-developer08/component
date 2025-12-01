@@ -108,6 +108,7 @@ export const catalog = {
   supermarketLevel2Categories: `${BASES.catalog}/categories/supermarket/level2`,
   storeLevel2Categories: `${BASES.catalog}/categories/store/level2`,
   categoryChildren: (slug) => `${BASES.catalog}/categories/level2/${slug}/children`,
+  categoryBySlug: (slug) => `${BASES.catalog}/categories/slug/${slug}`,
   searchProducts: (query) => `${BASES.catalog}/search/products?q=${encodeURIComponent(query)}`,
 }
 
@@ -118,6 +119,19 @@ export const search = {
   products: (query, params = {}) => {
     const usp = new URLSearchParams({ q: query, ...Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined && v !== null)) });
     return `${BASES.search}/search/products?${usp.toString()}`;
+  },
+  productsByLevel4: (params = {}) => {
+    const usp = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          value.forEach(v => usp.append(key, String(v)));
+        } else {
+          usp.append(key, String(value));
+        }
+      }
+    });
+    return `${BASES.search}/search/products/level4?${usp.toString()}`;
   },
   suggestions: (query) => `${BASES.search}/search/suggestions?q=${encodeURIComponent(query)}`,
   byCategory: (categoryId, params = {}) => {

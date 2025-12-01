@@ -91,6 +91,16 @@
   overflow: hidden;
   border: none;
   box-shadow: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.boc-badge:hover {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.boc-badge:active {
+  transform: scale(0.98);
 }
 
 /* For logo images inside badge */
