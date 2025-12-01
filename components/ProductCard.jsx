@@ -216,15 +216,9 @@ export default function ProductCard({
           </div>
         )}
 
-        <div className="product-dots">
-          <div className="dot active"></div>
-          <div className="dot"></div>
-          <div className="dot"></div>
-          <div className="dot"></div>
-        </div>
 
         {showIcons && (
-          <>
+          <div className="product-icon-row">
             <button className="wishlist-icon" aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"} onClick={handleWishlistClick}>
               <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                 <rect width="40" height="40" rx="20" fill="#0082FF" />
@@ -235,6 +229,12 @@ export default function ProductCard({
                 )}
               </svg>
             </button>
+            <div className="product-dots">
+              <div className="dot active"></div>
+              <div className="dot"></div>
+              <div className="dot"></div>
+              <div className="dot"></div>
+            </div>
 
             <div className="cart-control-container">
               <div
@@ -283,7 +283,7 @@ export default function ProductCard({
                 )}
               </div>
             </div>
-          </>
+          </div>
         )}
       </div>
 
@@ -310,19 +310,19 @@ export default function ProductCard({
         .product-card {
           display: flex;
           flex-direction: column;
-          align-items: center;
-          width: 280px;
-          height: auto;
-          max-height: 420px;
-          gap: 12px;
+          align-items: stretch;
+          width: 322px;
+          min-height: 490px;
+          gap: 16px;
           position: relative;
           cursor: pointer;
           transition: transform 0.2s ease, box-shadow 0.2s ease;
+          box-sizing: border-box;
         }
 
         .product-image {
           width: 100%;
-          height: 280px;
+          height: 380px;
           border-radius: 12px;
           border: 1px solid rgba(0, 0, 0, 0.16);
           background-size: cover;
@@ -330,7 +330,8 @@ export default function ProductCard({
           position: relative;
           overflow: hidden;
           display: flex;
-          align-items: center;
+          padding: 16px;
+          align-items: flex-start;
           justify-content: center;
           background-color: #fff;
         }
@@ -339,7 +340,7 @@ export default function ProductCard({
           width: 100%;
           height: 100%;
           max-width: 260px;
-          max-height: 260px;
+          max-height: 490px;
           object-fit: contain;
         }
 
@@ -362,16 +363,26 @@ export default function ProductCard({
           line-height: 150%;
         }
 
+        .product-icon-row {
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 16px;
+          gap: 12px;
+          z-index: 5;
+        }
+
         .product-dots {
           display: inline-flex;
           align-items: center;
+          justify-content: center;
           gap: 4px;
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
-          bottom: 45px;
-          width: 28px;
-          height: 4px;
+          flex: 1;
+          justify-content: center;
         }
 
         .dot {
@@ -386,14 +397,10 @@ export default function ProductCard({
         }
 
         .wishlist-icon {
-          position: absolute;
-          left: 12px;
-          bottom: 12px;
           border: none;
           background: none;
           cursor: pointer;
           transition: all 0.2s ease;
-          z-index: 10;
         }
 
         .cart-icon {
@@ -410,10 +417,8 @@ export default function ProductCard({
         }
         
         .cart-control-container {
-          position: absolute;
-          right: 12px;
-          bottom: 12px;
-          z-index: 10;
+          display: flex;
+          align-items: center;
         }
         
         .cart-control {
@@ -607,121 +612,6 @@ export default function ProductCard({
           font-size: 12px;
           font-weight: 400;
           line-height: 150%;
-        }
-
-        .product-dots {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          position: absolute;
-          left: 50%;
-          transform: translateX(-50%);
-          bottom: 45px;
-          width: 28px;
-          height: 4px;
-        }
-
-        .dot {
-          width: 4px;
-          height: 4px;
-          border-radius: 2px;
-          background: rgba(0, 130, 255, 0.24);
-        }
-
-        .dot.active {
-          background: #0082FF;
-        }
-
-        .wishlist-icon {
-          position: absolute;
-          left: 12px;
-          bottom: 12px;
-          border: none;
-          background: none;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          z-index: 10;
-        }
-
-        .cart-icon {
-          position: relative;
-          border: none;
-          background: none;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .wishlist-icon:hover,
-        .cart-icon:hover {
-          transform: scale(1.05);
-        }
-        
-        .cart-control-container {
-          position: absolute;
-          right: 12px;
-          bottom: 12px;
-          z-index: 10;
-        }
-        
-        .cart-control {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-        
-        .cart-quantity-control {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          background: #0082FF;
-          border-radius: 20px;
-          padding: 4px;
-          width: 120px;
-          height: 40px;
-        }
-        
-        .delete-icon, .plus-icon, .minus-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.2);
-          border: none;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        
-        .delete-icon:hover, .plus-icon:hover, .minus-icon:hover {
-          background: rgba(255, 255, 255, 0.3);
-        }
-        
-        .quantity-display {
-          color: white;
-          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 16px;
-          font-weight: 700;
-          min-width: 24px;
-          text-align: center;
-        }
-        
-        .cart-badge {
-          position: absolute;
-          top: -8px;
-          right: -8px;
-          background: white;
-          color: #0082FF;
-          border: 2px solid #0082FF;
-          border-radius: 50%;
-          width: 24px;
-          height: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 12px;
-          font-weight: 700;
         }
 
         .product-info {

@@ -679,6 +679,19 @@ export default function Home() {
                     ? supermarketStoresAsCategories
                     : (section.config?.level4Categories || []);
                   
+                  // Determine item type based on what's being displayed
+                  const itemType = hasHypermarketStores 
+                    ? 'hypermarket' 
+                    : hasSupermarketStores
+                    ? 'supermarket'
+                    : (section.config?.brands && section.config.brands.length > 0)
+                    ? 'brand'
+                    : 'category';
+                  
+                  // Extract level4CategoryIds from section config
+                  const level4CategoryIds = section.config?.level4CategoryIds || 
+                    (section.config?.level4Categories?.map(cat => cat._id) || []);
+                  
                   return (
                     <BrandOfferCard
                       key={section._id}
@@ -687,6 +700,8 @@ export default function Home() {
                       categories={categoriesToUse}
                       ctaLink={section.uiConfig?.ctaLink}
                       ctaText={section.uiConfig?.ctaText || 'View all'}
+                      itemType={itemType}
+                      level4CategoryIds={level4CategoryIds}
                     />
                   );
                 })}
