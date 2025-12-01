@@ -124,7 +124,29 @@ export const search = {
     const usp = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
+        if (key === 'attributes') {
+          // Handle nested objects for attributes
+          // Backend expects: attr_color=red&attr_color=blue&attr_size=large
+          if (typeof value === 'object' && !Array.isArray(value)) {
+            Object.entries(value).forEach(([attrKey, attrValues]) => {
+              const valuesArray = Array.isArray(attrValues) ? attrValues : [attrValues];
+              valuesArray.forEach(v => {
+                usp.append(`attr_${attrKey}`, String(v));
+              });
+            });
+          }
+        } else if (key === 'specifications') {
+          // Handle nested objects for specifications
+          // Backend expects: spec_size=large&spec_weight=1kg
+          if (typeof value === 'object' && !Array.isArray(value)) {
+            Object.entries(value).forEach(([specKey, specValues]) => {
+              const valuesArray = Array.isArray(specValues) ? specValues : [specValues];
+              valuesArray.forEach(v => {
+                usp.append(`spec_${specKey}`, String(v));
+              });
+            });
+          }
+        } else if (Array.isArray(value)) {
           value.forEach(v => usp.append(key, String(v)));
         } else {
           usp.append(key, String(value));
