@@ -10,7 +10,7 @@ export default function PrivacyPolicyPage() {
       <main className={styles.main}>
         <div className={styles.container}>
           <div className={styles.header}>
-            <h1 className={styles.title}>Pricing Policy</h1>
+            <h1 className={styles.title}>Privacy Policy</h1>
             {/* <p className={styles.lastUpdated}>Last updated: 10/10/2025</p> */}
           </div>
 

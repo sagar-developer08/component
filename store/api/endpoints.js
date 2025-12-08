@@ -2,14 +2,14 @@
 // Configure base URLs via environment variables if available
 
 export const BASES = {
-  catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'http://localhost:8082/api',
+  catalog: process.env.NEXT_PUBLIC_CATALOG_BASE_URL || 'https://backendcatalog.qliq.ae/api',
   search: process.env.NEXT_PUBLIC_SEARCH_BASE_URL || 'https://search.qliq.ae/api',
   auth: process.env.NEXT_PUBLIC_AUTH_BASE_URL || 'https://backendauth.qliq.ae/api',
-  cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'http://localhost:8084/api',
+  cart: process.env.NEXT_PUBLIC_CART_BASE_URL || 'https://backendcart.qliq.ae/api',
   payment: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'https://backendcart.qliq.ae/api',
   delivery: process.env.NEXT_PUBLIC_PAYMENT_BASE_URL || 'https://backendcart.qliq.ae/api', // Same as payment service
-  upload: process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || 'http://localhost:5005/api',
-  review: process.env.NEXT_PUBLIC_REVIEW_BASE_URL || 'http://localhost:8008/api',
+  upload: process.env.NEXT_PUBLIC_UPLOAD_BASE_URL || 'https://ecomupload.qliq.ae/api',
+  review: process.env.NEXT_PUBLIC_REVIEW_BASE_URL || 'https://backendreview.qliq.ae/api',
   subscription: process.env.NEXT_PUBLIC_SUBSCRIPTION_BASE_URL || 'https://backendamp.qliq.ae/api',
   wallet: process.env.NEXT_PUBLIC_WALLET_BASE_URL || 'https://backendwallet.qliq.ae/api',
 }
@@ -110,6 +110,12 @@ export const catalog = {
   categoryChildren: (slug) => `${BASES.catalog}/categories/level2/${slug}/children`,
   categoryBySlug: (slug) => `${BASES.catalog}/categories/slug/${slug}`,
   searchProducts: (query) => `${BASES.catalog}/search/products?q=${encodeURIComponent(query)}`,
+  homepageSections: (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.isActive !== undefined) queryParams.append('isActive', params.isActive);
+    const queryString = queryParams.toString();
+    return `${BASES.catalog}/homepage-sections${queryString ? `?${queryString}` : ''}`;
+  },
 }
 
 // Search endpoints (new microservice)
@@ -263,6 +269,7 @@ export const wallet = {
   base: BASES.wallet,
   userBalance: `${BASES.wallet}/wallet/qoyn/user-balance`,
   validateRedemption: `${BASES.wallet}/wallet/qoyn/validate-redemption`,
+  redeemQoyn: `${BASES.wallet}/wallet/qoyn/redeem`,
 }
 
 export const delivery = {

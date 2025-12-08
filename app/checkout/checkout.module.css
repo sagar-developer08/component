@@ -335,6 +335,17 @@
   margin-bottom: 8px;
 }
 
+.addressFormGrid > * {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.addressFormGrid input,
+.addressFormGrid select {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 @media (max-width: 768px) {
   .addressFormGrid {
     grid-template-columns: 1fr;
@@ -347,6 +358,16 @@
   padding: 16px 12px;
   font-size: 16px;
   background: #fff;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.addressFormGrid textarea.addressInput {
+  resize: vertical;
+  min-height: 80px;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .addressInput::placeholder {

@@ -12,6 +12,7 @@ import productDetailReducer from './slices/productDetailSlice'
 import reviewReducer from './slices/reviewSlice'
 import subscriptionReducer from './slices/subscriptionSlice'
 import walletReducer from './slices/walletSlice'
+import homepageSectionsReducer from './slices/homepageSectionsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +29,7 @@ export const store = configureStore({
     review: reviewReducer,
     subscription: subscriptionReducer,
     wallet: walletReducer,
+    homepageSections: homepageSectionsReducer,
   },
 })
 

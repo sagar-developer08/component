@@ -229,12 +229,6 @@ export default function ProductCard({
                 )}
               </svg>
             </button>
-            <div className="product-dots">
-              <div className="dot active"></div>
-              <div className="dot"></div>
-              <div className="dot"></div>
-              <div className="dot"></div>
-            </div>
 
             <div className="cart-control-container">
               <div
@@ -374,26 +368,6 @@ export default function ProductCard({
           padding: 0 16px;
           gap: 12px;
           z-index: 5;
-        }
-
-        .product-dots {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          gap: 4px;
-          flex: 1;
-          justify-content: center;
-        }
-
-        .dot {
-          width: 4px;
-          height: 4px;
-          border-radius: 2px;
-          background: rgba(0, 130, 255, 0.24);
-        }
-
-        .dot.active {
-          background: #0082FF;
         }
 
         .wishlist-icon {

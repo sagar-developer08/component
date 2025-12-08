@@ -3,7 +3,7 @@
 import Navigation from '@/components/Navigation'
 import Footer from '@/components/Footer'
 import Image from 'next/image'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { getAuthToken, getUserFromCookies, getUserIds } from '@/utils/userUtils'
 import { fetchCart } from '@/store/slices/cartSlice'
@@ -213,6 +213,16 @@ export default function CheckoutPage() {
   
   // Wallet state
   const { userQoynBalance, userBalance, storeCurrency, loading: walletLoading } = useSelector(state => state.wallet)
+
+  // Calculate displayed balance: current balance - applied Qoyns (if any)
+  // When Qoyns are applied, show remaining coins. When removed, show full balance again.
+  const displayedQoynBalance = useMemo(() => {
+    const currentBalance = userQoynBalance ?? 0
+    const appliedQoyns = appliedDiscount && appliedDiscount.type === 'qoyn' ? (appliedDiscount.qoynAmount || 0) : 0
+    // Calculate remaining balance (never show negative)
+    const remainingBalance = Math.max(0, currentBalance - appliedQoyns)
+    return remainingBalance
+  }, [userQoynBalance, appliedDiscount])
 
   // Checkout state
   const {
@@ -1021,7 +1031,7 @@ export default function CheckoutPage() {
     }
   }
 
-  // Qoyn validation handlers
+  // Qoyn validation handlers (only validates, doesn't redeem - redemption happens on order success)
   const handleQoynValidation = async () => {
     if (!qoynValidation.walletUnlocked || !qoynValidation.eligibleForDiscount) {
       showToast('Qoyn redemption is not available for this order', 'error')
@@ -1041,12 +1051,33 @@ export default function CheckoutPage() {
       
       if (result.payload && result.payload.data && result.payload.data.order) {
         const orderData = result.payload.data.order
-        setAppliedDiscount({
+        
+        // Extract productIds and storeId for later redemption
+        const productIds = cartItems
+          .map(item => item.productId || item.id)
+          .filter(id => id) // Remove any undefined/null values
+        
+        const storeId = cartItems[0]?.storeId || null
+        
+        // Only store the discount info - don't redeem yet
+        // Redemption will happen when order is successfully placed
+        const discountInfo = {
           type: 'qoyn',
           discountAmount: orderData.discountAmountStoreCurrency,
           totalAfterDiscount: orderData.totalAmountAfterDiscount,
-          qoynAmount: qoynValidation.currentDiscountQoyn
-        })
+          qoynAmount: qoynValidation.currentDiscountQoyn,
+          totalAmount: subtotalAfterCoupon, // Store for redemption later
+          productIds: productIds, // Store for redemption later
+          storeId: storeId // Store for redemption later
+        }
+        
+        setAppliedDiscount(discountInfo)
+        
+        // Store in sessionStorage for access on success page
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('pendingQoynRedemption', JSON.stringify(discountInfo))
+        }
+        
         showToast(`Applied ${qoynValidation.currentDiscountQoyn} Qoyns successfully!`, 'success')
       }
     } catch (error) {
@@ -1055,9 +1086,13 @@ export default function CheckoutPage() {
     }
   }
 
-  // Remove applied discount
+  // Remove applied discount (no coins to restore since they weren't redeemed yet)
   const handleRemoveDiscount = () => {
     setAppliedDiscount(null)
+    // Clear sessionStorage since Qoyns are no longer applied
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('pendingQoynRedemption')
+    }
   }
   
   // Handle coupon selection - populate the promo code input and apply
@@ -1232,7 +1267,7 @@ export default function CheckoutPage() {
                 <div className={styles.walletTitle}>My Qoyns Wallet</div>
               </div>
               <div className={styles.walletInfo}>
-                <div className={styles.walletBalance}>{userQoynBalance.toLocaleString()}</div>
+                <div className={styles.walletBalance}>{displayedQoynBalance.toLocaleString()}</div>
               </div>
               <div className={styles.walletExpiry}>Expires in 29 Days</div>
             </div>
@@ -1460,62 +1495,14 @@ export default function CheckoutPage() {
                       onChange={(e) => handleAddressFormChange('postalCode', e.target.value)}
                       required
                     />
-                    <div style={{ position: 'relative', width: '100%', gridColumn: 'span 1' }}>
-                      <input
-                        ref={addressLine1InputRef}
-                        className={styles.addressInput}
-                        placeholder="Address Line 1 (Start typing to search)"
-                        value={addressForm.addressLine1}
-                        onChange={(e) => handleAddressFormChange('addressLine1', e.target.value)}
-                        required
-                        style={{ paddingRight: '120px' }}
-                      />
-                      <button
-                        type="button"
-                        onClick={handleUseCurrentLocation}
-                        disabled={isLoadingLocation}
-                        style={{
-                          position: 'absolute',
-                          right: '8px',
-                          top: '50%',
-                          transform: 'translateY(-50%)',
-                          background: '#0082FF',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          padding: '6px 12px',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          cursor: isLoadingLocation ? 'not-allowed' : 'pointer',
-                          opacity: isLoadingLocation ? 0.6 : 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          whiteSpace: 'nowrap'
-                        }}
-                        title="Use your current location"
-                      >
-                        {isLoadingLocation ? (
-                          <>
-                            <span style={{ 
-                              display: 'inline-block',
-                              width: '12px',
-                              height: '12px',
-                              border: '2px solid rgba(255,255,255,0.3)',
-                              borderTop: '2px solid white',
-                              borderRadius: '50%',
-                              animation: 'spin 1s linear infinite'
-                            }}></span>
-                            Loading...
-                          </>
-                        ) : (
-                          <>
-                            <FontAwesomeIcon icon={faMapMarkerAlt} style={{ fontSize: '12px' }} />
-                            Use Location
-                          </>
-                        )}
-                      </button>
-                    </div>
+                    <input
+                      ref={addressLine1InputRef}
+                      className={styles.addressInput}
+                      placeholder="Address Line 1 (Start typing to search)"
+                      value={addressForm.addressLine1}
+                      onChange={(e) => handleAddressFormChange('addressLine1', e.target.value)}
+                      required
+                    />
                     <input
                       className={styles.addressInput}
                       placeholder="Address Line 2"
@@ -1534,6 +1521,7 @@ export default function CheckoutPage() {
                       value={addressForm.instructions}
                       onChange={(e) => handleAddressFormChange('instructions', e.target.value)}
                       rows="3"
+                      style={{ gridColumn: 'span 2', width: '100%', resize: 'vertical' }}
                     />
                   </div>
                   <div className={styles.addressFormActions}>
@@ -1887,11 +1875,6 @@ export default function CheckoutPage() {
               </div>
               {qoynValidation.walletUnlocked && qoynValidation.eligibleForDiscount && (
                 <>
-                  <div className={styles.orderSummaryMessage1}>
-                    <div className={styles.walletExpiry}>
-                      Minimum order value is AED 100 — you must spend at least AED 100 to apply Qoyns.
-                    </div>
-                  </div>
                   {/* Qoyns Input */}
                   <div className={styles.promoCode}>
                     <input 
@@ -1994,10 +1977,12 @@ export default function CheckoutPage() {
                       <span>- AED {qoynsDiscountAmount.toFixed(2)}</span>
                     </div>
                   )}
-                  <div className={styles.totalRow}>
-                    <span>Subtotal after discount</span>
-                    <span>AED {subtotal.toFixed(2)}</span>
-                  </div>
+                  {(appliedCoupon || (appliedDiscount && qoynsDiscountAmount > 0)) && (
+                    <div className={styles.totalRow}>
+                      <span>Subtotal after discount</span>
+                      <span>AED {subtotal.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className={styles.totalRow}>
                     <span>VAT ({(vatRate * 100).toFixed(0)}%)</span>
                     <span>AED {vatAmount.toFixed(2)}</span>
