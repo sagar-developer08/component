@@ -82,7 +82,7 @@ export default function Footer() {
         {/* Bottom Section - Copyright and Social Media */}
         <div className="footer-bottom">
           <div className="copyright">
-            <span>© 2025 Qliq</span>
+            <span>© 2025 IQliq</span>
           </div>
           <div className="social-media">
             <a href="https://www.facebook.com/people/IQLIQ/61583990447382/#" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Facebook">
