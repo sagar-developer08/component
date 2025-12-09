@@ -445,7 +445,7 @@ export default function CheckoutSuccessPage() {
             <div className={successStyles.actionButtons}>
               <button 
                 className={successStyles.primaryButton}
-                onClick={() => window.location.href = '/profile'}
+                onClick={() => window.location.href = '/profile?tab=orders'}
               >
                 <span className={successStyles.buttonIcon}>📋</span>
                 <span>View My Orders</span>

@@ -273,6 +273,14 @@ const OrderHistoryPage = () => {
       return;
     }
 
+    // Validate file size (5MB = 5 * 1024 * 1024 bytes)
+    const maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
+    const oversizedFiles = validFiles.filter(file => file.size > maxFileSize);
+    if (oversizedFiles.length > 0) {
+      showToast('Image too large. Please upload images below 5MB', 'error');
+      return;
+    }
+
     if (validFiles.length === 0) {
       return;
     }
@@ -902,7 +910,17 @@ const OrderHistoryPage = () => {
                 />
               </div>
 
-              <div className={styles.formGroup}>
+              <div className={styles.formGroup} style={{ flexDirection: 'column', alignItems: 'stretch' }}>
+                {/* File size remark - above input */}
+                <div style={{ 
+                  marginBottom: '8px', 
+                  fontSize: '12px', 
+                  color: '#666',
+                  fontStyle: 'italic'
+                }}>
+                  * Images above 5MB not allowed
+                </div>
+                
                 <div 
                   className={styles.uploadInput}
                   onClick={() => {
@@ -940,7 +958,7 @@ const OrderHistoryPage = () => {
                       return '';
                     })()}
                     className={styles.formInput}
-                    placeholder="Choose file (max 5 images)"
+                    placeholder="Choose file (max 3 images)"
                     readOnly
                     style={{ 
                       cursor: (() => {
@@ -976,7 +994,7 @@ const OrderHistoryPage = () => {
                   </button>
                 </div>
                 
-                {/* Image Previews */}
+                {/* Image Previews - below input */}
                 {imagePreviews.length > 0 && (
                   <div className={styles.imagePreviews}>
                     {imagePreviews.map((preview, index) => {
