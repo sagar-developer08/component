@@ -797,8 +797,20 @@ export default function CheckoutPage() {
     }
   }
 
-  const handleSetDefaultAddress = (addressId) => {
-    dispatch(setDefaultAddress(addressId))
+  const handleSetDefaultAddress = async (addressId) => {
+    try {
+      const result = await dispatch(setDefaultAddress(addressId))
+      
+      if (setDefaultAddress.fulfilled.match(result)) {
+        showToast('Default address updated successfully', 'success')
+        // Refetch addresses to get updated default status
+        dispatch(fetchUserAddresses())
+      } else if (setDefaultAddress.rejected.match(result)) {
+        showToast(result.payload || 'Failed to update default address', 'error')
+      }
+    } catch (error) {
+      showToast('Failed to update default address', 'error')
+    }
   }
 
   const handleCreateStripePaymentIntent = async () => {
@@ -1282,11 +1294,23 @@ export default function CheckoutPage() {
                 <>
                   {/* Display existing addresses */}
                   <div className={styles.addressesList}>
-                    {displayAddresses.map((address) => (
+                    {displayAddresses.map((address) => {
+                      const addressId = address.id || address._id
+                      const isSelected = (selectedAddress?.id || selectedAddress?._id) === addressId
+                      
+                      return (
                       <div
-                        key={address.id || address._id}
-                        className={`${styles.addressCard} ${((selectedAddress?.id || selectedAddress?._id) === (address.id || address._id)) ? styles.selectedAddress : ''}`}
-                        onClick={() => dispatch(setSelectedAddress(address))}
+                        key={addressId}
+                        className={`${styles.addressCard} ${isSelected ? styles.selectedAddress : ''}`}
+                        onClick={async () => {
+                          // Update selected address immediately for better UX
+                          dispatch(setSelectedAddress(address))
+                          
+                          // Call API to set as default address
+                          if (!isSelected) {
+                            await handleSetDefaultAddress(addressId)
+                          }
+                        }}
                         style={{ cursor: 'pointer' }}
                       >
                         <div className={styles.addressType}>
@@ -1304,7 +1328,7 @@ export default function CheckoutPage() {
                               <span className={styles.defaultBadge}>Default</span>
                             )} */}
                           </div>
-                          {((selectedAddress?.id || selectedAddress?._id) === (address.id || address._id)) && (
+                          {isSelected && (
                             <div className={styles.selectedIndicator}>
                               <FontAwesomeIcon icon={faCheck} className={styles.checkIcon} />
                             </div>
@@ -1333,7 +1357,7 @@ export default function CheckoutPage() {
                           </button>
                         )} */}
                       </div>
-                    ))}
+                    )})}
                   </div>
 
                   {/* No address selected message */}

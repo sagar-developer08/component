@@ -26,14 +26,14 @@ export default function Footer() {
             <div className="footer-logo" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
               <Image
                 src="/iqliq.jpg"
-                alt="QLIQ Logo"
+                alt="IQLIQ Logo"
                 width={100}
                 height={60}
                 style={{ aspectRatio: 'contain' }}
               />
             </div>
             <p className="footer-description">
-              QLIQ is an innovative AI based eCommerce app that lets you shop your favorite products while earning and spending Qliq Coins for exclusive savings. Enjoy a smarter shopping experience with amazing discounts, seamless payments, and rewarding loyalty every time you buy.
+              IQLIQ is an innovative AI based eCommerce app that lets you shop your favorite products while earning and spending IQliq Coins for exclusive savings. Enjoy a smarter shopping experience with amazing discounts, seamless payments, and rewarding loyalty every time you buy.
             </p>
           </div>
 
