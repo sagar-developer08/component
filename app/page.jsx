@@ -25,6 +25,7 @@ import { fetchProducts } from '@/store/slices/productsSlice'
 import { fetchBrands } from '@/store/slices/brandsSlice'
 import { fetchStores } from '@/store/slices/storesSlice'
 import { fetchPopularCategories, fetchLevel2Categories } from '@/store/slices/categoriesSlice'
+import { fetchHomepageSections } from '@/store/slices/homepageSectionsSlice'
 import { ProductCardSkeleton, CategoryCardSkeleton } from '@/components/SkeletonLoader'
 
 // Helper function to transform API product data to match ProductCard component format
@@ -273,6 +274,7 @@ export default function Home() {
   const { brands, loading: brandsLoading, error: brandsError } = useSelector(state => state.brands);
   const { stores, topStores, newStores, loading: storesLoading, error: storesError } = useSelector(state => state.stores);
   const { popularCategories, level2Categories, loading: popularCategoriesLoading, error: popularCategoriesError } = useSelector(state => state.categories);
+  const { sections: homepageSections, loading: homepageSectionsLoading, error: homepageSectionsError } = useSelector(state => state.homepageSections);
 
   const swiperRef = useRef(null);
   const topStoresSwiperRef = useRef(null);
@@ -285,9 +287,6 @@ export default function Home() {
   const otherCategoriesSwiperRef = useRef(null);
   const [activeStoreFilter, setActiveStoreFilter] = useState('all');
   const [isMobile, setIsMobile] = useState(false);
-  const [homepageSections, setHomepageSections] = useState([]);
-  const [homepageSectionsLoading, setHomepageSectionsLoading] = useState(false);
-  const [homepageSectionsError, setHomepageSectionsError] = useState(null);
 
   // Check screen size for mobile detection
   useEffect(() => {
@@ -305,37 +304,15 @@ export default function Home() {
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  // Fetch products, brands, stores, and categories on component mount
+  // Fetch products, brands, stores, categories, and homepage sections on component mount
   useEffect(() => {
     dispatch(fetchProducts());
     dispatch(fetchBrands());
     dispatch(fetchStores());
     dispatch(fetchPopularCategories());
     dispatch(fetchLevel2Categories());
+    dispatch(fetchHomepageSections({ isActive: true }));
   }, [dispatch]);
-
-  // Fetch homepage sections
-  useEffect(() => {
-    const fetchHomepageSections = async () => {
-      setHomepageSectionsLoading(true);
-      setHomepageSectionsError(null);
-      try {
-        const response = await fetch('http://localhost:8082/api/homepage-sections?isActive=true');
-        const data = await response.json();
-        if (data.success && data.data) {
-          setHomepageSections(data.data);
-        } else {
-          setHomepageSectionsError('Failed to fetch homepage sections');
-        }
-      } catch (error) {
-        setHomepageSectionsError(error.message);
-      } finally {
-        setHomepageSectionsLoading(false);
-      }
-    };
-
-    fetchHomepageSections();
-  }, []);
 
   // Cart and wishlist are now fetched on login, not on home page visit
 
@@ -513,6 +490,23 @@ export default function Home() {
     }
   };
 
+  // Helper function to check if homepage sections exist
+  const hasHomepageSections = () => {
+    if (!homepageSections) return false;
+    
+    // Check if it's the new grouped structure
+    if (typeof homepageSections === 'object' && !Array.isArray(homepageSections)) {
+      const brandCount = Array.isArray(homepageSections.brand) ? homepageSections.brand.length : 0;
+      const categoriesCount = Array.isArray(homepageSections.categories) ? homepageSections.categories.length : 0;
+      const hypermarketCount = Array.isArray(homepageSections.hypermarket) ? homepageSections.hypermarket.length : 0;
+      const supermarketCount = Array.isArray(homepageSections.supermarket) ? homepageSections.supermarket.length : 0;
+      return brandCount + categoriesCount + hypermarketCount + supermarketCount > 0;
+    }
+    
+    // Check if it's the legacy array structure
+    return Array.isArray(homepageSections) && homepageSections.length > 0;
+  };
+
   return (
     <>
       <Navigation />
@@ -630,56 +624,136 @@ export default function Home() {
               <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>
                 Error loading homepage sections: {homepageSectionsError}
               </div>
-            ) : homepageSections.length > 0 ? (
+            ) : homepageSections && typeof homepageSections === 'object' && !Array.isArray(homepageSections) ? (
+              <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                {/* Map Brand Sections */}
+                {homepageSections.brand && Array.isArray(homepageSections.brand) && homepageSections.brand.map((section) => {
+                  const level4CategoryIds = section.config?.level4Categories?.map(cat => cat._id) || [];
+                  
+                  return (
+                    <BrandOfferCard
+                      key={section._id}
+                      title={section.title}
+                      brands={section.config?.brands || []}
+                      categories={section.config?.level4Categories || []}
+                      ctaLink={section.uiConfig?.ctaLink}
+                      ctaText={section.uiConfig?.ctaText || 'View all'}
+                      itemType="brand"
+                      level4CategoryIds={level4CategoryIds}
+                    />
+                  );
+                })}
+                
+                {/* Map Category Sections */}
+                {homepageSections.categories && Array.isArray(homepageSections.categories) && homepageSections.categories.map((section) => {
+                  const level4CategoryIds = section.config?.level4Categories?.map(cat => cat._id) || [];
+                  
+                  return (
+                    <BrandOfferCard
+                      key={section._id}
+                      title={section.title}
+                      brands={[]}
+                      categories={section.config?.level4Categories || []}
+                      ctaLink={section.uiConfig?.ctaLink}
+                      ctaText={section.uiConfig?.ctaText || 'View all'}
+                      itemType="category"
+                      level4CategoryIds={level4CategoryIds}
+                    />
+                  );
+                })}
+                
+                {/* Map Hypermarket Sections */}
+                {homepageSections.hypermarket && Array.isArray(homepageSections.hypermarket) && homepageSections.hypermarket.map((section) => {
+                  const level4CategoryIds = section.config?.level4Categories?.map(cat => cat._id) || [];
+                  
+                  // Transform hypermarket stores to match category format
+                  const hypermarketStoresAsCategories = section.config?.hypermarketStores?.map(store => ({
+                    _id: store._id,
+                    name: store.name,
+                    icon: store.logo,
+                    logo: store.logo,
+                    slug: store.slug
+                  })) || [];
+                  
+                  return (
+                    <BrandOfferCard
+                      key={section._id}
+                      title={section.title}
+                      brands={[]}
+                      categories={hypermarketStoresAsCategories}
+                      ctaLink={section.uiConfig?.ctaLink}
+                      ctaText={section.uiConfig?.ctaText || 'View all'}
+                      itemType="hypermarket"
+                      level4CategoryIds={level4CategoryIds}
+                    />
+                  );
+                })}
+                
+                {/* Map Supermarket Sections */}
+                {homepageSections.supermarket && Array.isArray(homepageSections.supermarket) && homepageSections.supermarket.map((section) => {
+                  const level4CategoryIds = section.config?.level4Categories?.map(cat => cat._id) || [];
+                  
+                  // Transform supermarket stores to match category format
+                  const supermarketStoresAsCategories = section.config?.supermarketStores?.map(store => ({
+                    _id: store._id,
+                    name: store.name,
+                    icon: store.logo,
+                    logo: store.logo,
+                    slug: store.slug
+                  })) || [];
+                  
+                  return (
+                    <BrandOfferCard
+                      key={section._id}
+                      title={section.title}
+                      brands={[]}
+                      categories={supermarketStoresAsCategories}
+                      ctaLink={section.uiConfig?.ctaLink}
+                      ctaText={section.uiConfig?.ctaText || 'View all'}
+                      itemType="supermarket"
+                      level4CategoryIds={level4CategoryIds}
+                    />
+                  );
+                })}
+              </div>
+            ) : Array.isArray(homepageSections) && homepageSections.length > 0 ? (
+              // Fallback for legacy array structure
               <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
                 {homepageSections.map((section) => {
-                  // For hypermarket sections: use hypermarket stores instead of categories
-                  // For supermarket sections: use supermarket stores instead of categories
-                  // For brand/category sections: use categories as before
-                  const hasHypermarketStores = section.config?.hypermarketStoreIds && 
-                    Array.isArray(section.config.hypermarketStoreIds) && 
-                    section.config.hypermarketStoreIds.length > 0 &&
-                    section.config?.hypermarketStores &&
+                  const hasHypermarketStores = section.config?.hypermarketStores && 
                     Array.isArray(section.config.hypermarketStores) &&
                     section.config.hypermarketStores.length > 0;
                   
-                  const hasSupermarketStores = section.config?.supermarketStoreIds && 
-                    Array.isArray(section.config.supermarketStoreIds) && 
-                    section.config.supermarketStoreIds.length > 0 &&
-                    section.config?.supermarketStores &&
+                  const hasSupermarketStores = section.config?.supermarketStores && 
                     Array.isArray(section.config.supermarketStores) &&
                     section.config.supermarketStores.length > 0;
                   
-                  // Transform hypermarket stores to match category format (name and icon/logo)
                   const hypermarketStoresAsCategories = hasHypermarketStores 
                     ? section.config.hypermarketStores.map(store => ({
                         _id: store._id,
                         name: store.name,
-                        icon: store.logo, // Use logo as icon for compatibility
+                        icon: store.logo,
                         logo: store.logo,
                         slug: store.slug
                       }))
                     : [];
                   
-                  // Transform supermarket stores to match category format (name and icon/logo)
                   const supermarketStoresAsCategories = hasSupermarketStores 
                     ? section.config.supermarketStores.map(store => ({
                         _id: store._id,
                         name: store.name,
-                        icon: store.logo, // Use logo as icon for compatibility
+                        icon: store.logo,
                         logo: store.logo,
                         slug: store.slug
                       }))
                     : [];
                   
-                  // Use stores for hypermarket/supermarket sections, otherwise use categories
                   const categoriesToUse = hasHypermarketStores 
                     ? hypermarketStoresAsCategories 
                     : hasSupermarketStores
                     ? supermarketStoresAsCategories
                     : (section.config?.level4Categories || []);
                   
-                  // Determine item type based on what's being displayed
                   const itemType = hasHypermarketStores 
                     ? 'hypermarket' 
                     : hasSupermarketStores
@@ -688,9 +762,7 @@ export default function Home() {
                     ? 'brand'
                     : 'category';
                   
-                  // Extract level4CategoryIds from section config
-                  const level4CategoryIds = section.config?.level4CategoryIds || 
-                    (section.config?.level4Categories?.map(cat => cat._id) || []);
+                  const level4CategoryIds = section.config?.level4Categories?.map(cat => cat._id) || [];
                   
                   return (
                     <BrandOfferCard

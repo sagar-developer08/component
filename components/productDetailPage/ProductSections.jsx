@@ -518,10 +518,6 @@ export default function ProductSections({ relatedProducts, productData }) {
             <div className="reviews-summary">
               <div className="summary-title">{reviewStats.totalReviews} Reviews, summarised</div>
               <ul className="summary-list">
-                <li>Stunning display and powerful performance make it a top-tier phone.</li>
-                <li>The pro-grade camera system captures incredible photos and videos.</li>
-                <li>Innovative AI features enhance productivity and user experience.</li>
-                <li>Some users have reported battery drain and heating issues.</li>
               </ul>
               <div className="customer-photos-row">
                 <span className="customer-photos-title">Customers Photos ({reviewImages.length})</span>

@@ -243,6 +243,39 @@ export const validateQoynRedemption = createAsyncThunk(
   }
 )
 
+// Qoyn redemption async thunk
+export const redeemQoyns = createAsyncThunk(
+  'checkout/redeemQoyns',
+  async (redemptionData, { rejectWithValue }) => {
+    try {
+      const token = await getAuthToken()
+      
+      if (!token) {
+        throw new Error('Authentication required')
+      }
+
+      const response = await fetch(wallet.redeemQoyn, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(redemptionData)
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to redeem Qoyns')
+      }
+
+      const responseData = await response.json()
+      return responseData
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 // Fetch accepted purchase gigs (coupons) async thunk
 export const fetchAcceptedPurchaseGigs = createAsyncThunk(
   'checkout/fetchAcceptedPurchaseGigs',
@@ -565,6 +598,23 @@ const checkoutSlice = createSlice({
       .addCase(fetchAcceptedPurchaseGigs.rejected, (state, action) => {
         state.loadingCoupons = false
         state.couponsError = action.payload
+      })
+      
+      // Redeem Qoyns
+      .addCase(redeemQoyns.pending, (state) => {
+        state.qoynValidation.isValidationLoading = true
+        state.qoynValidation.validationError = null
+      })
+      .addCase(redeemQoyns.fulfilled, (state, action) => {
+        state.qoynValidation.isValidationLoading = false
+        // Update qoyn balance if returned in response
+        if (action.payload.data && action.payload.data.userQoynBalance !== undefined) {
+          state.qoynValidation.totalQoynBalance = action.payload.data.userQoynBalance
+        }
+      })
+      .addCase(redeemQoyns.rejected, (state, action) => {
+        state.qoynValidation.isValidationLoading = false
+        state.qoynValidation.validationError = action.payload
       })
   }
 })

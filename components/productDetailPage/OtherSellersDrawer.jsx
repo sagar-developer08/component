@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { catalog } from '../../store/api/endpoints';
 import axios from 'axios';
@@ -8,6 +9,7 @@ import { getUserFromCookies } from '../../utils/userUtils';
 import { useToast } from '../../contexts/ToastContext';
 
 export default function OtherSellersDrawer({ open, onClose, productId }) {
+    const router = useRouter();
     const { requireAuth } = useAuth();
     const dispatch = useDispatch();
     const { show } = useToast();
@@ -173,6 +175,18 @@ export default function OtherSellersDrawer({ open, onClose, productId }) {
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
+    const handleProductClick = (seller) => {
+        const productSlug = seller.productData?.slug || seller.slug;
+        const productId = seller.id || seller._id;
+        
+        if (productSlug && productId) {
+            // Close the drawer first
+            onClose();
+            // Navigate to product PDP page
+            router.push(`/product/${productSlug}?pid=${productId}`);
+        }
+    };
+
 
     if (!open) return null;
 
@@ -206,7 +220,13 @@ export default function OtherSellersDrawer({ open, onClose, productId }) {
                         sellers.map((seller, idx) => (
                             <div className="seller-card" key={idx}>
                                 <div className="product-info">
-                                    <span className="product-title">{seller.productData.title}</span>
+                                    <span 
+                                        className="product-title" 
+                                        onClick={() => handleProductClick(seller)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {seller.productData.title}
+                                    </span>
                                     <span className="product-brand">{seller.brand} • {seller.category}</span>
                                     {seller.similarityScore > 0 && (
                                         <span className="similarity-badge">
@@ -370,6 +390,12 @@ export default function OtherSellersDrawer({ open, onClose, productId }) {
           color: #111;
           margin-bottom: 4px;
           line-height: 1.4;
+          cursor: pointer;
+          transition: color 0.2s ease;
+        }
+        .product-title:hover {
+          color: #0082FF;
+          text-decoration: underline;
         }
         .product-brand {
           display: block;

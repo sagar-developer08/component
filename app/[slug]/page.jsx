@@ -1135,7 +1135,7 @@ export default function BrandPage() {
       <Navigation />
       {/* Products Section */}
       <section className="section">
-        <div className="container">
+        <div className="container breadcrumb-container">
           {/* Breadcrumb */}
           {breadcrumbPath.length > 0 && (
             <nav className="breadcrumb" aria-label="Breadcrumb">
@@ -1163,7 +1163,7 @@ export default function BrandPage() {
             </nav>
           )}
           <div className="listing-layout">
-            {/* Sticky Filter Sidebar */}
+            {/* Sticky Filter Sidebar - Always display filters */}
             <aside className="filters-sidebar">
               <FilterDrawer 
                 open={true} 
@@ -1260,7 +1260,7 @@ export default function BrandPage() {
         </div>
       </section>
 
-      {/* Drawer for small screens */}
+      {/* Drawer for small screens - Always display filters */}
       <FilterDrawer 
         open={filterOpen} 
         onClose={() => setFilterOpen(false)} 
@@ -1273,9 +1273,19 @@ export default function BrandPage() {
       <Footer />
 
       <style jsx>{`
+        .home-page .section {
+          padding-top: 16px;
+        }
+
+        .breadcrumb-container {
+          padding-top: 0;
+          padding-bottom: 4px;
+        }
+
         .breadcrumb {
-          margin-bottom: 16px;
+          margin-bottom: 4px;
           padding: 0;
+          margin-top: 0;
         }
 
         .breadcrumb-list {
@@ -1297,7 +1307,7 @@ export default function BrandPage() {
         }
 
         .breadcrumb-separator {
-          margin: 0 6px;
+          margin: 0 0;
           color: #6b7280;
           font-size: 12px;
         }
@@ -1553,7 +1563,7 @@ export default function BrandPage() {
           display: flex;
           width: 100%;
           max-width: 1392px;
-          justify-content: space-between;
+          justify-content: flex-end;
           align-items: center;
           margin-bottom: 24px;
           padding-right: 24px;
@@ -1572,7 +1582,9 @@ export default function BrandPage() {
         .section-actions {
           display: flex;
           align-items: center;
+          justify-content: flex-end;
           gap: 16px;
+          margin-left: auto;
         }
 
         .sticky-header {

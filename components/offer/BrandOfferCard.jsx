@@ -161,7 +161,8 @@ const BrandOfferCard = ({
                     fontSize: '12px',
                     fontWeight: 400,
                     letterSpacing: '0.5px',
-                    textTransform: 'uppercase'
+                    textTransform: 'uppercase',
+                    textAlign: 'center'
                   }}>
                     {name.toUpperCase()}
                   </span>

@@ -9,6 +9,9 @@ import { getAuthToken, getUserFromCookies } from '@/utils/userUtils'
 import styles from '../checkout.module.css'
 import successStyles from './success.module.css'
 import { removeFromCart, clearCart } from '@/store/slices/cartSlice'
+import { redeemQoyns } from '@/store/slices/checkoutSlice'
+import { fetchUserBalance } from '@/store/slices/walletSlice'
+import { orders } from '@/store/api/endpoints'
 
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams()
@@ -17,6 +20,147 @@ export default function CheckoutSuccessPage() {
   const [paymentStatus, setPaymentStatus] = useState('loading')
   const [paymentData, setPaymentData] = useState(null)
   const [error, setError] = useState(null)
+
+  // Function to fetch the latest order and redeem Qoyns (with retry logic)
+  const fetchOrderAndRedeemQoyns = async (sessionIdOrPaymentIntentId, type, retryCount = 0) => {
+    const MAX_RETRIES = 3
+    const RETRY_DELAY = 2000 // 2 seconds
+    
+    try {
+      console.log(`🔍 [QOYNS REDEMPTION] Attempt ${retryCount + 1}/${MAX_RETRIES + 1} - Fetching order after payment confirmation...`)
+      console.log('🔍 [QOYNS REDEMPTION] Session/Payment Intent ID:', sessionIdOrPaymentIntentId, 'Type:', type)
+      
+      // Check if there are pending Qoyns to redeem
+      const pendingRedemption = sessionStorage.getItem('pendingQoynRedemption')
+      if (!pendingRedemption) {
+        console.log('⚠️ [QOYNS REDEMPTION] No pending Qoyn redemption found in sessionStorage')
+        return
+      }
+
+      console.log('✅ [QOYNS REDEMPTION] Found pending redemption')
+      const redemptionInfo = JSON.parse(pendingRedemption)
+      console.log('✅ [QOYNS REDEMPTION] Parsed redemption info:', redemptionInfo)
+      
+      // Fetch the latest order for the user
+      const token = await getAuthToken()
+      if (!token) {
+        console.error('❌ [QOYNS REDEMPTION] No auth token available')
+        return
+      }
+
+      console.log('📡 [QOYNS REDEMPTION] Fetching user orders...')
+      const ordersResponse = await fetch(`${orders.getUserOrders}?page=1&limit=1`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!ordersResponse.ok) {
+        const errorText = await ordersResponse.text()
+        console.error('❌ [QOYNS REDEMPTION] Failed to fetch orders:', ordersResponse.status, errorText)
+        if (retryCount < MAX_RETRIES) {
+          setTimeout(() => {
+            fetchOrderAndRedeemQoyns(sessionIdOrPaymentIntentId, type, retryCount + 1)
+          }, RETRY_DELAY)
+        }
+        return
+      }
+
+      const ordersData = await ordersResponse.json()
+      console.log('📦 [QOYNS REDEMPTION] Orders response structure:', {
+        hasData: !!ordersData.data,
+        hasOrders: !!ordersData.orders,
+        keys: Object.keys(ordersData)
+      })
+      
+      // Get the latest order - handle different response structures
+      const ordersList = ordersData?.data?.orders || 
+                        ordersData?.orders?.orders || 
+                        ordersData?.data || 
+                        ordersData?.orders ||
+                        []
+      
+      console.log('📦 [QOYNS REDEMPTION] Orders list length:', ordersList.length)
+      
+      if (!ordersList || ordersList.length === 0) {
+        console.warn(`⚠️ [QOYNS REDEMPTION] No orders found (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`)
+        if (retryCount < MAX_RETRIES) {
+          console.log(`🔄 [QOYNS REDEMPTION] Retrying in ${RETRY_DELAY}ms...`)
+          setTimeout(() => {
+            fetchOrderAndRedeemQoyns(sessionIdOrPaymentIntentId, type, retryCount + 1)
+          }, RETRY_DELAY)
+        } else {
+          console.error('❌ [QOYNS REDEMPTION] Max retries reached. Full response:', ordersData)
+        }
+        return
+      }
+      
+      // Get the most recent order (first one, as they're sorted by createdAt descending)
+      const latestOrder = ordersList[0]
+
+      console.log('✅ [QOYNS REDEMPTION] Found latest order:', {
+        orderNumber: latestOrder.orderNumber,
+        orderId: latestOrder.orderId,
+        _id: latestOrder._id,
+        id: latestOrder.id,
+        createdAt: latestOrder.createdAt
+      })
+      
+      // Get order ID - try multiple fields (orderNumber is the primary identifier)
+      const orderId = latestOrder.orderNumber || latestOrder.orderId || latestOrder._id || latestOrder.id
+      
+      if (!orderId) {
+        console.error('❌ [QOYNS REDEMPTION] Order ID not found in order data. Order keys:', Object.keys(latestOrder))
+        console.error('❌ [QOYNS REDEMPTION] Full order data:', latestOrder)
+        return
+      }
+
+      console.log('🚀 [QOYNS REDEMPTION] Calling redemption API with:', {
+        orderId,
+        totalAmount: redemptionInfo.totalAmount,
+        metadata: {
+          storeId: redemptionInfo.storeId || undefined,
+          productIds: redemptionInfo.productIds || []
+        }
+      })
+      
+      // Redeem Qoyns with actual order ID
+      const result = await dispatch(redeemQoyns({
+        orderId: orderId,
+        totalAmount: redemptionInfo.totalAmount,
+        metadata: {
+          storeId: redemptionInfo.storeId || undefined,
+          productIds: redemptionInfo.productIds || []
+        }
+      }))
+
+      console.log('📥 [QOYNS REDEMPTION] Redemption result:', {
+        type: result.type,
+        error: result.error,
+        payload: result.payload
+      })
+
+      if (redeemQoyns.fulfilled.match(result)) {
+        console.log('✅ [QOYNS REDEMPTION] Qoyns redeemed successfully!')
+        console.log('📊 [QOYNS REDEMPTION] Result payload:', result.payload)
+        // Clear sessionStorage
+        sessionStorage.removeItem('pendingQoynRedemption')
+        console.log('🗑️ [QOYNS REDEMPTION] Cleared sessionStorage')
+        // Refresh wallet balance
+        dispatch(fetchUserBalance())
+        console.log('🔄 [QOYNS REDEMPTION] Refreshed wallet balance')
+      } else {
+        console.error('❌ [QOYNS REDEMPTION] Failed to redeem Qoyns')
+        console.error('❌ [QOYNS REDEMPTION] Error:', result.error)
+        console.error('❌ [QOYNS REDEMPTION] Payload:', result.payload)
+      }
+    } catch (error) {
+      console.error('❌ [QOYNS REDEMPTION] Exception occurred:', error)
+      console.error('❌ [QOYNS REDEMPTION] Error stack:', error.stack)
+      // Don't fail the entire success page if redemption fails
+    }
+  }
 
   useEffect(() => {
     const handlePaymentSuccess = async () => {
@@ -58,6 +202,9 @@ export default function CheckoutSuccessPage() {
             setPaymentData(responseData.data)
             setPaymentStatus('success')
             console.log('✅ Order created successfully via session confirmation')
+            
+            // Immediately fetch the order and redeem Qoyns (order should be created synchronously)
+            await fetchOrderAndRedeemQoyns(sessionId, 'session')
           } catch (error) {
             console.error('❌ Error confirming session:', error)
             // Still show success but with warning
@@ -97,6 +244,9 @@ export default function CheckoutSuccessPage() {
           const responseData = await response.json()
           setPaymentData(responseData.data)
           setPaymentStatus('success')
+          
+          // Immediately fetch the order and redeem Qoyns
+          await fetchOrderAndRedeemQoyns(paymentIntentId, 'paymentIntent')
           return
         }
         

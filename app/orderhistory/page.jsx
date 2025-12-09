@@ -558,24 +558,38 @@ const OrderHistoryPage = () => {
     return Number(sum.toFixed(2));
   };
 
-  // Compute total VAT across displayed items (prefer item-level vat, else proportional share from order.vat)
+  // Compute discounted subtotal (subtotal after all discounts)
+  const getDiscountedSubtotal = (order) => {
+    if (!order) return 0;
+    const subtotal = getItemsSubtotal(order) || 0;
+    const couponDiscount = Number(order?.couponDiscountAmount || 0);
+    const qoynsDiscount = Number(order?.qoynsDiscountAmount || 0);
+    const otherDiscount = Number(order?.discount || 0);
+    
+    // Calculate total discount (only count qoyns and coupon, not other discount if they exist)
+    let totalDiscount = 0;
+    if (couponDiscount > 0) totalDiscount += couponDiscount;
+    if (qoynsDiscount > 0) totalDiscount += qoynsDiscount;
+    if (otherDiscount > 0 && couponDiscount === 0 && qoynsDiscount === 0) {
+      totalDiscount += otherDiscount;
+    }
+    
+    const discountedSubtotal = subtotal - totalDiscount;
+    return Math.max(0, discountedSubtotal); // Ensure it doesn't go negative
+  };
+
+  // Compute total VAT across displayed items - VAT should be calculated on discounted amount at 5%
   const getItemsVat = (order) => {
     if (!order || !Array.isArray(order.items)) return 0;
-    const orderSubtotal = getItemsSubtotal(order) || 0;
-    const orderVat = Number(order?.vat) || 0;
-    let sum = 0;
-    for (const it of order.items) {
-      const qty = Math.max(1, Number(it?.quantity) || 1);
-      const unit = Number(it?.unitPrice ?? it?.price ?? 0) || 0;
-      const lineBase = unit * qty;
-      const lineVat = Number(it?.vat) || 0;
-      if (lineVat) {
-        sum += lineVat;
-      } else if (orderSubtotal > 0 && orderVat) {
-        sum += (lineBase / orderSubtotal) * orderVat;
-      }
-    }
-    return Number(sum.toFixed(2));
+    
+    const discountedSubtotal = getDiscountedSubtotal(order);
+    
+    // Always use 5% VAT rate
+    const vatRate = 0.05;
+    
+    // Calculate VAT on discounted subtotal (matching checkout logic)
+    const vatAmount = discountedSubtotal * vatRate;
+    return Number(vatAmount.toFixed(2));
   };
 
   if (ordersLoading) {
@@ -995,8 +1009,56 @@ const OrderHistoryPage = () => {
             <div className={styles.costBreakdown}>
               <div className={styles.costItem}>
                 <span className={styles.costLabel}>Subtotal</span>
-                <span className={styles.costValue}>{'AED'} {getItemsSubtotal(orderData)}</span>
+                <span className={styles.costValue}>{'AED'} {getItemsSubtotal(orderData).toFixed(2)}</span>
               </div>
+              {/* Discount Breakdown - shown before VAT */}
+              {((orderData.couponDiscountAmount && Number(orderData.couponDiscountAmount) > 0) || 
+                (orderData.qoynsDiscountAmount && Number(orderData.qoynsDiscountAmount) > 0) || 
+                (orderData.discount !== undefined && orderData.discount !== null && Number(orderData.discount) > 0)) && (
+                <>
+                  {/* {orderData.couponDiscountAmount && Number(orderData.couponDiscountAmount) > 0 && (
+                    <div className={styles.costItem}>
+                      <span className={styles.costLabel}>
+                        Coupon Discount {orderData.couponCode ? `(${orderData.couponCode})` : ''}
+                        {orderData.couponDiscountPercentage ? ` - ${orderData.couponDiscountPercentage}%` : ''}
+                      </span>
+                      <span className={styles.costValue} style={{ color: '#4CAF50' }}>
+                        - {"AED"} {Number(orderData.couponDiscountAmount).toFixed(2)}
+                      </span>
+                    </div>
+                  )} */}
+                  {orderData.qoynsDiscountAmount && Number(orderData.qoynsDiscountAmount) > 0 && (
+                    <div className={styles.costItem}>
+                      <span className={styles.costLabel}>
+                        Qoyns Discount {orderData.qoynsUsed && Number(orderData.qoynsUsed) > 0 ? `(${Number(orderData.qoynsUsed).toLocaleString()} Qoyns)` : ''}
+                      </span>
+                      <span className={styles.costValue} style={{ color: '#4CAF50' }}>
+                        - {"AED"} {Number(orderData.qoynsDiscountAmount).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  {orderData.discount !== undefined && orderData.discount !== null && Number(orderData.discount) > 0 && 
+                   !((orderData.couponDiscountAmount && Number(orderData.couponDiscountAmount) > 0) || 
+                     (orderData.qoynsDiscountAmount && Number(orderData.qoynsDiscountAmount) > 0)) && (
+                    <div className={styles.costItem}>
+                      <span className={styles.costLabel}>Discount</span>
+                      <span className={styles.costValue} style={{ color: '#4CAF50' }}>
+                        - {"AED"} {Number(orderData.discount).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  <div className={styles.costItem}>
+                    <span className={styles.costLabel}>Subtotal after discount</span>
+                    <span className={styles.costValue}>{'AED'} {getDiscountedSubtotal(orderData).toFixed(2)}</span>
+                  </div>
+                </>
+              )}
+              {getItemsVat(orderData) > 0 && (
+                <div className={styles.costItem}>
+                  <span className={styles.costLabel}>VAT (5%)</span>
+                  <span className={styles.costValue}>{'AED'} {getItemsVat(orderData).toFixed(2)}</span>
+                </div>
+              )}
               <div className={styles.costItem}>
                 <span className={styles.costLabel}>Shipping</span>
                 <span className={styles.costValue}>
@@ -1009,59 +1071,14 @@ const OrderHistoryPage = () => {
                   <span className={styles.costValue}>{'AED'} {getItemsTax(orderData)}</span>
                 </div>
               )} */}
-              {getItemsVat(orderData) > 0 && (
-                <div className={styles.costItem}>
-                  <span className={styles.costLabel}>VAT</span>
-                  <span className={styles.costValue}>{'AED'} {getItemsVat(orderData)}</span>
-                </div>
-              )}
-              {/* Discount Breakdown */}
-              {((orderData.couponDiscountAmount && orderData.couponDiscountAmount > 0) || 
-                (orderData.qoynsDiscountAmount && orderData.qoynsDiscountAmount > 0) || 
-                (orderData.discount !== undefined && orderData.discount !== null && orderData.discount > 0)) && (
-                <>
-                  {orderData.couponDiscountAmount && orderData.couponDiscountAmount > 0 && (
-                    <div className={styles.costItem}>
-                      <span className={styles.costLabel}>
-                        Coupon Discount {orderData.couponCode ? `(${orderData.couponCode})` : ''}
-                        {orderData.couponDiscountPercentage ? ` - ${orderData.couponDiscountPercentage}%` : ''}
-                      </span>
-                      <span className={styles.costValue} style={{ color: '#4CAF50' }}>
-                        - {"AED"} {Number(orderData.couponDiscountAmount).toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-                  {orderData.qoynsDiscountAmount && orderData.qoynsDiscountAmount > 0 && (
-                    <div className={styles.costItem}>
-                      <span className={styles.costLabel}>
-                        Qoyns Discount {orderData.qoynsUsed ? `(${Number(orderData.qoynsUsed).toLocaleString()} Qoyns)` : ''}
-                      </span>
-                      <span className={styles.costValue} style={{ color: '#4CAF50' }}>
-                        - {"AED"} {Number(orderData.qoynsDiscountAmount).toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-                  {orderData.discount !== undefined && orderData.discount !== null && orderData.discount > 0 && 
-                   !((orderData.couponDiscountAmount && orderData.couponDiscountAmount > 0) || 
-                     (orderData.qoynsDiscountAmount && orderData.qoynsDiscountAmount > 0)) && (
-                    <div className={styles.costItem}>
-                      <span className={styles.costLabel}>Discount</span>
-                      <span className={styles.costValue} style={{ color: '#4CAF50' }}>
-                        - {"AED"} {Number(orderData.discount).toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
               <div className={`${styles.costItem} ${styles.totalItem}`}>
                 <span className={styles.costLabel}>Order Total</span>
                 <span className={styles.totalValue}>
-                  {'AED'} {orderData.totalAmount ? (Number(orderData.totalAmount) + 9).toFixed(2) : 
+                  {'AED'} {orderData.totalAmount ? (Number(orderData.totalAmount)).toFixed(2) : 
                     Number(
-                      getItemsSubtotal(orderData) + 
+                      getDiscountedSubtotal(orderData) + 
                       getItemsVat(orderData) + 
-                      9 - 
-                      (orderData.discount || 0)
+                      9
                     ).toFixed(2)
                   }
                 </span>
