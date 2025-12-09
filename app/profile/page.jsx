@@ -175,7 +175,7 @@ export default function ProfilePage() {
                 Add New Card
               </button>
             )}
-            {activeTab === 'qoyns-wallet' || activeTab === 'qoyns-history' || activeTab === 'send-qoyn' ? (
+            {/* {activeTab === 'qoyns-wallet' || activeTab === 'qoyns-history' || activeTab === 'send-qoyn' ? (
               <div className={styles.qoynsActionsRow}>
                 <button
                   className={`${styles.addCardBtn} ${activeTab === 'qoyns-history' ? styles.active : ''}`}
@@ -196,7 +196,7 @@ export default function ProfilePage() {
                   </span>
                 </button>
               </div>
-            ) : null}
+            ) : null} */}
             {activeTab === 'orders' && (
               <div className={styles.qoynsActionsRow}>
                 <div className={styles.statusDropdownWrapper}>

@@ -33,6 +33,7 @@ const OrderHistoryPage = () => {
   const [existingReview, setExistingReview] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const [lastSubmittedHasImages, setLastSubmittedHasImages] = useState(false);
 
   // Fetch orders data if not already loaded
   useEffect(() => {
@@ -206,9 +207,18 @@ const OrderHistoryPage = () => {
     if (reviewSuccess) {
       // Check if we're in edit mode to show appropriate message
       if (isEditMode) {
-        showToast('Review updated successfully!', 'success')
+        // Message for update is handled in handleSubmitReview where we have image context
+        // This is a fallback in case the update message wasn't shown
+        if (!lastSubmittedHasImages) {
+          showToast('Review updated successfully (no images)', 'success')
+        }
       } else {
-        showToast('Review submitted successfully!', 'success')
+        // For new reviews, show message based on whether images were included
+        if (lastSubmittedHasImages) {
+          showToast('Review submitted successfully with images!', 'success')
+        } else {
+          showToast('Review submitted successfully (without images)', 'success')
+        }
         // After successful creation, refresh to check for existing review
         setReviewData({ name: '', review: '' })
         setRating(0)
@@ -223,7 +233,7 @@ const OrderHistoryPage = () => {
         dispatch(clearReviewState())
       }, 2000)
     }
-  }, [reviewSuccess, dispatch, showToast, isEditMode])
+  }, [reviewSuccess, dispatch, showToast, isEditMode, lastSubmittedHasImages])
 
   // Handle review error
   useEffect(() => {
@@ -263,14 +273,28 @@ const OrderHistoryPage = () => {
       return;
     }
 
+    if (validFiles.length === 0) {
+      return;
+    }
+
     // Add new files to existing files
     setImageFiles(prev => [...prev, ...validFiles]);
 
     // Create previews
+    let loadedCount = 0;
     validFiles.forEach(file => {
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreviews(prev => [...prev, e.target.result]);
+        loadedCount++;
+        // Show success message when all images are loaded
+        if (loadedCount === validFiles.length) {
+          if (validFiles.length === 1) {
+            showToast('Image added successfully', 'success');
+          } else {
+            showToast(`${validFiles.length} images added successfully`, 'success');
+          }
+        }
       };
       reader.readAsDataURL(file);
     });
@@ -283,6 +307,7 @@ const OrderHistoryPage = () => {
     if (isExistingImage && isEditMode) {
       // Remove from existing review images
       setImagePreviews(prev => prev.filter((_, i) => i !== index));
+      showToast('Image removed. Changes will be saved when you update the review.', 'success');
       // Note: The existing images will be updated when form is submitted
     } else {
       // Remove from new uploads
@@ -294,6 +319,7 @@ const OrderHistoryPage = () => {
         setImageFiles(prev => prev.filter((_, i) => i !== newFileIndex));
       }
       setImagePreviews(prev => prev.filter((_, i) => i !== index));
+      showToast('Image removed successfully', 'success');
     }
   };
 
@@ -308,6 +334,10 @@ const OrderHistoryPage = () => {
       showToast('Please write a review', 'error');
       return;
     }
+
+    // Check if review has images
+    const hasImages = imageFiles.length > 0 || imagePreviews.length > 0;
+    setLastSubmittedHasImages(hasImages);
 
     // Use productId field directly as specified
     const firstItem = orderData?.items?.[0];
@@ -327,6 +357,11 @@ const OrderHistoryPage = () => {
         // Get existing image URLs from previews
         const existingImageUrls = imagePreviews.filter(url => typeof url === 'string' && url.startsWith('http'));
         
+        // Check if images were added, removed, or updated
+        const originalImageCount = existingReview.images ? existingReview.images.length : 0;
+        const currentImageCount = existingImageUrls.length + imageFiles.length;
+        const imagesChanged = originalImageCount !== currentImageCount || imageFiles.length > 0;
+        
         const result = await dispatch(updateProductReview({
           reviewId: existingReview.id || existingReview._id,
           rating: rating,
@@ -337,6 +372,26 @@ const OrderHistoryPage = () => {
         }));
 
         if (updateProductReview.fulfilled.match(result)) {
+          // Show appropriate message based on image changes
+          if (imagesChanged) {
+            if (imageFiles.length > 0 && existingImageUrls.length > 0) {
+              showToast('Review and images updated successfully!', 'success');
+            } else if (imageFiles.length > 0) {
+              showToast('Review updated with new images!', 'success');
+            } else if (currentImageCount < originalImageCount) {
+              showToast('Review updated. Images removed successfully!', 'success');
+            } else {
+              showToast('Review updated successfully!', 'success');
+            }
+          } else {
+            // Images didn't change
+            if (!hasImages) {
+              showToast('Review updated successfully (no images)', 'success');
+            } else {
+              showToast('Review updated successfully!', 'success');
+            }
+          }
+          
           // Update the existing review state with new data
           setExistingReview({
             ...existingReview,
