@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useSelector, useDispatch } from 'react-redux'
 import { updateCartItem, removeFromCart, fetchCart, moveToWishlist } from '../store/slices/cartSlice'
 import { fetchWishlist } from '../store/slices/wishlistSlice'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { getUserFromCookies } from '../utils/userUtils'
 import { useToast } from '../contexts/ToastContext'
 
@@ -13,6 +13,24 @@ export default function CartDrawer({ open, onClose }) {
   const { items, total, itemsCount, loading, error } = useSelector(state => state.cart)
   const { items: wishlistItems } = useSelector(state => state.wishlist)
   const { show } = useToast()
+  const drawerRef = useRef(null)
+
+  // Handle click outside drawer to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (open && drawerRef.current && !drawerRef.current.contains(event.target)) {
+        onClose()
+      }
+    }
+
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [open, onClose])
 
   // Fetch cart and wishlist when drawer opens and user is authenticated
   useEffect(() => {
@@ -99,8 +117,8 @@ export default function CartDrawer({ open, onClose }) {
 
   if (!open) return null
   return (
-    <div className="drawer-overlay">
-      <div className="drawer">
+    <div className="drawer-overlay" onClick={onClose}>
+      <div className="drawer" ref={drawerRef} onClick={(e) => e.stopPropagation()}>
         <div className="drawer-header">
           <span className="drawer-title">Your Cart</span>
           <button className="drawer-close" onClick={onClose}>

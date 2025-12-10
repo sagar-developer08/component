@@ -199,9 +199,6 @@ export default function CheckoutPage() {
   const [selectedShippingMethod, setSelectedShippingMethod] = useState(null)
   const [loadingShippingMethods, setLoadingShippingMethods] = useState(false)
 
-  // Google Places Autocomplete refs
-  const addressLine1InputRef = useRef(null)
-  const autocompleteRef = useRef(null)
   const [isLoadingLocation, setIsLoadingLocation] = useState(false)
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false)
 
@@ -478,105 +475,11 @@ export default function CheckoutPage() {
     }
   }, [showAddressForm, user, dispatch])
 
-  // Load Google Maps API when address form is shown
+  // Load Google Maps API when "Use Current Location" is needed (for reverse geocoding only)
   useEffect(() => {
-    if (showAddressForm && !googleMapsLoaded) {
-      loadGoogleMaps()
-        .then(() => {
-          setGoogleMapsLoaded(true)
-        })
-        .catch((error) => {
-          console.error('Failed to load Google Maps:', error)
-          showToast('Failed to load location services', 'error')
-        })
-    }
-  }, [showAddressForm, googleMapsLoaded, showToast])
-
-  // Initialize Google Places Autocomplete when form is shown and Google Maps is loaded
-  useEffect(() => {
-    if (showAddressForm && googleMapsLoaded && addressLine1InputRef.current && window.google && window.google.maps && window.google.maps.places) {
-      // Clean up previous autocomplete instance
-      if (autocompleteRef.current) {
-        window.google.maps.event.clearInstanceListeners(autocompleteRef.current)
-        autocompleteRef.current = null
-      }
-
-      // Initialize autocomplete
-      const autocomplete = new window.google.maps.places.Autocomplete(
-        addressLine1InputRef.current,
-        {
-          types: ['address'],
-          componentRestrictions: { country: ['ae', 'sa', 'kw', 'qa'] } // Restrict to UAE, Saudi Arabia, Kuwait, Qatar
-        }
-      )
-
-      autocompleteRef.current = autocomplete
-
-      // Handle place selection
-      autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace()
-        
-        if (!place.geometry) {
-          console.log('No details available for input: ' + place.name)
-          return
-        }
-
-        // Extract address components
-        let addressData = {
-          addressLine1: '',
-          city: '',
-          state: '',
-          postalCode: '',
-          country: ''
-        }
-
-        // Get formatted address
-        if (place.formatted_address) {
-          addressData.addressLine1 = place.formatted_address.split(',')[0]
-        }
-
-        // Extract components
-        place.address_components.forEach(component => {
-          const types = component.types
-          
-          if (types.includes('street_number') || types.includes('route')) {
-            if (types.includes('street_number')) {
-              addressData.addressLine1 = component.long_name
-            } else if (types.includes('route')) {
-              addressData.addressLine1 = addressData.addressLine1 
-                ? `${addressData.addressLine1} ${component.long_name}` 
-                : component.long_name
-            }
-          } else if (types.includes('locality')) {
-            addressData.city = component.long_name
-          } else if (types.includes('administrative_area_level_1')) {
-            addressData.state = component.long_name
-          } else if (types.includes('postal_code')) {
-            addressData.postalCode = component.long_name
-          } else if (types.includes('country')) {
-            addressData.country = component.short_name
-          }
-        })
-
-        // Update form with address data
-        dispatch(updateAddressForm({
-          addressLine1: addressData.addressLine1,
-          city: addressData.city || addressForm.city,
-          state: addressData.state || addressForm.state,
-          postalCode: addressData.postalCode || addressForm.postalCode,
-          country: addressData.country || addressForm.country
-        }))
-      })
-
-      // Cleanup on unmount
-      return () => {
-        if (autocompleteRef.current) {
-          window.google.maps.event.clearInstanceListeners(autocompleteRef.current)
-          autocompleteRef.current = null
-        }
-      }
-    }
-  }, [showAddressForm, googleMapsLoaded, addressForm.city, addressForm.state, addressForm.postalCode, addressForm.country, dispatch])
+    // Only load if user clicks "Use Current Location" - not for autocomplete
+    // This prevents Google API errors when just opening the address form
+  }, [])
 
   // Ensure a selected address when addresses are available (prefer default)
   useEffect(() => {
@@ -721,6 +624,17 @@ export default function CheckoutPage() {
     setIsLoadingLocation(true)
 
     try {
+      // Load Google Maps API only when needed for reverse geocoding
+      if (!googleMapsLoaded) {
+        try {
+          await loadGoogleMaps()
+          setGoogleMapsLoaded(true)
+        } catch (error) {
+          console.error('Failed to load Google Maps:', error)
+          // Continue without Google Maps - user can enter address manually
+        }
+      }
+
       // Get user's current location
       const position = await new Promise((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(
@@ -736,8 +650,16 @@ export default function CheckoutPage() {
 
       const { latitude, longitude } = position.coords
 
-      // Get address from coordinates using Google Places API
-      const addressData = await getAddressFromCoordinates(latitude, longitude)
+      // Get address from coordinates using Google Places API (only if Google Maps is loaded)
+      let addressData = null
+      if (googleMapsLoaded && window.google && window.google.maps) {
+        try {
+          addressData = await getAddressFromCoordinates(latitude, longitude)
+        } catch (error) {
+          console.error('Error getting address from coordinates:', error)
+          // Continue without address data - user can enter manually
+        }
+      }
 
       if (addressData) {
         // Update form with fetched address data
@@ -753,7 +675,12 @@ export default function CheckoutPage() {
 
         showToast('Location fetched successfully!', 'success')
       } else {
-        showToast('Could not fetch address details. Please enter manually.', 'error')
+        // Update form with coordinates even if address details couldn't be fetched
+        dispatch(updateAddressForm({
+          latitude: latitude,
+          longitude: longitude
+        }))
+        showToast('Coordinates saved. Please enter address details manually.', 'success')
       }
     } catch (error) {
       console.error('Error getting current location:', error)
@@ -1520,9 +1447,8 @@ export default function CheckoutPage() {
                       required
                     />
                     <input
-                      ref={addressLine1InputRef}
                       className={styles.addressInput}
-                      placeholder="Address Line 1 (Start typing to search)"
+                      placeholder="Address Line 1"
                       value={addressForm.addressLine1}
                       onChange={(e) => handleAddressFormChange('addressLine1', e.target.value)}
                       required
