@@ -41,8 +41,14 @@ export default function NewAddress({ onCancel, onSave }) {
     }
   }, [user])
   
-  // Get all countries
+  // Get all countries, filter out unwanted countries, and sort alphabetically
   const countries = Country.getAllCountries()
+    .filter(country => {
+      // Remove Kosovo, Curacao, and Sint Maarten
+      const excludedCountries = ['Kosovo', 'Curacao', 'Sint Maarten']
+      return !excludedCountries.includes(country.name)
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
   
   // Get states for selected country
   const states = selectedCountry 
