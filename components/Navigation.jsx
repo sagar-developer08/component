@@ -10,7 +10,7 @@ import { faUser } from '@fortawesome/free-solid-svg-icons'
 import CartDrawer from './CartDrawer'
 import WishlistDrawer from './WishlistDrawer'
 import LoginModal from './LoginModal'
-import RegisterModal from './RegisterModal'
+import CreateAccountModal from './CreateAccountModal'
 import LocationModal from './LocationModal'
 import ForgotPasswordModal from './ForgotPasswordModal'
 import SearchSuggestions from './SearchSuggestions'
@@ -38,7 +38,7 @@ const Navigation = memo(function Navigation() {
   const router = useRouter()
   const pathname = usePathname()
   const { requireAuth, loginModalOpen, closeLoginModal, openLoginModal, isAuthenticated } = useAuth()
-  const [registerModalOpen, setRegisterModalOpen] = useState(false)
+  const [createAccountModalOpen, setCreateAccountModalOpen] = useState(false)
   const [locationModalOpen, setLocationModalOpen] = useState(false)
   const [forgotPasswordModalOpen, setForgotPasswordModalOpen] = useState(false)
   const [currentLocation, setCurrentLocation] = useState('')
@@ -530,7 +530,7 @@ const Navigation = memo(function Navigation() {
                         <span>Login</span>
                       </div>
                       <div className="mobile-action-btn" onClick={() => {
-                        setRegisterModalOpen(true)
+                        setCreateAccountModalOpen(true)
                         setMobileMenuOpen(false)
                       }}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -1174,20 +1174,20 @@ const Navigation = memo(function Navigation() {
       <LoginModal
         open={loginModalOpen}
         onClose={closeLoginModal}
-        onOpenRegister={() => {
-          setRegisterModalOpen(true)
-          closeLoginModal()
-        }}
         onOpenForgotPassword={() => {
           setForgotPasswordModalOpen(true)
           closeLoginModal()
         }}
+        onOpenCreateModal={() => {
+          setCreateAccountModalOpen(true)
+          closeLoginModal()
+        }}
       />
-      <RegisterModal
-        open={registerModalOpen}
-        onClose={() => setRegisterModalOpen(false)}
-        onSwitchToLogin={() => {
-          setRegisterModalOpen(false)
+      <CreateAccountModal
+        open={createAccountModalOpen}
+        onClose={() => setCreateAccountModalOpen(false)}
+        onBackToLogin={() => {
+          setCreateAccountModalOpen(false)
           openLoginModal()
         }}
       />

@@ -3,18 +3,68 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { useToast } from '@/contexts/ToastContext'
+import { settler } from '@/store/api/endpoints'
 
 export default function Footer() {
   const router = useRouter()
+  const { show: showToast } = useToast()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleJoinNewsletter = (e) => {
+  const handleJoinNewsletter = async (e) => {
     e.preventDefault()
-    // TODO: Implement newsletter signup functionality
-    console.log('Newsletter signup:', { name, email })
-    setName('')
-    setEmail('')
+
+    // Validate inputs
+    if (!name.trim()) {
+      showToast('Please enter your name', 'error')
+      return
+    }
+
+    if (!email.trim()) {
+      showToast('Please enter your email', 'error')
+      return
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      showToast('Please enter a valid email address', 'error')
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const response = await fetch(settler.create, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to subscribe to newsletter')
+      }
+
+      // Success
+      showToast('Successfully subscribed to newsletter!', 'success')
+      setName('')
+      setEmail('')
+    } catch (error) {
+      console.error('Newsletter subscription error:', error)
+      const errorMessage = error.message || 'Failed to subscribe. Please try again later.'
+      showToast(errorMessage, 'error')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -58,8 +108,8 @@ export default function Footer() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="newsletter-input"
                 />
-                <button type="submit" className="join-button">
-                  Join
+                <button type="submit" className="join-button" disabled={loading}>
+                  {loading ? 'Joining...' : 'Join'}
                 </button>
               </div>
             </form>
@@ -222,9 +272,14 @@ export default function Footer() {
           white-space: nowrap;
         }
 
-        .join-button:hover {
+        .join-button:hover:not(:disabled) {
           background: #f0f0f0;
           transform: translateY(-1px);
+        }
+
+        .join-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
         }
 
         /* Middle Section - Navigation */

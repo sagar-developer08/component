@@ -277,6 +277,12 @@ export const delivery = {
   getShippingMethods: `${BASES.delivery}/delivery/shipping/methods`,
 }
 
-export default { catalog, search, auth, cart, addresses, orders, upload, review, subscription, wallet, delivery }
+export const settler = {
+  base: `${BASES.auth}/settlers`,
+  create: `${BASES.auth}/settlers`,
+  getByEmail: (email) => `${BASES.auth}/settlers/email/${email}`,
+}
+
+export default { catalog, search, auth, cart, addresses, orders, upload, review, subscription, wallet, delivery, settler }
 
 
