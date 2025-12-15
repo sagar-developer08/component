@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { loginUser } from '@/store/slices/authSlice'
 import { useToast } from '@/contexts/ToastContext'
 
-export default function LoginModal({ open, onClose, onOpenRegister, onOpenForgotPassword }) {
+export default function LoginModal({ open, onClose, onOpenForgotPassword, onOpenCreateModal }) {
   const { login } = useAuth()
   const dispatch = useDispatch()
   const authState = useSelector(state => state.auth)
@@ -120,8 +120,10 @@ export default function LoginModal({ open, onClose, onOpenRegister, onOpenForgot
 
   const handleCreateAccount = (e) => {
     e.preventDefault()
-    resetForm() // Reset login form when switching to register
-    onOpenRegister() // Open registration modal and close login modal
+    resetForm() // Reset login form when switching to create flow
+    if (onOpenCreateModal) {
+      onOpenCreateModal()
+    }
   }
 
   // Reset form data when modal is closed

@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import { useAuth } from '../contexts/AuthContext'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchWishlist, removeFromWishlist, moveToCart } from '@/store/slices/wishlistSlice'
 import { fetchCart } from '@/store/slices/cartSlice'
@@ -12,6 +12,24 @@ export default function WishlistDrawer({ open, onClose }) {
   const dispatch = useDispatch()
   const { items, loading } = useSelector(state => state.wishlist)
   const { show } = useToast()
+  const drawerRef = useRef(null)
+
+  // Handle click outside drawer to close it
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (open && drawerRef.current && !drawerRef.current.contains(event.target)) {
+        onClose()
+      }
+    }
+
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [open, onClose])
 
   const handleAddToCart = (item) => {
     requireAuth(async () => {
@@ -67,8 +85,8 @@ export default function WishlistDrawer({ open, onClose }) {
 
   if (!open) return null
   return (
-    <div className="drawer-overlay">
-      <div className="drawer">
+    <div className="drawer-overlay" onClick={onClose}>
+      <div className="drawer" ref={drawerRef} onClick={(e) => e.stopPropagation()}>
         <div className="drawer-header">
           <span className="drawer-title">Your Wishlist</span>
           <button className="drawer-close" onClick={onClose}>

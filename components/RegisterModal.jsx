@@ -12,8 +12,14 @@ export default function RegisterModal({ open, onClose, onSwitchToLogin }) {
   const authState = useSelector(state => state.auth)
   const { show } = useToast()
   
-  // Get all countries for nationality dropdown
+  // Get all countries for nationality dropdown, filter out unwanted countries, and sort alphabetically
   const countries = Country.getAllCountries()
+    .filter(country => {
+      // Remove Kosovo, Curacao, and Sint Maarten
+      const excludedCountries = ['Kosovo', 'Curacao', 'Sint Maarten']
+      return !excludedCountries.includes(country.name)
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
 
   const [formData, setFormData] = useState({
     name: '',

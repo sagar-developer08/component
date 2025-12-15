@@ -42,23 +42,11 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
     if (field === 'min') {
       const proposedMin = Math.min(Math.max(numValue, facetMin), facetMax);
       const currentMax = newRange.max ?? facetMax;
-      if (proposedMin > currentMax) {
-        // Crossed over: swap so min <= max
-        newRange.min = currentMax;
-        newRange.max = proposedMin;
-      } else {
-        newRange.min = proposedMin;
-      }
+      newRange.min = Math.min(proposedMin, currentMax); // clamp at current max instead of swapping
     } else if (field === 'max') {
       const proposedMax = Math.min(Math.max(numValue, facetMin), facetMax);
       const currentMin = newRange.min ?? facetMin;
-      if (proposedMax < currentMin) {
-        // Crossed over: swap so min <= max
-        newRange.max = currentMin;
-        newRange.min = proposedMax;
-      } else {
-        newRange.max = proposedMax;
-      }
+      newRange.max = Math.max(proposedMax, currentMin); // clamp at current min instead of swapping
     }
     
     // Update local state immediately for smooth UI
@@ -71,39 +59,67 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
     debouncedPriceChange(facetKey, newRange);
   }, [onChange, localPriceRange, selected, debouncedPriceChange]);
   
-  // Handle click on track to determine which slider to activate
-  const handleTrackClick = (facetKey, event, facetMin, facetMax, currentMin, currentMax) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const clickX = event.clientX - rect.left;
-    const trackWidth = rect.width;
-    const clickPercent = clickX / trackWidth;
-    const clickValue = facetMin + (clickPercent * (facetMax - facetMin));
-    
-    // Determine which slider thumb is closer
-    const minDistance = Math.abs(clickValue - currentMin);
-    const maxDistance = Math.abs(clickValue - currentMax);
-    
-    if (minDistance < maxDistance) {
-      // Closer to min thumb, activate min slider
-      setActiveSlider('min');
-      const newMin = Math.min(Math.max(clickValue, facetMin), currentMax);
-      handleRangeChange(facetKey, 'min', Math.round(newMin).toString(), facetMin, facetMax);
-    } else {
-      // Closer to max thumb, activate max slider
-      setActiveSlider('max');
-      const newMax = Math.max(Math.min(clickValue, facetMax), currentMin);
-      handleRangeChange(facetKey, 'max', Math.round(newMax).toString(), facetMin, facetMax);
-    }
+  // Dedicated handlers so each thumb has its own code path
+  const handleMinSliderInput = (facetKey, value, facetMin, facetMax) => {
+    setActiveSlider('min');
+    handleRangeChange(facetKey, 'min', value, facetMin, facetMax);
   };
-  
-  // Handle slider input to ensure proper activation
-  const handleSliderInput = (facetKey, field, value, facetMin, facetMax) => {
+
+  const handleMaxSliderInput = (facetKey, value, facetMin, facetMax) => {
+    setActiveSlider('max');
+    handleRangeChange(facetKey, 'max', value, facetMin, facetMax);
+  };
+
+  // Allow clicking anywhere on the track to pick the nearest thumb (min or max)
+  const handleTrackPointerDown = useCallback((event, facetKey, facetMin, facetMax, currentMin, currentMax) => {
+    if (event.button !== undefined && event.button !== 0) return; // only primary mouse button
+
+    const wrapper = event.currentTarget;
+    const rect = wrapper.getBoundingClientRect();
+    const clientX = event.touches?.[0]?.clientX ?? event.clientX;
+    const percent = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const rawValue = facetMin + (percent * (facetMax - facetMin));
+    const snappedValue = Math.round(rawValue);
+
+    const distanceToMin = Math.abs(snappedValue - currentMin);
+    const distanceToMax = Math.abs(snappedValue - currentMax);
+    const targetThumb = distanceToMin <= distanceToMax ? 'min' : 'max';
+
+    // Ensure subsequent drags track against the wrapper we started on
+    activeSliderDataRef.current = { wrapper, facetKey, facetMin, facetMax };
+    setActiveSlider(targetThumb);
+    handleRangeChange(facetKey, targetThumb, snappedValue.toString(), facetMin, facetMax);
+
+    event.preventDefault();
+    event.stopPropagation();
+  }, [handleRangeChange]);
+
+  // Keyboard support so both thumbs are usable without the track
+  const handleSliderKeyDown = (facetKey, field, facetMin, facetMax) => (event) => {
+    const step = 1;
+    const currentRange = localPriceRange[facetKey] || selected[facetKey] || {};
+    const currentMin = currentRange.min ?? facetMin;
+    const currentMax = currentRange.max ?? facetMax;
+    let nextValue;
+
     if (field === 'min') {
-      setActiveSlider('min');
-    } else {
-      setActiveSlider('max');
+      if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+        nextValue = Math.min(currentMin + step, currentMax);
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+        nextValue = Math.max(currentMin - step, facetMin);
+      }
+    } else if (field === 'max') {
+      if (event.key === 'ArrowRight' || event.key === 'ArrowUp') {
+        nextValue = Math.min(currentMax + step, facetMax);
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') {
+        nextValue = Math.max(currentMax - step, currentMin);
+      }
     }
-    handleRangeChange(facetKey, field, value, facetMin, facetMax);
+
+    if (nextValue !== undefined) {
+      event.preventDefault();
+      handleRangeChange(facetKey, field, nextValue.toString(), facetMin, facetMax);
+    }
   };
 
   // Global mouse move handler for dragging
@@ -334,12 +350,9 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                         </div>
                         <div 
                           className="range-slider-wrapper"
-                          onClick={(e) => {
-                            // Only handle track clicks, not slider thumb clicks
-                            if (e.target === e.currentTarget || e.target.classList.contains('range-track')) {
-                              handleTrackClick(facet.key, e, facetMin, facetMax, currentMin, currentMax);
-                            }
-                          }}
+                          aria-label="Price range slider"
+                          onMouseDownCapture={(e) => handleTrackPointerDown(e, facet.key, facetMin, facetMax, currentMin, currentMax)}
+                          onTouchStartCapture={(e) => handleTrackPointerDown(e, facet.key, facetMin, facetMax, currentMin, currentMax)}
                         >
                           <div className="range-track">
                             <div 
@@ -356,9 +369,16 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                             max={facetMax}
                             step="1"
                             value={currentMin}
-                            onChange={(e) => handleSliderInput(facet.key, 'min', e.target.value, facetMin, facetMax)}
-                            onInput={(e) => handleSliderInput(facet.key, 'min', e.target.value, facetMin, facetMax)}
+                            aria-label="Minimum price"
+                            aria-valuemin={facetMin}
+                            aria-valuemax={currentMax}
+                            aria-valuenow={currentMin}
+                            aria-valuetext={`Minimum price ${currentMin}`}
+                            onChange={(e) => handleMinSliderInput(facet.key, e.target.value, facetMin, facetMax)}
+                            onInput={(e) => handleMinSliderInput(facet.key, e.target.value, facetMin, facetMax)}
                             onMouseDown={(e) => {
+                              // Prevent track clicks from jumping the thumb; we handle movement manually
+                              e.preventDefault();
                               setActiveSlider('min');
                               const wrapper = e.currentTarget.closest('.range-slider-wrapper');
                               if (wrapper) {
@@ -377,6 +397,7 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                               activeSliderDataRef.current = null;
                             }}
                             onTouchStart={(e) => {
+                              e.preventDefault();
                               setActiveSlider('min');
                               const wrapper = e.currentTarget.closest('.range-slider-wrapper');
                               if (wrapper) {
@@ -395,7 +416,10 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                               activeSliderDataRef.current = null;
                             }}
                             onClick={(e) => e.stopPropagation()}
-                            style={{ pointerEvents: 'auto' }}
+                            onFocus={() => setActiveSlider('min')}
+                            onBlur={() => setActiveSlider(null)}
+                            onKeyDown={handleSliderKeyDown(facet.key, 'min', facetMin, facetMax)}
+                            style={{ pointerEvents: 'auto', touchAction: 'none', zIndex: activeSlider === 'min' ? 3 : 2 }}
                             className={`range-slider min-slider ${activeSlider === 'min' ? 'active' : ''}`}
                           />
                           <input
@@ -404,9 +428,15 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                             max={facetMax}
                             step="1"
                             value={currentMax}
-                            onChange={(e) => handleSliderInput(facet.key, 'max', e.target.value, facetMin, facetMax)}
-                            onInput={(e) => handleSliderInput(facet.key, 'max', e.target.value, facetMin, facetMax)}
+                            aria-label="Maximum price"
+                            aria-valuemin={currentMin}
+                            aria-valuemax={facetMax}
+                            aria-valuenow={currentMax}
+                            aria-valuetext={`Maximum price ${currentMax}`}
+                            onChange={(e) => handleMaxSliderInput(facet.key, e.target.value, facetMin, facetMax)}
+                            onInput={(e) => handleMaxSliderInput(facet.key, e.target.value, facetMin, facetMax)}
                             onMouseDown={(e) => {
+                              e.preventDefault();
                               setActiveSlider('max');
                               const wrapper = e.currentTarget.closest('.range-slider-wrapper');
                               if (wrapper) {
@@ -425,6 +455,7 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                               activeSliderDataRef.current = null;
                             }}
                             onTouchStart={(e) => {
+                              e.preventDefault();
                               setActiveSlider('max');
                               const wrapper = e.currentTarget.closest('.range-slider-wrapper');
                               if (wrapper) {
@@ -443,7 +474,10 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                               activeSliderDataRef.current = null;
                             }}
                             onClick={(e) => e.stopPropagation()}
-                            style={{ pointerEvents: 'auto' }}
+                            onFocus={() => setActiveSlider('max')}
+                            onBlur={() => setActiveSlider(null)}
+                            onKeyDown={handleSliderKeyDown(facet.key, 'max', facetMin, facetMax)}
+                            style={{ pointerEvents: 'auto', touchAction: 'none', zIndex: activeSlider === 'max' ? 3 : 2 }}
                             className={`range-slider max-slider ${activeSlider === 'max' ? 'active' : ''}`}
                           />
                         </div>
@@ -634,6 +668,7 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
           top: 50%;
           transform: translateY(-50%);
           cursor: pointer;
+          pointer-events: none; /* Only allow interaction via the thumb (button) */
         }
         .range-slider::-webkit-slider-track { 
           height: 6px; 
@@ -650,7 +685,8 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
           cursor: pointer; 
           border: 2px solid #fff; 
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          transition: transform 0.1s ease;
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+          pointer-events: auto; /* Keep thumbs clickable even when track is disabled */
         }
         .range-slider::-webkit-slider-thumb:hover {
           transform: scale(1.1);
@@ -669,7 +705,8 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
           cursor: pointer; 
           border: 2px solid #fff; 
           box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          transition: transform 0.1s ease;
+          transition: transform 0.15s ease, box-shadow 0.15s ease;
+          pointer-events: auto; /* Keep thumbs clickable even when track is disabled */
         }
         .range-slider::-moz-range-thumb:hover {
           transform: scale(1.1);
