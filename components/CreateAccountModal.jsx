@@ -38,33 +38,13 @@ export default function CreateAccountModal({ open, onClose, onBackToLogin }) {
 
             <div className="create-qr-block">
               <div className="create-qr">
-                <svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="160" height="160" rx="12" fill="#EAF4FF" />
-                  <rect x="18" y="18" width="44" height="44" rx="4" fill="white" stroke="#0078FF" strokeWidth="8" />
-                  <rect x="98" y="18" width="44" height="44" rx="4" fill="white" stroke="#0078FF" strokeWidth="8" />
-                  <rect x="18" y="98" width="44" height="44" rx="4" fill="white" stroke="#0078FF" strokeWidth="8" />
-                  <rect x="34" y="34" width="12" height="12" fill="#0078FF" />
-                  <rect x="114" y="34" width="12" height="12" fill="#0078FF" />
-                  <rect x="34" y="114" width="12" height="12" fill="#0078FF" />
-                  <rect x="74" y="74" width="12" height="12" fill="#0078FF" />
-                  <rect x="90" y="90" width="12" height="12" fill="#0078FF" />
-                  <rect x="74" y="106" width="12" height="12" fill="#0078FF" />
-                  <rect x="106" y="74" width="12" height="12" fill="#0078FF" />
-                  <rect x="58" y="90" width="12" height="12" fill="#0078FF" />
-                  <rect x="90" y="58" width="12" height="12" fill="#0078FF" />
-                  <rect x="58" y="58" width="12" height="12" fill="#0078FF" />
-                  <rect x="122" y="106" width="12" height="12" fill="#0078FF" />
-                  <rect x="106" y="122" width="12" height="12" fill="#0078FF" />
-                  <rect x="90" y="122" width="12" height="12" fill="#0078FF" />
-                  <rect x="122" y="90" width="12" height="12" fill="#0078FF" />
-                  <rect x="42" y="74" width="12" height="12" fill="#0078FF" />
-                  <rect x="74" y="42" width="12" height="12" fill="#0078FF" />
-                  <rect x="122" y="58" width="12" height="12" fill="#0078FF" />
-                  <rect x="138" y="74" width="4" height="12" fill="#0078FF" />
-                  <rect x="74" y="138" width="12" height="4" fill="#0078FF" />
-                  <rect x="18" y="74" width="12" height="12" fill="#0078FF" />
-                  <text x="80" y="86" textAnchor="middle" fill="#0078FF" fontWeight="800" fontSize="16" fontFamily="Inter">QLIQ</text>
-                </svg>
+                <Image
+                  src="/iqliq.svg"
+                  alt="QLIQ QR Code"
+                  width={160}
+                  height={160}
+                  className="create-qr-image"
+                />
               </div>
             </div>
 
@@ -100,7 +80,7 @@ export default function CreateAccountModal({ open, onClose, onBackToLogin }) {
           background: #fff;
           border-radius: 32px;
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-          max-width: 1100px;
+          max-width: 900px;
           width: 100%;
           display: flex;
           flex-direction: column;
@@ -120,14 +100,14 @@ export default function CreateAccountModal({ open, onClose, onBackToLogin }) {
           display: flex;
           flex-direction: row;
           width: 100%;
-          height: 720px;
+          height: 700px;
         }
         .create-modal-left {
           flex: 1;
-          padding: 56px 48px 48px 56px;
+          padding: 48px 12px 48px 32px;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 8px;
         }
         .create-title {
           font-size: 40px;
@@ -138,41 +118,47 @@ export default function CreateAccountModal({ open, onClose, onBackToLogin }) {
         .create-rules {
           list-style: none;
           padding: 0;
-          margin: 8px 0 0 0;
+          margin: 4px 0 0 0;
           display: flex;
           flex-direction: column;
-          gap: 14px;
+          gap: 8px;
         }
         .create-rule {
           display: flex;
-          gap: 12px;
+          gap: 0;
           align-items: flex-start;
         }
         .create-rule-number {
-          font-weight: 700;
-          font-size: 20px;
+          font-weight: 600;
+          font-size: 16px;
           color: #000;
-          min-width: 32px;
+          min-width: 40px;
         }
         .create-rule-text {
           font-size: 16px;
           line-height: 1.5;
           color: #1f1f1f;
           margin: 0;
+          padding-left: 0;
         }
         .create-qr-block {
-          margin-top: 12px;
+          margin-top: 16px;
           display: flex;
-          justify-content: flex-start;
+          justify-content: center;
         }
         .create-qr {
-          background: #f6faff;
-          border: 1px solid #e1edff;
+          background: transparent;
+          border: none;
           border-radius: 16px;
-          padding: 20px;
+          padding: 0px;
           display: inline-flex;
           align-items: center;
           justify-content: center;
+        }
+        .create-qr-image {
+          width: 160px;
+          height: 160px;
+          object-fit: contain;
         }
         .create-back-btn {
           margin-top: auto;
@@ -185,7 +171,7 @@ export default function CreateAccountModal({ open, onClose, onBackToLogin }) {
           font-weight: 600;
           font-size: 16px;
           cursor: pointer;
-          min-width: 220px;
+          min-width: 400px;
           transition: box-shadow 0.15s ease, transform 0.15s ease;
         }
         .create-back-btn:hover {
@@ -205,7 +191,7 @@ export default function CreateAccountModal({ open, onClose, onBackToLogin }) {
           border-radius: 32px;
           object-fit: cover;
         }
-        @media (max-width: 1024px) {
+        @media (max-width: 900px) {
           .create-modal-content {
             flex-direction: column;
             height: auto;
