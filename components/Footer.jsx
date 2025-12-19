@@ -82,6 +82,26 @@ export default function Footer() {
                 style={{ aspectRatio: 'contain' }}
               />
             </div>
+
+            {/* Mobile Navigation Grid - Only visible on mobile, appears after logo */}
+            <div className="mobile-nav-grid">
+              <div className="nav-column">
+                <a href="/" className="nav-link">Discovery</a>
+                <a href="/hypermarket" className="nav-link">Hypermarket</a>
+                <a href="/stores" className="nav-link">Stores</a>
+              </div>
+              <div className="nav-column">
+                <a href="/eshop" className="nav-link">E-Shop</a>
+                <a href="/supermarket" className="nav-link">Supermarket</a>
+                <a href="/privacy-policy" className="nav-link">Privacy Policy</a>
+              </div>
+              <div className="nav-column">
+                <a href="/terms-and-conditions" className="nav-link">Terms of Service</a>
+                <a href="/returns-and-exchange" className="nav-link">Returns & Exchange</a>
+                <a href="/shipping-and-delivery" className="nav-link">Shipping & Delivery</a>
+              </div>
+            </div>
+
             <p className="footer-description">
               IQLIQ is an innovative AI based eCommerce app that lets you shop your favorite products while earning and spending IQliq Coins for exclusive savings. Enjoy a smarter shopping experience with amazing discounts, seamless payments, and rewarding loyalty every time you buy.
             </p>
@@ -292,6 +312,17 @@ export default function Footer() {
           align-items: center;
         }
 
+        /* Mobile Navigation Grid - Hidden by default (desktop) */
+        .mobile-nav-grid {
+          display: none;
+        }
+
+        .nav-column {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
         .nav-link {
           color: #fff;
           text-decoration: none;
@@ -368,10 +399,33 @@ export default function Footer() {
             gap: 24px;
           }
 
+          /* Hide desktop navigation on mobile */
           .footer-navigation {
+            display: none;
+          }
+
+          /* Show mobile navigation grid */
+          .mobile-nav-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            width: 100%;
+            padding: 20px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+          }
+
+          .nav-column {
+            display: flex;
             flex-direction: column;
-            gap: 16px;
-            padding: 16px 0;
+            gap: 12px;
+            align-items: flex-start;
+          }
+
+          .nav-column .nav-link {
+            font-size: 12px;
+            line-height: 1.4;
+            white-space: normal;
           }
 
           .input-group {
@@ -396,11 +450,16 @@ export default function Footer() {
           .social-media {
             gap: 20px;
           }
+
+          /* Hide the white line divider on mobile since nav is moved */
+          .white-line-divider {
+            display: none;
+          }
         }
 
         @media (max-width: 480px) {
           .footer {
-            padding: 30px 24px 24px;
+            padding: 30px 16px 24px;
           }
 
           .logo-image {
@@ -412,12 +471,12 @@ export default function Footer() {
             font-size: 18px;
           }
 
-          .footer-navigation {
+          .mobile-nav-grid {
             gap: 12px;
           }
 
-          .nav-link {
-            font-size: 13px;
+          .nav-column .nav-link {
+            font-size: 11px;
           }
         }
       `}</style>

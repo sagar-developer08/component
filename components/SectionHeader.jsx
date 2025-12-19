@@ -117,11 +117,11 @@ export default function SectionHeader({
             gap: 8px;
             align-items: flex-start;
             padding: 0 0;
-            margin-bottom: 0px;
+            margin-bottom: 8px;
           }
 
           .section-title {
-            font-size: 28px;
+            font-size: 20px;
           }
 
           .section-button {
