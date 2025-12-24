@@ -216,6 +216,7 @@ export const payment = {
   base: BASES.payment,
   stripeCheckout: `${BASES.payment}/payment/stripe/checkout`,
   stripeHostedCheckout: `${BASES.payment}/payment/stripe/hosted-checkout`,
+  cashWalletCheckout: `${BASES.payment}/payment/cash-wallet/checkout`,
 }
 
 export const addresses = {
@@ -270,6 +271,8 @@ export const wallet = {
   userBalance: `${BASES.wallet}/wallet/qoyn/user-balance`,
   validateRedemption: `${BASES.wallet}/wallet/qoyn/validate-redemption`,
   redeemQoyn: `${BASES.wallet}/wallet/qoyn/redeem`,
+  redeemableCashBalance: `${BASES.wallet}/wallet/cash/redeemable-balance`,
+  redeemCash: `${BASES.wallet}/wallet/cash/redeem`,
 }
 
 export const delivery = {

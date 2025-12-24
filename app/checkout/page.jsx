@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { getAuthToken, getUserFromCookies, getUserIds } from '@/utils/userUtils'
-import { fetchCart } from '@/store/slices/cartSlice'
+import { fetchCart, clearCart } from '@/store/slices/cartSlice'
 
 import {
   fetchUserAddresses,
@@ -28,12 +28,15 @@ import {
   clearStripeData,
   validateQoynRedemption,
   fetchAcceptedPurchaseGigs,
+  fetchGigCompletions,
   setAppliedCoupon,
-  clearAppliedCoupon
+  clearAppliedCoupon,
+  setAppliedGigCompletion,
+  clearAppliedGigCompletion
 } from '@/store/slices/checkoutSlice'
 import { fetchProfile } from '@/store/slices/profileSlice'
-import { fetchUserBalance } from '@/store/slices/walletSlice'
-import { payment as paymentEndpoints } from '@/store/api/endpoints'
+import { fetchUserBalance, fetchRedeemableCashBalance } from '@/store/slices/walletSlice'
+import { payment as paymentEndpoints, wallet as walletEndpoints } from '@/store/api/endpoints'
 import { loadStripe } from '@stripe/stripe-js'
 import StripeCheckout from '@/components/StripeCheckout'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -193,6 +196,13 @@ export default function CheckoutPage() {
   
   // Selected coupon state
   const [selectedCouponId, setSelectedCouponId] = useState('')
+  
+  // Selected gig completion state
+  const [selectedGigCompletionId, setSelectedGigCompletionId] = useState('')
+
+  // Cash wallet applied state
+  const [useCashWallet, setUseCashWallet] = useState(false)
+  const [isCashWalletPaymentLoading, setIsCashWalletPaymentLoading] = useState(false)
 
   // Shipping methods state
   const [shippingMethods, setShippingMethods] = useState([])
@@ -208,8 +218,27 @@ export default function CheckoutPage() {
   // Profile state - for user data
   const { user, addresses: profileAddresses } = useSelector(state => state.profile)
   
+  // Auth state - fallback for user role
+  const authUser = useSelector(state => state.auth?.user)
+  
+  // Get user role from profile or auth (whichever is available)
+  const userRole = user?.role || authUser?.role
+
   // Wallet state
-  const { userQoynBalance, userBalance, storeCurrency, loading: walletLoading } = useSelector(state => state.wallet)
+  const { userQoynBalance, userBalance, storeCurrency, loading: walletLoading, redeemableCashUsd, redeemableCashAed, cashLoading } = useSelector(state => state.wallet)
+  
+  // Debug: Log user role for troubleshooting (after wallet state is declared)
+  useEffect(() => {
+    if (user || authUser) {
+      console.log('👤 [CHECKOUT] User role check:', {
+        profileUser: user,
+        authUser: authUser,
+        userRole: userRole,
+        isInfluencer: userRole === 'influencer',
+        redeemableCashAed: redeemableCashAed
+      })
+    }
+  }, [user, authUser, userRole, redeemableCashAed])
 
   // Calculate displayed balance: current balance - applied Qoyns (if any)
   // When Qoyns are applied, show remaining coins. When removed, show full balance again.
@@ -243,7 +272,11 @@ export default function CheckoutPage() {
     coupons,
     loadingCoupons,
     couponsError,
-    appliedCoupon
+    appliedCoupon,
+    gigCompletions,
+    loadingGigCompletions,
+    gigCompletionsError,
+    appliedGigCompletion
   } = useSelector(state => state.checkout)
 
   // Combine addresses from both sources to ensure we get all available addresses
@@ -353,6 +386,18 @@ export default function CheckoutPage() {
     }
   }, [coupons, cartItems, availableCoupons])
 
+  // Filter gig completions that match cart items by productId
+  const availableGigCompletions = gigCompletions.filter(gig => {
+    // Get all product IDs from the gig completion
+    const gigProductIds = (gig.productId || []).map(p => String(p.id || p).trim())
+    
+    // Check if any cart item matches any of the gig's product IDs
+    return cartItems.some(item => {
+      const itemProductId = String(item.productId || item.id || '').trim()
+      return gigProductIds.includes(itemProductId)
+    })
+  })
+
   // Apply coupon discount to subtotal if coupon is applied
   let couponDiscountAmount = 0
   let subtotalAfterCoupon = originalSubtotal
@@ -364,9 +409,23 @@ export default function CheckoutPage() {
     subtotalAfterCoupon = originalSubtotal - couponDiscountAmount
   }
 
-  // Apply Qoyns discount to subtotal (after coupon discount)
+  // Apply gig completion discount to subtotal if gig completion is applied
+  let gigCompletionDiscountAmount = 0
+  let subtotalAfterGigCompletion = subtotalAfterCoupon
+  if (appliedGigCompletion) {
+    if (appliedGigCompletion.customerDiscountPercentage > 0) {
+      gigCompletionDiscountAmount = (originalSubtotal * appliedGigCompletion.customerDiscountPercentage) / 100
+    } else if (appliedGigCompletion.customerDiscountFixed > 0) {
+      gigCompletionDiscountAmount = appliedGigCompletion.customerDiscountFixed
+    }
+    subtotalAfterGigCompletion = subtotalAfterCoupon - gigCompletionDiscountAmount
+  } else {
+    subtotalAfterGigCompletion = subtotalAfterCoupon
+  }
+
+  // Apply Qoyns discount to subtotal (after coupon and gig completion discount)
   let qoynsDiscountAmount = 0
-  let subtotalAfterDiscounts = subtotalAfterCoupon
+  let subtotalAfterDiscounts = subtotalAfterGigCompletion
   if (appliedDiscount && appliedDiscount.discountAmount) {
     qoynsDiscountAmount = appliedDiscount.discountAmount
     // Apply Qoyns discount to subtotal
@@ -388,16 +447,31 @@ export default function CheckoutPage() {
   }
   
   const vatRate = getVatRate();
-  // Calculate VAT on subtotal after both coupon and Qoyns discounts
-  const vatAmount = subtotalAfterDiscounts * vatRate;
+  // Calculate VAT on original subtotal (always, not on discounted amount)
+  const vatAmount = originalSubtotal * vatRate;
   // Get shipping cost from selected shipping method (from Jibly API)
   const shippingCost = selectedShippingMethod?.cost || selectedShippingMethod?.shippingMethodCost || 9; // Default to 9 if no method selected
-  const finalTotal = subtotalAfterDiscounts + vatAmount + shippingCost;
   
-  // Use the calculated final total (subtotal after discounts + VAT)
+  // Calculate order total before cash wallet
+  // VAT is always on original subtotal, but discounts are still applied to subtotal
+  const orderTotalBeforeCashWallet = subtotalAfterDiscounts + vatAmount + shippingCost;
+  
+  // Apply Cash Wallet discount on ORDER TOTAL (1 AED = 1 AED discount) - Only for influencer role
+  let cashWalletDiscountAmount = 0
+  let finalTotal = orderTotalBeforeCashWallet
+  if (userRole === 'influencer' && useCashWallet && redeemableCashAed > 0) {
+    // Use the minimum of cash balance or order total
+    cashWalletDiscountAmount = Math.min(redeemableCashAed, orderTotalBeforeCashWallet)
+    finalTotal = orderTotalBeforeCashWallet - cashWalletDiscountAmount
+    if (finalTotal < 0) {
+      finalTotal = 0
+    }
+  }
+
+  // Use the calculated final total
   const actualTotal = finalTotal;
   
-  // For display purposes, use subtotalAfterDiscounts as the subtotal
+  // For display purposes
   const subtotal = subtotalAfterDiscounts;
 
   // Combined error state
@@ -417,6 +491,9 @@ export default function CheckoutPage() {
       
       // Load coupons
       dispatch(fetchAcceptedPurchaseGigs())
+      
+      // Load gig completions
+      dispatch(fetchGigCompletions())
 
       // Check if cart data is already available in Redux
       if (cartItems.length > 0) {
@@ -583,6 +660,13 @@ export default function CheckoutPage() {
   //     console.log('Cart item keys:', Object.keys(cartItems[0]))
   //   }
   // }, [cartItems, cartTotal, cartLoading])
+
+  // Fetch cash wallet balance when user role is available and is influencer
+  useEffect(() => {
+    if (userRole === 'influencer') {
+      dispatch(fetchRedeemableCashBalance())
+    }
+  }, [userRole, dispatch])
 
   // Check if cart is empty and show appropriate message
   useEffect(() => {
@@ -762,8 +846,8 @@ export default function CheckoutPage() {
       subtotal: subtotal,
       vat: vatAmount,
       shipping: shippingCost,
-      discount: qoynsDiscountAmount + couponDiscountAmount,
-      couponCode: appliedCoupon ? appliedCoupon.discountCode : null,
+      discount: qoynsDiscountAmount + couponDiscountAmount + gigCompletionDiscountAmount + cashWalletDiscountAmount,
+      couponCode: appliedCoupon ? appliedCoupon.discountCode : (appliedGigCompletion ? appliedGigCompletion.discountCode : null),
       // Shipping method information (from Jibly API)
       shippingMethod: selectedShippingMethod?.id || selectedShippingMethod?.methodId,
       shippingMethodName: selectedShippingMethod?.name || selectedShippingMethod?.methodName,
@@ -796,8 +880,8 @@ export default function CheckoutPage() {
       subtotal: subtotal,
       vat: vatAmount,
       shipping: shippingCost,
-      discount: qoynsDiscountAmount + couponDiscountAmount,
-      couponCode: appliedCoupon ? appliedCoupon.discountCode : null,
+      discount: qoynsDiscountAmount + couponDiscountAmount + gigCompletionDiscountAmount + cashWalletDiscountAmount,
+      couponCode: appliedCoupon ? appliedCoupon.discountCode : (appliedGigCompletion ? appliedGigCompletion.discountCode : null),
       // Shipping method information (from Jibly API)
       shippingMethod: selectedShippingMethod?.id || selectedShippingMethod?.methodId,
       shippingMethodName: selectedShippingMethod?.name || selectedShippingMethod?.methodName,
@@ -881,14 +965,20 @@ export default function CheckoutPage() {
       const { mongoUserId, cognitoUserId } = await getUserIds()
       console.log('👤 User IDs:', { mongoUserId, cognitoUserId })
 
-      // Determine discount type - can be 'qoyn', 'coupon', 'both', or null
+      // Determine discount type - can be 'qoyn', 'coupon', 'gig_completion', 'both', or null
       let finalDiscountType = null
       if (appliedDiscount && appliedCoupon) {
         finalDiscountType = 'both'
+      } else if (appliedDiscount && appliedGigCompletion) {
+        finalDiscountType = 'qoyn_gig'
+      } else if (appliedCoupon && appliedGigCompletion) {
+        finalDiscountType = 'coupon_gig'
       } else if (appliedDiscount) {
         finalDiscountType = 'qoyn'
       } else if (appliedCoupon) {
         finalDiscountType = 'coupon'
+      } else if (appliedGigCompletion) {
+        finalDiscountType = 'gig_completion'
       }
 
       const body = {
@@ -904,15 +994,19 @@ export default function CheckoutPage() {
         total: actualTotal,
         subtotal: subtotal,
         vat: vatAmount,
-        discount: qoynsDiscountAmount + couponDiscountAmount,
+        discount: qoynsDiscountAmount + couponDiscountAmount + gigCompletionDiscountAmount + cashWalletDiscountAmount,
         discountType: finalDiscountType,
         // Qoyns discount information
         qoynsUsed: appliedDiscount && appliedDiscount.type === 'qoyn' ? appliedDiscount.qoynAmount : undefined,
         qoynsDiscountAmount: qoynsDiscountAmount > 0 ? qoynsDiscountAmount : undefined,
         // Coupon discount information
-        couponCode: appliedCoupon ? appliedCoupon.discountCode : null,
+        couponCode: appliedCoupon ? appliedCoupon.discountCode : (appliedGigCompletion ? appliedGigCompletion.discountCode : null),
         couponDiscountAmount: appliedCoupon ? couponDiscountAmount : undefined,
         couponDiscountPercentage: appliedCoupon ? appliedCoupon.customerDiscountPercentage : undefined,
+        // Gig completion discount information
+        gigCompletionDiscountAmount: appliedGigCompletion ? gigCompletionDiscountAmount : undefined,
+        gigCompletionDiscountPercentage: appliedGigCompletion ? appliedGigCompletion.customerDiscountPercentage : undefined,
+        gigCompletionDiscountFixed: appliedGigCompletion ? appliedGigCompletion.customerDiscountFixed : undefined,
         currency: 'usd',
         userId: mongoUserId, // MongoDB user ID
         cognitoUserId: cognitoUserId, // Cognito user ID
@@ -921,6 +1015,31 @@ export default function CheckoutPage() {
         successUrl: `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancelUrl: `${window.location.origin}/checkout`,
         ...(mongoUserId && { mongoUserId }) // Include MongoDB userId if available
+      }
+
+      // Store cash wallet redemption info in sessionStorage if using cash wallet
+      if (useCashWallet && cashWalletDiscountAmount > 0) {
+        const cashRedemptionInfo = {
+          amountInAed: cashWalletDiscountAmount.toFixed(2)
+        }
+        sessionStorage.setItem('pendingCashRedemption', JSON.stringify(cashRedemptionInfo))
+        console.log('💰 [CASH WALLET] Stored pending cash redemption:', cashRedemptionInfo)
+      } else {
+        sessionStorage.removeItem('pendingCashRedemption')
+      }
+
+      // Store gig completion info in sessionStorage if sales gig is used
+      if (appliedGigCompletion) {
+        const gigCompletionInfo = {
+          discountCode: appliedGigCompletion.discountCode,
+          customerDiscountPercentage: appliedGigCompletion.customerDiscountPercentage,
+          customerDiscountFixed: appliedGigCompletion.customerDiscountFixed,
+          totalAmount: finalTotal // Store total amount for commission calculation
+        }
+        sessionStorage.setItem('pendingGigCompletionPurchase', JSON.stringify(gigCompletionInfo))
+        console.log('🎯 [GIG COMPLETION] Stored pending gig completion purchase:', gigCompletionInfo)
+      } else {
+        sessionStorage.removeItem('pendingGigCompletionPurchase')
       }
 
       console.log('📤 Creating checkout session...')
@@ -967,6 +1086,148 @@ export default function CheckoutPage() {
     } catch (e) {
       console.error('❌ Hosted checkout error:', e)
       showToast(`Checkout error: ${e.message || 'Unknown error'}`, 'error')
+    }
+  }
+
+  // Handle payment with Cash Wallet only (when order total is 0 after cash wallet discount)
+  const handleCashWalletPayment = async () => {
+    try {
+      setIsCashWalletPaymentLoading(true)
+      console.log('💰 [CASH WALLET PAYMENT] Starting cash wallet checkout...')
+
+      // Validation checks
+      if (cartItems.length === 0) {
+        showToast('Your cart is empty. Please add items before checkout.', 'error')
+        return
+      }
+
+      if (!selectedAddress) {
+        setAddressValidationError(true)
+        showToast('Add an address first', 'error')
+        if (addressSectionRef.current) {
+          addressSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+        return
+      }
+
+      if (!useCashWallet || cashWalletDiscountAmount <= 0) {
+        showToast('Cash wallet not applied', 'error')
+        return
+      }
+
+      const token = await getAuthToken()
+      if (!token) {
+        showToast('Please log in to continue with checkout.', 'error')
+        return
+      }
+
+      // Build checkout payload
+      const checkoutPayload = {
+        items: cartItems.map(item => ({
+          productId: item.productId || item.id,
+          name: item.name || 'Product',
+          price: item.price || 0,
+          quantity: item.quantity || 1,
+          image: item.image || null
+        })),
+        currency: 'usd',
+        total: actualTotal,
+        subtotal: originalSubtotal,
+        vat: vatAmount,
+        discount: qoynsDiscountAmount + couponDiscountAmount + cashWalletDiscountAmount,
+        cashWalletAmount: cashWalletDiscountAmount,
+        qoynsDiscountAmount: qoynsDiscountAmount,
+        couponDiscountAmount: couponDiscountAmount,
+        couponCode: appliedCoupon?.discountCode || null,
+        deliveryAddress: {
+          fullName: selectedAddress.fullName,
+          addressLine1: selectedAddress.addressLine1,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          postalCode: selectedAddress.postalCode,
+          country: selectedAddress.country,
+          phone: selectedAddress.phone,
+          email: selectedAddress.email
+        },
+        shippingMethod: selectedShippingMethod?.id || selectedShippingMethod?.methodId || 'standard',
+        shippingMethodName: selectedShippingMethod?.name || selectedShippingMethod?.methodName || 'Standard Delivery',
+        shippingMethodCost: shippingCost
+      }
+
+      console.log('📡 [CASH WALLET PAYMENT] Calling checkout API:', checkoutPayload)
+      
+      const response = await fetch(paymentEndpoints.cashWalletCheckout, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(checkoutPayload)
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ [CASH WALLET PAYMENT] Failed:', response.status, errorText)
+        try {
+          const errorData = JSON.parse(errorText)
+          showToast(errorData.message || 'Failed to process cash wallet payment.', 'error')
+        } catch {
+          showToast('Failed to process cash wallet payment. Please try again.', 'error')
+        }
+        return
+      }
+
+      const result = await response.json()
+      console.log('✅ [CASH WALLET PAYMENT] Success:', result)
+
+      // Redeem cash wallet amount after successful order
+      try {
+        console.log('💸 [CASH WALLET REDEEM] Calling redeem API for amount:', cashWalletDiscountAmount)
+        const redeemResponse = await fetch('https://backendwallet.qliq.ae/api/wallet/cash/redeem', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            amountInAed: cashWalletDiscountAmount.toFixed(2)
+          })
+        })
+        
+        if (redeemResponse.ok) {
+          const redeemResult = await redeemResponse.json()
+          console.log('✅ [CASH WALLET REDEEM] Success:', redeemResult)
+        } else {
+          console.error('❌ [CASH WALLET REDEEM] Failed:', redeemResponse.status)
+        }
+      } catch (redeemError) {
+        console.error('❌ [CASH WALLET REDEEM] Error:', redeemError)
+      }
+
+      // Refresh cash wallet balance
+      dispatch(fetchRedeemableCashBalance())
+
+      // Clear cart
+      dispatch(clearCart())
+
+      // Show success toast briefly then redirect
+      showToast('Payment successful with Cash Wallet!', 'success')
+      
+      // Use router.push for proper Next.js navigation
+      const orderId = result.data?.order?._id || result.data?.orderId || ''
+      const redirectUrl = `/checkout/success?payment_method=cash_wallet${orderId ? `&order_id=${orderId}` : ''}`
+      
+      // Small delay to allow toast to show, then redirect
+      setTimeout(() => {
+        window.location.replace(redirectUrl)
+      }, 500)
+      
+      return // Prevent finally block from resetting loading state before redirect
+
+    } catch (error) {
+      console.error('❌ [CASH WALLET PAYMENT] Error:', error)
+      showToast(`Payment error: ${error.message || 'Unknown error'}`, 'error')
+      setIsCashWalletPaymentLoading(false)
     }
   }
 
@@ -1109,6 +1370,34 @@ export default function CheckoutPage() {
     showToast('Coupon removed', 'success')
   }
 
+  // Handle gig completion selection and application
+  const handleGigCompletionSelect = (gigId) => {
+    if (!gigId) {
+      setSelectedGigCompletionId('')
+      if (appliedGigCompletion) {
+        handleRemoveGigCompletion()
+      }
+      return
+    }
+
+    const selectedGig = availableGigCompletions.find(g => g._id === gigId)
+    if (selectedGig) {
+      setSelectedGigCompletionId(gigId)
+      dispatch(setAppliedGigCompletion(selectedGig))
+      const discountText = selectedGig.customerDiscountPercentage > 0 
+        ? `${selectedGig.customerDiscountPercentage}% off`
+        : `AED ${selectedGig.customerDiscountFixed} off`
+      showToast(`Gig completion offer ${selectedGig.discountCode} (${discountText}) applied!`, 'success')
+    }
+  }
+
+  // Handle gig completion removal
+  const handleRemoveGigCompletion = () => {
+    dispatch(clearAppliedGigCompletion())
+    setSelectedGigCompletionId('')
+    showToast('Gig completion offer removed', 'success')
+  }
+
   const handlePromoCodeValidation = async () => {
     if (!promoCodeInput.trim()) {
       showToast('Please enter a promo code', 'error')
@@ -1211,6 +1500,7 @@ export default function CheckoutPage() {
               <div className={styles.walletExpiry}>Expires in 29 Days</div>
             </div>
 
+
             {/* Delivery Address */}
             <div ref={addressSectionRef} className={`${styles.section} ${addressValidationError ? styles.addressError : ''}`}>
               <div className={`${styles.sectionHeader} ${addressValidationError ? styles.sectionHeaderError : ''}`}>Delivery Address</div>
@@ -1284,7 +1574,8 @@ export default function CheckoutPage() {
                           </button>
                         )} */}
                       </div>
-                    )})}
+                      )
+                    })}
                   </div>
 
                   {/* No address selected message */}
@@ -1689,8 +1980,7 @@ export default function CheckoutPage() {
                   {shippingMethods.map((method) => (
                     <div
                       key={method.id || method.name}
-                      className={`${styles.shippingMethodCard} ${
-                        selectedShippingMethod?.id === method.id || 
+                      className={`${styles.shippingMethodCard} ${selectedShippingMethod?.id === method.id ||
                         selectedShippingMethod?.name === method.name 
                           ? styles.shippingMethodSelected 
                           : ''
@@ -1908,6 +2198,58 @@ export default function CheckoutPage() {
                   <span>Coupon {appliedCoupon.discountCode} ({appliedCoupon.customerDiscountPercentage}% off) applied: -AED {couponDiscountAmount.toFixed(2)}</span>
                 </div>
               )} */}
+              {/* Gig Completions Dropdown - Select and apply discount offer */}
+              {availableGigCompletions.length > 0 && (
+                <div className={styles.couponDropdownSection}>
+                  <div className={styles.couponSelectWrapper}>
+                    <select
+                      className={styles.couponSelect}
+                      value={appliedGigCompletion ? appliedGigCompletion._id : selectedGigCompletionId}
+                      onChange={(e) => {
+                        const gigId = e.target.value
+                        handleGigCompletionSelect(gigId)
+                      }}
+                      disabled={!!appliedGigCompletion}
+                    >
+                      <option value="">
+                        {appliedGigCompletion 
+                          ? `${appliedGigCompletion.discountCode} (${appliedGigCompletion.customerDiscountPercentage > 0 ? `${appliedGigCompletion.customerDiscountPercentage}%` : `AED ${appliedGigCompletion.customerDiscountFixed}`} off)`
+                          : 'Choose a gig completion offer'}
+                      </option>
+                      {availableGigCompletions.map((gig) => (
+                        <option key={gig._id} value={gig._id}>
+                          {gig.discountCode} ({gig.customerDiscountPercentage > 0 
+                            ? `${gig.customerDiscountPercentage}% off`
+                            : `AED ${gig.customerDiscountFixed} off`})
+                        </option>
+                      ))}
+                    </select>
+                    {appliedGigCompletion && (
+                      <button 
+                        className={styles.couponRemoveBtn}
+                        onClick={handleRemoveGigCompletion}
+                        title="Remove gig completion offer"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              {/* Cash Wallet Checkbox - Only show for influencer role */}
+              {userRole === 'influencer' && redeemableCashAed > 0 && cartItems.length > 0 && (
+                <div className={styles.cashWalletOption}>
+                  <label className={styles.cashWalletLabel}>
+                    <input
+                      type="checkbox"
+                      checked={useCashWallet}
+                      onChange={(e) => setUseCashWallet(e.target.checked)}
+                      className={styles.cashWalletCheckbox}
+                    />
+                    <span>Use Cash Wallet (AED {redeemableCashAed.toFixed(2)} available)</span>
+                  </label>
+                </div>
+              )}
               {/* Totals */}
               {cartItems.length > 0 && (
                 <div className={styles.orderTotals}>
@@ -1921,13 +2263,19 @@ export default function CheckoutPage() {
                       <span>- AED {couponDiscountAmount.toFixed(2)}</span>
                     </div>
                   )}
+                  {appliedGigCompletion && gigCompletionDiscountAmount > 0 && (
+                    <div className={styles.totalRowDiscount}>
+                      <span>Gig Completion Offer ({appliedGigCompletion.discountCode})</span>
+                      <span>- AED {gigCompletionDiscountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
                   {appliedDiscount && qoynsDiscountAmount > 0 && (
                     <div className={styles.totalRowDiscount}>
                       <span>Qoyns Discount</span>
                       <span>- AED {qoynsDiscountAmount.toFixed(2)}</span>
                     </div>
                   )}
-                  {(appliedCoupon || (appliedDiscount && qoynsDiscountAmount > 0)) && (
+                  {(appliedCoupon || appliedGigCompletion || (appliedDiscount && qoynsDiscountAmount > 0)) && (
                     <div className={styles.totalRow}>
                       <span>Subtotal after discount</span>
                       <span>AED {subtotal.toFixed(2)}</span>
@@ -1941,12 +2289,32 @@ export default function CheckoutPage() {
                     <span>Shipping</span>
                     <span>AED {shippingCost.toFixed(2)}</span>
                   </div>
-                  <div className={styles.totalRowFinal}>
+                  <div className={styles.totalRow}>
                     <span>Order Total</span>
+                    <span>AED {orderTotalBeforeCashWallet.toFixed(2)}</span>
+                  </div>
+                  {userRole === 'influencer' && useCashWallet && cashWalletDiscountAmount > 0 && (
+                    <div className={styles.totalRowDiscount}>
+                      <span>Cash Wallet</span>
+                      <span>- AED {cashWalletDiscountAmount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className={styles.totalRowFinal}>
+                    <span>Amount to Pay</span>
                     <span>AED {finalTotal.toFixed(2)}</span>
                   </div>
                 </div>
               )}
+              {/* Show different button based on whether cash wallet covers full amount - Only for influencer */}
+              {userRole === 'influencer' && useCashWallet && finalTotal <= 0 ? (
+                <button
+                  className={styles.placeOrderBtn}
+                  onClick={handleCashWalletPayment}
+                  disabled={cartItems.length === 0 || isCashWalletPaymentLoading}
+                >
+                  {isCashWalletPaymentLoading ? 'Processing...' : 'Pay with Cash Wallet'}
+                </button>
+              ) : (
               <button
                 className={styles.placeOrderBtn}
                 onClick={handleHostedCheckout}
@@ -1954,6 +2322,7 @@ export default function CheckoutPage() {
               >
                 Pay with Stripe
               </button>
+              )}
             </div>
           </div>
         </div>

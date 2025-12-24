@@ -50,6 +50,21 @@ export default function Orders({ orders }) {
     }
   }
 
+  const getPaymentMethodLabel = (paymentMethod) => {
+    switch (paymentMethod?.toLowerCase()) {
+      case 'cash_wallet':
+        return 'Cash Wallet'
+      case 'stripe':
+        return 'Card (Stripe)'
+      case 'tabby':
+        return 'Tabby'
+      case 'cash_on_delivery':
+        return 'Cash on Delivery'
+      default:
+        return paymentMethod || 'N/A'
+    }
+  }
+
   const handleOrderClick = (order, item) => {
     // Navigate to order history page with order and specific product
     const pid = item?.productId || item?.id || ''
@@ -132,8 +147,33 @@ export default function Orders({ orders }) {
                 </div>
               )} */}
               <div className={styles.orderPrice}>
-                {"AED"} {order.totalAmount}
+                {"AED"} {order.totalAmount?.toFixed(2)}
               </div>
+              {/* Show shipping cost */}
+              {(order.shippingCost > 0 || order.shippingMethodCost > 0) && (
+                <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
+                  Shipping: AED {(order.shippingCost || order.shippingMethodCost || 0).toFixed(2)}
+                </div>
+              )}
+              {/* Show discount info if any */}
+              {/* {(order.discount > 0 || order.qoynsDiscountAmount > 0 || order.couponDiscountAmount > 0 || order.cashWalletAmount > 0) && (
+                <div style={{ fontSize: '11px', color: '#4CAF50', marginTop: '2px' }}>
+                  {order.cashWalletAmount > 0 && `Wallet: -AED ${order.cashWalletAmount.toFixed(2)}`}
+                  {order.cashWalletAmount > 0 && (order.qoynsDiscountAmount > 0 || order.couponDiscountAmount > 0) && ' | '}
+                  {order.qoynsDiscountAmount > 0 && `Qoyns: -AED ${order.qoynsDiscountAmount.toFixed(2)}`}
+                  {order.qoynsDiscountAmount > 0 && order.couponDiscountAmount > 0 && ' | '}
+                  {order.couponDiscountAmount > 0 && `Coupon: -AED ${order.couponDiscountAmount.toFixed(2)}`}
+                  {order.discount > 0 && !order.qoynsDiscountAmount && !order.couponDiscountAmount && !order.cashWalletAmount && `Discount: -AED ${order.discount.toFixed(2)}`}
+                </div>
+              )} */}
+              {/* Show discount type */}
+              {/* {order.discountType && (
+                <div style={{ fontSize: '10px', color: '#9C27B0', marginTop: '2px' }}>
+                  {order.discountType === 'cash_wallet' ? 'Cash Wallet Applied' : 
+                   order.discountType === 'qoyn' ? 'Qoyn Discount' : 
+                   order.discountType === 'coupon' ? 'Coupon Applied' : order.discountType}
+                </div>
+              )} */}
               <div 
                 className={styles.orderStatus}
                 style={{ color: getStatusColor(order.status) }}
@@ -143,10 +183,17 @@ export default function Orders({ orders }) {
             </div>
             <div className={styles.orderRightSection}>
               <div className={styles.orderDate}>{formatDate(order.createdAt)}</div>
+              <div style={{ 
+                fontSize: '11px',
+                color: '#666',
+                marginTop: '4px'
+              }}>
+                {/* {getPaymentMethodLabel(order.paymentMethod)} */}
+              </div>
               <div className={styles.paymentStatus} style={{ 
                 color: getPaymentStatusColor(order.paymentStatus),
                 fontSize: '12px',
-                marginTop: '4px'
+                marginTop: '2px'
               }}>
                 {order.paymentStatus}
               </div>

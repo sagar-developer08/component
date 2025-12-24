@@ -60,7 +60,7 @@ export const fetchProfile = createAsyncThunk(
         }
       }
 
-      const response = await fetch(`${auth.base}/profile/aggregated`, {
+      const response = await fetch(auth.profile, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
           'Content-Type': 'application/json',
@@ -195,20 +195,18 @@ const profileSlice = createSlice({
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.loading = false
-        // Handle the aggregated response structure
+        // Handle the profile response structure: { user: { id, cognitoUserId, email, name, role, phone, profileImage } }
         const responseData = action.payload.data || action.payload
-        state.user = responseData.profile || null
-        // Don't map addresses from aggregate API - they will be fetched separately via fetchUserAddresses()
-        // Don't map orders from aggregate API - they don't have order details
-        // Orders will be fetched separately via fetchOrders() when needed
-        state.orders = [] 
+        state.user = responseData.user || null
+        // Don't map addresses from profile API - they will be fetched separately via fetchUserAddresses()
+        // Don't touch orders - they are fetched separately via fetchOrders()
         state.error = null
       })
       .addCase(fetchProfile.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
         state.user = null
-        state.orders = []
+        // Don't touch orders on profile error
       })
       // Fetch addresses
       .addCase(fetchUserAddresses.pending, (state) => {
