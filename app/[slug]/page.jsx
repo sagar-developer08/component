@@ -580,7 +580,18 @@ export default function BrandPage() {
                         }
                       }
                       
-                      const newProducts = data.data.products || [];
+                      let newProducts = data.data.products || [];
+                      
+                      // Filter products by store_id if storeId is present (when on a store page)
+                      if (storeId && newProducts.length > 0) {
+                        newProducts = newProducts.filter(product => {
+                          // Check if product has store_id and it matches the current storeId
+                          const productStoreId = product.store_id?._id || product.store_id;
+                          return productStoreId === storeId || String(productStoreId) === String(storeId);
+                        });
+                        console.log(`Filtered products by store_id ${storeId}: ${newProducts.length} products found`);
+                      }
+                      
                       console.log('Received products:', newProducts.length);
                       setBrandProducts(newProducts);
                       
@@ -659,7 +670,18 @@ export default function BrandPage() {
                     }
                   }
                   
-                  const newProducts = data.data.products || []
+                  let newProducts = data.data.products || []
+                  
+                  // Filter products by store_id if storeId is present (when on a store page)
+                  if (storeId && newProducts.length > 0) {
+                    newProducts = newProducts.filter(product => {
+                      // Check if product has store_id and it matches the current storeId
+                      const productStoreId = product.store_id?._id || product.store_id;
+                      return productStoreId === storeId || String(productStoreId) === String(storeId);
+                    });
+                    console.log(`Filtered products by store_id ${storeId}: ${newProducts.length} products found`);
+                  }
+                  
                   console.log('Received products:', newProducts.length);
                   setBrandProducts(newProducts)
 
@@ -807,7 +829,18 @@ export default function BrandPage() {
                   setBrandInfo(categoryData) // Category info with enhanced path
                 }
                 
-                const newProducts = data.data.products || []
+                let newProducts = data.data.products || []
+                
+                // Filter products by store_id if storeId is present (when on a store page)
+                if (storeId && newProducts.length > 0) {
+                  newProducts = newProducts.filter(product => {
+                    // Check if product has store_id and it matches the current storeId
+                    const productStoreId = product.store_id?._id || product.store_id;
+                    return productStoreId === storeId || String(productStoreId) === String(storeId);
+                  });
+                  console.log(`Filtered products by store_id ${storeId}: ${newProducts.length} products found`);
+                }
+                
                 setBrandProducts(newProducts)
 
                 const pagination = data.data.pagination
@@ -899,7 +932,18 @@ export default function BrandPage() {
                   }
                 }
                 
-                const newProducts = data.data.products || []
+                let newProducts = data.data.products || []
+                
+                // Filter products by store_id if storeId is present (when on a store page)
+                if (storeId && newProducts.length > 0) {
+                  newProducts = newProducts.filter(product => {
+                    // Check if product has store_id and it matches the current storeId
+                    const productStoreId = product.store_id?._id || product.store_id;
+                    return productStoreId === storeId || String(productStoreId) === String(storeId);
+                  });
+                  console.log(`Filtered products by store_id ${storeId}: ${newProducts.length} products found`);
+                }
+                
                 setBrandProducts(newProducts)
 
                 const pagination = data.data.pagination

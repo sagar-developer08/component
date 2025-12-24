@@ -125,9 +125,10 @@ export default function ProfilePage() {
     window.open('https://dev.qliq.ae/', '_blank')
   }
 
+  // Only show cash wallet tab for influencer role
   const tabs = [
     { id: 'personal-info', label: 'Personal Info' },
-    // { id: 'cash-wallet', label: 'Cash Wallet' },
+    ...(user?.role === 'influencer' ? [{ id: 'cash-wallet', label: 'Cash Wallet' }] : []),
     { id: 'qoyns-wallet', label: 'Qoyns Wallet' },
     { id: 'orders', label: 'Orders' },
     { id: 'addresses', label: 'Addresses' },
@@ -167,14 +168,14 @@ export default function ProfilePage() {
                 </button>
               ))}
             </div>
-            {activeTab === 'cash-wallet' && (
+            {/* {activeTab === 'cash-wallet' && (
               <button
                 className={styles.addCardBtn}
                 onClick={() => handleTabChange('add-card')}
               >
                 Add New Card
               </button>
-            )}
+            )} */}
             {/* {activeTab === 'qoyns-wallet' || activeTab === 'qoyns-history' || activeTab === 'send-qoyn' ? (
               <div className={styles.qoynsActionsRow}>
                 <button
@@ -293,11 +294,11 @@ export default function ProfilePage() {
                     <PersonalInfo user={user} />
                   </div>
                 )}
-                {/* {activeTab === 'cash-wallet' && (
+                {activeTab === 'cash-wallet' && user?.role === 'influencer' && (
                   <div className={styles.sectionContent}>
                     <CashWallet user={user} />
                   </div>
-                )} */}
+                )}
                 {activeTab === 'add-card' && (
                   <div className={styles.sectionContent}>
                     <AddCard

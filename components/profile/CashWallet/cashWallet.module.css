@@ -3,16 +3,16 @@
 }
 
 .balanceCard {
-  background: #F8F9FA;
+  background: #fff;
   border-radius: 16px;
-  border: 1px solid #666;
-  padding: 16px;
+  border: 1px solid #e0e0e0;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
+  gap: 16px;
   margin-bottom: 24px;
-  max-width: 364px;
+  max-width: 340px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .balanceRow {
@@ -20,41 +20,55 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  gap: 8px;
-  flex-direction: row;
+}
+
+.walletLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
 }
 
 .balanceTitle {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
   color: #000;
+  margin: 0;
 }
 
-.AccountName {
-  font-size: 16px;
-  font-weight: 600;
-  color: #000;
-  padding-top: 24px;
-  padding-bottom: 8px;
-}
-
-.CardDetails {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 8px;
-  flex-direction: row;
-}
-
-.DateExpiry {
+.balanceSubtitle {
   font-size: 14px;
-  font-weight: 600;
-  color: #000;
+  color: #666;
+  margin: 0;
 }
 
-.CardNumber {
-  font-size: 24px;
-  font-weight: 600;
+.withdrawBtn {
+  width: 100%;
+  padding: 12px 16px;
+  background: #4CA8FF;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.withdrawBtn:hover {
+  background: #3a9aff;
+}
+
+.useQoynsBtn {
+  width: 100%;
+  padding: 12px 16px;
+  background: #fff;
   color: #000;
+  border: 1px solid #000;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.useQoynsBtn:hover {
+  background: #f5f5f5;
 }
