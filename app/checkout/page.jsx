@@ -398,26 +398,136 @@ export default function CheckoutPage() {
     })
   })
 
-  // Apply coupon discount to subtotal if coupon is applied
+  // Helper function to check if a product has coupon discount applied
+  const hasCouponDiscount = (item) => {
+    if (!appliedCoupon || !appliedCoupon.customerDiscountPercentage) return false
+    const couponPid = appliedCoupon.pid || extractPidFromUrl(appliedCoupon.productUrl)
+    if (!couponPid) return false
+    const itemProductId = String(item.productId || item.id || '').trim()
+    const pid = String(couponPid).trim()
+    return itemProductId === pid && itemProductId !== '' && pid !== ''
+  }
+
+  // Helper function to check if a product has gig completion discount applied
+  const hasGigCompletionDiscount = (item) => {
+    if (!appliedGigCompletion) return false
+    const gigProductIds = (appliedGigCompletion.productId || []).map(p => String(p.id || p).trim())
+    const itemProductId = String(item.productId || item.id || '').trim()
+    return gigProductIds.includes(itemProductId) && itemProductId !== ''
+  }
+
+  // Helper function to check if a product has any discount applied
+  const hasAnyDiscount = (item) => {
+    return hasCouponDiscount(item) || hasGigCompletionDiscount(item)
+  }
+
+  // Helper function to get discount percentage for a product
+  const getProductDiscountPercentage = (item) => {
+    if (hasCouponDiscount(item)) {
+      return appliedCoupon.customerDiscountPercentage
+    }
+    if (hasGigCompletionDiscount(item)) {
+      return appliedGigCompletion.customerDiscountPercentage || 0
+    }
+    return 0
+  }
+
+  // Helper function to get discount code for a product
+  const getProductDiscountCode = (item) => {
+    if (hasCouponDiscount(item)) {
+      return appliedCoupon.discountCode
+    }
+    if (hasGigCompletionDiscount(item)) {
+      return appliedGigCompletion.discountCode
+    }
+    return null
+  }
+
+  // Helper function to calculate discounted price for a product
+  const getProductDiscountedPrice = (item) => {
+    const originalPrice = item.price || 0
+    let discountAmount = 0
+    
+    if (hasCouponDiscount(item)) {
+      const discountPercentage = appliedCoupon.customerDiscountPercentage
+      discountAmount = (originalPrice * discountPercentage) / 100
+    } else if (hasGigCompletionDiscount(item)) {
+      if (appliedGigCompletion.customerDiscountPercentage > 0) {
+        const discountPercentage = appliedGigCompletion.customerDiscountPercentage
+        discountAmount = (originalPrice * discountPercentage) / 100
+      } else if (appliedGigCompletion.customerDiscountFixed > 0) {
+        // For fixed discount, we need to calculate per unit
+        // Since fixed discount is on total, we'll calculate proportionally
+        const itemTotal = originalPrice * (item.quantity || 1)
+        const allMatchingItemsTotal = cartItems
+          .filter(i => hasGigCompletionDiscount(i))
+          .reduce((sum, i) => sum + ((i.price || 0) * (i.quantity || 1)), 0)
+        
+        if (allMatchingItemsTotal > 0) {
+          const itemDiscountShare = (itemTotal / allMatchingItemsTotal) * appliedGigCompletion.customerDiscountFixed
+          discountAmount = itemDiscountShare / (item.quantity || 1)
+        }
+      }
+    }
+    
+    return originalPrice - discountAmount
+  }
+
+  // Apply coupon discount only to matching product(s) if coupon is applied
   let couponDiscountAmount = 0
   let subtotalAfterCoupon = originalSubtotal
   if (appliedCoupon && appliedCoupon.customerDiscountPercentage) {
     const discountPercentage = appliedCoupon.customerDiscountPercentage
-    // Calculate discount amount based on percentage
-    couponDiscountAmount = (originalSubtotal * discountPercentage) / 100
+    // Extract productId from coupon (pid from productUrl or direct pid field)
+    const couponPid = appliedCoupon.pid || extractPidFromUrl(appliedCoupon.productUrl)
+    
+    if (couponPid) {
+      // Find matching cart items for this coupon
+      const matchingItems = cartItems.filter(item => {
+        const itemProductId = String(item.productId || item.id || '').trim()
+        const pid = String(couponPid).trim()
+        return itemProductId === pid && itemProductId !== '' && pid !== ''
+      })
+      
+      // Calculate discount only on matching products
+      matchingItems.forEach(item => {
+        const itemTotal = (item.price || 0) * (item.quantity || 1)
+        couponDiscountAmount += (itemTotal * discountPercentage) / 100
+      })
+    }
+    
     // Apply discount to subtotal
     subtotalAfterCoupon = originalSubtotal - couponDiscountAmount
   }
 
-  // Apply gig completion discount to subtotal if gig completion is applied
+  // Apply gig completion discount only to matching product(s) if gig completion is applied
   let gigCompletionDiscountAmount = 0
   let subtotalAfterGigCompletion = subtotalAfterCoupon
   if (appliedGigCompletion) {
-    if (appliedGigCompletion.customerDiscountPercentage > 0) {
-      gigCompletionDiscountAmount = (originalSubtotal * appliedGigCompletion.customerDiscountPercentage) / 100
-    } else if (appliedGigCompletion.customerDiscountFixed > 0) {
-      gigCompletionDiscountAmount = appliedGigCompletion.customerDiscountFixed
+    // Get all product IDs from the gig completion
+    const gigProductIds = (appliedGigCompletion.productId || []).map(p => String(p.id || p).trim())
+    
+    if (gigProductIds.length > 0) {
+      // Find matching cart items for this gig completion
+      const matchingItems = cartItems.filter(item => {
+        const itemProductId = String(item.productId || item.id || '').trim()
+        return gigProductIds.includes(itemProductId) && itemProductId !== ''
+      })
+      
+      if (matchingItems.length > 0) {
+        if (appliedGigCompletion.customerDiscountPercentage > 0) {
+          // Calculate discount only on matching products
+          matchingItems.forEach(item => {
+            const itemTotal = (item.price || 0) * (item.quantity || 1)
+            gigCompletionDiscountAmount += (itemTotal * appliedGigCompletion.customerDiscountPercentage) / 100
+          })
+        } else if (appliedGigCompletion.customerDiscountFixed > 0) {
+          // For fixed discount, apply the full amount (it's already a fixed value)
+          gigCompletionDiscountAmount = appliedGigCompletion.customerDiscountFixed
+        }
+      }
     }
+    
     subtotalAfterGigCompletion = subtotalAfterCoupon - gigCompletionDiscountAmount
   } else {
     subtotalAfterGigCompletion = subtotalAfterCoupon
@@ -2081,23 +2191,76 @@ export default function CheckoutPage() {
                 <div className={styles.loadingText}>Loading cart items...</div>
               ) : cartItems.length > 0 ? (
                 <>
-                  {cartItems.map((item, index) => (
-                    <div key={index} className={styles.productItem}>
-                      <Image
-                        src={item.image || '/iphone.jpg'}
-                        alt={item.name || "Product"}
-                        width={60}
-                        height={60}
-                        className={styles.productImage}
-                      />
-                      <div className={styles.productDetails}>
-                        <div className={styles.productBrand}>{item.brand || "Brand"}</div>
-                        <div className={styles.productName}>{item.name || "Product Name"}</div>
-                        <div className={styles.productQuantity}>Qty: {item.quantity}</div>
+                  {cartItems.map((item, index) => {
+                    const hasDiscount = hasAnyDiscount(item)
+                    const discountedPrice = getProductDiscountedPrice(item)
+                    const originalPrice = item.price || 0
+                    const discountPercentage = getProductDiscountPercentage(item)
+                    const discountCode = getProductDiscountCode(item)
+                    
+                    return (
+                      <div key={index} className={styles.productItem}>
+                        <Image
+                          src={item.image || '/iphone.jpg'}
+                          alt={item.name || "Product"}
+                          width={60}
+                          height={60}
+                          className={styles.productImage}
+                        />
+                        <div className={styles.productDetails}>
+                          <div className={styles.productBrand}>{item.brand || "Brand"}</div>
+                          <div className={styles.productName}>
+                            {item.name || "Product Name"}
+                            {hasDiscount && discountPercentage > 0 && (
+                              <span style={{ 
+                                marginLeft: '8px', 
+                                fontSize: '12px', 
+                                color: '#0082FF', 
+                                fontWeight: '600',
+                                background: '#E6F3FF',
+                                padding: '2px 6px',
+                                borderRadius: '4px'
+                              }}>
+                                {discountPercentage}% OFF {discountCode ? `(${discountCode})` : ''}
+                              </span>
+                            )}
+                            {hasDiscount && discountPercentage === 0 && appliedGigCompletion?.customerDiscountFixed > 0 && (
+                              <span style={{ 
+                                marginLeft: '8px', 
+                                fontSize: '12px', 
+                                color: '#0082FF', 
+                                fontWeight: '600',
+                                background: '#E6F3FF',
+                                padding: '2px 6px',
+                                borderRadius: '4px'
+                              }}>
+                                OFF {discountCode ? `(${discountCode})` : ''}
+                              </span>
+                            )}
+                          </div>
+                          <div className={styles.productQuantity}>Qty: {item.quantity}</div>
+                        </div>
+                        <div className={styles.productPrice}>
+                          {hasDiscount ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                              <span style={{ 
+                                textDecoration: 'line-through', 
+                                color: '#999', 
+                                fontSize: '14px' 
+                              }}>
+                                AED {originalPrice.toFixed(2)}
+                              </span>
+                              <span style={{ color: '#0082FF', fontWeight: '600' }}>
+                                AED {discountedPrice.toFixed(2)}
+                              </span>
+                            </div>
+                          ) : (
+                            <span>AED {originalPrice.toFixed(2)}</span>
+                          )}
+                        </div>
                       </div>
-                      <div className={styles.productPrice}>AED {item.price || 0}</div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </>
               ) : (
                 <div className={styles.emptyCart}>
