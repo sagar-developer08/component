@@ -4,11 +4,9 @@ import Image from 'next/image'
 
 export default function CreateAccountModal({ open, onClose, onBackToLogin }) {
   const rules = [
-    'Treat fellow contestants, production staff, and brand partners with respect and professionalism.',
-    'Treat fellow contestants, production staff, and brand partners with respect and professionalism.',
-    'Treat fellow contestants, production staff, and brand partners with respect and professionalism.',
-    'Treat fellow contestants, production staff, and brand partners with respect and professionalism.',
-    'Treat fellow contestants, production staff, and brand partners with respect and professionalism.'
+    "Scan the QR Code",
+"Download the IQLIQ Live App",
+"Signup for an account to start using IQLIQ!"
   ]
 
   if (!open) return null
@@ -24,8 +22,16 @@ export default function CreateAccountModal({ open, onClose, onBackToLogin }) {
         </button>
 
         <div className="create-modal-content">
+          
           <div className="create-modal-left">
             <h1 className="create-title">Create Your Account</h1>
+
+            <ul className="create-rules-2">
+                {/* <li key={index} className="create-rule"> */}
+                  {/* <span className="create-rule-number">{String(index + 1).padStart(2, '0')}</span> */}
+                  <p className="create-rule-text">Seems like you are not signed in!</p>
+                {/* </li> */}
+            </ul>
 
             <ul className="create-rules">
               {rules.map((rule, index) => (
@@ -34,6 +40,13 @@ export default function CreateAccountModal({ open, onClose, onBackToLogin }) {
                   <p className="create-rule-text">{rule}</p>
                 </li>
               ))}
+            </ul>
+
+            <ul className="create-rules-1">
+                {/* <li key={index} className="create-rule"> */}
+                  {/* <span className="create-rule-number">{String(index + 1).padStart(2, '0')}</span> */}
+                  <p className="create-rule-text">If you already have an IQLIQ Live account, please Login to continue.</p>
+                {/* </li> */}
             </ul>
 
             <div className="create-qr-block">
@@ -123,6 +136,24 @@ export default function CreateAccountModal({ open, onClose, onBackToLogin }) {
           flex-direction: column;
           gap: 8px;
         }
+                .create-rules-1 {
+          list-style: none;
+          padding: 0;
+          margin: 32px 0 0 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+                        .create-rules-2 {
+          list-style: none;
+          padding: 0;
+          margin: 32px 0 32px 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
         .create-rule {
           display: flex;
           gap: 0;

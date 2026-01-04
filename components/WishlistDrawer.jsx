@@ -149,7 +149,7 @@ export default function WishlistDrawer({ open, onClose }) {
             ))
           ) : (
             <div style={{ color: '#666', textAlign: 'center', padding: '20px' }}>
-              No items in wishlist
+              What's on your wishlist?
             </div>
           )}
         </div>

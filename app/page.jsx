@@ -604,9 +604,9 @@ export default function Home() {
 
         {/* Banner 1 */}
         <Banner
-          title="How To Refer & Earn on QLIQ"
-          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
-          buttonText="Try Qliq Live Now"
+          title="IQLIQ - Home to best online deals in the UAE"
+          description="Shop, Earn, Save and Share!! Up to 50% saving for all shoppers and bigger margins for brands and sellers!"
+          buttonText="Start here now!"
           backgroundImage="3.jpg"
           onButtonClick={handleBannerClick}
         />
@@ -857,9 +857,9 @@ export default function Home() {
 
         {/* Banner 2 */}
         <Banner
-          title="How To Pay Using Qoyns"
-          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
-          buttonText="Download Qliq Now"
+          title="Earn Online with IQLIQ Qyons!"
+          description="Introducing online IQLIQ Qoyns system where 100 Qoyn = $1. The more you shop, the more you save!!"
+          buttonText="Learn how it works"
           backgroundImage="1.jpg"
           onButtonClick={handleBannerClick}
         />
@@ -978,9 +978,9 @@ export default function Home() {
 
         {/* Banner 3 */}
         <Banner
-          title="How To Save on QLIQ"
-          description="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis."
-          buttonText="Login on Qliq Live Now"
+          title="Make dollars online while in the UAE"
+          description="QLIQ helps you earn $$$ every month in form of Qoyns by doing small gigs offered by influencers and brands. You can start today!"
+          buttonText="Learn more"
           backgroundImage="2.jpg"
           onButtonClick={handleBannerClick}
         />

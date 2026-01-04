@@ -226,9 +226,9 @@ export default function LocationModal({ open, onClose, onLocationSelect }) {
                     <path d="M24 8C18.48 8 14 12.48 14 18C14 25 24 40 24 40S34 25 34 18C34 12.48 29.52 8 24 8ZM24 22C21.79 22 20 20.21 20 18C20 15.79 21.79 14 24 14C26.21 14 28 15.79 28 18C28 20.21 26.21 22 24 22Z" fill="#0082FF"/>
                   </svg>
                 </div>
-                <h3 className="permission-title">Allow Location Access</h3>
+                <h3 className="permission-title">Help us find you</h3>
                 <p className="permission-description">
-                  We need your location to show you nearby stores and provide accurate delivery estimates.
+                so that we can show you nearby deals when you're outside or deliver efficiently when you're home.
                 </p>
                 <button className="permission-btn" onClick={getCurrentLocation}>
                   Allow Location Access

@@ -538,8 +538,8 @@ export default function CheckoutPage() {
   let subtotalAfterDiscounts = subtotalAfterGigCompletion
   if (appliedDiscount && appliedDiscount.discountAmount) {
     qoynsDiscountAmount = appliedDiscount.discountAmount
-    // Apply Qoyns discount to subtotal
-    subtotalAfterDiscounts = subtotalAfterCoupon - qoynsDiscountAmount
+    // Apply Qoyns discount to subtotal after gig completion discount
+    subtotalAfterDiscounts = subtotalAfterGigCompletion - qoynsDiscountAmount
     // Ensure subtotal doesn't go negative
     if (subtotalAfterDiscounts < 0) {
       subtotalAfterDiscounts = 0
@@ -583,6 +583,8 @@ export default function CheckoutPage() {
   
   // For display purposes
   const subtotal = subtotalAfterDiscounts;
+  // Combined discounts (coupon + gig completion + qoyns) — shown inline in Subtotal
+  const totalDiscounts = couponDiscountAmount + gigCompletionDiscountAmount + qoynsDiscountAmount;
 
   // Combined error state
   const error = addressError || orderError || paymentIntentError
@@ -641,15 +643,15 @@ export default function CheckoutPage() {
   }, [dispatch, cartItems.length])
 
   // Auto-validate Qoyn redemption when cart total changes
-  // Use subtotal after coupon discount since Qoyns are applied to subtotal
+  // Use subtotal after gig completion discount since Qoyns are applied to subtotal after gig discount
   useEffect(() => {
-    if (subtotalAfterCoupon > 0 && cartItems.length > 0) {
-      // Auto-validate with subtotal after coupon discount
+    if (subtotalAfterGigCompletion > 0 && cartItems.length > 0) {
+      // Auto-validate with subtotal after gig completion discount
       dispatch(validateQoynRedemption({
-        totalAmount: subtotalAfterCoupon
+        totalAmount: subtotalAfterGigCompletion
       }))
     }
-  }, [subtotalAfterCoupon, cartItems.length, dispatch])
+  }, [subtotalAfterGigCompletion, cartItems.length, dispatch])
 
   // Auto-populate address form with user data when form is shown
   useEffect(() => {
@@ -1354,9 +1356,9 @@ export default function CheckoutPage() {
     }
 
     try {
-      // Use subtotal after coupon discount since Qoyns are applied to subtotal
+      // Use subtotal after gig completion discount since Qoyns are applied to subtotal after gig discount
       const result = await dispatch(validateQoynRedemption({
-        totalAmount: subtotalAfterCoupon
+        totalAmount: subtotalAfterGigCompletion
       }))
       
       if (result.payload && result.payload.data && result.payload.data.order) {
@@ -1376,7 +1378,7 @@ export default function CheckoutPage() {
           discountAmount: orderData.discountAmountStoreCurrency,
           totalAfterDiscount: orderData.totalAmountAfterDiscount,
           qoynAmount: qoynValidation.currentDiscountQoyn,
-          totalAmount: subtotalAfterCoupon, // Store for redemption later
+          totalAmount: subtotalAfterGigCompletion, // Store for redemption later
           productIds: productIds, // Store for redemption later
           storeId: storeId // Store for redemption later
         }
@@ -2418,7 +2420,7 @@ export default function CheckoutPage() {
                 <div className={styles.orderTotals}>
                   <div className={styles.totalRow}>
                     <span>Subtotal</span>
-                    <span>AED {originalSubtotal.toFixed(2)}</span>
+                    <span>AED {subtotalAfterGigCompletion.toFixed(2)}</span>
                   </div>
                   {appliedCoupon && (
                     <div className={styles.totalRowDiscount}>
@@ -2426,24 +2428,19 @@ export default function CheckoutPage() {
                       <span>- AED {couponDiscountAmount.toFixed(2)}</span>
                     </div>
                   )}
-                  {appliedGigCompletion && gigCompletionDiscountAmount > 0 && (
-                    <div className={styles.totalRowDiscount}>
-                      <span>Gig Completion Offer ({appliedGigCompletion.discountCode})</span>
-                      <span>- AED {gigCompletionDiscountAmount.toFixed(2)}</span>
-                    </div>
-                  )}
                   {appliedDiscount && qoynsDiscountAmount > 0 && (
-                    <div className={styles.totalRowDiscount}>
-                      <span>Qoyns Discount</span>
-                      <span>- AED {qoynsDiscountAmount.toFixed(2)}</span>
-                    </div>
+                    <>
+                      <div className={styles.totalRowDiscount}>
+                        <span>Qoyns Discount</span>
+                        <span>- AED {qoynsDiscountAmount.toFixed(2)}</span>
+                      </div>
+                      <div className={styles.totalRow}>
+                        <span>Subtotal (after discount)</span>
+                        <span>AED {subtotal.toFixed(2)}</span>
+                      </div>
+                    </>
                   )}
-                  {(appliedCoupon || appliedGigCompletion || (appliedDiscount && qoynsDiscountAmount > 0)) && (
-                    <div className={styles.totalRow}>
-                      <span>Subtotal after discount</span>
-                      <span>AED {subtotal.toFixed(2)}</span>
-                    </div>
-                  )}
+                  {/* Gig Completion offer display removed per request (still applied to subtotal calculation) */}
                   <div className={styles.totalRow}>
                     <span>VAT ({(vatRate * 100).toFixed(0)}%)</span>
                     <span>AED {vatAmount.toFixed(2)}</span>

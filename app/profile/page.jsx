@@ -142,7 +142,7 @@ export default function ProfilePage() {
           <div className={styles.textContent}>
             <h1 className={styles.title}>MY PROFILE</h1>
             <p className={styles.subtitle}>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.
+            Welcome to IQLIQ where you NEVER have to pay a full price for buying your favorite stuff  again!
             </p>
           </div>
           <div className={styles.actionTop}>
