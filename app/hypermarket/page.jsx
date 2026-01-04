@@ -281,7 +281,7 @@ export default function Home() {
       <section className="section">
         <div className="container">
           <SectionHeader
-            title="Best & Cheap Deals"
+            title="Best Deals - up to 50% off"
             showNavigation={true}
             onPrev={handleBestCheapDealsPrev}
             onNext={handleBestCheapDealsNext}
@@ -415,7 +415,7 @@ export default function Home() {
       <section className="section">
         <div className="container">
           <SectionHeader
-            title="Best Cashback"
+            title="Crazy Cashback"
             showNavigation={true}
             onPrev={handleBestCashbackPrev}
             onNext={handleBestCashbackNext}

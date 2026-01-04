@@ -83,7 +83,7 @@ export default function Footer() {
               />
             </div>
             <p className="footer-description">
-              IQLIQ is an innovative AI based eCommerce app that lets you shop your favorite products while earning and spending IQliq Coins for exclusive savings. Enjoy a smarter shopping experience with amazing discounts, seamless payments, and rewarding loyalty every time you buy.
+            Let us keep you updated with the latest offers, hottest deals, crazy promotions, new brands and much more.
             </p>
           </div>
 

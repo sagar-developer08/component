@@ -150,8 +150,8 @@ export default function CartDrawer({ open, onClose }) {
                   <path d="M20 20V12C20 8.68629 22.6863 6 26 6H38C41.3137 6 44 8.68629 44 12V20" stroke="#ccc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <h3>Your cart is empty</h3>
-              <p>Add some products to get started!</p>
+              <h3>What's on your cart</h3>
+              {/* <p>Add some products to get started!</p> */}
             </div>
           ) : (
             <div className="cart-items">
