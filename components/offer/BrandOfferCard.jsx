@@ -153,7 +153,7 @@ const BrandOfferCard = ({
                     width={64}
                     height={64}
                     style={{ objectFit: 'contain' }}
-                    unoptimized={true}
+                    unoptimized={true} 
                   />
                 ) : (
                   <span className="boc-badge__text" style={{
