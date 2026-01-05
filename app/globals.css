@@ -354,6 +354,13 @@ button {
   gap: 24px;
 }
 
+@media (max-width: 768px) {
+  .section {
+    padding: 20px 0 !important;
+    gap: 14px !important;
+  }
+}
+
 .products-grid {
   display: flex;
   width: 100%;

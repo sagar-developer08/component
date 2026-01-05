@@ -45,6 +45,8 @@ const Navigation = memo(function Navigation() {
   const [currentCity, setCurrentCity] = useState('')
   const [currentCountry, setCurrentCountry] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileSearchVisible, setMobileSearchVisible] = useState(true)
+  const lastScrollY = useRef(0)
 
   // Determine active nav based on current path
   const getActiveNav = () => {
@@ -139,6 +141,37 @@ const Navigation = memo(function Navigation() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [mobileMenuOpen])
+
+  // Handle scroll to show/hide mobile search bar
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      
+      // Only apply on mobile (768px and below)
+      if (window.innerWidth > 768) {
+        setMobileSearchVisible(true)
+        return
+      }
+
+      // Show search bar when at top of page
+      if (currentScrollY < 10) {
+        setMobileSearchVisible(true)
+      }
+      // Hide when scrolling down
+      else if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+        setMobileSearchVisible(false)
+      }
+      // Show when scrolling up
+      else if (currentScrollY < lastScrollY.current) {
+        setMobileSearchVisible(true)
+      }
+
+      lastScrollY.current = currentScrollY
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   // Reset local badge counts when logged out (defensive; actual state remains in Redux)
   useEffect(() => {
@@ -358,6 +391,7 @@ const Navigation = memo(function Navigation() {
               </div>
               {/* nav-actions */}
               <div className="nav-actions">
+                {/* Location container - Desktop shows with text, Mobile shows icon only */}
                 <div className="location-container" onClick={() => setLocationModalOpen(true)}>
                   <div className="location-text-container">
                     {currentCity ? (
@@ -377,22 +411,18 @@ const Navigation = memo(function Navigation() {
                       <path d="M20 12.6213C18.3498 12.6213 16.7671 13.2189 15.6002 14.2826C14.4333 15.3463 13.7778 16.7889 13.7778 18.2932C13.7778 20.6122 15.3618 22.8493 17.1004 24.5824C17.9895 25.4653 18.9595 26.2775 20 27.01C20.1553 26.9014 20.3375 26.7691 20.5467 26.613C21.382 25.9877 22.1683 25.3097 22.8996 24.5841C24.6382 22.8493 26.2222 20.613 26.2222 18.2932C26.2222 16.7889 25.5667 15.3463 24.3998 14.2826C23.2329 13.2189 21.6502 12.6213 20 12.6213ZM20 29L19.496 28.684L19.4933 28.6824L19.488 28.6783L19.4702 28.667L19.4036 28.624L19.1636 28.4644C17.9474 27.6313 16.8177 26.6983 15.7884 25.6771C13.9716 23.8637 12 21.2393 12 18.2924C12 16.3583 12.8429 14.5035 14.3431 13.1359C15.8434 11.7683 17.8783 11 20 11C22.1217 11 24.1566 11.7683 25.6569 13.1359C27.1571 14.5035 28 16.3583 28 18.2924C28 21.2393 26.0284 23.8646 24.2116 25.6755C23.1826 26.6966 22.0531 27.6296 20.8373 28.4628C20.736 28.5318 20.6338 28.5996 20.5307 28.6662L20.512 28.6775L20.5067 28.6816L20.5049 28.6824L20 29ZM20 16.6727C19.5285 16.6727 19.0763 16.8434 18.7429 17.1473C18.4095 17.4512 18.2222 17.8634 18.2222 18.2932C18.2222 18.723 18.4095 19.1352 18.7429 19.4391C19.0763 19.743 19.5285 19.9137 20 19.9137C20.4715 19.9137 20.9237 19.743 21.2571 19.4391C21.5905 19.1352 21.7778 18.723 21.7778 18.2932C21.7778 17.8634 21.5905 17.4512 21.2571 17.1473C20.9237 16.8434 20.4715 16.6727 20 16.6727ZM16.4444 18.2932C16.4444 17.4336 16.819 16.6092 17.4858 16.0014C18.1526 15.3936 19.057 15.0521 20 15.0521C20.943 15.0521 21.8474 15.3936 22.5142 16.0014C23.181 16.6092 23.5556 17.4336 23.5556 18.2932C23.5556 19.1528 23.181 19.9771 22.5142 20.585C21.8474 21.1928 20.943 21.5342 20 21.5342C19.057 21.5342 18.1526 21.1928 17.4858 20.585C16.819 19.9771 16.4444 19.1528 16.4444 18.2932Z" fill="black" />
                     </svg>
                   </div>
-
                 </div>
-                <div className="action-btn" onClick={handleSearchClick}>
+
+                {/* Search button - Desktop only */}
+                <div className="action-btn desktop-only" onClick={handleSearchClick}>
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                     <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
                     <circle cx="20" cy="20" r="7.5" stroke="black" strokeWidth="1.66667" />
                     <path d="M25 25L30 30" stroke="black" strokeWidth="1.66667" strokeLinecap="round" />
                   </svg>
                 </div>
-                <div className="action-btn" onClick={() => requireAuth(() => setCartOpen(true))}>
-                  <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                    <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
-                    <path d="M16.1818 15.1538C16.1818 15.1538 16.1818 11 20 11C23.8182 11 23.8182 15.1538 23.8182 15.1538M13 15.1538V29H27V15.1538H13Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  {displayCartCount > 0 && <span className="badge-count">{displayCartCount}</span>}
-                </div>
+
+                {/* Wishlist button */}
                 <div className="action-btn" onClick={() => requireAuth(() => setWishlistOpen(true))}>
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                     <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
@@ -401,16 +431,17 @@ const Navigation = memo(function Navigation() {
                   {displayWishlistCount > 0 && <span className="badge-count">{displayWishlistCount}</span>}
                 </div>
 
-                {/* Mobile hamburger menu button - always show */}
-                <div className="mobile-menu-toggle" onClick={handleMobileMenuToggle}>
+                {/* Cart button */}
+                <div className="action-btn" onClick={() => requireAuth(() => setCartOpen(true))}>
                   <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
                     <rect x="0.5" y="0.5" width="39" height="39" rx="19.5" stroke="#0082FF" />
-                    <path d="M12 16H28M12 20H28M12 24H28" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M16.1818 15.1538C16.1818 15.1538 16.1818 11 20 11C23.8182 11 23.8182 15.1538 23.8182 15.1538M13 15.1538V29H27V15.1538H13Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
+                  {displayCartCount > 0 && <span className="badge-count">{displayCartCount}</span>}
                 </div>
 
-                {/* Desktop profile button - hidden on mobile */}
-                <div className="desktop-profile-btn">
+                {/* Profile button */}
+                <div className="profile-section">
                   {isAuthenticated ? (
                     <div className="profile-btn" onClick={() => router.push('/profile')}>
                       {profileUser?.profileImage ? (
@@ -437,6 +468,32 @@ const Navigation = memo(function Navigation() {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Mobile Search Bar - Below Navbar */}
+            <div className={`mobile-search-container ${mobileSearchVisible ? 'visible' : 'hidden'}`}>
+              <form onSubmit={handleSearchSubmit} className="mobile-search-form">
+                <div className="mobile-search-input-wrapper">
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="mobile-search-input"
+                  />
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="mobile-search-icon">
+                    <circle cx="9" cy="9" r="7" stroke="#9CA3AF" strokeWidth="1.5" />
+                    <path d="M14 14L18 18" stroke="#9CA3AF" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                </div>
+              </form>
+              <SearchSuggestions
+                query={debouncedQuery}
+                isVisible={debouncedQuery.length >= 2}
+                onClose={handleSearchClose}
+                onSelect={handleSuggestionSelect}
+                inputRef={searchInputRef}
+              />
             </div>
           </div>
 
@@ -608,10 +665,137 @@ const Navigation = memo(function Navigation() {
           transform: scale(1.05);
         }
 
-        .desktop-profile-btn {
+        .profile-section {
           display: block;
         }
 
+        /* Desktop-only elements */
+        .desktop-only {
+          display: flex;
+        }
+
+        /* Location text container - visible on desktop */
+        .location-text-container {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          justify-content: center;
+          max-width: 120px;
+          height: 100%;
+        }
+
+        /* Mobile search container - hidden by default on desktop */
+        .mobile-search-container {
+          display: none;
+          width: 100%;
+          padding: 12px 0 0 0;
+          position: relative;
+          transition: all 0.3s ease;
+          max-height: 60px;
+          opacity: 1;
+          overflow: hidden;
+        }
+
+        .mobile-search-container.hidden {
+          max-height: 0;
+          opacity: 0;
+          padding: 0;
+        }
+
+        .mobile-search-container.visible {
+          max-height: 60px;
+          opacity: 1;
+          padding: 12px 0 0 0;
+        }
+
+        .mobile-search-form {
+          width: 100%;
+        }
+
+        .mobile-search-input-wrapper {
+          position: relative;
+          width: 100%;
+        }
+
+        .mobile-search-input {
+          width: 100%;
+          height: 44px;
+          padding: 10px 44px 10px 16px;
+          border: 1px solid #E5E7EB;
+          border-radius: 24px;
+          font-size: 16px;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          outline: none;
+          background: #F9FAFB;
+          box-sizing: border-box;
+        }
+
+        .mobile-search-input:focus {
+          border-color: #0082FF;
+          background: #FFF;
+        }
+
+        .mobile-search-input::placeholder {
+          color: #9CA3AF;
+        }
+
+        .mobile-search-icon {
+          position: absolute;
+          right: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+          pointer-events: none;
+        }
+
+        /* Mobile Bottom Navigation - Hidden on desktop */
+        .mobile-bottom-nav {
+          display: none;
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: #FFF;
+          border-top: 1px solid #E5E7EB;
+          padding: 8px 0 12px 0;
+          z-index: 1000;
+          justify-content: space-around;
+          align-items: center;
+          box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .bottom-nav-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          cursor: pointer;
+          padding: 4px 8px;
+          min-width: 60px;
+          transition: all 0.2s ease;
+        }
+
+        .bottom-nav-icon {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px;
+          height: 24px;
+        }
+
+        .bottom-nav-label {
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 11px;
+          font-weight: 500;
+          color: #666;
+          text-align: center;
+          line-height: 1.2;
+        }
+
+        .bottom-nav-item.active .bottom-nav-label {
+          color: #0082FF;
+          font-weight: 600;
+        }
 
         .nav-item {
           display: flex;
@@ -1043,46 +1227,53 @@ const Navigation = memo(function Navigation() {
           }
 
           .mobile-menu-toggle {
+            display: none;
+          }
+
+          /* Hide desktop-only elements on mobile */
+          .desktop-only {
+            display: none;
+          }
+
+          /* Hide location text on mobile, show only icon */
+          .location-text-container {
+            display: none;
+          }
+
+          .mobile-search-container {
             display: block;
           }
 
-          .desktop-profile-btn {
-            display: none;
+          .mobile-bottom-nav {
+            display: flex;
           }
 
-          /* Hide cart and wishlist on mobile - they're in hamburger menu */
-          .nav-actions .action-btn:nth-child(3),
-          .nav-actions .action-btn:nth-child(4) {
-            display: none;
+          .profile-section {
+            display: block;
           }
 
           .nav-actions {
-            gap: 12px;
+            gap: 8px;
           }
 
           .action-btn {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
           }
 
           .action-btn svg {
-            width: 36px;
-            height: 36px;
-          }
-
-          .mobile-menu-toggle svg {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
           }
 
           .profile-btn {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
           }
 
           .profile-avatar {
-            width: 36px;
-            height: 36px;
+            width: 40px;
+            height: 40px;
           }
 
           .logo {
@@ -1104,43 +1295,45 @@ const Navigation = memo(function Navigation() {
             padding: 0 12px;
           }
 
-          /* Hide cart and wishlist on mobile - they're in hamburger menu */
-          .nav-actions .action-btn:nth-child(3),
-          .nav-actions .action-btn:nth-child(4) {
-            display: none;
-          }
-
           .nav-actions {
-            gap: 8px;
+            gap: 6px;
           }
 
           .action-btn {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
           }
 
           .action-btn svg {
-            width: 32px;
-            height: 32px;
-          }
-
-          .mobile-menu-toggle svg {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
           }
 
           .profile-btn {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
           }
 
           .profile-avatar {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
           }
 
           .logo {
             width: 70px;
+          }
+
+          .mobile-search-container {
+            padding: 10px 0 0 0;
+          }
+
+          .mobile-search-input {
+            height: 40px;
+            font-size: 14px;
+          }
+
+          .mobile-bottom-nav {
+            padding-bottom: env(safe-area-inset-bottom);
           }
 
           .mobile-nav-content {
@@ -1164,6 +1357,73 @@ const Navigation = memo(function Navigation() {
           }
         }
       `}</style>
+
+        {/* Mobile Bottom Navigation */}
+        <div className="mobile-bottom-nav">
+          {navItems.map(item => (
+            <div
+              key={item.key}
+              className={`bottom-nav-item${activeNav === item.key ? ' active' : ''}`}
+              onClick={() => handleNavItemClick(item.path)}
+            >
+              <div className="bottom-nav-icon">
+                {item.key === 'Discovery' && (
+                  <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M10.3333 1C14.9358 1 18.6667 4.73083 18.6667 9.33333C18.6667 13.9358 14.9358 17.6667 10.3333 17.6667C5.73083 17.6667 2 13.9358 2 9.33333C2 4.73083 5.73083 1 10.3333 1ZM13.8692 5.7975C13.5742 5.50333 9.74417 6.38667 8.56583 7.56583C7.3875 8.74417 6.50333 12.5742 6.7975 12.8692C7.0925 13.1633 10.9225 12.28 12.1008 11.1008C13.28 9.9225 14.1633 6.0925 13.8692 5.7975ZM10.3333 8.5C10.5543 8.5 10.7663 8.5878 10.9226 8.74408C11.0789 8.90036 11.1667 9.11232 11.1667 9.33333C11.1667 9.55435 11.0789 9.76631 10.9226 9.92259C10.7663 10.0789 10.5543 10.1667 10.3333 10.1667C10.1123 10.1667 9.90036 10.0789 9.74408 9.92259C9.5878 9.76631 9.5 9.55435 9.5 9.33333C9.5 9.11232 9.5878 8.90036 9.74408 8.74408C9.90036 8.5878 10.1123 8.5 10.3333 8.5Z"
+                      fill={activeNav === 'Discovery' ? '#0082FF' : '#666'}
+                    />
+                  </svg>
+                )}
+                {item.key === 'Hypermarket' && (
+                  <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M1.3335 15L1.75016 13.3333H6.3335L5.91683 15H1.3335ZM3.00016 11.6667L3.41683 10H8.8335L8.41683 11.6667H3.00016ZM15.9793 16.6667L16.396 13.3333L17.0002 8.33333L17.2085 6.6875L15.9793 16.6667ZM5.50016 18.3333C5.04183 18.3333 4.64961 18.1703 4.3235 17.8442C3.99738 17.5181 3.83405 17.1256 3.8335 16.6667H15.9793L17.2085 6.6875H14.9168L14.6877 8.45833C14.6599 8.69444 14.5557 8.87861 14.3752 9.01083C14.1946 9.14306 13.9863 9.195 13.7502 9.16667C13.5141 9.13833 13.3302 9.0375 13.1985 8.86417C13.0668 8.69083 13.0146 8.48611 13.0418 8.25L13.2293 6.6875H9.91683L9.68766 8.4375C9.65988 8.67361 9.55572 8.86111 9.37516 9C9.19461 9.13889 8.98627 9.19444 8.75016 9.16667C8.51405 9.13889 8.32655 9.03472 8.18766 8.85417C8.04877 8.67361 7.99322 8.46528 8.021 8.22917L8.2085 6.6875H5.0835C5.13905 6.21528 5.31961 5.81611 5.62516 5.49C5.93072 5.16389 6.30572 5.00056 6.75016 5H8.41683C8.52794 3.95833 8.88572 3.1425 9.49016 2.5525C10.0946 1.9625 10.9174 1.66722 11.9585 1.66667C12.8474 1.66667 13.5871 1.99667 14.1777 2.65667C14.7682 3.31667 15.0563 4.09778 15.0418 5H17.1668C17.6668 5.01389 18.0835 5.20833 18.4168 5.58333C18.7502 5.95833 18.8821 6.39583 18.8127 6.89583L17.5627 16.8958C17.5071 17.3125 17.3229 17.6564 17.0102 17.9275C16.6974 18.1986 16.3329 18.3339 15.9168 18.3333H5.50016ZM10.0835 5H13.396C13.4099 4.54167 13.2538 4.14944 12.9277 3.82333C12.6016 3.49722 12.2091 3.33389 11.7502 3.33333C11.2641 3.33333 10.8785 3.48278 10.5935 3.78167C10.3085 4.08056 10.1385 4.48667 10.0835 5Z"
+                      fill={activeNav === 'Hypermarket' ? '#0082FF' : '#666'}
+                    />
+                  </svg>
+                )}
+                {item.key === 'Stores' && (
+                  <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M16.6636 8.85083V15.8333C16.6636 16.2754 16.488 16.6993 16.1755 17.0118C15.8629 17.3244 15.439 17.5 14.9969 17.5H5.00361C4.56173 17.4998 4.13802 17.3241 3.82564 17.0115C3.51326 16.699 3.33778 16.2752 3.33778 15.8333V8.85083M6.25194 7.29167L6.66861 2.5M6.25194 7.29167C6.25194 9.71 10.0003 9.71 10.0003 7.29167M6.25194 7.29167C6.25194 9.93833 1.95611 9.39167 2.55778 7.085L3.42861 3.74583C3.52168 3.38919 3.73034 3.07346 4.02196 2.84804C4.31358 2.62262 4.67169 2.50022 5.04028 2.5H14.9603C15.3289 2.50022 15.687 2.62262 15.9786 2.84804C16.2702 3.07346 16.4789 3.38919 16.5719 3.74583L17.4428 7.085C18.0444 9.3925 13.7486 9.93833 13.7486 7.29167M10.0003 7.29167V2.5M10.0003 7.29167C10.0003 9.71 13.7486 9.71 13.7486 7.29167M13.7486 7.29167L13.3319 2.5"
+                      stroke={activeNav === 'Stores' ? '#0082FF' : '#666'}
+                      strokeWidth="1.25"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                  </svg>
+                )}
+                {item.key === 'E-Shop' && (
+                  <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M3 3H8.25V8.25H3V3ZM11.75 3H17V8.25H11.75V3ZM3 11.75H8.25V17H3V11.75ZM11.75 14.375C11.75 15.0712 12.0266 15.7389 12.5188 16.2312C13.0111 16.7234 13.6788 17 14.375 17C15.0712 17 15.7389 16.7234 16.2312 16.2312C16.7234 15.7389 17 15.0712 17 14.375C17 13.6788 16.7234 13.0111 16.2312 12.5188C15.7389 12.0266 15.0712 11.75 14.375 11.75C13.6788 11.75 13.0111 12.0266 12.5188 12.5188C12.0266 13.0111 11.75 13.6788 11.75 14.375Z"
+                      stroke={activeNav === 'E-Shop' ? '#0082FF' : '#666'}
+                      strokeWidth="1.66667"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                  </svg>
+                )}
+                {item.key === 'Supermarket' && (
+                  <svg width="24" height="24" viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M2.64293 12.1429V18.5714C2.64293 18.7609 2.71818 18.9426 2.85214 19.0765C2.98609 19.2105 3.16777 19.2857 3.35721 19.2857H17.6429C17.8324 19.2857 18.014 19.2105 18.148 19.0765C18.282 18.9426 18.3572 18.7609 18.3572 18.5714V12.1429M1.21436 5V7.85714C1.21436 8.04658 1.28961 8.22826 1.42356 8.36222C1.55752 8.49617 1.7392 8.57143 1.92864 8.57143H19.0715C19.2609 8.57143 19.4426 8.49617 19.5766 8.36222C19.7105 8.22826 19.7858 8.04658 19.7858 7.85714V5M1.21436 5L2.95721 1.5C3.07702 1.26223 3.26088 1.06268 3.48806 0.923848C3.71524 0.785016 3.97669 0.712433 4.24293 0.714285H16.7572C17.0234 0.712433 17.2849 0.785016 17.5121 0.923848C17.7393 1.06268 17.9231 1.26223 18.0429 1.5L19.7858 5M1.21436 5H19.7858M11.9286 12.1429V19.2857M2.64293 14.2857H11.9286"
+                      stroke={activeNav === 'Supermarket' ? '#0082FF' : '#666'}
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                  </svg>
+                )}
+              </div>
+              <span className="bottom-nav-label">{item.label === 'Stores' ? 'Store' : item.label}</span>
+            </div>
+          ))}
+        </div>
         </div>
 
         {/* Spacer to prevent content from jumping under the fixed navbar */}

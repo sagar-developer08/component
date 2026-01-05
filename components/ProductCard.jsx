@@ -540,17 +540,20 @@ export default function ProductCard({
           display: flex;
           flex-direction: column;
           align-items: flex-start;
-          width: 240px;
+          width: 100%;
+          min-height: unset;
           height: auto;
-          max-height: 380px;
           gap: 10px;
+          padding: 0;
+          background: #fff;
+          border-radius: 12px;
         }
         
         .product-image {
           width: 100%;
-          height: 240px;
-          border-radius: 12px;
-          border: 1px solid rgba(0, 0, 0, 0.16);
+          height: 180px;
+          border-radius: 10px;
+          border: 1px solid rgba(0, 0, 0, 0.08);
           background-size: cover;
           background-position: center;
           position: relative;
@@ -564,26 +567,26 @@ export default function ProductCard({
         .product-image img {
           width: 100%;
           height: 100%;
-          max-width: 220px;
-          max-height: 220px;
+          max-width: 160px;
+          max-height: 160px;
           object-fit: contain;
         }
 
         .product-badge {
           display: flex;
-          padding: 4px 16px;
+          padding: 4px 12px;
           justify-content: center;
           align-items: center;
           gap: 10px;
           position: absolute;
-          left: 16px;
-          top: 16px;
+          left: 12px;
+          top: 12px;
           border-radius: 100px;
           background: #0082FF;
           color: #FFF;
           text-align: center;
           font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 12px;
+          font-size: 10px;
           font-weight: 400;
           line-height: 150%;
         }
@@ -594,7 +597,7 @@ export default function ProductCard({
           padding: 0 4px 4px 4px;
           flex-direction: column;
           align-items: flex-start;
-          gap: 6px;
+          gap: 4px;
         }
 
         .product-title-row {
@@ -608,7 +611,7 @@ export default function ProductCard({
           flex: 1 0 0;
           color: #000;
           font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 600;
           line-height: 140%;
           margin: 0;
@@ -621,7 +624,7 @@ export default function ProductCard({
 
         .delivery-time {
           display: flex;
-          padding: 8px;
+          padding: 6px;
           justify-content: center;
           align-items: center;
           gap: 10px;
@@ -630,7 +633,7 @@ export default function ProductCard({
           color: #0082FF;
           text-align: center;
           font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 14px;
+          font-size: 12px;
           font-weight: 700;
           line-height: 150%;
         }
@@ -645,14 +648,14 @@ export default function ProductCard({
         .product-price {
           color: #000;
           font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 16px;
+          font-size: 14px;
           font-weight: 700;
           line-height: 150%;
         }
 
         .product-rating {
           display: flex;
-          padding: 4px 16px;
+          padding: 4px 8px;
           justify-content: center;
           align-items: center;
           gap: 4px;
@@ -662,9 +665,34 @@ export default function ProductCard({
           color: #0082FF;
           text-align: center;
           font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 400;
           line-height: 150%;
+        }
+        
+        .product-icon-row {
+          bottom: 10px;
+          padding: 0 10px;
+        }
+        
+        .wishlist-icon svg,
+        .cart-icon svg {
+          width: 32px;
+          height: 32px;
+        }
+        
+        .cart-quantity-control {
+          width: 100px;
+          height: 32px;
+        }
+        
+        .delete-icon, .plus-icon, .minus-icon {
+          width: 26px;
+          height: 26px;
+        }
+        
+        .quantity-display {
+          font-size: 14px;
         }
         }
       `}</style>

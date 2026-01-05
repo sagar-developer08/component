@@ -543,8 +543,8 @@ export default function Home() {
               <Swiper
                 ref={bestsellersSwiperRef}
                 modules={[SwiperNavigation]}
-                slidesPerView={isMobile ? 1.2 : 'auto'}
-                spaceBetween={isMobile ? 16 : 24}
+                slidesPerView={isMobile ? 2.2 : 'auto'}
+                spaceBetween={isMobile ? 10 : 24}
                 grabCursor={true}
                 freeMode={true}
                 className="bestsellers-swiper"
@@ -611,13 +611,13 @@ export default function Home() {
           onButtonClick={handleBannerClick}
         />
 
-        {/* Offers Section */}
         <section className="section">
           <div className="container">
+          
             {homepageSectionsLoading ? (
-              <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
                 {[...Array(4)].map((_, index) => (
-                  <div key={`skeleton-${index}`} style={{ width: '322px', height: '404px', background: '#f0f0f0', borderRadius: '16px' }} />
+                  <div key={`skeleton-${index}`} style={{ width: '322px', height: '404px', background: '#f0f0f0', borderRadius: '16px', flexShrink: 0 }} />
                 ))}
               </div>
             ) : homepageSectionsError ? (
@@ -625,22 +625,31 @@ export default function Home() {
                 Error loading homepage sections: {homepageSectionsError}
               </div>
             ) : homepageSections && typeof homepageSections === 'object' && !Array.isArray(homepageSections) ? (
-              <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Swiper
+                ref={offersSwiperRef}
+                modules={[SwiperNavigation]}
+                slidesPerView={isMobile ? 1.2 : 'auto'}
+                spaceBetween={isMobile ? 16 : 24}
+                grabCursor={true}
+                freeMode={true}
+                className="offers-swiper"
+              >
                 {/* Map Brand Sections */}
                 {homepageSections.brand && Array.isArray(homepageSections.brand) && homepageSections.brand.map((section) => {
                   const level4CategoryIds = section.config?.level4Categories?.map(cat => cat._id) || [];
                   
                   return (
-                    <BrandOfferCard
-                      key={section._id}
-                      title={section.title}
-                      brands={section.config?.brands || []}
-                      categories={section.config?.level4Categories || []}
-                      ctaLink={section.uiConfig?.ctaLink}
-                      ctaText={section.uiConfig?.ctaText || 'View all'}
-                      itemType="brand"
-                      level4CategoryIds={level4CategoryIds}
-                    />
+                    <SwiperSlide key={section._id} style={{ width: 'auto' }}>
+                      <BrandOfferCard
+                        title={section.title}
+                        brands={section.config?.brands || []}
+                        categories={section.config?.level4Categories || []}
+                        ctaLink={section.uiConfig?.ctaLink}
+                        ctaText={section.uiConfig?.ctaText || 'View all'}
+                        itemType="brand"
+                        level4CategoryIds={level4CategoryIds}
+                      />
+                    </SwiperSlide>
                   );
                 })}
                 
@@ -649,16 +658,17 @@ export default function Home() {
                   const level4CategoryIds = section.config?.level4Categories?.map(cat => cat._id) || [];
                   
                   return (
-                    <BrandOfferCard
-                      key={section._id}
-                      title={section.title}
-                      brands={[]}
-                      categories={section.config?.level4Categories || []}
-                      ctaLink={section.uiConfig?.ctaLink}
-                      ctaText={section.uiConfig?.ctaText || 'View all'}
-                      itemType="category"
-                      level4CategoryIds={level4CategoryIds}
-                    />
+                    <SwiperSlide key={section._id} style={{ width: 'auto' }}>
+                      <BrandOfferCard
+                        title={section.title}
+                        brands={[]}
+                        categories={section.config?.level4Categories || []}
+                        ctaLink={section.uiConfig?.ctaLink}
+                        ctaText={section.uiConfig?.ctaText || 'View all'}
+                        itemType="category"
+                        level4CategoryIds={level4CategoryIds}
+                      />
+                    </SwiperSlide>
                   );
                 })}
                 
@@ -676,16 +686,17 @@ export default function Home() {
                   })) || [];
                   
                   return (
-                    <BrandOfferCard
-                      key={section._id}
-                      title={section.title}
-                      brands={[]}
-                      categories={hypermarketStoresAsCategories}
-                      ctaLink={section.uiConfig?.ctaLink}
-                      ctaText={section.uiConfig?.ctaText || 'View all'}
-                      itemType="hypermarket"
-                      level4CategoryIds={level4CategoryIds}
-                    />
+                    <SwiperSlide key={section._id} style={{ width: 'auto' }}>
+                      <BrandOfferCard
+                        title={section.title}
+                        brands={[]}
+                        categories={hypermarketStoresAsCategories}
+                        ctaLink={section.uiConfig?.ctaLink}
+                        ctaText={section.uiConfig?.ctaText || 'View all'}
+                        itemType="hypermarket"
+                        level4CategoryIds={level4CategoryIds}
+                      />
+                    </SwiperSlide>
                   );
                 })}
                 
@@ -703,22 +714,31 @@ export default function Home() {
                   })) || [];
                   
                   return (
-                    <BrandOfferCard
-                      key={section._id}
-                      title={section.title}
-                      brands={[]}
-                      categories={supermarketStoresAsCategories}
-                      ctaLink={section.uiConfig?.ctaLink}
-                      ctaText={section.uiConfig?.ctaText || 'View all'}
-                      itemType="supermarket"
-                      level4CategoryIds={level4CategoryIds}
-                    />
+                    <SwiperSlide key={section._id} style={{ width: 'auto' }}>
+                      <BrandOfferCard
+                        title={section.title}
+                        brands={[]}
+                        categories={supermarketStoresAsCategories}
+                        ctaLink={section.uiConfig?.ctaLink}
+                        ctaText={section.uiConfig?.ctaText || 'View all'}
+                        itemType="supermarket"
+                        level4CategoryIds={level4CategoryIds}
+                      />
+                    </SwiperSlide>
                   );
                 })}
-              </div>
+              </Swiper>
             ) : Array.isArray(homepageSections) && homepageSections.length > 0 ? (
               // Fallback for legacy array structure
-              <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Swiper
+                ref={offersSwiperRef}
+                modules={[SwiperNavigation]}
+                slidesPerView={isMobile ? 1.2 : 'auto'}
+                spaceBetween={isMobile ? 16 : 24}
+                grabCursor={true}
+                freeMode={true}
+                className="offers-swiper"
+              >
                 {homepageSections.map((section) => {
                   const hasHypermarketStores = section.config?.hypermarketStores && 
                     Array.isArray(section.config.hypermarketStores) &&
@@ -765,26 +785,35 @@ export default function Home() {
                   const level4CategoryIds = section.config?.level4Categories?.map(cat => cat._id) || [];
                   
                   return (
-                    <BrandOfferCard
-                      key={section._id}
-                      title={section.title}
-                      brands={section.config?.brands || []}
-                      categories={categoriesToUse}
-                      ctaLink={section.uiConfig?.ctaLink}
-                      ctaText={section.uiConfig?.ctaText || 'View all'}
-                      itemType={itemType}
-                      level4CategoryIds={level4CategoryIds}
-                    />
+                    <SwiperSlide key={section._id} style={{ width: 'auto' }}>
+                      <BrandOfferCard
+                        title={section.title}
+                        brands={section.config?.brands || []}
+                        categories={categoriesToUse}
+                        ctaLink={section.uiConfig?.ctaLink}
+                        ctaText={section.uiConfig?.ctaText || 'View all'}
+                        itemType={itemType}
+                        level4CategoryIds={level4CategoryIds}
+                      />
+                    </SwiperSlide>
                   );
                 })}
-              </div>
+              </Swiper>
             ) : (
-              <div style={{ display: 'flex', gap: '24px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <BrandOfferCard />
-                <BrandOfferCard />
-                <BrandOfferCard />
-                <BrandOfferCard />
-              </div>
+              <Swiper
+                ref={offersSwiperRef}
+                modules={[SwiperNavigation]}
+                slidesPerView={isMobile ? 1.2 : 'auto'}
+                spaceBetween={isMobile ? 16 : 24}
+                grabCursor={true}
+                freeMode={true}
+                className="offers-swiper"
+              >
+                <SwiperSlide style={{ width: 'auto' }}><BrandOfferCard /></SwiperSlide>
+                <SwiperSlide style={{ width: 'auto' }}><BrandOfferCard /></SwiperSlide>
+                <SwiperSlide style={{ width: 'auto' }}><BrandOfferCard /></SwiperSlide>
+                <SwiperSlide style={{ width: 'auto' }}><BrandOfferCard /></SwiperSlide>
+              </Swiper>
             )}
           </div>
         </section>
@@ -918,8 +947,8 @@ export default function Home() {
             <Swiper
               ref={featuredOffersSwiperRef}
               modules={[SwiperNavigation]}
-              slidesPerView={isMobile ? 1.2 : 'auto'}
-              spaceBetween={isMobile ? 16 : 24}
+              slidesPerView={isMobile ? 2.2 : 'auto'}
+              spaceBetween={isMobile ? 10 : 24}
               grabCursor={true}
               freeMode={true}
               className="bestsellers-swiper"
