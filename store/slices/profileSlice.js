@@ -121,10 +121,10 @@ export const setDefaultAddress = createAsyncThunk(
   }
 )
 
-// Fetch user orders specifically
+// Fetch user orders specifically with pagination
 export const fetchOrders = createAsyncThunk(
   'profile/fetchOrders',
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10 } = {}, { rejectWithValue }) => {
     try {
       let token = ''
       if (typeof document !== 'undefined') {
@@ -138,7 +138,11 @@ export const fetchOrders = createAsyncThunk(
         }
       }
 
-      const response = await fetch(orders.getUserOrders, {
+      const url = new URL(orders.getUserOrders)
+      url.searchParams.set('page', page.toString())
+      url.searchParams.set('limit', limit.toString())
+
+      const response = await fetch(url.toString(), {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
           'Content-Type': 'application/json',
@@ -161,6 +165,7 @@ const initialState = {
   user: null,
   addresses: [],
   orders: [],
+  ordersPagination: null,
   loading: false,
   loadingAddresses: false,
   ordersLoading: false,
@@ -248,13 +253,23 @@ const profileSlice = createSlice({
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.ordersLoading = false
         // Handle both direct orders array and nested data structure
-        state.orders = action.payload.data?.orders || action.payload.orders || []
+        const responseData = action.payload.data || action.payload
+        state.orders = responseData.orders || []
+        // Store pagination info if available
+        if (responseData.pagination) {
+          state.ordersPagination = responseData.pagination
+        } else if (action.payload.pagination) {
+          state.ordersPagination = action.payload.pagination
+        } else {
+          state.ordersPagination = null
+        }
         state.error = null
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.ordersLoading = false
         state.error = action.payload
         state.orders = []
+        state.ordersPagination = null
       })
   }
 })

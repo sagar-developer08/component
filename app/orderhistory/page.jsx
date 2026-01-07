@@ -8,6 +8,7 @@ import { createProductReview, updateProductReview, clearReviewState } from '../.
 import { addToCart } from '../../store/slices/cartSlice';
 import { getAuthToken, getUserFromCookies } from '../../utils/userUtils';
 import { useToast } from '../../contexts/ToastContext';
+import { orders as orderEndpoints } from '../../store/api/endpoints';
 import Navigation from '@/components/Navigation';
 import styles from './orderHistory.module.css';
 import Image from 'next/image';
@@ -18,10 +19,9 @@ const OrderHistoryPage = () => {
   const orderId = searchParams.get('orderId');
   const productId = searchParams.get('productId');
   const dispatch = useDispatch();
-  const { orders, ordersLoading, error } = useSelector(state => state.profile);
   const { loading: reviewLoading, error: reviewError, success: reviewSuccess, reviews } = useSelector(state => state.review);
   const { show: showToast } = useToast();
-  
+
   const [rating, setRating] = useState(0);
   const [reviewData, setReviewData] = useState({
     name: '',
@@ -34,39 +34,132 @@ const OrderHistoryPage = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [lastSubmittedHasImages, setLastSubmittedHasImages] = useState(false);
+  const [expandedProducts, setExpandedProducts] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderError, setOrderError] = useState(null);
 
-  // Fetch orders data if not already loaded
+  // Fetch order by ID directly from API
   useEffect(() => {
-    if (!orders || orders.length === 0) {
-      dispatch(fetchOrders());
-    }
-  }, [dispatch, orders]);
+    const fetchOrderById = async () => {
+      if (!orderId) {
+        setOrderData(null);
+        return;
+      }
+
+      setOrderLoading(true);
+      setOrderError(null);
+
+      try {
+        const token = await getAuthToken();
+        if (!token) {
+          throw new Error('Authentication required');
+        }
+
+        const response = await fetch(orderEndpoints.getOrderById(orderId), {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Failed to fetch order' }));
+          throw new Error(errorData.message || `HTTP error ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        
+        if (responseData.success && responseData.data?.order) {
+          const order = responseData.data.order;
+          console.log('Fetched order from API:', order);
+          console.log('Order items:', order.items);
+          setOrderData(order);
+          
+          // Set initial selected product from URL or first item
+          if (productId && order.items) {
+            const foundItem = order.items.find(item =>
+              String(item.productId || item.id || '') === String(productId)
+            );
+            if (foundItem) {
+              setSelectedProductId(foundItem.productId || foundItem.id || productId);
+            } else if (order.items.length > 0) {
+              setSelectedProductId(order.items[0].productId || order.items[0].id || null);
+            }
+          } else if (order.items && order.items.length > 0) {
+            setSelectedProductId(order.items[0].productId || order.items[0].id || null);
+          }
+        } else {
+          throw new Error('Order not found in response');
+        }
+      } catch (error) {
+        console.error('Error fetching order:', error);
+        setOrderError(error.message || 'Failed to fetch order');
+        setOrderData(null);
+        showToast(`Error loading order: ${error.message}`, 'error');
+      } finally {
+        setOrderLoading(false);
+      }
+    };
+
+    fetchOrderById();
+  }, [orderId, productId, showToast]);
 
   // Fetch existing review for this product
   useEffect(() => {
     const checkExistingReview = async () => {
       try {
-        // Use productId field directly as specified
-        const firstItem = orderData?.items?.[0];
-        const actualProductId = firstItem?.productId || productId;
-        
+        // Use selected product from dropdown first, then productId from URL, then first item
+        let actualProductId = null;
+
+        // First, try to get product ID from selectedProductId (dropdown selection)
+        if (selectedProductId && orderData?.items) {
+          const selectedItem = orderData.items.find(item => {
+            const itemProductId = item.productId || item.id;
+            return String(itemProductId) === String(selectedProductId);
+          });
+          if (selectedItem) {
+            actualProductId = selectedItem.productId || selectedItem.id;
+          }
+        }
+
+        // If not found, try productId from URL
+        if (!actualProductId && productId && orderData?.items) {
+          const urlItem = orderData.items.find(item => {
+            const itemProductId = item.productId || item.id;
+            return String(itemProductId) === String(productId);
+          });
+          if (urlItem) {
+            actualProductId = urlItem.productId || urlItem.id;
+          }
+        }
+
+        // If still not found, use first item
+        if (!actualProductId && orderData?.items && orderData.items.length > 0) {
+          actualProductId = orderData.items[0].productId || orderData.items[0].id;
+        }
+
         if (!actualProductId) {
           console.log('⚠️ No valid product ID found');
+          setExistingReview(null);
+          setIsEditMode(false);
+          setShowEditForm(true);
           return;
         }
 
         console.log('🔍 Checking for existing review for product:', actualProductId);
+        console.log('🔍 Selected Product ID from dropdown:', selectedProductId);
 
         // Get auth token to identify current user
         const token = await getAuthToken();
         let foundReview = null;
-        
+
         if (token) {
           try {
             // Get MongoDB user ID from encrypted cookies (this is the correct way)
             const mongoUserId = await getUserFromCookies();
             console.log('🔍 Looking for review with MongoDB user ID:', mongoUserId);
-            
+
             if (mongoUserId) {
               // Call the API using POST method with body parameters
               const response = await fetch(`https://backendreview.qliq.ae/api/product-reviews/user/product-reviews`, {
@@ -82,16 +175,16 @@ const OrderHistoryPage = () => {
                 })
               });
               const data = await response.json();
-              
+
               console.log('📝 User product reviews response:', data);
-              
+
               if (data.success && data.data && data.data.reviews && Array.isArray(data.data.reviews)) {
                 // The API now returns only the user's reviews for this product
                 foundReview = data.data.reviews.length > 0 ? data.data.reviews[0] : null;
                 console.log('🔍 Found review by MongoDB ID:', foundReview ? 'YES' : 'NO');
               }
             }
-            
+
             // If no review found with MongoDB user ID, try JWT token sub
             if (!foundReview) {
               const tokenParts = token.split('.');
@@ -99,7 +192,7 @@ const OrderHistoryPage = () => {
                 const payload = JSON.parse(atob(tokenParts[1]));
                 const currentUserId = payload.sub;
                 console.log('🔍 Trying JWT sub:', currentUserId);
-                
+
                 // Try the API again with JWT sub as userId
                 const response = await fetch(`https://backendreview.qliq.ae/api/product-reviews/user/product-reviews`, {
                   method: 'POST',
@@ -114,7 +207,7 @@ const OrderHistoryPage = () => {
                   })
                 });
                 const data = await response.json();
-                
+
                 if (data.success && data.data && data.data.reviews && Array.isArray(data.data.reviews)) {
                   foundReview = data.data.reviews.length > 0 ? data.data.reviews[0] : null;
                   console.log('🔍 Found review by JWT sub:', foundReview ? 'YES' : 'NO');
@@ -127,10 +220,10 @@ const OrderHistoryPage = () => {
         } else {
           console.log('⚠️ No auth token available');
         }
-        
+
         if (foundReview) {
           console.log('✅ Found existing review:', foundReview);
-          
+
           // Map the review data to match our expected structure
           const mappedReview = {
             id: foundReview.id,
@@ -149,22 +242,22 @@ const OrderHistoryPage = () => {
             createdAt: foundReview.createdAt,
             updatedAt: foundReview.updatedAt
           };
-          
+
           setExistingReview(mappedReview);
           setIsEditMode(true);
           setShowEditForm(false); // Show view mode first
-          
+
           // Populate form data (but don't show form yet)
           setRating(mappedReview.rating);
           setReviewData({
             name: mappedReview.title || '',
             review: mappedReview.comment || ''
           });
-          
+
           if (mappedReview.images && mappedReview.images.length > 0) {
             setImagePreviews(mappedReview.images);
           }
-          
+
           console.log('📋 Review data loaded - showing review with edit button');
         } else {
           console.log('ℹ️ No existing review found for this product');
@@ -181,26 +274,8 @@ const OrderHistoryPage = () => {
     if (orderData) {
       checkExistingReview();
     }
-  }, [orderData, productId]);
+  }, [orderData, productId, selectedProductId]);
 
-  // Find the specific order when orders are loaded
-  useEffect(() => {
-    if (orders && orders.length > 0 && orderId) {
-      const order = orders.find(o => o._id === orderId);
-      if (order) {
-        console.log('Found order:', order);
-        console.log('Order items:', order.items);
-        if (productId && Array.isArray(order.items)) {
-          const filtered = { ...order, items: order.items.filter(it => (it.productId || it.id || '').toString() === productId.toString()) };
-          setOrderData(filtered.items.length > 0 ? filtered : order);
-        } else {
-          setOrderData(order);
-        }
-      } else {
-        console.error('Order not found');
-      }
-    }
-  }, [orders, orderId, productId]);
 
   // Handle review success
   useEffect(() => {
@@ -257,10 +332,10 @@ const OrderHistoryPage = () => {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files || []);
-    
+
     // Count existing images (URLs) and new files
     const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
-    
+
     if (files.length + imageFiles.length + existingImageCount > 5) {
       showToast('Maximum 5 images allowed per review', 'error');
       return;
@@ -311,7 +386,7 @@ const OrderHistoryPage = () => {
   const handleRemoveImage = (index) => {
     // Check if this is an existing review image (URL) or new upload (File)
     const isExistingImage = typeof imagePreviews[index] === 'string' && imagePreviews[index].startsWith('http');
-    
+
     if (isExistingImage && isEditMode) {
       // Remove from existing review images
       setImagePreviews(prev => prev.filter((_, i) => i !== index));
@@ -322,7 +397,7 @@ const OrderHistoryPage = () => {
       // Calculate the correct index for new files (excluding existing images)
       const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
       const newFileIndex = index - existingImageCount;
-      
+
       if (newFileIndex >= 0) {
         setImageFiles(prev => prev.filter((_, i) => i !== newFileIndex));
       }
@@ -347,15 +422,43 @@ const OrderHistoryPage = () => {
     const hasImages = imageFiles.length > 0 || imagePreviews.length > 0;
     setLastSubmittedHasImages(hasImages);
 
-    // Use productId field directly as specified
-    const firstItem = orderData?.items?.[0];
-    const actualProductId = firstItem?.productId || productId;
-    
+    // Use selected product from dropdown first, then productId from URL, then first item
+    let actualProductId = null;
+
+    // First, try to get product ID from selectedProductId (dropdown selection)
+    if (selectedProductId && orderData?.items) {
+      const selectedItem = orderData.items.find(item => {
+        const itemProductId = item.productId || item.id;
+        return String(itemProductId) === String(selectedProductId);
+      });
+      if (selectedItem) {
+        actualProductId = selectedItem.productId || selectedItem.id;
+      }
+    }
+
+    // If not found, try productId from URL
+    if (!actualProductId && productId && orderData?.items) {
+      const urlItem = orderData.items.find(item => {
+        const itemProductId = item.productId || item.id;
+        return String(itemProductId) === String(productId);
+      });
+      if (urlItem) {
+        actualProductId = urlItem.productId || urlItem.id;
+      }
+    }
+
+    // If still not found, use first item
+    if (!actualProductId && orderData?.items && orderData.items.length > 0) {
+      actualProductId = orderData.items[0].productId || orderData.items[0].id;
+    }
+
     if (!actualProductId) {
       showToast('Product MongoDB ID not found. Please contact support.', 'error');
-      console.error('Available product data:', firstItem);
+      console.error('Available product data:', orderData?.items);
       return;
     }
+
+    console.log('📝 Submitting review for product ID:', actualProductId);
 
     console.log(isEditMode ? 'Updating review' : 'Creating review', 'with product ID:', actualProductId);
 
@@ -364,12 +467,12 @@ const OrderHistoryPage = () => {
       try {
         // Get existing image URLs from previews
         const existingImageUrls = imagePreviews.filter(url => typeof url === 'string' && url.startsWith('http'));
-        
+
         // Check if images were added, removed, or updated
         const originalImageCount = existingReview.images ? existingReview.images.length : 0;
         const currentImageCount = existingImageUrls.length + imageFiles.length;
         const imagesChanged = originalImageCount !== currentImageCount || imageFiles.length > 0;
-        
+
         const result = await dispatch(updateProductReview({
           reviewId: existingReview.id || existingReview._id,
           rating: rating,
@@ -399,7 +502,7 @@ const OrderHistoryPage = () => {
               showToast('Review updated successfully!', 'success');
             }
           }
-          
+
           // Update the existing review state with new data
           setExistingReview({
             ...existingReview,
@@ -442,14 +545,14 @@ const OrderHistoryPage = () => {
         name: existingReview.title || '',
         review: existingReview.comment || ''
       });
-      
+
       // Set existing images as previews
       if (existingReview.images && existingReview.images.length > 0) {
         setImagePreviews(existingReview.images);
       } else {
         setImagePreviews([]);
       }
-      
+
       // Clear any new file uploads
       setImageFiles([]);
     }
@@ -484,7 +587,7 @@ const OrderHistoryPage = () => {
     try {
       // Get the first item from the order (or the specific product if filtered)
       const item = orderData?.items?.[0];
-      
+
       if (!item) {
         showToast('No product found to add to cart', 'error');
         return;
@@ -601,6 +704,72 @@ const OrderHistoryPage = () => {
     return Number(sum.toFixed(2));
   };
 
+  // Compute subtotal using discounted prices (when gig_completion discount exists)
+  const getDiscountedItemsSubtotal = (order) => {
+    if (!order || !Array.isArray(order.items)) return 0;
+    const sum = order.items.reduce((acc, it) => {
+      const priceDetails = getItemPriceDetails(it, order);
+      const qty = Math.max(1, Number(it?.quantity) || 1);
+      return acc + priceDetails.discountedPrice * qty;
+    }, 0);
+    return Number(sum.toFixed(2));
+  };
+
+  // Format discount type for display
+  const formatDiscountType = (discountType) => {
+    if (!discountType) return '';
+    return discountType
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ') + ' Discount';
+  };
+
+  // Format discount type for display in brackets (simpler version)
+  const formatDiscountTypeBracket = (discountType) => {
+    if (!discountType) return '';
+    return discountType
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // Calculate discounted price and discount amount for an item when discountType is gig_completion
+  const getItemPriceDetails = (item, order) => {
+    const basePrice = Number(item?.unitPrice ?? item?.price ?? 0) || 0;
+    
+    // If discountType is gig_completion, calculate discounted price
+    if (order?.discountType === 'gig_completion' && order?.discount > 0) {
+      const totalDiscount = Number(order.discount) || 0;
+      const orderSubtotal = getItemsSubtotal(order);
+      
+      if (orderSubtotal > 0) {
+        // Calculate discount proportion for this item
+        const itemTotal = basePrice * (Number(item?.quantity) || 1);
+        const discountProportion = itemTotal / orderSubtotal;
+        const itemDiscount = totalDiscount * discountProportion;
+        const discountPerUnit = itemDiscount / (Number(item?.quantity) || 1);
+        const discountedPrice = basePrice - discountPerUnit;
+        const discountPercentage = basePrice > 0 ? ((discountPerUnit / basePrice) * 100) : 0;
+        
+        return {
+          originalPrice: basePrice,
+          discountAmount: Number(discountPerUnit.toFixed(2)),
+          discountedPrice: Math.max(0, Number(discountedPrice.toFixed(2))),
+          discountPercentage: Number(discountPercentage.toFixed(2)),
+          discountType: order.discountType
+        };
+      }
+    }
+    
+    return {
+      originalPrice: basePrice,
+      discountAmount: 0,
+      discountedPrice: basePrice,
+      discountPercentage: 0,
+      discountType: null
+    };
+  };
+
   // Compute total tax across displayed items (prefer item-level tax, else proportional share from order.tax)
   const getItemsTax = (order) => {
     if (!order || !Array.isArray(order.items)) return 0;
@@ -629,7 +798,7 @@ const OrderHistoryPage = () => {
     const qoynsDiscount = Number(order?.qoynsDiscountAmount || 0);
     const discountType = order?.discountType;
     const discountAmount = Number(order?.discount || 0);
-    
+
     // Calculate total discount
     let totalDiscount = 0;
     if (couponDiscount > 0) totalDiscount += couponDiscount;
@@ -641,7 +810,7 @@ const OrderHistoryPage = () => {
       // Other discount types (fallback)
       totalDiscount += discountAmount;
     }
-    
+
     const discountedSubtotal = subtotal - totalDiscount;
     return Math.max(0, discountedSubtotal); // Ensure it doesn't go negative
   };
@@ -649,18 +818,18 @@ const OrderHistoryPage = () => {
   // Compute total VAT across displayed items - VAT should be calculated on discounted amount at 5%
   const getItemsVat = (order) => {
     if (!order || !Array.isArray(order.items)) return 0;
-    
+
     const discountedSubtotal = getDiscountedSubtotal(order);
-    
+
     // Always use 5% VAT rate
     const vatRate = 0.05;
-    
+
     // Calculate VAT on discounted subtotal (matching checkout logic)
     const vatAmount = discountedSubtotal * vatRate;
     return Number(vatAmount.toFixed(2));
   };
 
-  if (ordersLoading) {
+  if (orderLoading) {
     return (
       <div>
         <Navigation />
@@ -673,13 +842,13 @@ const OrderHistoryPage = () => {
     );
   }
 
-  if (error) {
+  if (orderError) {
     return (
       <div>
         <Navigation />
         <div className={styles.container}>
           <div style={{ textAlign: 'center', padding: '50px', color: 'red' }}>
-            Error loading order: {error}
+            Error loading order: {orderError}
           </div>
         </div>
       </div>
@@ -703,77 +872,82 @@ const OrderHistoryPage = () => {
     <div>
       <Navigation />
       <div className={styles.container}>
-      {/* Header Section */}
-      <div className={styles.header}>
-        <button className={styles.backButton} onClick={() => router.back()}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Back
-        </button>
-        <h1 className={styles.orderNumber}>ORDER #{orderData.orderNumber}</h1>
-      </div>
-
-      {/* Order Information Card */}
-      <div className={styles.orderInfoCard}>
-        <div className={styles.orderInfoLeft}>
-          <div className={styles.infoItem}>
-            <span className={styles.infoLabel}>Order Placed</span>
-            <span className={styles.infoValue}>{formatDate(orderData.createdAt)}</span>
-          </div>
-          <div className={styles.infoItem}>
-            <span className={styles.infoLabel}>Order Number</span>
-            <span className={styles.infoValue}>{orderData.orderNumber}</span>
-          </div>
-          <div className={styles.infoItem}>
-            <span className={styles.infoLabel}>Payment Method</span>
-            <span className={styles.infoValue}>{orderData.paymentMethod || 'Credit/Debit Card'}</span>
-          </div>
-          <div className={styles.infoItem}>
-            <span className={styles.infoLabel}>Order Status</span>
-            <span 
-              className={`${styles.infoValue} ${styles.deliveredStatus}`}
-              style={{ color: getStatusColor(orderData.status) }}
-            >
-              {orderData.status}
-            </span>
-          </div>
+        {/* Header Section */}
+        <div className={styles.header}>
+          <button className={styles.backButton} onClick={() => router.back()}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Back
+          </button>
+          <h1 className={styles.orderNumber}>ORDER #{orderData.orderNumber}</h1>
         </div>
-      </div>
 
-      {/* Address and Review Section */}
-      <div className={styles.contentGrid}>
-        {/* Address Cards Row */}
-        <div className={styles.addressRow}>
-          {/* Delivery Address Card */}
-          <div className={styles.addressCard}>
-            <h3 className={styles.cardTitle}>Delivery Address</h3>
-            <div className={styles.addressContent}>
-              <span className={styles.addressType}>Home</span>
-              <p className={styles.addressText}>
-                {orderData.deliveryAddress && orderData.deliveryAddress.addressLine1 !== "Address not provided" ? 
-                  `${orderData.deliveryAddress.fullName || ''}\n${orderData.deliveryAddress.addressLine1}, ${orderData.deliveryAddress.city}, ${orderData.deliveryAddress.state} ${orderData.deliveryAddress.postalCode}, ${orderData.deliveryAddress.country}` :
-                  'Delivery address not provided'
-                }
-              </p>
-              <div className={styles.contactInfo}>
-                <span className={styles.contactNumber}>
-                  {orderData.deliveryAddress?.phone && orderData.deliveryAddress.phone !== "+1234567890" ? 
-                    orderData.deliveryAddress.phone : 'Phone not provided'}
-                </span>
-                <span className={styles.contactEmail}>
-                  {orderData.deliveryAddress?.email || 'Email not provided'}
-                </span>
-              </div>
-              <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e0e0e0' }}>
-                <span style={{ fontSize: '14px', color: '#666', fontWeight: '500' }}>Shipping Cost: </span>
-                <span style={{ fontSize: '16px', color: '#000', fontWeight: '600' }}>AED 9.00</span>
-              </div>
+        {/* Order Information Card */}
+        <div className={styles.orderInfoCard}>
+          <div className={styles.orderInfoLeft}>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Order Placed</span>
+              <span className={styles.infoValue}>{formatDate(orderData.createdAt)}</span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Order Number</span>
+              <span className={styles.infoValue}>{orderData.orderNumber}</span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Payment Method</span>
+              <span className={styles.infoValue}>{orderData.paymentMethod || 'Credit/Debit Card'}</span>
+            </div>
+            <div className={styles.infoItem}>
+              <span className={styles.infoLabel}>Order Status</span>
+              <span
+                className={`${styles.infoValue} ${styles.deliveredStatus}`}
+                style={{ color: getStatusColor(orderData.status) }}
+              >
+                {orderData.status}
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* Shipping Address Card */}
-          {/* <div className={styles.addressCard}>
+        {/* Product Dropdown Section */}
+
+
+        {/* Address and Review Section */}
+        <div className={styles.contentGrid}>
+          {/* Address Cards Row */}
+          <div className={styles.addressRow}>
+            {/* Delivery Address Card */}
+            <div className={styles.addressCard}>
+              <h3 className={styles.cardTitle}>Delivery Address</h3>
+              <div className={styles.addressContent}>
+                <span className={styles.addressType}>Home</span>
+                <p className={styles.addressText}>
+                  {orderData.deliveryAddress && orderData.deliveryAddress.addressLine1 !== "Address not provided" ?
+                    `${orderData.deliveryAddress.fullName || ''}\n${orderData.deliveryAddress.addressLine1}, ${orderData.deliveryAddress.city}, ${orderData.deliveryAddress.state} ${orderData.deliveryAddress.postalCode}, ${orderData.deliveryAddress.country}` :
+                    'Delivery address not provided'
+                  }
+                </p>
+                <div className={styles.contactInfo}>
+                  <span className={styles.contactNumber}>
+                    {orderData.deliveryAddress?.phone && orderData.deliveryAddress.phone !== "+1234567890" ?
+                      orderData.deliveryAddress.phone : 'Phone not provided'}
+                  </span>
+                  <span className={styles.contactEmail}>
+                    {orderData.deliveryAddress?.email || 'Email not provided'}
+                  </span>
+                </div>
+                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #e0e0e0' }}>
+                  <span style={{ fontSize: '14px', color: '#666', fontWeight: '500' }}>Shipping Cost: </span>
+                  <span style={{ fontSize: '16px', color: '#000', fontWeight: '600' }}>
+                    AED {((orderData.shippingCost === 0 || !orderData.shippingCost) ? 9.00 : Number(orderData.shippingCost)).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Shipping Address Card */}
+            {/* <div className={styles.addressCard}>
             <h3 className={styles.cardTitle}>Billing Address</h3>
             <div className={styles.addressContent}>
               <span className={styles.addressType}>Home</span>
@@ -794,415 +968,437 @@ const OrderHistoryPage = () => {
               </div>
             </div>
           </div> */}
-        </div>
+          </div>
 
-        {/* Bottom Row - Review and Order Summary */}
-        <div className={styles.bottomRow}>
-          {/* Write/Edit a Review Card */}
-          <div className={styles.reviewCard}>
-            {/* Show Review View if exists and not in edit mode */}
-            {existingReview && !showEditForm ? (
-              <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                  <h3 className={styles.cardTitle}>Your Review</h3>
-                  <button 
-                    className={styles.editButton}
-                    onClick={handleEditClick}
-                    style={{ 
-                      padding: '12px 24px', 
-                      background: ' rgb(0, 130, 255, 0.2)', 
-                      color: 'rgb(0, 130, 255)', 
-                      border: '1px solid rgb(0, 130, 255)', 
-                      borderRadius: '25px', 
-                      cursor: 'pointer',
-                      fontWeight: '600',
-                      fontSize: '16px'
+          {/* Bottom Row - Review and Order Summary */}
+          <div className={styles.bottomRow}>
+            {/* Write/Edit a Review Card */}
+            <div className={styles.reviewCard}>
+              <h3 className={styles.cardTitle}>Write a review</h3>
+
+              {/* Product Dropdown Section - Inside Review Card */}
+              {orderData && orderData.items && orderData.items.length > 0 && (
+                <div className={styles.productDropdownSection}>
+                  <label className={styles.productDropdownLabel}>Select Product</label>
+                  <select
+                    className={styles.productDropdown}
+                    value={selectedProductId || ''}
+                    onChange={(e) => {
+                      const newProductId = e.target.value;
+                      console.log('🔄 Dropdown changed to product ID:', newProductId);
+                      setSelectedProductId(newProductId);
+                      // Clear existing review when product changes - useEffect will fetch new review
+                      setExistingReview(null);
+                      setIsEditMode(false);
+                      setShowEditForm(false); // Set to false so useEffect can check if review exists
+                      setRating(0);
+                      setReviewData({ name: '', review: '' });
+                      setImageFiles([]);
+                      setImagePreviews([]);
                     }}
                   >
-                    Edit Review
-                  </button>
+                    {orderData.items.map((item, index) => {
+                      const itemProductId = item.productId || item.id || `item-${index}`;
+                      return (
+                        <option key={itemProductId} value={itemProductId}>
+                          {item.name || `Product ${index + 1}`}
+                        </option>
+                      );
+                    })}
+                  </select>
                 </div>
-                
-                {/* Display existing review */}
-                <div style={{ padding: '20px', background: '#f8f9fa', borderRadius: '8px' }}>
-                  {/* Rating */}
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ fontSize: '14px', color: '#666', marginBottom: '8px', display: 'block' }}>Rating</label>
-                    <div className={styles.starRating}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <svg key={star} width="24" height="24" viewBox="0 0 24 24" fill={star <= existingReview.rating ? '#FFB800' : '#E0E0E0'}>
-                          <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-                        </svg>
-                      ))}
-                    </div>
+              )}
+              {/* Show Review View if exists and not in edit mode */}
+              {existingReview && !showEditForm ? (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <h3 className={styles.cardTitle}>Your Review</h3>
+                    <button
+                      className={styles.editButton}
+                      onClick={handleEditClick}
+                      style={{
+                        padding: '12px 24px',
+                        background: 'rgb(0, 130, 255, 0.2)',
+                        color: 'rgb(0, 130, 255)',
+                        border: '1px solid rgb(0, 130, 255)',
+                        borderRadius: '25px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        fontSize: '16px',
+                        transition: 'all 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = '#0082FF';
+                        e.currentTarget.style.color = 'white';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgb(0, 130, 255, 0.2)';
+                        e.currentTarget.style.color = 'rgb(0, 130, 255)';
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M11 4H4C3.46957 4 2.96086 4.21071 2.58579 4.58579C2.21071 4.96086 2 5.46957 2 6V20C2 20.5304 2.21071 21.0391 2.58579 21.4142C2.96086 21.7893 3.46957 22 4 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M18.5 2.5C18.8978 2.10217 19.4374 1.87868 20 1.87868C20.5626 1.87868 21.1022 2.10217 21.5 2.5C21.8978 2.89782 22.1213 3.43739 22.1213 4C22.1213 4.56261 21.8978 5.10217 21.5 5.5L12 15L8 16L9 12L18.5 2.5Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      Edit Review
+                    </button>
                   </div>
 
-                  {/* Name/Title */}
-                  {existingReview.title && (
+                  {/* Display existing review */}
+                  <div style={{ padding: '20px', background: '#f8f9fa', borderRadius: '8px' }}>
+                    {/* Rating */}
                     <div style={{ marginBottom: '15px' }}>
-                      <label style={{ fontSize: '14px', color: '#666', marginBottom: '8px', display: 'block' }}>Name</label>
-                      <div style={{ fontSize: '16px', color: '#1a1a1a', fontWeight: '500' }}>{existingReview.title}</div>
-                    </div>
-                  )}
-
-                  {/* Comment */}
-                  <div style={{ marginBottom: '15px' }}>
-                    <label style={{ fontSize: '14px', color: '#666', marginBottom: '8px', display: 'block' }}>Review</label>
-                    <div style={{ fontSize: '15px', color: '#333', lineHeight: '1.6' }}>{existingReview.comment}</div>
-                  </div>
-
-                  {/* Images */}
-                  {existingReview.images && existingReview.images.length > 0 && (
-                    <div>
-                      <label style={{ fontSize: '14px', color: '#666', marginBottom: '8px', display: 'block' }}>Photos</label>
-                      <div className={styles.imagePreviews}>
-                        {existingReview.images.map((imageUrl, index) => (
-                          <div key={index} className={styles.imagePreviewItem}>
-                            <img src={imageUrl} alt={`Review ${index + 1}`} className={styles.previewImage} />
-                          </div>
+                      <label style={{ fontSize: '14px', color: '#666', marginBottom: '8px', display: 'block' }}>Rating</label>
+                      <div className={styles.starRating}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <svg key={star} width="24" height="24" viewBox="0 0 24 24" fill={star <= existingReview.rating ? '#FFB800' : '#E0E0E0'}>
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                          </svg>
                         ))}
                       </div>
                     </div>
-                  )}
 
-                  {/* Status */}
-                  <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #dee2e6' }}>
-                    <span style={{ 
-                      fontSize: '12px', 
-                      color: existingReview.status === 'approved' ? '#4CAF50' : existingReview.status === 'pending' ? '#FF9800' : '#F44336',
-                      fontWeight: '600',
-                      textTransform: 'uppercase'
-                    }}>
-                      Status: {existingReview.status}
-                    </span>
-                    <span style={{ fontSize: '12px', color: '#999', marginLeft: '15px' }}>
-                      {formatDate(existingReview.createdAt)}
-                    </span>
+                    {/* Name/Title */}
+                    {existingReview.title && (
+                      <div style={{ marginBottom: '15px' }}>
+                        <label style={{ fontSize: '14px', color: '#666', marginBottom: '8px', display: 'block' }}>Name</label>
+                        <div style={{ fontSize: '16px', color: '#1a1a1a', fontWeight: '500' }}>{existingReview.title}</div>
+                      </div>
+                    )}
+
+                    {/* Comment */}
+                    <div style={{ marginBottom: '15px' }}>
+                      <label style={{ fontSize: '14px', color: '#666', marginBottom: '8px', display: 'block' }}>Review</label>
+                      <div style={{ fontSize: '15px', color: '#333', lineHeight: '1.6' }}>{existingReview.comment}</div>
+                    </div>
+
+                    {/* Images */}
+                    {existingReview.images && existingReview.images.length > 0 && (
+                      <div>
+                        <label style={{ fontSize: '14px', color: '#666', marginBottom: '8px', display: 'block' }}>Photos</label>
+                        <div className={styles.imagePreviews}>
+                          {existingReview.images.map((imageUrl, index) => (
+                            <div key={index} className={styles.imagePreviewItem}>
+                              <img src={imageUrl} alt={`Review ${index + 1}`} className={styles.previewImage} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Status */}
+                    <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #dee2e6' }}>
+                      <span style={{
+                        fontSize: '12px',
+                        color: existingReview.status === 'approved' ? '#4CAF50' : existingReview.status === 'pending' ? '#FF9800' : '#F44336',
+                        fontWeight: '600',
+                        textTransform: 'uppercase'
+                      }}>
+                        Status: {existingReview.status}
+                      </span>
+                      <span style={{ fontSize: '12px', color: '#999', marginLeft: '15px' }}>
+                        {formatDate(existingReview.createdAt)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </>
-            ) : (
-              <>
-                 <h3 className={styles.cardTitle}>
-                   {isEditMode ? 'Edit Your Review' : 'Write a review'}
-                 </h3>
-                <div className={styles.reviewForm}>
-              <div className={styles.ratingSection}>
-                <label className={styles.formLabel}>Rating</label>
-                <div className={styles.starRating}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      key={star}
-                      className={`${styles.star} ${star <= rating ? styles.starFilled : styles.starEmpty}`}
-                      onClick={() => handleRatingChange(star)}
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-                      </svg>
-                    </button>
+                </>
+              ) : (
+                <>
+                  <div className={styles.reviewForm}>
+                    <div className={styles.reviewFormColumns}>
+                      {/* Left Column: Name, Rating, Upload Photo */}
+                      <div className={styles.reviewFormLeft}>
+                        <div className={styles.formField}>
+                          <input
+                            type="text"
+                            name="name"
+                            value={reviewData.name}
+                            onChange={handleInputChange}
+                            className={styles.formInput}
+                            placeholder="Name"
+                          />
+                        </div>
+
+                        <div className={styles.ratingRow}>
+                          <label className={styles.ratingLabel}>Rating</label>
+                          <div className={styles.starRating}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                className={`${styles.star} ${star <= rating ? styles.starFilled : styles.starEmpty}`}
+                                onClick={() => handleRatingChange(star)}
+                                type="button"
+                              >
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
+                                </svg>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div className={styles.fileSizeNote}>
+                          * Images above 5MB not allowed
+                        </div>
+                        <div className={styles.formField}>
+                          <div className={styles.uploadRow}>
+                            <label className={styles.uploadLabel}>Upload Photo</label>
+                            <div
+                              className={styles.uploadButtonContainer}
+                              onClick={() => {
+                                const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
+                                const totalImages = imageFiles.length + existingImageCount;
+                                if (totalImages < 5) {
+                                  document.getElementById('photo-upload').click();
+                                }
+                              }}
+                              style={{
+                                cursor: (() => {
+                                  const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
+                                  const totalImages = imageFiles.length + existingImageCount;
+                                  return totalImages < 5 ? 'pointer' : 'not-allowed';
+                                })()
+                              }}
+                            >
+                              <input
+                                type="file"
+                                id="photo-upload"
+                                name="photo"
+                                accept="image/*"
+                                multiple
+                                onChange={handleFileChange}
+                                style={{ display: 'none' }}
+                              />
+                              <button
+                                type="button"
+                                className={styles.uploadButton}
+                                style={{
+                                  cursor: (() => {
+                                    const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
+                                    const totalImages = imageFiles.length + existingImageCount;
+                                    return totalImages < 5 ? 'pointer' : 'not-allowed';
+                                  })()
+                                }}
+                                disabled={(() => {
+                                  const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
+                                  const totalImages = imageFiles.length + existingImageCount;
+                                  return totalImages >= 5;
+                                })()}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M7 17L17 7M17 7H7M17 7V17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                          {/* File size remark */}
+
+                          {/* Image Previews */}
+                          {imagePreviews.length > 0 && (
+                            <div className={styles.imagePreviews}>
+                              {imagePreviews.map((preview, index) => {
+                                const isExistingImage = typeof preview === 'string' && preview.startsWith('http');
+                                return (
+                                  <div key={index} className={styles.imagePreviewItem}>
+                                    <img src={preview} alt={`Preview ${index + 1}`} className={styles.previewImage} />
+                                    {isExistingImage && (
+                                      <span className={styles.existingImageBadge}>Existing</span>
+                                    )}
+                                    <button
+                                      type="button"
+                                      className={styles.removeImageButton}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleRemoveImage(index);
+                                      }}
+                                    >
+                                      ✕
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right Column: Review */}
+                      <div className={styles.reviewFormRight}>
+                        <div className={styles.formField}>
+                          {/* <label className={styles.fieldLabel}>Comment</label> */}
+                          <textarea
+                            name="review"
+                            value={reviewData.review}
+                            onChange={handleInputChange}
+                            className={styles.formTextarea}
+                            placeholder="Write a comment"
+                            rows="10"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className={styles.reviewButtons}>
+                      <button
+                        className={styles.cancelButton}
+                        onClick={handleCancelReview}
+                        disabled={reviewLoading}
+                      >
+                        {isEditMode ? 'Back' : 'Cancel'}
+                      </button>
+                      <button
+                        className={styles.submitButton}
+                        onClick={handleSubmitReview}
+                        disabled={reviewLoading || rating === 0}
+                      >
+                        {reviewLoading ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Order Summary Card */}
+            <div className={styles.orderSummaryCard}>
+              <h3 className={styles.cardTitle}>Order Summary</h3>
+
+              {/* Order Items - Show all items */}
+              {orderData.items && orderData.items.length > 0 && (
+                <div className={styles.productsList}>
+                  {orderData.items.map((item, index) => (
+                    <div key={index} className={styles.productSection}>
+                      <div className={styles.productMiddleSection}>
+                        <div className={styles.productImageContainer}>
+                          <Image
+                            src={item.image || '/iphone.jpg'}
+                            alt={item.name}
+                            width={60}
+                            height={60}
+                            className={styles.productImg}
+                          />
+                        </div>
+                        <div className={styles.productDetails}>
+                          <h6 className={styles.productBrand}>{item.brand || 'Product'}</h6>
+                          <h4 className={styles.productName}>{item.name}</h4>
+                          <p className={styles.productQuantity}>Qty: {item.quantity}</p>
+                        </div>
+                      </div>
+                      <div className={styles.productRightSection}>
+                        <div className={styles.productNumber}>#{index + 1}</div>
+                        {(() => {
+                          const priceDetails = getItemPriceDetails(item, orderData);
+                          const hasDiscount = priceDetails.discountAmount > 0;
+                          
+                          return (
+                            <div className={styles.productPriceContainer}>
+                              {hasDiscount ? (
+                                <>
+                                  <p className={styles.originalPrice}>
+                                    AED {priceDetails.originalPrice.toFixed(2)}
+                                  </p>
+                                  <p className={styles.discountType}>
+                                    {formatDiscountType(priceDetails.discountType)} ({priceDetails.discountPercentage}% OFF)
+                                  </p>
+                                  <p className={styles.discountAmount}>
+                                    - AED {priceDetails.discountAmount.toFixed(2)}
+                                  </p>
+                                  <p className={styles.productPrice}>
+                                    AED {priceDetails.discountedPrice.toFixed(2)}
+                                  </p>
+                                </>
+                              ) : (
+                                <p className={styles.productPrice}>
+                                  AED {priceDetails.discountedPrice.toFixed(2)}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </div>
-
-              <div className={styles.formGroup}>
-                <input
-                  type="text"
-                  name="name"
-                  value={reviewData.name}
-                  onChange={handleInputChange}
-                  className={styles.formInput}
-                  placeholder="Enter your name"
-                />
-              </div>
-
-              <div className={styles.formGroup} style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-                {/* File size remark - above input */}
-                <div style={{ 
-                  marginBottom: '8px', 
-                  fontSize: '12px', 
-                  color: '#666',
-                  fontStyle: 'italic'
-                }}>
-                  * Images above 5MB not allowed
-                </div>
-                
-                <div 
-                  className={styles.uploadInput}
-                  onClick={() => {
-                    const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
-                    const totalImages = imageFiles.length + existingImageCount;
-                    if (totalImages < 5) {
-                      document.getElementById('photo-upload').click();
-                    }
-                  }}
-                  style={{ 
-                    cursor: (() => {
-                      const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
-                      const totalImages = imageFiles.length + existingImageCount;
-                      return totalImages < 5 ? 'pointer' : 'not-allowed';
-                    })()
-                  }}
-                >
-                  <input
-                    type="file"
-                    id="photo-upload"
-                    name="photo"
-                    accept="image/*"
-                    multiple
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
-                  />
-                  <input
-                    type="text"
-                    value={(() => {
-                      const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
-                      const totalImages = imageFiles.length + existingImageCount;
-                      if (totalImages > 0) {
-                        return `${totalImages} image(s) selected (${existingImageCount} existing, ${imageFiles.length} new)`;
-                      }
-                      return '';
-                    })()}
-                    className={styles.formInput}
-                    placeholder="Choose file (max 3 images)"
-                    readOnly
-                    style={{ 
-                      cursor: (() => {
-                        const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
-                        const totalImages = imageFiles.length + existingImageCount;
-                        return totalImages < 5 ? 'pointer' : 'not-allowed';
-                      })()
-                    }}
-                  />
-                  <button 
-                    type="button"
-                    className={styles.uploadButton}
-                    style={{ 
-                      cursor: (() => {
-                        const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
-                        const totalImages = imageFiles.length + existingImageCount;
-                        return totalImages < 5 ? 'pointer' : 'not-allowed';
-                      })()
-                    }}
-                    disabled={(() => {
-                      const existingImageCount = imagePreviews.filter(img => typeof img === 'string' && img.startsWith('http')).length;
-                      const totalImages = imageFiles.length + existingImageCount;
-                      return totalImages >= 5;
-                    })()}
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </button>
-                </div>
-                
-                {/* Image Previews - below input */}
-                {imagePreviews.length > 0 && (
-                  <div className={styles.imagePreviews}>
-                    {imagePreviews.map((preview, index) => {
-                      const isExistingImage = typeof preview === 'string' && preview.startsWith('http');
-                      return (
-                        <div key={index} className={styles.imagePreviewItem}>
-                          <img src={preview} alt={`Preview ${index + 1}`} className={styles.previewImage} />
-                          {isExistingImage && (
-                            <span className={styles.existingImageBadge}>Existing</span>
-                          )}
-                          <button
-                            type="button"
-                            className={styles.removeImageButton}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveImage(index);
-                            }}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              <div className={styles.formGroup}>
-                <textarea
-                  name="review"
-                  value={reviewData.review}
-                  onChange={handleInputChange}
-                  className={styles.formTextarea}
-                  placeholder="Write your review here..."
-                  rows="4"
-                />
-                </div>
-
-              <div className={styles.reviewButtons}>
-                <button 
-                  className={styles.cancelButton} 
-                  onClick={handleCancelReview}
-                  disabled={reviewLoading}
-                >
-                  {isEditMode ? 'Back' : 'Cancel'}
-                </button>
-                <button 
-                  className={styles.submitButton} 
-                  onClick={handleSubmitReview}
-                  disabled={reviewLoading || rating === 0}
-                >
-                  {reviewLoading ? (isEditMode ? 'Updating...' : 'Submitting...') : (isEditMode ? 'Update' : 'Submit')}
-                </button>
-              </div>
-            </div>
-              </>
-            )}
-          </div>
-
-          {/* Order Summary Card */}
-          <div className={styles.orderSummaryCard}>
-            <h3 className={styles.cardTitle}>Order Summary</h3>
-            
-            {/* Order Items */}
-            {orderData.items && orderData.items.map((item, index) => (
-              <div key={index} className={styles.productSection}>
-                <div className={styles.productImage}>
-                  <Image
-                    src={item.image || '/iphone.jpg'}
-                    alt={item.name}
-                    width={60}
-                    height={60}
-                    className={styles.productImg}
-                  />
-                </div>
-                <div className={styles.productDetails}>
-                  <h6 className={styles.productBrand}>Product</h6>
-                  <h4 className={styles.productName}>{item.name}</h4>
-                  <p className={styles.productQuantity}>Qty: {item.quantity}</p>
-                  <p className={styles.productPrice}>{'AED'} {(Number(item?.unitPrice ?? item?.price ?? 0)).toFixed(2)}</p>
-                </div>
-              </div>
-            ))}
-
-            <div className={styles.costBreakdown}>
-              {/* Subtotal from product prices */}
-              <div className={styles.costItem}>
-                <span className={styles.costLabel}>Subtotal</span>
-                <span className={styles.costValue}>AED {getItemsSubtotal(orderData).toFixed(2)}</span>
-              </div>
-              
-              {/* Coupon Discount */}
-              {orderData.couponDiscountAmount > 0 && orderData.discountType !== 'gig_completion' && (
-                <div className={styles.costItem}>
-                  <span className={styles.costLabel}>
-                    Coupon Discount {orderData.couponCode ? `(${orderData.couponCode})` : ''}
-                  </span>
-                  <span className={styles.costValue} style={{ color: '#4CAF50' }}>
-                    - AED {Number(orderData.couponDiscountAmount).toFixed(2)}
-                  </span>
-                </div>
               )}
-              
-              {/* Sales Gig Discount */}
-              {orderData.discountType === 'gig_completion' && orderData.discount > 0 && (
+
+              <div className={styles.costBreakdown}>
+                {/* Subtotal from discounted product prices */}
                 <div className={styles.costItem}>
-                  <span className={styles.costLabel}>
-                    Sales Gig Discount {orderData.couponCode ? `(${orderData.couponCode})` : ''}
-                  </span>
-                  <span className={styles.costValue} style={{ color: '#4CAF50' }}>
-                    - AED {Number(orderData.discount).toFixed(2)}
-                  </span>
+                  <span className={styles.costLabel}>Subtotal</span>
+                  <span className={styles.costValue}>AED {getDiscountedItemsSubtotal(orderData).toFixed(2)}</span>
                 </div>
-              )}
-              
-              {/* Qoyns Discount */}
-              {orderData.qoynsDiscountAmount > 0 && (
+
+                {/* Shipping */}
                 <div className={styles.costItem}>
-                  <span className={styles.costLabel}>
-                    Qoyns Discount {orderData.qoynsUsed ? `(${orderData.qoynsUsed} Qoyns)` : ''}
-                  </span>
-                  <span className={styles.costValue} style={{ color: '#4CAF50' }}>
-                    - AED {Number(orderData.qoynsDiscountAmount).toFixed(2)}
-                  </span>
-                </div>
-              )}
-              
-              {/* Subtotal after discount */}
-              {((orderData.couponDiscountAmount > 0 && orderData.discountType !== 'gig_completion') || 
-                (orderData.discountType === 'gig_completion' && orderData.discount > 0) || 
-                orderData.qoynsDiscountAmount > 0) && (
-                <div className={styles.costItem}>
-                  <span className={styles.costLabel}>Subtotal after discount</span>
+                  <span className={styles.costLabel}>Shipping</span>
                   <span className={styles.costValue}>
-                    AED {(
-                      getItemsSubtotal(orderData) -
-                      (orderData.qoynsDiscountAmount || 0) -
-                      (orderData.discountType === 'gig_completion' ? (orderData.discount || 0) : (orderData.couponDiscountAmount || 0))
-                    ).toFixed(2)}
+                    AED {((orderData.shippingCost === 0 || !orderData.shippingCost) ? 9.00 : Number(orderData.shippingCost)).toFixed(2)}
                   </span>
                 </div>
-              )}
-              
-              {/* VAT from API */}
-              <div className={styles.costItem}>
-                <span className={styles.costLabel}>VAT (5%)</span>
-                <span className={styles.costValue}>AED {(orderData.vat || 0).toFixed(2)}</span>
-              </div>
-              
-              {/* Shipping from API */}
-              <div className={styles.costItem}>
-                <span className={styles.costLabel}>Shipping</span>
-                <span className={styles.costValue}>AED {((orderData.shippingCost || 0) > 0 ? orderData.shippingCost : 9).toFixed(2)}</span>
-              </div>
-              
-              {/* Order Total (before cash wallet) */}
-              <div className={styles.costItem}>
-                <span className={styles.costLabel}>Order Total</span>
-                <span className={styles.costValue}>
-                  AED {(
-                    getItemsSubtotal(orderData) +
-                    (orderData.vat || 0) +
-                    ((orderData.shippingCost || 0) > 0 ? orderData.shippingCost : 9) -
-                    (orderData.qoynsDiscountAmount || 0) -
-                    (orderData.discountType === 'gig_completion' ? (orderData.discount || 0) : (orderData.couponDiscountAmount || 0))
-                  ).toFixed(2)}
-                </span>
-              </div>
-              
-              {/* Cash Wallet Amount */}
-              {orderData.cashWalletAmount > 0 && (
-                <div className={styles.costItem}>
-                  <span className={styles.costLabel}>Cash Wallet</span>
-                  <span className={styles.costValue} style={{ color: '#4CAF50' }}>
-                    - AED {Number(orderData.cashWalletAmount).toFixed(2)}
-                  </span>
-                </div>
-              )}
-              
-              {/* Amount Paid (final) */}
-              <div className={`${styles.costItem} ${styles.totalItem}`}>
-                <span className={styles.costLabel}>Amount Paid</span>
-                <span className={styles.totalValue}>
-                  AED {(orderData.totalAmount || 0).toFixed(2)}
-                </span>
-              </div>
-            </div>
 
-            <div className={styles.summaryButtons}>
-              <button 
-                className={styles.buyAgainButton}
-                onClick={handleBuyAgain}
-              >
-                Buy Again
-              </button>
-              <button className={styles.downloadInvoiceButton}>
-                Download Invoice
-              </button>
+                {/* VAT - Use order data VAT */}
+                <div className={styles.costItem}>
+                  <span className={styles.costLabel}>VAT</span>
+                  <span className={styles.costValue}>
+                    AED {(Number(orderData.vat) || 0).toFixed(2)}
+                  </span>
+                </div>
+
+                {/* Discount - Only for qoyns and cash wallet, NOT for gig_completion */}
+                {(() => {
+                  const qoynsDiscount = orderData.qoynsDiscountAmount || 0;
+                  const cashWalletDiscount = orderData.cashWalletAmount || 0;
+                  const otherDiscount = (orderData.discountType && orderData.discountType !== 'gig_completion' && orderData.discount > 0) ? (orderData.discount || 0) : 0;
+                  const totalDiscount = qoynsDiscount + cashWalletDiscount + otherDiscount;
+                  const discountType = orderData.discountType;
+                  const discount = orderData.discount;
+                  
+                  if (totalDiscount > 0) {
+                    return (
+                      <div className={styles.costItem}>
+                        <span className={styles.costLabel}> Discount</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                          <span className={styles.discountValue}>
+                            - AED {discount.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+                {/* Order Total */}
+                <div className={`${styles.costItem} ${styles.totalItem}`}>
+                  <span className={styles.costLabel}>Order Total</span>
+                  <span className={styles.totalValue}>
+                    AED {(Number(orderData.totalAmount) || (
+                      getDiscountedItemsSubtotal(orderData) +
+                      (Number(orderData.vat) || 0) +
+                      ((orderData.shippingCost === 0 || !orderData.shippingCost) ? 9.00 : Number(orderData.shippingCost)) -
+                      (orderData.qoynsDiscountAmount || 0) -
+                      (orderData.cashWalletAmount || 0)
+                    )).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.summaryButtons}>
+                <button
+                  className={styles.buyAgainButton}
+                  onClick={handleBuyAgain}
+                >
+                  Buy Again
+                </button>
+                <button className={styles.downloadInvoiceButton}>
+                  Download Invoice
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
     </div>
   );
 };

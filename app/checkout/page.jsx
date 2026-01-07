@@ -175,6 +175,40 @@ const getAddressFromCoordinates = async (latitude, longitude) => {
   }
 }
 
+// Helper function to calculate days remaining until expiry
+const calculateDaysRemaining = (expiryDate) => {
+  if (!expiryDate) return null
+  
+  try {
+    const expiry = new Date(expiryDate)
+    const now = new Date()
+    const diffTime = expiry - now
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    return diffDays > 0 ? diffDays : 0
+  } catch (error) {
+    console.error('Error calculating days remaining:', error)
+    return null
+  }
+}
+
+// Helper function to format expiry date
+const formatExpiryDate = (expiryDate) => {
+  if (!expiryDate) return null
+  
+  try {
+    const date = new Date(expiryDate)
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
+  } catch (error) {
+    console.error('Error formatting expiry date:', error)
+    return null
+  }
+}
+
 export default function CheckoutPage() {
   const dispatch = useDispatch()
   const { show: showToast } = useToast()
@@ -225,7 +259,7 @@ export default function CheckoutPage() {
   const userRole = user?.role || authUser?.role
 
   // Wallet state
-  const { userQoynBalance, userBalance, storeCurrency, loading: walletLoading, redeemableCashUsd, redeemableCashAed, cashLoading } = useSelector(state => state.wallet)
+  const { userQoynBalance, userBalance, storeCurrency, qoynExpiryDate, loading: walletLoading, redeemableCashUsd, redeemableCashAed, cashLoading } = useSelector(state => state.wallet)
   
   // Debug: Log user role for troubleshooting (after wallet state is declared)
   useEffect(() => {
@@ -1261,9 +1295,21 @@ export default function CheckoutPage() {
           phone: selectedAddress.phone,
           email: selectedAddress.email
         },
+        shippingAddress: shippingSameAsDelivery ? {
+          fullName: selectedAddress.fullName,
+          addressLine1: selectedAddress.addressLine1,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          postalCode: selectedAddress.postalCode,
+          country: selectedAddress.country,
+          phone: selectedAddress.phone,
+          email: selectedAddress.email
+        } : null,
         shippingMethod: selectedShippingMethod?.id || selectedShippingMethod?.methodId || 'standard',
         shippingMethodName: selectedShippingMethod?.name || selectedShippingMethod?.methodName || 'Standard Delivery',
-        shippingMethodCost: shippingCost
+        shippingMethodTime: selectedShippingMethod?.deliveryTime || selectedShippingMethod?.estimatedDelivery || selectedShippingMethod?.time,
+        shippingMethodCost: shippingCost,
+        shippingCost: shippingCost
       }
 
       console.log('📡 [CASH WALLET PAYMENT] Calling checkout API:', checkoutPayload)
@@ -1609,7 +1655,20 @@ export default function CheckoutPage() {
               <div className={styles.walletInfo}>
                 <div className={styles.walletBalance}>{displayedQoynBalance.toLocaleString()}</div>
               </div>
-              <div className={styles.walletExpiry}>Expires in 29 Days</div>
+              <div className={styles.walletExpiry}>
+                {(() => {
+                  const daysRemaining = calculateDaysRemaining(qoynExpiryDate)
+                  const formattedExpiryDate = formatExpiryDate(qoynExpiryDate)
+                  
+                  if (daysRemaining !== null && formattedExpiryDate) {
+                    return `Expires on ${formattedExpiryDate} (${daysRemaining} ${daysRemaining === 1 ? 'Day' : 'Days'} remaining)`
+                  } else if (daysRemaining !== null) {
+                    return `Expires in ${daysRemaining} ${daysRemaining === 1 ? 'Day' : 'Days'}`
+                  } else {
+                    return 'No expiry date available'
+                  }
+                })()}
+              </div>
             </div>
 
 
@@ -2274,7 +2333,9 @@ export default function CheckoutPage() {
                 <div className={styles.walletExpiry}>
                   {qoynValidation.walletUnlocked && qoynValidation.eligibleForDiscount 
                     ? `You can get Maximum of ${qoynValidation.maxDiscountInStoreCurrency} ${qoynValidation.storeCurrency} Discount if you spend ${qoynValidation.maxDiscountSpendInStoreCurrency} ${qoynValidation.storeCurrency}. Avail this Offer Now!`
-                    : 'Minimum order value is AED 100 — you must spend at least AED 100 to apply Qoyns.'
+                    : qoynValidation.totalQoynBalance === 0 && qoynValidation.message
+                      ? qoynValidation.message
+                      : 'Minimum order value is AED 100 — you must spend at least AED 100 to apply Qoyns.'
                   }
                 </div>
               </div>

@@ -84,6 +84,7 @@ const initialState = {
   userQoynBalance: 0,
   storeCurrency: 'AED',
   userBalance: 0,
+  qoynExpiryDate: null,
   loading: false,
   error: null,
   success: false,
@@ -105,6 +106,7 @@ const walletSlice = createSlice({
       state.userQoynBalance = 0
       state.userBalance = 0
       state.storeCurrency = 'AED'
+      state.qoynExpiryDate = null
       state.error = null
     },
     updateQoynBalance: (state, action) => {
@@ -129,6 +131,7 @@ const walletSlice = createSlice({
           state.userQoynBalance = action.payload.data.userQoynBalance || 0
           state.storeCurrency = action.payload.data.storeCurrency || 'AED'
           state.userBalance = action.payload.data.userBalance || 0
+          state.qoynExpiryDate = action.payload.data.qoynExpiryDate || null
         }
         state.error = null
       })

@@ -542,6 +542,46 @@
   }
 }
 
+.paginationControls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 32px;
+  margin-bottom: 32px;
+  padding: 24px 0;
+}
+
+.paginationButton {
+  min-width: 40px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.paginationButton:hover:not(:disabled) {
+  border-color: #0082FF;
+  color: #0082FF;
+  background: #E5F0FF;
+}
+
+.paginationButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.paginationButton.active {
+  background: #0082FF;
+  color: #ffffff;
+  border-color: #0082FF;
+}
+
 @media (max-width: 600px) {
   .title {
     font-size: 22px;
@@ -555,5 +595,16 @@
   .loginGrid {
     grid-template-columns: 1fr;
     gap: 8px;
+  }
+
+  .paginationControls {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .paginationButton {
+    min-width: 36px;
+    padding: 6px 10px;
+    font-size: 12px;
   }
 }

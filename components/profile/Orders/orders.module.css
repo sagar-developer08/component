@@ -1,38 +1,59 @@
 .ordersList {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 24px 0px;
+  gap: 0;
+  padding: 0;
 }
 
 .orderItem {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   background: #fff;
   border-radius: 0;
   box-shadow: none;
   border: none;
-  padding: 0;
-  min-height: 120px;
-  padding-bottom: 24px;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 24px 0;
+  min-height: auto;
+  gap: 20px;
 }
 
 .orderImageSection {
   width: 150px;
   min-width: 150px;
+  height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fafafa;
-  border: 1px solid #eee;
+  background: #fff;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .orderImage {
-  width: 140px;
-  height: 140px;
-  object-fit: contain;
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
   border-radius: 8px;
   background: #fff;
+}
+
+.imageBadge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: #0082FF;
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
 }
 
 .orderInfoSection {
@@ -40,49 +61,97 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 24px 0 24px 32px;
-  gap: 8px;
+  gap: 12px;
+  padding: 0;
 }
 
-.orderBrand {
-  font-size: 14px;
-  color: #000;
-  font-weight: 600;
-  margin-bottom: 2px;
+.orderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.orderName {
-  font-size: 18px;
-  font-weight: 600;
+.orderProducts {
+  font-size: 16px;
   color: #000;
-  margin-bottom: 2px;
+  font-weight: 600;
+  margin: 0;
+  cursor: pointer;
+}
+
+.productsLabel {
+  text-decoration: underline;
+}
+
+.productsNumber {
+  text-decoration: underline;
+}
+
+.orderNumber {
+  font-size: 16px;
+  color: #000;
+  font-weight: 600;
+  margin: 0;
+}
+
+.orderStatus {
+  font-size: 16px;
+  color: #000;
+  font-weight: 600;
+  margin: 0;
+  text-transform: capitalize;
 }
 
 .orderPrice {
   font-size: 16px;
   font-weight: 600;
   color: #000;
-  margin-bottom: 8px;
-}
-
-.orderStatus {
-  font-size: 14px;
-  color: #aaa;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.orderRightSection {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: flex-end;
-  flex: 1;
-  padding: 24px 0 32px 24px;
+  margin: 0;
 }
 
 .orderDate {
-  font-size: 14px;
-  color: #aaa;
+  font-size: 16px;
+  color: #000;
+  font-weight: 600;
+  margin: 0;
+}
+
+.orderGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: none;
+  border-radius: 0;
+  background: #fff;
+  overflow: hidden;
+  margin-bottom: 0;
+}
+
+.orderGroupHeader {
+  width: 100%;
+}
+
+.orderGroupContent {
+  display: flex;
+  flex-direction: column;
+  border-top: none;
+  background: #fafafa;
+  padding-top: 12px;
+}
+
+.orderGroupContent .orderItem {
+  padding-left: 12px;
+  padding-right: 12px;
+  margin-bottom: 12px;
+}
+
+.orderGroupContent .orderItem:last-child {
+  margin-bottom: 0;
+  padding-bottom: 12px;
+}
+
+.paymentStatus {
+  font-size: 12px;
   font-weight: 600;
 }
