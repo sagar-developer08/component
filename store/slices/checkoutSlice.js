@@ -128,7 +128,15 @@ export const createStripePaymentIntent = createAsyncThunk(
           }
         }),
         total: orderData.total,
-        currency: 'usd'
+        currency: 'usd',
+        // Include shipping information
+        shippingMethodCost: orderData.shippingMethodCost || orderData.shipping || 0,
+        shippingCost: orderData.shippingMethodCost || orderData.shipping || 0,
+        shippingMethod: orderData.shippingMethod,
+        shippingMethodName: orderData.shippingMethodName,
+        shippingMethodTime: orderData.shippingMethodTime,
+        deliveryAddress: orderData.deliveryAddress,
+        shippingAddress: orderData.shippingAddress
       }
 
       console.log('🔗 Endpoint:', payment.stripeCheckout)
@@ -395,7 +403,8 @@ const checkoutSlice = createSlice({
       qoynExpiryDate: null,
       storeCurrency: 'AED',
       isValidationLoading: false,
-      validationError: null
+      validationError: null,
+      message: null
     },
     
     // Coupons
@@ -624,6 +633,10 @@ const checkoutSlice = createSlice({
             state.qoynValidation.qoynExpiryDate = data.qoyn.qoynExpiryDate
             state.qoynValidation.storeCurrency = data.qoyn.storeCurrency
           }
+        }
+        // Store the message from API response
+        if (action.payload.message) {
+          state.qoynValidation.message = action.payload.message
         }
       })
       .addCase(validateQoynRedemption.rejected, (state, action) => {

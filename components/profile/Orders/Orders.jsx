@@ -1,17 +1,32 @@
 'use client'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import styles from './orders.module.css'
+import orderHistoryStyles from '../../../app/orderhistory/orderHistory.module.css'
 
 export default function Orders({ orders }) {
   const router = useRouter()
+  const [expandedGroups, setExpandedGroups] = useState(new Set())
+  const [expandedOrders, setExpandedOrders] = useState(new Set())
+  const [selectedOrder, setSelectedOrder] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
+      day: 'numeric',
+      month: 'long',
       year: 'numeric'
     })
+  }
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US').format(price.toFixed(2))
+  }
+
+  const getTotalProductsCount = (order) => {
+    if (!order.items || !Array.isArray(order.items)) return 0
+    return order.items.reduce((total, item) => total + (item.quantity || 1), 0)
   }
 
   const getStatusColor = (status) => {
@@ -65,11 +80,200 @@ export default function Orders({ orders }) {
     }
   }
 
+  // Compute subtotal from items' unit prices (excluding taxes), respecting quantity
+  const getItemsSubtotal = (order) => {
+    if (!order || !Array.isArray(order.items)) return 0;
+    const sum = order.items.reduce((acc, it) => {
+      const unit = Number(it?.unitPrice ?? it?.price ?? 0) || 0;
+      const qty = Math.max(1, Number(it?.quantity) || 1);
+      return acc + unit * qty;
+    }, 0);
+    return Number(sum.toFixed(2));
+  };
+
+  // Format discount type for display
+  const formatDiscountType = (discountType) => {
+    if (!discountType) return '';
+    return discountType
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ') + ' Discount';
+  };
+
+  // Calculate discounted price and discount amount for an item when discountType is gig_completion
+  const getItemPriceDetails = (item, order) => {
+    const basePrice = Number(item?.unitPrice ?? item?.price ?? 0) || 0;
+    
+    // If discountType is gig_completion, calculate discounted price
+    if (order?.discountType === 'gig_completion' && order?.discount > 0) {
+      const totalDiscount = Number(order.discount) || 0;
+      const orderSubtotal = getItemsSubtotal(order);
+      
+      if (orderSubtotal > 0) {
+        // Calculate discount proportion for this item
+        const itemTotal = basePrice * (Number(item?.quantity) || 1);
+        const discountProportion = itemTotal / orderSubtotal;
+        const itemDiscount = totalDiscount * discountProportion;
+        const discountPerUnit = itemDiscount / (Number(item?.quantity) || 1);
+        const discountedPrice = basePrice - discountPerUnit;
+        const discountPercentage = basePrice > 0 ? ((discountPerUnit / basePrice) * 100) : 0;
+        
+        return {
+          originalPrice: basePrice,
+          discountAmount: Number(discountPerUnit.toFixed(2)),
+          discountedPrice: Math.max(0, Number(discountedPrice.toFixed(2))),
+          discountPercentage: Number(discountPercentage.toFixed(2)),
+          discountType: order.discountType
+        };
+      }
+    }
+    
+    return {
+      originalPrice: basePrice,
+      discountAmount: 0,
+      discountedPrice: basePrice,
+      discountPercentage: 0,
+      discountType: null
+    };
+  };
+
   const handleOrderClick = (order, item) => {
     // Navigate to order history page with order and specific product
     const pid = item?.productId || item?.id || ''
     const url = pid ? `/orderhistory?orderId=${order._id}&productId=${encodeURIComponent(pid)}` : `/orderhistory?orderId=${order._id}`
     router.push(url)
+  }
+
+  const handleProductsClick = (order, e) => {
+    e.stopPropagation()
+    // Open modal with order summary
+    setSelectedOrder(order)
+    setIsModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setSelectedOrder(null)
+  }
+
+  const toggleGroup = (groupId) => {
+    setExpandedGroups(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(groupId)) {
+        newSet.delete(groupId)
+      } else {
+        newSet.add(groupId)
+      }
+      return newSet
+    })
+  }
+
+  const toggleOrder = (orderId) => {
+    setExpandedOrders(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId)
+      } else {
+        newSet.add(orderId)
+      }
+      return newSet
+    })
+  }
+
+  // Group orders by paymentIntentId or by close createdAt timestamps (within 2 minutes)
+  const groupedOrders = useMemo(() => {
+    if (!orders || orders.length === 0) return []
+    
+    const groups = []
+    const processed = new Set()
+    
+    orders.forEach((order, index) => {
+      if (processed.has(index)) return
+      
+      const group = [order]
+      processed.add(index)
+      
+      // Try to find orders with same paymentIntentId
+      if (order.paymentIntentId) {
+        orders.forEach((otherOrder, otherIndex) => {
+          if (otherIndex !== index && !processed.has(otherIndex) && 
+              otherOrder.paymentIntentId === order.paymentIntentId) {
+            group.push(otherOrder)
+            processed.add(otherIndex)
+          }
+        })
+      }
+      
+      // If no matches by paymentIntentId, try grouping by close timestamps (within 2 minutes)
+      if (group.length === 1 && order.createdAt) {
+        const orderTime = new Date(order.createdAt).getTime()
+        orders.forEach((otherOrder, otherIndex) => {
+          if (otherIndex !== index && !processed.has(otherIndex) && otherOrder.createdAt) {
+            const otherTime = new Date(otherOrder.createdAt).getTime()
+            const timeDiff = Math.abs(orderTime - otherTime)
+            // Group if within 2 minutes (120000 ms) and same user
+            if (timeDiff <= 120000 && order.userId === otherOrder.userId) {
+              group.push(otherOrder)
+              processed.add(otherIndex)
+            }
+          }
+        })
+      }
+      
+      groups.push(group)
+    })
+    
+    return groups
+  }, [orders])
+
+  const renderOrderItem = (order, item, idx, isGrouped = false) => {
+    const totalProducts = getTotalProductsCount(order)
+    const productCount = totalProducts.toString().padStart(2, '0')
+    
+    return (
+      <div 
+        key={`${order._id}_${idx}`}
+        className={styles.orderItem}
+      >
+        <div className={styles.orderImageSection}>
+          {item ? (
+            <Image
+              src={item.image || '/iphone.jpg'}
+              alt={item.name || 'Product'}
+              width={150}
+              height={150}
+              className={styles.orderImage}
+            />
+          ) : (
+            <div className={styles.orderImage} style={{ backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              No Image
+            </div>
+          )}
+        </div>
+        <div className={styles.orderInfoSection}>
+          <div className={styles.orderRow}>
+            <div className={styles.orderStatus}>{order.status}</div>
+            <div className={styles.orderNumber} onClick={(e) => {
+              e.stopPropagation()
+              handleOrderClick(order, item)
+            }}>ORDER #{order.orderNumber}</div>
+          </div>
+          <div className={styles.orderRow}>
+            <div className={styles.orderDate}>{formatDate(order.createdAt)}</div>
+            <div className={styles.orderPrice}>AED {formatPrice(order.totalAmount || 0)}</div>
+          </div>
+          <div className={styles.orderProducts}>
+            <span 
+              className={styles.productsLabel}
+              onClick={(e) => handleProductsClick(order, e)}
+              style={{ cursor: 'pointer' }}
+            >
+              Products
+            </span> : <span className={styles.productsNumber}>{productCount}</span>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Loading and error states are now handled in the parent ProfilePage component
@@ -85,123 +289,289 @@ export default function Orders({ orders }) {
   }
 
   return (
-    <div className={styles.ordersContainer}>
-      {/* <div className={styles.ordersSummary} style={{ 
-        padding: '16px', 
-        backgroundColor: '#f8f9fa', 
-        borderRadius: '8px', 
-        marginBottom: '20px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>Your Orders</h3>
-          <p style={{ margin: '4px 0 0 0', color: '#666', fontSize: '14px' }}>
-            {orders.length} order{orders.length !== 1 ? 's' : ''} found
-          </p>
+    <>
+      <div className={styles.ordersContainer}>
+        <div className={styles.ordersList}>
+        {groupedOrders.map((group, groupIndex) => {
+          const groupId = `group-${groupIndex}`
+          const isExpanded = expandedGroups.has(groupId)
+          const firstOrder = group[0]
+          const additionalCount = group.length - 1
+          
+          // If only one order in group, render it with first item + expandable
+          if (group.length === 1) {
+            const orderItems = firstOrder.items || []
+            const isOrderExpanded = expandedOrders.has(firstOrder._id)
+            const additionalItemsCount = orderItems.length - 1
+            
+            if (orderItems.length === 0) {
+              return (
+                <div key={groupId} className={styles.orderGroup}>
+                  <div className={styles.orderItem}>
+                    <div className={styles.orderInfoSection}>
+                      <div className={styles.orderRow}>
+                        <div className={styles.orderStatus}>{firstOrder.status}</div>
+                        <div 
+                          className={styles.orderNumber}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleOrderClick(firstOrder, null)
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          ORDER #{firstOrder.orderNumber}
+                        </div>
+                      </div>
+                      <div className={styles.orderRow}>
+                        <div className={styles.orderDate}>{formatDate(firstOrder.createdAt)}</div>
+                        <div className={styles.orderPrice}>AED {formatPrice(firstOrder.totalAmount || 0)}</div>
+                      </div>
+                      <div className={styles.orderProducts}>
+                        <span 
+                          className={styles.productsLabel}
+                          onClick={(e) => handleProductsClick(firstOrder, e)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          Products
+                        </span> : <span className={styles.productsNumber}>00</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            }
+            
+            const firstItem = orderItems[0]
+            const totalProducts = getTotalProductsCount(firstOrder)
+            const productCount = totalProducts.toString().padStart(2, '0')
+            
+            return (
+              <div key={groupId} className={styles.orderGroup}>
+                <div className={styles.orderGroupHeader}>
+                  <div className={styles.orderItem}>
+                    <div className={styles.orderImageSection}>
+                      {firstItem ? (
+                        <Image
+                          src={firstItem.image || '/iphone.jpg'}
+                          alt={firstItem.name || 'Product'}
+                          width={150}
+                          height={150}
+                          className={styles.orderImage}
+                        />
+                      ) : (
+                        <div className={styles.orderImage} style={{ backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          No Image
+                        </div>
+                      )}
+                    </div>
+                    <div className={styles.orderInfoSection}>
+                      <div className={styles.orderRow}>
+                        <div className={styles.orderStatus}>{firstOrder.status}</div>
+                        <div 
+                          className={styles.orderNumber}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleOrderClick(firstOrder, firstItem)
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          ORDER #{firstOrder.orderNumber}
+                        </div>
+                      </div>
+                      <div className={styles.orderRow}>
+                        <div className={styles.orderDate}>{formatDate(firstOrder.createdAt)}</div>
+                        <div className={styles.orderPrice}>AED {formatPrice(firstOrder.totalAmount || 0)}</div>
+                      </div>
+                      <div className={styles.orderProducts}>
+                        <span 
+                          className={styles.productsLabel}
+                          onClick={(e) => handleProductsClick(firstOrder, e)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          Products
+                        </span> : <span className={styles.productsNumber}>{productCount}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+              </div>
+            )
+          }
+          
+          // Multiple orders - render each order separately
+          return (
+            <>
+              {group.map((order) => {
+                const orderItems = order.items || []
+                const firstItem = orderItems[0]
+                const totalProducts = getTotalProductsCount(order)
+                const productCount = totalProducts.toString().padStart(2, '0')
+                
+                if (orderItems.length === 0) {
+                  return (
+                    <div key={order._id} className={styles.orderItem}>
+                      <div className={styles.orderInfoSection}>
+                        <div className={styles.orderRow}>
+                          <div className={styles.orderStatus}>{order.status}</div>
+                          <div 
+                            className={styles.orderNumber}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleOrderClick(order, null)
+                            }}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            ORDER #{order.orderNumber}
+                          </div>
+                        </div>
+                        <div className={styles.orderRow}>
+                          <div className={styles.orderDate}>{formatDate(order.createdAt)}</div>
+                          <div className={styles.orderPrice}>AED {formatPrice(order.totalAmount || 0)}</div>
+                        </div>
+                        <div className={styles.orderProducts}>
+                          <span 
+                            className={styles.productsLabel}
+                            onClick={(e) => handleProductsClick(order, e)}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            Products
+                          </span> : <span className={styles.productsNumber}>00</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }
+                
+                return (
+                  <div key={order._id} className={styles.orderGroup}>
+                    <div className={styles.orderItem}>
+                      <div className={styles.orderImageSection}>
+                        {firstItem ? (
+                          <Image
+                            src={firstItem.image || '/iphone.jpg'}
+                            alt={firstItem.name || 'Product'}
+                            width={150}
+                            height={150}
+                            className={styles.orderImage}
+                          />
+                        ) : (
+                          <div className={styles.orderImage} style={{ backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            No Image
+                          </div>
+                        )}
+                      </div>
+                      <div className={styles.orderInfoSection}>
+                        <div className={styles.orderRow}>
+                          <div className={styles.orderStatus}>{order.status}</div>
+                          <div 
+                            className={styles.orderNumber}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleOrderClick(order, firstItem)
+                            }}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            ORDER #{order.orderNumber}
+                          </div>
+                        </div>
+                        <div className={styles.orderRow}>
+                          <div className={styles.orderDate}>{formatDate(order.createdAt)}</div>
+                          <div className={styles.orderPrice}>AED {formatPrice(order.totalAmount || 0)}</div>
+                        </div>
+                        <div className={styles.orderProducts}>
+                          <span 
+                            className={styles.productsLabel}
+                            onClick={(e) => handleProductsClick(order, e)}
+                            style={{ cursor: 'pointer' }}
+                          >
+                            Products
+                          </span> : <span className={styles.productsNumber}>{productCount}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </>
+          )
+        })}
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '14px', color: '#666' }}>
-            Total Amount: {orders.length > 0 ? orders[0].currency || 'USD' : 'USD'} {orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0).toFixed(2)}
-          </div>
-        </div>
-      </div> */}
-      <div className={styles.ordersList}>
-        {orders.map((order) => (
-        (order.items || []).map((item, idx) => (
-          <div 
-            key={`${order._id}_${idx}`}
-            className={styles.orderItem}
-            onClick={() => handleOrderClick(order, item)}
-            style={{ cursor: 'pointer' }}
-          >
-            <div className={styles.orderImageSection}>
-              {item ? (
-                <Image
-                  src={item.image || '/iphone.jpg'}
-                  alt={item.name || 'Product'}
-                  width={120}
-                  height={80}
-                  className={styles.orderImage}
-                />
-              ) : (
-                <div className={styles.orderImage} style={{ backgroundColor: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  No Image
-                </div>
-              )}
-            </div>
-            <div className={styles.orderInfoSection}>
-              <div className={styles.orderBrand}>Order #{order.orderNumber}</div>
-              <div className={styles.orderName}>
-                {item?.name || 'No items'}
-              </div>
-              {item?.quantity && (
-                <div className={styles.orderQuantity} style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
-                  Qty: {item.quantity}
-                </div>
-              )}
-              {/* {item?.vendorName && item.vendorName !== 'Unknown Vendor' && (
-                <div className={styles.orderVendor} style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
-                  {item.vendorName}
-                </div>
-              )} */}
-              <div className={styles.orderPrice}>
-                {"AED"} {order.totalAmount?.toFixed(2)}
-              </div>
-              {/* Show shipping cost */}
-              {(order.shippingCost > 0 || order.shippingMethodCost > 0) && (
-                <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>
-                  Shipping: AED {(order.shippingCost || order.shippingMethodCost || 0).toFixed(2)}
-                </div>
-              )}
-              {/* Show discount info if any */}
-              {/* {(order.discount > 0 || order.qoynsDiscountAmount > 0 || order.couponDiscountAmount > 0 || order.cashWalletAmount > 0) && (
-                <div style={{ fontSize: '11px', color: '#4CAF50', marginTop: '2px' }}>
-                  {order.cashWalletAmount > 0 && `Wallet: -AED ${order.cashWalletAmount.toFixed(2)}`}
-                  {order.cashWalletAmount > 0 && (order.qoynsDiscountAmount > 0 || order.couponDiscountAmount > 0) && ' | '}
-                  {order.qoynsDiscountAmount > 0 && `Qoyns: -AED ${order.qoynsDiscountAmount.toFixed(2)}`}
-                  {order.qoynsDiscountAmount > 0 && order.couponDiscountAmount > 0 && ' | '}
-                  {order.couponDiscountAmount > 0 && `Coupon: -AED ${order.couponDiscountAmount.toFixed(2)}`}
-                  {order.discount > 0 && !order.qoynsDiscountAmount && !order.couponDiscountAmount && !order.cashWalletAmount && `Discount: -AED ${order.discount.toFixed(2)}`}
-                </div>
-              )} */}
-              {/* Show discount type */}
-              {/* {order.discountType && (
-                <div style={{ fontSize: '10px', color: '#9C27B0', marginTop: '2px' }}>
-                  {order.discountType === 'cash_wallet' ? 'Cash Wallet Applied' : 
-                   order.discountType === 'qoyn' ? 'Qoyn Discount' : 
-                   order.discountType === 'coupon' ? 'Coupon Applied' : order.discountType}
-                </div>
-              )} */}
-              <div 
-                className={styles.orderStatus}
-                style={{ color: getStatusColor(order.status) }}
-              >
-                {order.status}
-              </div>
-            </div>
-            <div className={styles.orderRightSection}>
-              <div className={styles.orderDate}>{formatDate(order.createdAt)}</div>
-              <div style={{ 
-                fontSize: '11px',
-                color: '#666',
-                marginTop: '4px'
-              }}>
-                {/* {getPaymentMethodLabel(order.paymentMethod)} */}
-              </div>
-              <div className={styles.paymentStatus} style={{ 
-                color: getPaymentStatusColor(order.paymentStatus),
-                fontSize: '12px',
-                marginTop: '2px'
-              }}>
-                {order.paymentStatus}
-              </div>
-            </div>
-          </div>
-        ))
-      ))}
       </div>
-    </div>
+
+      {/* Order Summary Modal */}
+      {isModalOpen && selectedOrder && (
+        <div className={orderHistoryStyles.modalOverlay} onClick={closeModal}>
+          <div className={orderHistoryStyles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={orderHistoryStyles.modalHeader}>
+              <h3 className={orderHistoryStyles.cardTitle}>Order Summary</h3>
+              <button className={orderHistoryStyles.modalCloseButton} onClick={closeModal}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+
+            {/* Order Items - Show all items */}
+            {selectedOrder.items && selectedOrder.items.length > 0 && (
+              <div className={orderHistoryStyles.productsList}>
+                {selectedOrder.items.map((item, index) => (
+                  <div key={index} className={orderHistoryStyles.productSection}>
+                    <div className={orderHistoryStyles.productMiddleSection}>
+                      <div className={orderHistoryStyles.productImageContainer}>
+                        <Image
+                          src={item.image || '/iphone.jpg'}
+                          alt={item.name}
+                          width={60}
+                          height={60}
+                          className={orderHistoryStyles.productImg}
+                        />
+                      </div>
+                      <div className={orderHistoryStyles.productDetails}>
+                        <h6 className={orderHistoryStyles.productBrand}>{item.brand || 'Product'}</h6>
+                        <h4 className={orderHistoryStyles.productName}>{item.name}</h4>
+                        <p className={orderHistoryStyles.productQuantity}>Qty: {item.quantity}</p>
+                      </div>
+                    </div>
+                    <div className={orderHistoryStyles.productRightSection}>
+                      <div className={orderHistoryStyles.productNumber}>#{index + 1}</div>
+                      {(() => {
+                        const priceDetails = getItemPriceDetails(item, selectedOrder);
+                        const hasDiscount = priceDetails.discountAmount > 0;
+                        
+                        return (
+                          <div className={orderHistoryStyles.productPriceContainer}>
+                            {hasDiscount ? (
+                              <>
+                                <p className={orderHistoryStyles.originalPrice}>
+                                  AED {priceDetails.originalPrice.toFixed(2)}
+                                </p>
+                                <p className={orderHistoryStyles.discountType}>
+                                  {formatDiscountType(priceDetails.discountType)} ({priceDetails.discountPercentage}% OFF)
+                                </p>
+                                <p className={orderHistoryStyles.discountAmount}>
+                                  - AED {priceDetails.discountAmount.toFixed(2)}
+                                </p>
+                                <p className={orderHistoryStyles.productPrice}>
+                                  AED {priceDetails.discountedPrice.toFixed(2)}
+                                </p>
+                              </>
+                            ) : (
+                              <p className={orderHistoryStyles.productPrice}>
+                                AED {priceDetails.discountedPrice.toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   )
 }

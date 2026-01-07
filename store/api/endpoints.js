@@ -231,6 +231,7 @@ export const addresses = {
 export const orders = {
   base: `${BASES.cart}/orders`,
   getUserOrders: `${BASES.cart}/orders/user-orders`,
+  getOrderById: (orderId) => `${BASES.cart}/orders/${orderId}`,
 }
 
 
