@@ -287,6 +287,16 @@ export default function Home() {
   const otherCategoriesSwiperRef = useRef(null);
   const [activeStoreFilter, setActiveStoreFilter] = useState('all');
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Swiper navigation states
+  const [bestsellersNav, setBestsellersNav] = useState({ isBeginning: true, isEnd: false });
+  const [offersNav, setOffersNav] = useState({ isBeginning: true, isEnd: false });
+  const [specialDealsNav, setSpecialDealsNav] = useState({ isBeginning: true, isEnd: false });
+  const [featuredOffersNav, setFeaturedOffersNav] = useState({ isBeginning: true, isEnd: false });
+  const [popularCategoriesNav, setPopularCategoriesNav] = useState({ isBeginning: true, isEnd: false });
+  const [otherCategoriesNav, setOtherCategoriesNav] = useState({ isBeginning: true, isEnd: false });
+  const [topStoresNav, setTopStoresNav] = useState({ isBeginning: true, isEnd: false });
+  const [topBrandsNav, setTopBrandsNav] = useState({ isBeginning: true, isEnd: false });
 
   // Check screen size for mobile detection
   useEffect(() => {
@@ -350,97 +360,97 @@ export default function Home() {
   };
 
   const handleTopStoresPrev = () => {
-    if (topStoresSwiperRef.current && topStoresSwiperRef.current.swiper) {
+    if (topStoresSwiperRef.current && topStoresSwiperRef.current.swiper && !topStoresNav.isBeginning) {
       topStoresSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleTopStoresNext = () => {
-    if (topStoresSwiperRef.current && topStoresSwiperRef.current.swiper) {
+    if (topStoresSwiperRef.current && topStoresSwiperRef.current.swiper && !topStoresNav.isEnd) {
       topStoresSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleTopBrandsPrev = () => {
-    if (topBrandsSwiperRef.current && topBrandsSwiperRef.current.swiper) {
+    if (topBrandsSwiperRef.current && topBrandsSwiperRef.current.swiper && !topBrandsNav.isBeginning) {
       topBrandsSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleTopBrandsNext = () => {
-    if (topBrandsSwiperRef.current && topBrandsSwiperRef.current.swiper) {
+    if (topBrandsSwiperRef.current && topBrandsSwiperRef.current.swiper && !topBrandsNav.isEnd) {
       topBrandsSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleBestsellersPrev = () => {
-    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper) {
+    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper && !bestsellersNav.isBeginning) {
       bestsellersSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleBestsellersNext = () => {
-    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper) {
+    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper && !bestsellersNav.isEnd) {
       bestsellersSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleOffersPrev = () => {
-    if (offersSwiperRef.current && offersSwiperRef.current.swiper) {
+    if (offersSwiperRef.current && offersSwiperRef.current.swiper && !offersNav.isBeginning) {
       offersSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleOffersNext = () => {
-    if (offersSwiperRef.current && offersSwiperRef.current.swiper) {
+    if (offersSwiperRef.current && offersSwiperRef.current.swiper && !offersNav.isEnd) {
       offersSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleSpecialDealsPrev = () => {
-    if (specialDealsSwiperRef.current && specialDealsSwiperRef.current.swiper) {
+    if (specialDealsSwiperRef.current && specialDealsSwiperRef.current.swiper && !specialDealsNav.isBeginning) {
       specialDealsSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleSpecialDealsNext = () => {
-    if (specialDealsSwiperRef.current && specialDealsSwiperRef.current.swiper) {
+    if (specialDealsSwiperRef.current && specialDealsSwiperRef.current.swiper && !specialDealsNav.isEnd) {
       specialDealsSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleFeaturedOffersPrev = () => {
-    if (featuredOffersSwiperRef.current && featuredOffersSwiperRef.current.swiper) {
+    if (featuredOffersSwiperRef.current && featuredOffersSwiperRef.current.swiper && !featuredOffersNav.isBeginning) {
       featuredOffersSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleFeaturedOffersNext = () => {
-    if (featuredOffersSwiperRef.current && featuredOffersSwiperRef.current.swiper) {
+    if (featuredOffersSwiperRef.current && featuredOffersSwiperRef.current.swiper && !featuredOffersNav.isEnd) {
       featuredOffersSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handlePopularCategoriesPrev = () => {
-    if (popularCategoriesSwiperRef.current && popularCategoriesSwiperRef.current.swiper) {
+    if (popularCategoriesSwiperRef.current && popularCategoriesSwiperRef.current.swiper && !popularCategoriesNav.isBeginning) {
       popularCategoriesSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handlePopularCategoriesNext = () => {
-    if (popularCategoriesSwiperRef.current && popularCategoriesSwiperRef.current.swiper) {
+    if (popularCategoriesSwiperRef.current && popularCategoriesSwiperRef.current.swiper && !popularCategoriesNav.isEnd) {
       popularCategoriesSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleOtherCategoriesPrev = () => {
-    if (otherCategoriesSwiperRef.current && otherCategoriesSwiperRef.current.swiper) {
+    if (otherCategoriesSwiperRef.current && otherCategoriesSwiperRef.current.swiper && !otherCategoriesNav.isBeginning) {
       otherCategoriesSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleOtherCategoriesNext = () => {
-    if (otherCategoriesSwiperRef.current && otherCategoriesSwiperRef.current.swiper) {
+    if (otherCategoriesSwiperRef.current && otherCategoriesSwiperRef.current.swiper && !otherCategoriesNav.isEnd) {
       otherCategoriesSwiperRef.current.swiper.slideNext();
     }
   };
@@ -528,6 +538,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleBestsellersPrev}
               onNext={handleBestsellersNext}
+              prevDisabled={bestsellersNav.isBeginning}
+              nextDisabled={bestsellersNav.isEnd}
             />
             {loading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -547,6 +559,12 @@ export default function Home() {
                 spaceBetween={isMobile ? 10 : 24}
                 grabCursor={true}
                 freeMode={true}
+                onSlideChange={(swiper) => {
+                  setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onSwiper={(swiper) => {
+                  setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 className="bestsellers-swiper"
               >
                 {transformedBestsellers.map((product, index) => (
@@ -567,6 +585,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleOtherCategoriesPrev}
               onNext={handleOtherCategoriesNext}
+              prevDisabled={otherCategoriesNav.isBeginning}
+              nextDisabled={otherCategoriesNav.isEnd}
             />
             {popularCategoriesLoading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -586,6 +606,12 @@ export default function Home() {
                 spaceBetween={isMobile ? 12 : 24}
                 grabCursor={true}
                 freeMode={true}
+                onSlideChange={(swiper) => {
+                  setOtherCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onSwiper={(swiper) => {
+                  setOtherCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 className="other-categories-swiper"
               >
                 {(transformedLevel2Categories.length > 0 ? transformedLevel2Categories : categoryData).map((category, index) => (
@@ -826,6 +852,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleTopBrandsPrev}
               onNext={handleTopBrandsNext}
+              prevDisabled={topBrandsNav.isBeginning}
+              nextDisabled={topBrandsNav.isEnd}
             />
             {brandsLoading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -845,6 +873,12 @@ export default function Home() {
                 spaceBetween={isMobile ? 12 : 24}
                 grabCursor={true}
                 freeMode={true}
+                onSlideChange={(swiper) => {
+                  setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onSwiper={(swiper) => {
+                  setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 className="other-categories-swiper"
               >
                 {transformedBrands.map((brand, index) => (
@@ -904,6 +938,8 @@ export default function Home() {
               onButtonClick={handleSeeAllStores}
               onPrev={handleTopStoresPrev}
               onNext={handleTopStoresNext}
+              prevDisabled={topStoresNav.isBeginning}
+              nextDisabled={topStoresNav.isEnd}
             />
             {storesLoading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -923,6 +959,12 @@ export default function Home() {
                 spaceBetween={isMobile ? 12 : 24}
                 grabCursor={true}
                 freeMode={true}
+                onSlideChange={(swiper) => {
+                  setTopStoresNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onSwiper={(swiper) => {
+                  setTopStoresNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 className="other-categories-swiper"
               >
                 {transformedTopStores.map((store, index) => (
@@ -943,6 +985,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleFeaturedOffersPrev}
               onNext={handleFeaturedOffersNext}
+              prevDisabled={featuredOffersNav.isBeginning}
+              nextDisabled={featuredOffersNav.isEnd}
             />
             <Swiper
               ref={featuredOffersSwiperRef}
@@ -951,6 +995,12 @@ export default function Home() {
               spaceBetween={isMobile ? 10 : 24}
               grabCursor={true}
               freeMode={true}
+              onSlideChange={(swiper) => {
+                setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
               className="bestsellers-swiper"
             >
               {transformedFeaturedOffers.map((product, index) => (
@@ -970,6 +1020,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handlePopularCategoriesPrev}
               onNext={handlePopularCategoriesNext}
+              prevDisabled={popularCategoriesNav.isBeginning}
+              nextDisabled={popularCategoriesNav.isEnd}
             />
             {popularCategoriesLoading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -989,6 +1041,12 @@ export default function Home() {
                 spaceBetween={isMobile ? 12 : 24}
                 grabCursor={true}
                 freeMode={true}
+                onSlideChange={(swiper) => {
+                  setPopularCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onSwiper={(swiper) => {
+                  setPopularCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 className="other-categories-swiper"
               >
                 {(transformedPopularCategories.length > 0 ? transformedPopularCategories : testCategories).map((category, index) => (

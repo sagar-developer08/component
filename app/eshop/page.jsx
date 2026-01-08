@@ -110,6 +110,16 @@ export default function Home() {
   const [activeStoreFilter, setActiveStoreFilter] = useState('all');
   const [selectedFilters, setSelectedFilters] = useState({});
   const [isMobile, setIsMobile] = useState(false);
+  
+  // Swiper navigation states
+  const [bestsellersNav, setBestsellersNav] = useState({ isBeginning: true, isEnd: false });
+  const [offersNav, setOffersNav] = useState({ isBeginning: true, isEnd: false });
+  const [specialDealsNav, setSpecialDealsNav] = useState({ isBeginning: true, isEnd: false });
+  const [featuredOffersNav, setFeaturedOffersNav] = useState({ isBeginning: true, isEnd: false });
+  const [categoriesNav, setCategoriesNav] = useState({ isBeginning: true, isEnd: false });
+  const [level3CategoriesNav, setLevel3CategoriesNav] = useState({ isBeginning: true, isEnd: false });
+  const [topStoresNav, setTopStoresNav] = useState({ isBeginning: true, isEnd: false });
+  const [topBrandsNav, setTopBrandsNav] = useState({ isBeginning: true, isEnd: false });
 
   // Check screen size for mobile detection
   useEffect(() => {
@@ -189,97 +199,97 @@ export default function Home() {
   };
 
   const handleTopStoresPrev = () => {
-    if (topStoresSwiperRef.current && topStoresSwiperRef.current.swiper) {
+    if (topStoresSwiperRef.current && topStoresSwiperRef.current.swiper && !topStoresNav.isBeginning) {
       topStoresSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleTopStoresNext = () => {
-    if (topStoresSwiperRef.current && topStoresSwiperRef.current.swiper) {
+    if (topStoresSwiperRef.current && topStoresSwiperRef.current.swiper && !topStoresNav.isEnd) {
       topStoresSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleTopBrandsPrev = () => {
-    if (topBrandsSwiperRef.current && topBrandsSwiperRef.current.swiper) {
+    if (topBrandsSwiperRef.current && topBrandsSwiperRef.current.swiper && !topBrandsNav.isBeginning) {
       topBrandsSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleTopBrandsNext = () => {
-    if (topBrandsSwiperRef.current && topBrandsSwiperRef.current.swiper) {
+    if (topBrandsSwiperRef.current && topBrandsSwiperRef.current.swiper && !topBrandsNav.isEnd) {
       topBrandsSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleBestsellersPrev = () => {
-    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper) {
+    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper && !bestsellersNav.isBeginning) {
       bestsellersSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleBestsellersNext = () => {
-    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper) {
+    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper && !bestsellersNav.isEnd) {
       bestsellersSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleOffersPrev = () => {
-    if (offersSwiperRef.current && offersSwiperRef.current.swiper) {
+    if (offersSwiperRef.current && offersSwiperRef.current.swiper && !offersNav.isBeginning) {
       offersSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleOffersNext = () => {
-    if (offersSwiperRef.current && offersSwiperRef.current.swiper) {
+    if (offersSwiperRef.current && offersSwiperRef.current.swiper && !offersNav.isEnd) {
       offersSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleSpecialDealsPrev = () => {
-    if (specialDealsSwiperRef.current && specialDealsSwiperRef.current.swiper) {
+    if (specialDealsSwiperRef.current && specialDealsSwiperRef.current.swiper && !specialDealsNav.isBeginning) {
       specialDealsSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleSpecialDealsNext = () => {
-    if (specialDealsSwiperRef.current && specialDealsSwiperRef.current.swiper) {
+    if (specialDealsSwiperRef.current && specialDealsSwiperRef.current.swiper && !specialDealsNav.isEnd) {
       specialDealsSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleFeaturedOffersPrev = () => {
-    if (featuredOffersSwiperRef.current && featuredOffersSwiperRef.current.swiper) {
+    if (featuredOffersSwiperRef.current && featuredOffersSwiperRef.current.swiper && !featuredOffersNav.isBeginning) {
       featuredOffersSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleFeaturedOffersNext = () => {
-    if (featuredOffersSwiperRef.current && featuredOffersSwiperRef.current.swiper) {
+    if (featuredOffersSwiperRef.current && featuredOffersSwiperRef.current.swiper && !featuredOffersNav.isEnd) {
       featuredOffersSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleCategoriesPrev = () => {
-    if (categoriesSwiperRef.current && categoriesSwiperRef.current.swiper) {
+    if (categoriesSwiperRef.current && categoriesSwiperRef.current.swiper && !categoriesNav.isBeginning) {
       categoriesSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleCategoriesNext = () => {
-    if (categoriesSwiperRef.current && categoriesSwiperRef.current.swiper) {
+    if (categoriesSwiperRef.current && categoriesSwiperRef.current.swiper && !categoriesNav.isEnd) {
       categoriesSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleLevel3CategoriesPrev = () => {
-    if (level3CategoriesSwiperRef.current && level3CategoriesSwiperRef.current.swiper) {
+    if (level3CategoriesSwiperRef.current && level3CategoriesSwiperRef.current.swiper && !level3CategoriesNav.isBeginning) {
       level3CategoriesSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleLevel3CategoriesNext = () => {
-    if (level3CategoriesSwiperRef.current && level3CategoriesSwiperRef.current.swiper) {
+    if (level3CategoriesSwiperRef.current && level3CategoriesSwiperRef.current.swiper && !level3CategoriesNav.isEnd) {
       level3CategoriesSwiperRef.current.swiper.slideNext();
     }
   };
@@ -347,6 +357,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleBestsellersPrev}
               onNext={handleBestsellersNext}
+              prevDisabled={bestsellersNav.isBeginning}
+              nextDisabled={bestsellersNav.isEnd}
             />
             {loading ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
@@ -364,6 +376,12 @@ export default function Home() {
                 spaceBetween={isMobile ? 16 : 24}
                 grabCursor={true}
                 freeMode={true}
+                onSlideChange={(swiper) => {
+                  setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onSwiper={(swiper) => {
+                  setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 className="bestsellers-swiper"
               >
                 {displayBestsellers.map((product, index) => (
@@ -384,6 +402,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleCategoriesPrev}
               onNext={handleCategoriesNext}
+              prevDisabled={categoriesNav.isBeginning}
+              nextDisabled={categoriesNav.isEnd}
             />
             {categoriesLoading ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
@@ -401,6 +421,12 @@ export default function Home() {
                 spaceBetween={isMobile ? 12 : 24}
                 grabCursor={true}
                 freeMode={true}
+                onSlideChange={(swiper) => {
+                  setCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onSwiper={(swiper) => {
+                  setCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 className="other-categories-swiper"
               >
                 {transformedCategories.map((category, index) => (
@@ -421,6 +447,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleOffersPrev}
               onNext={handleOffersNext}
+              prevDisabled={offersNav.isBeginning}
+              nextDisabled={offersNav.isEnd}
             />
             <Swiper
               ref={offersSwiperRef}
@@ -429,6 +457,12 @@ export default function Home() {
               spaceBetween={isMobile ? 16 : 24}
               grabCursor={true}
               freeMode={true}
+              onSlideChange={(swiper) => {
+                setOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
               className="bestsellers-swiper"
             >
               {transformedOffers.map((product, index) => (
@@ -477,6 +511,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleTopBrandsPrev}
               onNext={handleTopBrandsNext}
+              prevDisabled={topBrandsNav.isBeginning}
+              nextDisabled={topBrandsNav.isEnd}
             />
             {brandsLoading ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
@@ -494,6 +530,12 @@ export default function Home() {
                 spaceBetween={isMobile ? 12 : 24}
                 grabCursor={true}
                 freeMode={true}
+                onSlideChange={(swiper) => {
+                  setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onSwiper={(swiper) => {
+                  setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 className="other-categories-swiper"
               >
                 {transformedBrands.map((brand, index) => (
@@ -515,6 +557,8 @@ export default function Home() {
               showButton={false}
               onPrev={handleFeaturedOffersPrev}
               onNext={handleFeaturedOffersNext}
+              prevDisabled={featuredOffersNav.isBeginning}
+              nextDisabled={featuredOffersNav.isEnd}
             />
             <Swiper
               ref={featuredOffersSwiperRef}
@@ -523,6 +567,12 @@ export default function Home() {
               spaceBetween={isMobile ? 16 : 24}
               grabCursor={true}
               freeMode={true}
+              onSlideChange={(swiper) => {
+                setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
               className="bestsellers-swiper"
             >
               {transformedFeaturedOffers.map((product, index) => (
@@ -535,7 +585,7 @@ export default function Home() {
         </section>
 
         {/* Top Stores Section */}
-        <section className="section">
+        {/* <section className="section">
           <div className="container">
             <SectionHeader
               title="Top Stores"
@@ -570,7 +620,7 @@ export default function Home() {
               </Swiper>
             )}
           </div>
-        </section>
+        </section> */}
 
         {/* Level 3 Categories Section */}
         <section className="section">
@@ -580,6 +630,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleLevel3CategoriesPrev}
               onNext={handleLevel3CategoriesNext}
+              prevDisabled={level3CategoriesNav.isBeginning}
+              nextDisabled={level3CategoriesNav.isEnd}
             />
             {categoriesLoading ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
@@ -597,6 +649,12 @@ export default function Home() {
                 spaceBetween={isMobile ? 12 : 24}
                 grabCursor={true}
                 freeMode={true}
+                onSlideChange={(swiper) => {
+                  setLevel3CategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onSwiper={(swiper) => {
+                  setLevel3CategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 className="other-categories-swiper"
               >
                 {transformedLevel3Categories.map((category, index) => (
@@ -611,7 +669,7 @@ export default function Home() {
 
 
         {/* New Stores Section */}
-        <section className="section">
+        {/* <section className="section">
           <div className="container">
             <SectionHeader
               title="New Stores on QLIQ"
@@ -645,7 +703,7 @@ export default function Home() {
               </Swiper>
             )}
           </div>
-        </section>
+        </section> */}
 
         <Footer />
         {/* Test Authentication Link */}

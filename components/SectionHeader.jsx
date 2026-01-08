@@ -4,7 +4,9 @@ export default function SectionHeader({
   title, 
   showNavigation = false,
   onPrev,
-  onNext, 
+  onNext,
+  prevDisabled = false,
+  nextDisabled = false,
   showButton = false, 
   buttonText = "See All",
   onButtonClick 
@@ -23,13 +25,23 @@ export default function SectionHeader({
           
           {showNavigation && (
             <div className="navigation-buttons">
-              <button className="nav-btn prev" aria-label="Previous" onClick={onPrev}>
+              <button 
+                className={`nav-btn prev ${prevDisabled ? 'disabled' : ''}`} 
+                aria-label="Previous" 
+                onClick={onPrev}
+                disabled={prevDisabled}
+              >
                 <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
                     <rect y="44" width="44" height="44" rx="22" transform="rotate(-90 0 44)" fill="#0082FF" fillOpacity="0.24"/>
                     <path d="M32 22L11 22M11 22L18.875 14.125M11 22L18.875 29.875" stroke="#0082FF" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
-              <button className="nav-btn next" aria-label="Next" onClick={onNext}>
+              <button 
+                className={`nav-btn next ${nextDisabled ? 'disabled' : ''}`} 
+                aria-label="Next" 
+                onClick={onNext}
+                disabled={nextDisabled}
+              >
                 <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
                   <rect x="44" width="44" height="44" rx="22" transform="rotate(90 44 0)" fill="#0082FF" fillOpacity="0.24"/>
                   <path d="M11 22L32 22M32 22L24.125 29.875M32 22L24.125 14.125" stroke="#0082FF" strokeWidth="2.75" strokeLinecap="round" strokeLinejoin="round"/>
@@ -107,8 +119,23 @@ export default function SectionHeader({
           transition: all 0.2s ease;
         }
 
-        .nav-btn:hover {
+        .nav-btn:hover:not(.disabled) {
           transform: scale(1.05);
+        }
+
+        .nav-btn.disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+          pointer-events: none;
+        }
+
+        .nav-btn.disabled svg path {
+          stroke: #999;
+        }
+
+        .nav-btn.disabled svg rect {
+          fill: #999;
+          fillOpacity: 0.24;
         }
 
         @media (max-width: 768px) {
