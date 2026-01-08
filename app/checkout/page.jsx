@@ -2332,10 +2332,11 @@ export default function CheckoutPage() {
               <div className={styles.orderSummaryMessage}>
                 <div className={styles.walletExpiry}>
                   {qoynValidation.walletUnlocked && qoynValidation.eligibleForDiscount 
-                    ? `You can get Maximum of ${qoynValidation.maxDiscountInStoreCurrency} ${qoynValidation.storeCurrency} Discount if you spend ${qoynValidation.maxDiscountSpendInStoreCurrency} ${qoynValidation.storeCurrency}. Avail this Offer Now!`
+                   
+                    ? `${qoynValidation.message}`
                     : qoynValidation.totalQoynBalance === 0 && qoynValidation.message
                       ? qoynValidation.message
-                      : 'Minimum order value is AED 100 — you must spend at least AED 100 to apply Qoyns.'
+                      : `${qoynValidation.message}`
                   }
                 </div>
               </div>
