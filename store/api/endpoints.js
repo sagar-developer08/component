@@ -79,7 +79,7 @@ export const catalog = {
     return `${BASES.catalog}/products/store-products/${storeId}/cheap-deals${queryString ? `?${queryString}` : ''}`;
   },
   productsByLevel4Category: (categorySlug) => `${BASES.catalog}/products/level4/${categorySlug}`,
-  productsByCategory: (categoryId) => `${BASES.catalog}/products/category?categoryId=${categoryId}`,
+  productsByCategory: (categoryId, limit = 100) => `${BASES.catalog}/products/category?categoryId=${categoryId}&limit=${limit}`,
   similarProducts: (productId, limit = 10) => `${BASES.catalog}/products/similar/${productId}?limit=${limit}`,
   stores: `${BASES.catalog}/stores`,
   storeBySlug: (slug) => `${BASES.catalog}/stores/slug/${slug}`,
