@@ -86,3 +86,28 @@
   color: #aaa;
   font-weight: 600;
 }
+
+@media (max-width: 900px) {
+  .orderItem {
+    flex-direction: column;
+    height: auto;
+  }
+  .orderImageSection {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+    justify-content: flex-start;
+    padding: 16px;
+  }
+  .orderInfoSection {
+    padding: 16px;
+  }
+  .orderRightSection {
+    padding: 0 16px 16px;
+    align-items: flex-start;
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
