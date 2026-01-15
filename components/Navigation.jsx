@@ -134,7 +134,7 @@ const Navigation = memo(function Navigation() {
   // Close mobile menu when window is resized to desktop size
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth > 768 && mobileMenuOpen) {
+      if (window.innerWidth > 1024 && mobileMenuOpen) {
         setMobileMenuOpen(false)
       }
     }
@@ -147,8 +147,8 @@ const Navigation = memo(function Navigation() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
       
-      // Only apply on mobile (768px and below)
-      if (window.innerWidth > 768) {
+      // Only apply on mobile (1024px and below)
+      if (window.innerWidth > 1024) {
         setMobileSearchVisible(true)
         return
       }
@@ -1208,12 +1208,6 @@ const Navigation = memo(function Navigation() {
 
         /* Responsive Breakpoints */
         @media (max-width: 1024px) {
-          .nav-menu {
-            width: 600px;
-          }
-        }
-
-        @media (max-width: 768px) {
           .navbar {
             padding: 16px 0;
           }
