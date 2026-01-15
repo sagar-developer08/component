@@ -140,18 +140,27 @@
   padding-top: 12px;
 }
 
-.orderGroupContent .orderItem {
-  padding-left: 12px;
-  padding-right: 12px;
-  margin-bottom: 12px;
+@media (max-width: 900px) {
+  .orderItem {
+    flex-direction: column;
+    height: auto;
+  }
+  .orderImageSection {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+    justify-content: flex-start;
+    padding: 16px;
+  }
+  .orderInfoSection {
+    padding: 16px;
+  }
+  .orderRightSection {
+    padding: 0 16px 16px;
+    align-items: flex-start;
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
-.orderGroupContent .orderItem:last-child {
-  margin-bottom: 0;
-  padding-bottom: 12px;
-}
-
-.paymentStatus {
-  font-size: 12px;
-  font-weight: 600;
-}

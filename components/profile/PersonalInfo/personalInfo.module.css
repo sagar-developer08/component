@@ -432,3 +432,38 @@
     transform: rotate(360deg);
   }
 }
+
+@media (max-width: 900px) {
+  .inputsGrid,
+  .loginGrid,
+  .passwordGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .avatarEditRow {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .editLabel {
+    margin-left: 0;
+    text-align: center;
+  }
+  
+  .profileActions, .actionRow, .passwordActions {
+    justify-content: center;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .updateProfileBtn, .logoutBtn, .changePasswordBtn, .deleteAccountBtn, .savePasswordBtn, .cancelPasswordBtn {
+     width: 100%;
+     justify-content: center;
+  }
+  
+  .avatarActions {
+      flex-wrap: wrap;
+      justify-content: center;
+  }
+}
