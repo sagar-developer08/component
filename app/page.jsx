@@ -628,8 +628,8 @@ export default function Home() {
               <Swiper
                 ref={offersSwiperRef}
                 modules={[SwiperNavigation]}
-                slidesPerView={isMobile ? 1.2 : 'auto'}
-                spaceBetween={isMobile ? 16 : 24}
+                slidesPerView={'auto'}
+                spaceBetween={20}
                 grabCursor={true}
                 freeMode={true}
                 className="offers-swiper"
@@ -733,8 +733,8 @@ export default function Home() {
               <Swiper
                 ref={offersSwiperRef}
                 modules={[SwiperNavigation]}
-                slidesPerView={isMobile ? 1.2 : 'auto'}
-                spaceBetween={isMobile ? 16 : 24}
+                slidesPerView={'auto'}
+                spaceBetween={20}
                 grabCursor={true}
                 freeMode={true}
                 className="offers-swiper"
@@ -803,8 +803,8 @@ export default function Home() {
               <Swiper
                 ref={offersSwiperRef}
                 modules={[SwiperNavigation]}
-                slidesPerView={isMobile ? 1.2 : 'auto'}
-                spaceBetween={isMobile ? 16 : 24}
+                slidesPerView={'auto'}
+                spaceBetween={20}
                 grabCursor={true}
                 freeMode={true}
                 className="offers-swiper"
