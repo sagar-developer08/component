@@ -257,13 +257,13 @@ export const fetchSearchSuggestions = createAsyncThunk(
 // Async thunk for fetching products by category
 export const fetchProductsByCategory = createAsyncThunk(
   'products/fetchProductsByCategory',
-  async (categoryId, { rejectWithValue }) => {
+  async ({ categoryId, limit = 100 } = {}, { rejectWithValue }) => {
     try {
       if (!categoryId) {
         throw new Error('Category ID is required')
       }
       
-      const response = await fetch(catalog.productsByCategory(categoryId))
+      const response = await fetch(catalog.productsByCategory(categoryId, limit))
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)

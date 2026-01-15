@@ -146,9 +146,9 @@ export default function LoginModal({ open, onClose, onOpenForgotPassword, onOpen
           </button>
           <div className="login-modal-content">
             <div className="login-modal-left">
-              <h1 className="login-title">Welcome to QLIQ</h1>
+              <h1 className="login-title">Welcome to IQLIQ</h1>
               <p className="login-desc">
-                Vorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.
+              Home to the best deals and big savings. Log in to shop, earn, save & share!
               </p>
               <form className="login-form">
                 <div className="login-field">

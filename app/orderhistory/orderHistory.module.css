@@ -90,6 +90,76 @@
   color: #059669;
 }
 
+/* Product Dropdown Section */
+.productDropdownSection {
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.productDropdownContainer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.productDropdownLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.productDropdown {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+
+.productDropdown:focus {
+  outline: none;
+  border-color: #0082FF;
+  box-shadow: 0 0 0 3px rgba(0, 130, 255, 0.1);
+}
+
+.editProductButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: rgb(0, 130, 255, 0.2);
+  border: 1px solid #0082FF;
+  border-radius: 25px;
+  color: #0082FF;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.editProductButton:hover {
+  background: #0082FF;
+  color: white;
+}
+
+.editProductButton svg {
+  flex-shrink: 0;
+}
+
 /* Content Grid */
 .contentGrid {
   display: flex;
@@ -155,12 +225,10 @@
 /* Review Card */
 .reviewCard {
   background: white;
-  max-width: 460px;
   width: 100%;
   border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 16px;  
   padding: 24px;
-  flex: 1;
 }
 
 .reviewForm {
@@ -169,25 +237,153 @@
   gap: 20px;
 }
 
-.ratingSection {
+.reviewFormColumns {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 16px;
-  padding: 12px;
+  gap: 24px;
+  align-items: flex-start;
 }
 
-.formLabel {
+.reviewFormLeft {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.reviewFormRight {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.formRow {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.fieldLabel {
+  font-size: 14px;
+  color: #000;
+  font-weight: 600;
+  display: block;
+}
+
+.formInput {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
   font-size: 14px;
   color: #374151;
+  background: white;
+  transition: border-color 0.2s ease;
+  box-sizing: border-box;
+  height: 44px;
+}
+
+.formInput::placeholder {
+  color: #000;
+  opacity: 1;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: #0082FF;
+  box-shadow: 0 0 0 3px rgba(0, 130, 255, 0.1);
+}
+
+.ratingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  background: white;
+  height: 44px;
+  box-sizing: border-box;
+}
+
+.ratingLabel {
+  font-size: 14px;
+  color: #000;
   font-weight: 600;
-  min-width: 100px;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.uploadRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  background: white;
+  height: 44px;
+  box-sizing: border-box;
+}
+
+.uploadLabel {
+  font-size: 14px;
+  color: #000;
+  font-weight: 600;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.uploadButtonContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uploadButton {
+  padding: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: #0082FF;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.uploadButton:hover {
+  background: rgba(0, 130, 255, 0.1);
+}
+
+.uploadButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fileSizeNote {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+  margin-top: 4px;
 }
 
 .starRating {
   display: flex;
   gap: 4px;
+  align-items: center;
 }
 
 .star {
@@ -196,6 +392,9 @@
   cursor: pointer;
   padding: 0;
   transition: transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .star:hover {
@@ -203,64 +402,11 @@
 }
 
 .starFilled {
-  color: #3b82f6;
+  color: #0082FF;
 }
 
 .starEmpty {
-  color: #3b82f6;
-  opacity: 0.3;
-}
-
-.formGroup {
-  display: flex;
-  justify-content: space-between;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 16px;
-  align-items: center;
-  gap: 16px;
-}
-
-.formInput {
-  padding: 16px 16px;
-  border: transparent;
-  border-radius: 16px;
-  font-size: 14px;
-  color: #374151;
-  background: white;
-  transition: border-color 0.2s ease;
-  flex: 1;
-  max-width: 100%;
-}
-
-.formInput:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: none
-}
-
-.uploadInput {
-  display: flex;
-  align-items: center;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 16px;
-  gap: 8px;
-  flex: 1;
-  max-width: 100%;
-}
-
-.uploadButton {
-  padding: 12px;
-  background: transparent;
-  border: transparent;
-  border-radius: 8px;
-  color: #6b7280;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.uploadButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  color: #E0E0E0;
 }
 
 /* Image Previews */
@@ -335,24 +481,29 @@
 }
 
 .formTextarea {
-  padding: 16px 16px;
-  border: 1px solid #d1d5db;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 8px;
   font-size: 14px;
   color: #374151;
   background: white;
   resize: vertical;
-  min-height: 100px;
+  min-height: 120px;
   font-family: inherit;
   transition: border-color 0.2s ease;
-  flex: 1;
-  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.formTextarea::placeholder {
+  color: #000;
+  opacity: 1;
 }
 
 .formTextarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #0082FF;
+  box-shadow: 0 0 0 3px rgba(0, 130, 255, 0.1);
 }
 
 .reviewButtons {
@@ -378,17 +529,24 @@
   flex: 1;
   padding: 12px 24px;
   background: rgb(0, 130, 255, 0.2);
-  border: 2px solid #3b82f6;
+  border: 2px solid #0082FF;
   border-radius: 25px;
   color: #0082FF;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: #0082FF;
+  color: white;
 }
 
 /* Bottom Row Container */
 .bottomRow {
   display: flex;
+  flex-direction: column;
   gap: 24px;
   width: 100%;
 }
@@ -405,10 +563,52 @@
   gap: 24px;
 }
 
+.productsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
 .productSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 16px;
+}
+
+.productSection:last-child {
+  padding-bottom: 0;
+}
+
+.productRightSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.productNumber {
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  margin: 0;
+}
+
+.productMiddleSection {
   display: flex;
   gap: 16px;
   align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.productImageContainer {
+  flex-shrink: 0;
+  position: relative;
+  display: inline-block;
 }
 
 .productImage {
@@ -418,6 +618,8 @@
 .productImg {
   border-radius: 8px;
   object-fit: cover;
+  width: 60px;
+  height: 60px;
 }
 
 .productDetails {
@@ -449,11 +651,43 @@
   margin: 0;
 }
 
+.productPriceContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.originalPrice {
+  font-size: 14px;
+  color: #999;
+  text-decoration: line-through;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.discountType {
+  font-size: 11px;
+  color: #0082FF;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.discountAmount {
+  font-size: 12px;
+  color: #0082FF;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
+}
+
 .productPrice {
   font-size: 16px;
   font-weight: 600;
   color: #1f2937;
   margin: 0;
+  white-space: nowrap;
 }
 
 .costBreakdown {
@@ -471,19 +705,20 @@
 }
 
 .costLabel {
-  font-size: 14px;
-  color: #6b7280;
-  font-weight: 500;
+  font-size: 16px;
+  color: #000;
+  font-weight: 600;
 }
 
 .costValue {
-  font-size: 14px;
-  color: #374151;
+  font-size: 16px;
+  color: #000;
   font-weight: 600;
 }
 
 .discountValue {
-  color: #3b82f6;
+  color: #0082FF;
+  font-weight: 600;
 }
 
 .totalItem {
@@ -517,6 +752,10 @@
   transition: all 0.2s ease;
 }
 
+.buyAgainButton:hover {
+  background: rgba(0, 130, 255, 0.1);
+}
+
 .downloadInvoiceButton {
   flex: 1;
   padding: 12px 24px;
@@ -528,6 +767,11 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.downloadInvoiceButton:hover {
+  background: #0082FF;
+  color: white;
 }
 
 /* Responsive Design */
@@ -563,6 +807,21 @@
     padding: 24px;
   }
   
+  .productDropdownContainer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .productDropdown {
+    max-width: 100%;
+  }
+  
+  .editProductButton {
+    width: 100%;
+    justify-content: center;
+  }
+  
   .contentGrid {
     gap: 16px;
   }
@@ -571,6 +830,10 @@
   .reviewCard,
   .orderSummaryCard {
     padding: 20px;
+  }
+  
+  .reviewFormColumns {
+    flex-direction: column;
   }
   
   .reviewButtons,
@@ -599,10 +862,36 @@
     padding: 20px;
   }
   
+  .productDropdownSection {
+    padding: 0;
+  }
+  
+  .productDropdownContainer {
+    padding: 12px 16px;
+  }
+  
+  .productDropdownLabel {
+    font-size: 14px;
+  }
+  
+  .productDropdown {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+  
+  .editProductButton {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+  
   .addressCard,
   .reviewCard,
   .orderSummaryCard {
     padding: 16px;
+  }
+  
+  .reviewFormColumns {
+    flex-direction: column;
   }
   
   .productSection {
@@ -610,4 +899,55 @@
     align-items: flex-start;
     gap: 12px;
   }
+}
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 1000px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.modalCloseButton {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  transition: all 0.2s ease;
+}
+
+.modalCloseButton:hover {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
 }

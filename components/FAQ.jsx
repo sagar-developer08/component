@@ -5,20 +5,20 @@ import Image from 'next/image'
 
 const faqData = [
   {
-    question: "Question text goes here",
-    answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique. Duis cursus, mi quis viverra ornare, eros dolor interdum nulla, ut commodo diam libero vitae erat. Aenean faucibus nibh et justo cursus id rutrum lorem imperdiet. Nunc ut sem vitae risus tristique posuere."
+    question: " How do I create an account on IQLIQ E-Commerce?",
+    answer: "Download the IQLIQ ecommerce app. Go to ‘Sign Up’ and fill in your name, and details. You’ll receive a one-time OTP verification to activate your account. Once done, you can start browsing our marketplace for fashion, electronics, home goods, and exclusive influencer drops in Dubai and the UAE."
   },
   {
-    question: "Question text goes here",
-    answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique."
+    question: "Do I need an account to shop?",
+    answer: "You can browse freely without logging in, but an account helps you place orders faster, track deliveries, and earn Qoyns and Q-Points. Registered users also get access to affiliate programs in the UAE and early-bird sales notifications."
   },
   {
-    question: "Question text goes here",
-    answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique."
+    question: "How do I reset my password?",
+    answer: "On the login screen, tap ‘Forgot Password’ and follow the secure link sent to your registered email or mobile number. Resetting your password helps maintain the security of your personal and payment data."
   },
   {
-    question: "Question text goes here",
-    answer: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique."
+    question: "Can I update my address and contact details?",
+    answer: "Yes. Go to ‘My Account’ → ‘Profile’ → ‘Edit Details’ to update at any time. This ensures smoother deliveries, especially if you’re shopping for Quick Commerce items or flash deals in Dubai."
   }
 ]
 

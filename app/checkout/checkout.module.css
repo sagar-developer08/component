@@ -814,6 +814,28 @@
   justify-content: center;
 }
 
+.cashWalletOption {
+  margin-bottom: 12px;
+  padding: 8px 0;
+}
+
+.cashWalletLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.cashWalletCheckbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #0082FF;
+  cursor: pointer;
+}
+
 .orderTotals {
   margin-bottom: 8px;
   display: flex;

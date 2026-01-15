@@ -60,7 +60,7 @@ export const fetchProfile = createAsyncThunk(
         }
       }
 
-      const response = await fetch(`${auth.base}/profile/aggregated`, {
+      const response = await fetch(auth.profile, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
           'Content-Type': 'application/json',
@@ -121,10 +121,10 @@ export const setDefaultAddress = createAsyncThunk(
   }
 )
 
-// Fetch user orders specifically
+// Fetch user orders specifically with pagination
 export const fetchOrders = createAsyncThunk(
   'profile/fetchOrders',
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10 } = {}, { rejectWithValue }) => {
     try {
       let token = ''
       if (typeof document !== 'undefined') {
@@ -138,7 +138,11 @@ export const fetchOrders = createAsyncThunk(
         }
       }
 
-      const response = await fetch(orders.getUserOrders, {
+      const url = new URL(orders.getUserOrders)
+      url.searchParams.set('page', page.toString())
+      url.searchParams.set('limit', limit.toString())
+
+      const response = await fetch(url.toString(), {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
           'Content-Type': 'application/json',
@@ -161,6 +165,7 @@ const initialState = {
   user: null,
   addresses: [],
   orders: [],
+  ordersPagination: null,
   loading: false,
   loadingAddresses: false,
   ordersLoading: false,
@@ -195,20 +200,18 @@ const profileSlice = createSlice({
       })
       .addCase(fetchProfile.fulfilled, (state, action) => {
         state.loading = false
-        // Handle the aggregated response structure
+        // Handle the profile response structure: { user: { id, cognitoUserId, email, name, role, phone, profileImage } }
         const responseData = action.payload.data || action.payload
-        state.user = responseData.profile || null
-        // Don't map addresses from aggregate API - they will be fetched separately via fetchUserAddresses()
-        // Don't map orders from aggregate API - they don't have order details
-        // Orders will be fetched separately via fetchOrders() when needed
-        state.orders = [] 
+        state.user = responseData.user || null
+        // Don't map addresses from profile API - they will be fetched separately via fetchUserAddresses()
+        // Don't touch orders - they are fetched separately via fetchOrders()
         state.error = null
       })
       .addCase(fetchProfile.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
         state.user = null
-        state.orders = []
+        // Don't touch orders on profile error
       })
       // Fetch addresses
       .addCase(fetchUserAddresses.pending, (state) => {
@@ -250,13 +253,23 @@ const profileSlice = createSlice({
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.ordersLoading = false
         // Handle both direct orders array and nested data structure
-        state.orders = action.payload.data?.orders || action.payload.orders || []
+        const responseData = action.payload.data || action.payload
+        state.orders = responseData.orders || []
+        // Store pagination info if available
+        if (responseData.pagination) {
+          state.ordersPagination = responseData.pagination
+        } else if (action.payload.pagination) {
+          state.ordersPagination = action.payload.pagination
+        } else {
+          state.ordersPagination = null
+        }
         state.error = null
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.ordersLoading = false
         state.error = action.payload
         state.orders = []
+        state.ordersPagination = null
       })
   }
 })

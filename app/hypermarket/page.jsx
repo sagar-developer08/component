@@ -121,7 +121,7 @@ export default function Home() {
   useEffect(() => {
     dispatch(fetchHypermarketStores())
     dispatch(fetchProducts())
-    dispatch(fetchProductsByCategory(hypermarketCategoryId))
+    dispatch(fetchProductsByCategory({ categoryId: hypermarketCategoryId, limit: 200 }))
   }, [dispatch])
 
   // Fetch fastest delivery stores when location is available
@@ -281,7 +281,7 @@ export default function Home() {
       <section className="section">
         <div className="container">
           <SectionHeader
-            title="Best & Cheap Deals"
+            title="Best Deals - up to 50% off"
             showNavigation={true}
             onPrev={handleBestCheapDealsPrev}
             onNext={handleBestCheapDealsNext}
@@ -412,21 +412,21 @@ export default function Home() {
         </div>
       </section>
       {/* Best Cashback - Show products with special deals for Qliq Plus */}
-      <section className="section">
+      {/* <section className="section">
         <div className="container">
           <SectionHeader
-            title="Best Cashback"
+            title="Crazy Cashback"
             showNavigation={true}
             onPrev={handleBestCashbackPrev}
             onNext={handleBestCashbackNext}
           />
-          {loading ? (
+          {categoryProductsLoading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
               {[...Array(4)].map((_, index) => (
                 <ProductCardSkeleton key={`skeleton-${index}`} />
               ))}
             </div>
-          ) : (products && products.length > 0) ? (
+          ) : (categoryProducts && categoryProducts.length > 0) ? (
             <Swiper
               ref={bestCashbackSwiperRef}
               modules={[SwiperNavigation]}
@@ -436,7 +436,7 @@ export default function Home() {
               freeMode={true}
               className="bestsellers-swiper"
             >
-              {products
+              {categoryProducts
                 .filter(product => product.special_deals_for_qliq_plus || product.is_offer)
                 .slice(0, 20)
                 .map((product, index) => {
@@ -457,7 +457,7 @@ export default function Home() {
             </div>
           )}
         </div>
-      </section>
+      </section> */}
 
       <FilterDrawer
         open={filterOpen}

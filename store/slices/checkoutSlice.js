@@ -128,7 +128,15 @@ export const createStripePaymentIntent = createAsyncThunk(
           }
         }),
         total: orderData.total,
-        currency: 'usd'
+        currency: 'usd',
+        // Include shipping information
+        shippingMethodCost: orderData.shippingMethodCost || orderData.shipping || 0,
+        shippingCost: orderData.shippingMethodCost || orderData.shipping || 0,
+        shippingMethod: orderData.shippingMethod,
+        shippingMethodName: orderData.shippingMethodName,
+        shippingMethodTime: orderData.shippingMethodTime,
+        deliveryAddress: orderData.deliveryAddress,
+        shippingAddress: orderData.shippingAddress
       }
 
       console.log('🔗 Endpoint:', payment.stripeCheckout)
@@ -308,6 +316,37 @@ export const fetchAcceptedPurchaseGigs = createAsyncThunk(
   }
 )
 
+export const fetchGigCompletions = createAsyncThunk(
+  'checkout/fetchGigCompletions',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = await getAuthToken()
+      
+      if (!token) {
+        throw new Error('Authentication required')
+      }
+
+      const response = await fetch('https://backendgigs.qliq.ae/api/gig-completions/accepted-purchase-gigs', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to fetch gig completions')
+      }
+
+      const responseData = await response.json()
+      return responseData.data || []
+    } catch (error) {
+      return rejectWithValue(error.message)
+    }
+  }
+)
+
 const checkoutSlice = createSlice({
   name: 'checkout',
   initialState: {
@@ -364,7 +403,8 @@ const checkoutSlice = createSlice({
       qoynExpiryDate: null,
       storeCurrency: 'AED',
       isValidationLoading: false,
-      validationError: null
+      validationError: null,
+      message: null
     },
     
     // Coupons
@@ -372,6 +412,12 @@ const checkoutSlice = createSlice({
     loadingCoupons: false,
     couponsError: null,
     appliedCoupon: null,
+    
+    // Gig Completions
+    gigCompletions: [],
+    loadingGigCompletions: false,
+    gigCompletionsError: null,
+    appliedGigCompletion: null,
     
     // General
     loading: false,
@@ -447,6 +493,14 @@ const checkoutSlice = createSlice({
     },
     clearAppliedCoupon: (state) => {
       state.appliedCoupon = null
+    },
+    
+    // Gig Completion management
+    setAppliedGigCompletion: (state, action) => {
+      state.appliedGigCompletion = action.payload
+    },
+    clearAppliedGigCompletion: (state) => {
+      state.appliedGigCompletion = null
     }
   },
   extraReducers: (builder) => {
@@ -580,6 +634,10 @@ const checkoutSlice = createSlice({
             state.qoynValidation.storeCurrency = data.qoyn.storeCurrency
           }
         }
+        // Store the message from API response
+        if (action.payload.message) {
+          state.qoynValidation.message = action.payload.message
+        }
       })
       .addCase(validateQoynRedemption.rejected, (state, action) => {
         state.qoynValidation.isValidationLoading = false
@@ -598,6 +656,20 @@ const checkoutSlice = createSlice({
       .addCase(fetchAcceptedPurchaseGigs.rejected, (state, action) => {
         state.loadingCoupons = false
         state.couponsError = action.payload
+      })
+      
+      // Fetch gig completions
+      .addCase(fetchGigCompletions.pending, (state) => {
+        state.loadingGigCompletions = true
+        state.gigCompletionsError = null
+      })
+      .addCase(fetchGigCompletions.fulfilled, (state, action) => {
+        state.loadingGigCompletions = false
+        state.gigCompletions = action.payload || []
+      })
+      .addCase(fetchGigCompletions.rejected, (state, action) => {
+        state.loadingGigCompletions = false
+        state.gigCompletionsError = action.payload
       })
       
       // Redeem Qoyns
@@ -633,7 +705,9 @@ export const {
   clearPaymentIntentError,
   clearStripeData,
   setAppliedCoupon,
-  clearAppliedCoupon
+  clearAppliedCoupon,
+  setAppliedGigCompletion,
+  clearAppliedGigCompletion
 } = checkoutSlice.actions
 
 export default checkoutSlice.reducer

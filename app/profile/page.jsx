@@ -24,11 +24,13 @@ export default function ProfilePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const dispatch = useDispatch()
-  const { user, addresses, orders, loading, loadingAddresses, ordersLoading, error, addressError } = useSelector(state => state.profile)
+  const { user, addresses, orders, ordersPagination, loading, loadingAddresses, ordersLoading, error, addressError } = useSelector(state => state.profile)
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'personal-info')
   const [isEditing, setIsEditing] = useState(false)
   const [locationModalOpen, setLocationModalOpen] = useState(false)
   const [selectedStatus, setSelectedStatus] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
 
   const normalizeStatus = (value) => {
     if (!value) return ''
@@ -55,6 +57,22 @@ export default function ProfilePage() {
   const uniqueStatuses = Array.from(new Set((orders || []).map(o => normalizeStatus(o?.status)).filter(Boolean)))
   const filteredOrders = selectedStatus === 'all' ? orders : (orders || []).filter(o => normalizeStatus(o?.status) === selectedStatus)
 
+  // Calculate pagination info
+  const totalPages = ordersPagination?.totalPages || 1
+  const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1)
+
+  const handlePageChange = (page) => {
+    if (page < 1 || page > totalPages || page === currentPage) {
+      return
+    }
+    setCurrentPage(page)
+    // Scroll to top of orders section
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handlePrevious = () => handlePageChange(currentPage - 1)
+  const handleNext = () => handlePageChange(currentPage + 1)
+
   // Fetch profile data only when on tabs that require it
   useEffect(() => {
     const tabsThatDoNotNeedProfile = new Set(['orders', 'qoyns-wallet', 'qoyns-history', 'send-qoyn'])
@@ -63,12 +81,19 @@ export default function ProfilePage() {
     }
   }, [dispatch, activeTab])
 
-  // Fetch orders when orders tab becomes active
+  // Fetch orders when orders tab becomes active or page changes
   useEffect(() => {
     if (activeTab === 'orders') {
-      dispatch(fetchOrders())
+      dispatch(fetchOrders({ page: currentPage, limit: pageSize }))
     }
-  }, [activeTab, dispatch])
+  }, [activeTab, dispatch, currentPage, pageSize])
+
+  // Reset to page 1 when status filter changes
+  useEffect(() => {
+    if (activeTab === 'orders' && currentPage !== 1) {
+      setCurrentPage(1)
+    }
+  }, [selectedStatus, activeTab])
 
   // Fetch addresses when addresses tab becomes active
   useEffect(() => {
@@ -125,9 +150,10 @@ export default function ProfilePage() {
     window.open('https://dev.qliq.ae/', '_blank')
   }
 
+  // Only show cash wallet tab for influencer role
   const tabs = [
     { id: 'personal-info', label: 'Personal Info' },
-    // { id: 'cash-wallet', label: 'Cash Wallet' },
+    ...(user?.role === 'influencer' ? [{ id: 'cash-wallet', label: 'Cash Wallet' }] : []),
     { id: 'qoyns-wallet', label: 'Qoyns Wallet' },
     { id: 'orders', label: 'Orders' },
     { id: 'addresses', label: 'Addresses' },
@@ -141,7 +167,7 @@ export default function ProfilePage() {
           <div className={styles.textContent}>
             <h1 className={styles.title}>MY PROFILE</h1>
             <p className={styles.subtitle}>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc vulputate libero et velit interdum, ac aliquet odio mattis.
+            Welcome to IQLIQ where you NEVER have to pay a full price for buying your favorite stuff  again!
             </p>
           </div>
           <div className={styles.actionTop}>
@@ -167,14 +193,14 @@ export default function ProfilePage() {
                 </button>
               ))}
             </div>
-            {activeTab === 'cash-wallet' && (
+            {/* {activeTab === 'cash-wallet' && (
               <button
                 className={styles.addCardBtn}
                 onClick={() => handleTabChange('add-card')}
               >
                 Add New Card
               </button>
-            )}
+            )} */}
             {/* {activeTab === 'qoyns-wallet' || activeTab === 'qoyns-history' || activeTab === 'send-qoyn' ? (
               <div className={styles.qoynsActionsRow}>
                 <button
@@ -252,7 +278,40 @@ export default function ProfilePage() {
                     Loading orders...
                   </div>
                 ) : (
-                  <Orders orders={filteredOrders} />
+                  <>
+                    <Orders orders={filteredOrders} />
+                    {!ordersLoading && totalPages > 1 && (
+                      <div className={styles.paginationControls} role="navigation" aria-label="Orders pagination">
+                        <button
+                          type="button"
+                          className={styles.paginationButton}
+                          onClick={handlePrevious}
+                          disabled={currentPage === 1}
+                        >
+                          Previous
+                        </button>
+                        {pageNumbers.map((page) => (
+                          <button
+                            key={page}
+                            type="button"
+                            className={`${styles.paginationButton} ${page === currentPage ? styles.active : ''}`}
+                            onClick={() => handlePageChange(page)}
+                            aria-current={page === currentPage ? 'page' : undefined}
+                          >
+                            {page}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          className={styles.paginationButton}
+                          onClick={handleNext}
+                          disabled={currentPage === totalPages}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             ) : activeTab === 'qoyns-wallet' ? (
@@ -293,11 +352,11 @@ export default function ProfilePage() {
                     <PersonalInfo user={user} />
                   </div>
                 )}
-                {/* {activeTab === 'cash-wallet' && (
+                {activeTab === 'cash-wallet' && user?.role === 'influencer' && (
                   <div className={styles.sectionContent}>
                     <CashWallet user={user} />
                   </div>
-                )} */}
+                )}
                 {activeTab === 'add-card' && (
                   <div className={styles.sectionContent}>
                     <AddCard

@@ -613,7 +613,7 @@ export default function CategoryPage() {
       </section>
 
       {/* Best and Cheap Deals Section */}
-      <section className="section">
+      {/* <section className="section">
         <div className="container">
           <SectionHeader
             title="Best and Cheap Deals"
@@ -653,7 +653,7 @@ export default function CategoryPage() {
             </div>
           )}
         </div>
-      </section>
+      </section> */}
 
       {/* Offers Section */}
       <section className="section">

@@ -79,7 +79,7 @@ export const catalog = {
     return `${BASES.catalog}/products/store-products/${storeId}/cheap-deals${queryString ? `?${queryString}` : ''}`;
   },
   productsByLevel4Category: (categorySlug) => `${BASES.catalog}/products/level4/${categorySlug}`,
-  productsByCategory: (categoryId) => `${BASES.catalog}/products/category?categoryId=${categoryId}`,
+  productsByCategory: (categoryId, limit = 100) => `${BASES.catalog}/products/category?categoryId=${categoryId}&limit=${limit}`,
   similarProducts: (productId, limit = 10) => `${BASES.catalog}/products/similar/${productId}?limit=${limit}`,
   stores: `${BASES.catalog}/stores`,
   storeBySlug: (slug) => `${BASES.catalog}/stores/slug/${slug}`,
@@ -216,6 +216,7 @@ export const payment = {
   base: BASES.payment,
   stripeCheckout: `${BASES.payment}/payment/stripe/checkout`,
   stripeHostedCheckout: `${BASES.payment}/payment/stripe/hosted-checkout`,
+  cashWalletCheckout: `${BASES.payment}/payment/cash-wallet/checkout`,
 }
 
 export const addresses = {
@@ -230,6 +231,7 @@ export const addresses = {
 export const orders = {
   base: `${BASES.cart}/orders`,
   getUserOrders: `${BASES.cart}/orders/user-orders`,
+  getOrderById: (orderId) => `${BASES.cart}/orders/${orderId}`,
 }
 
 
@@ -270,6 +272,8 @@ export const wallet = {
   userBalance: `${BASES.wallet}/wallet/qoyn/user-balance`,
   validateRedemption: `${BASES.wallet}/wallet/qoyn/validate-redemption`,
   redeemQoyn: `${BASES.wallet}/wallet/qoyn/redeem`,
+  redeemableCashBalance: `${BASES.wallet}/wallet/cash/redeemable-balance`,
+  redeemCash: `${BASES.wallet}/wallet/cash/redeem`,
 }
 
 export const delivery = {

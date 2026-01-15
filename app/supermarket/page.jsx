@@ -73,7 +73,6 @@ export default function Home() {
   const bestCheapDealsSwiperRef = useRef(null)
   const bestBundlesSwiperRef = useRef(null)
   const bestCashbackSwiperRef = useRef(null)
-  const cheapDealsProductsSwiperRef = useRef(null)
   const dispatch = useDispatch()
   const router = useRouter()
   const { supermarketStores, fastestDeliveryStores, bestCheapDeals, bestBundleDeals, loading, error } = useSelector(state => state.stores)
@@ -130,7 +129,7 @@ export default function Home() {
   useEffect(() => {
     dispatch(fetchSupermarketStores())
     dispatch(fetchProducts())
-    dispatch(fetchProductsByCategory(supermarketCategoryId))
+    dispatch(fetchProductsByCategory({ categoryId: supermarketCategoryId, limit: 200 }))
   }, [dispatch])
 
   // Fetch fastest delivery stores and deals when location is available
@@ -228,44 +227,6 @@ export default function Home() {
     }
   }
 
-  const handleCheapDealsProductsPrev = () => {
-    if (cheapDealsProductsSwiperRef.current?.swiper) {
-      cheapDealsProductsSwiperRef.current.swiper.slidePrev()
-    }
-  }
-
-  const handleCheapDealsProductsNext = () => {
-    if (cheapDealsProductsSwiperRef.current?.swiper) {
-      cheapDealsProductsSwiperRef.current.swiper.slideNext()
-    }
-  }
-
-  // Filter products with cheap deals (discount > 0%)
-  const cheapDealsProducts = useMemo(() => {
-    if (!Array.isArray(categoryProducts) || categoryProducts.length === 0) {
-      return []
-    }
-    return categoryProducts
-      .filter(product => {
-        // Check if product has discount_price and calculate discount percentage
-        if (product.discount_price && product.price && product.price > 0) {
-          const discountPercent = ((product.price - product.discount_price) / product.price) * 100
-          return discountPercent > 0
-        }
-        return false
-      })
-      .map(product => {
-        // Calculate discount percentage for badge
-        const discountPercent = ((product.price - product.discount_price) / product.price) * 100
-        return {
-          ...product,
-          discount_percentage: discountPercent
-        }
-      })
-      .sort((a, b) => (b.discount_percentage || 0) - (a.discount_percentage || 0)) // Sort by highest discount first
-      .slice(0, 20) // Limit to 20 products
-      .map(transformProductData)
-  }, [categoryProducts])
 
   return (
     <main className="home-page">
@@ -391,45 +352,6 @@ export default function Home() {
           )}
         </div>
       </section>
-
-      {/* Best and Cheap Deals Products Section */}
-      <section className="section">
-        <div className="container">
-          <SectionHeader
-            title="Best and Cheap Deals"
-            showNavigation={true}
-            onPrev={handleCheapDealsProductsPrev}
-            onNext={handleCheapDealsProductsNext}
-          />
-          {categoryProductsLoading ? (
-            <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
-              {[...Array(4)].map((_, index) => (
-                <ProductCardSkeleton key={`skeleton-cheap-${index}`} />
-              ))}
-            </div>
-          ) : cheapDealsProducts.length > 0 ? (
-            <Swiper
-              ref={cheapDealsProductsSwiperRef}
-              modules={[SwiperNavigation]}
-              slidesPerView={isMobile ? 1.2 : 'auto'}
-              spaceBetween={isMobile ? 16 : 24}
-              grabCursor={true}
-              freeMode={true}
-              className="bestsellers-swiper"
-            >
-              {cheapDealsProducts.map((product, index) => (
-                <SwiperSlide key={product.id || index} className="bestseller-slide">
-                  <ProductCard {...product} />
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-              No cheap deals available at the moment.
-            </div>
-          )}
-        </div>
-      </section>
       {/* Best Bundles Deals */}
       <section className="section">
         <div className="container">
@@ -498,7 +420,7 @@ export default function Home() {
         </div>
       </section>
       {/* Best Cashback - Show products with special deals for Qliq Plus */}
-      <section className="section">
+      {/* <section className="section">
         <div className="container">
           <SectionHeader
             title="Best Cashback"
@@ -506,13 +428,13 @@ export default function Home() {
             onPrev={handleBestCashbackPrev}
             onNext={handleBestCashbackNext}
           />
-          {loading ? (
+          {categoryProductsLoading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
               {[...Array(4)].map((_, index) => (
                 <ProductCardSkeleton key={`skeleton-${index}`} />
               ))}
             </div>
-          ) : (products && products.length > 0) ? (
+          ) : (categoryProducts && categoryProducts.length > 0) ? (
             <Swiper
               ref={bestCashbackSwiperRef}
               modules={[SwiperNavigation]}
@@ -522,7 +444,7 @@ export default function Home() {
               freeMode={true}
               className="bestsellers-swiper"
             >
-              {products
+              {categoryProducts
                 .filter(product => product.special_deals_for_qliq_plus || product.is_offer)
                 .slice(0, 20)
                 .map((product, index) => {
@@ -543,7 +465,7 @@ export default function Home() {
             </div>
           )}
         </div>
-      </section>
+      </section> */}
       <FilterDrawer
         open={filterOpen}
         onClose={() => setFilterOpen(false)}
