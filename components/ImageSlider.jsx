@@ -22,13 +22,13 @@ const slides = [
   },
   {
     id: 3,
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/a868e3c3ae04f8cde35d9705cad41f2bccbeb7da?width=1376',
+    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxab6jMWSSKjrOEbsNjwj-ieKXun5YHnFTMA&s',
     width: 688,
     height: 380
   },
   {
     id: 4,
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/dc622b97235b892ac997a36da4ca4fc5bbe221a9?width=1376',
+    image: 'https://img.freepik.com/free-vector/paper-style-podium-horizontal-banner_23-2150956911.jpg?semt=ais_hybrid&w=740&q=80',
     width: 688,
     height: 380
   }
