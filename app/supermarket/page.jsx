@@ -253,8 +253,13 @@ export default function Home() {
             <Swiper
               ref={fastestDeliverySwiperRef}
               modules={[SwiperNavigation]}
-              slidesPerView={isMobile ? 1.2 : 'auto'}
-              spaceBetween={isMobile ? 16 : 24}
+              slidesPerView={'auto'}
+              spaceBetween={24}
+              breakpoints={{
+                320: { slidesPerView: 1.2, spaceBetween: 16 },
+                640: { slidesPerView: 2.2, spaceBetween: 20 },
+                1024: { slidesPerView: 'auto', spaceBetween: 24 }
+              }}
               grabCursor={true}
               freeMode={true}
               className="bestsellers-swiper"
@@ -304,8 +309,13 @@ export default function Home() {
             <Swiper
               ref={bestCheapDealsSwiperRef}
               modules={[SwiperNavigation]}
-              slidesPerView={isMobile ? 1.2 : 'auto'}
-              spaceBetween={isMobile ? 16 : 24}
+              slidesPerView={'auto'}
+              spaceBetween={24}
+              breakpoints={{
+                320: { slidesPerView: 1.2, spaceBetween: 16 },
+                640: { slidesPerView: 2.2, spaceBetween: 20 },
+                1024: { slidesPerView: 'auto', spaceBetween: 24 }
+              }}
               grabCursor={true}
               freeMode={true}
               className="bestsellers-swiper"
@@ -371,8 +381,13 @@ export default function Home() {
             <Swiper
               ref={bestBundlesSwiperRef}
               modules={[SwiperNavigation]}
-              slidesPerView={isMobile ? 1.2 : 'auto'}
-              spaceBetween={isMobile ? 16 : 24}
+              slidesPerView={'auto'}
+              spaceBetween={24}
+              breakpoints={{
+                320: { slidesPerView: 1.2, spaceBetween: 16 },
+                640: { slidesPerView: 2.2, spaceBetween: 20 },
+                1024: { slidesPerView: 'auto', spaceBetween: 24 }
+              }}
               grabCursor={true}
               freeMode={true}
               className="bestsellers-swiper"
