@@ -276,7 +276,6 @@ button {
     justify-content: flex-start;
   }
   .bestseller-slide {
-    width: auto !important;
     display: flex;
     justify-content: flex-start;
   }
@@ -331,12 +330,14 @@ button {
   justify-content: flex-start;
 }
 
-.bestseller-slide {
-  width: auto !important;
-  display: flex;
-  justify-content: flex-start;
-  padding-left: 0;
-  padding-right: 0;
+@media (min-width: 769px) {
+  .bestseller-slide {
+    width: auto !important;
+    display: flex;
+    justify-content: flex-start;
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 /* Page-level layout classes moved from app/page.tsx */

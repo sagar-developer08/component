@@ -93,6 +93,7 @@ export default function StoreCard({
           background-size: cover;
           background-position: center;
           position: relative;
+          overflow: hidden;
         }
 
         /* ... existing styles ... */
@@ -202,13 +203,18 @@ export default function StoreCard({
         }
 
         @media (max-width: 768px) {
+          .store-card {
+            width: 100%;
+          }
+
           .store-image {
-            width: 280px;
-            height: 200px;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 322/222;
           }
 
           .store-info {
-            width: 280px;
+            width: 100%;
           }
 
           .store-title {
