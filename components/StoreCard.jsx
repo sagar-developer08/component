@@ -29,7 +29,7 @@ export default function StoreCard({
           alt={title}
           width={322}
           height={222}
-          style={{ borderRadius: '16px', border: '1px solid rgba(0, 0, 0, 0.16)' }}
+          style={{ borderRadius: '16px', border: '1px solid rgba(0, 0, 0, 0.16)', width: '100%', height: '100%', objectFit: 'cover' }}
         />
 
         {getBadge() && (
@@ -92,6 +92,7 @@ export default function StoreCard({
           background-size: cover;
           background-position: center;
           position: relative;
+          overflow: hidden;
         }
 
         .store-badge {
@@ -208,13 +209,18 @@ export default function StoreCard({
         }
 
         @media (max-width: 768px) {
+          .store-card {
+            width: 100%;
+          }
+
           .store-image {
-            width: 280px;
-            height: 200px;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 322/222;
           }
 
           .store-info {
-            width: 280px;
+            width: 100%;
           }
 
           .store-title {
