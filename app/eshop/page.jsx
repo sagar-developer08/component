@@ -379,6 +379,12 @@ export default function Home() {
                 onSlideChange={(swiper) => {
                   setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
+                onReachEnd={(swiper) => {
+                  setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
+                  setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 onSwiper={(swiper) => {
                   setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
@@ -424,6 +430,12 @@ export default function Home() {
                 onSlideChange={(swiper) => {
                   setCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
+                onReachEnd={(swiper) => {
+                  setCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
+                  setCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 onSwiper={(swiper) => {
                   setCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
@@ -458,6 +470,12 @@ export default function Home() {
               grabCursor={true}
               freeMode={true}
               onSlideChange={(swiper) => {
+                setOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
                 setOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               onSwiper={(swiper) => {
@@ -533,6 +551,12 @@ export default function Home() {
                 onSlideChange={(swiper) => {
                   setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
+                onReachEnd={(swiper) => {
+                  setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
+                  setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 onSwiper={(swiper) => {
                   setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
@@ -568,6 +592,12 @@ export default function Home() {
               grabCursor={true}
               freeMode={true}
               onSlideChange={(swiper) => {
+                setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
                 setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               onSwiper={(swiper) => {
@@ -650,6 +680,12 @@ export default function Home() {
                 grabCursor={true}
                 freeMode={true}
                 onSlideChange={(swiper) => {
+                  setLevel3CategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachEnd={(swiper) => {
+                  setLevel3CategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
                   setLevel3CategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
                 onSwiper={(swiper) => {
