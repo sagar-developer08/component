@@ -555,8 +555,13 @@ export default function Home() {
               <Swiper
                 ref={bestsellersSwiperRef}
                 modules={[SwiperNavigation]}
-                slidesPerView={isMobile ? 2.2 : 'auto'}
-                spaceBetween={isMobile ? 10 : 24}
+                slidesPerView={'auto'}
+                spaceBetween={24}
+                breakpoints={{
+                  320: { slidesPerView: 1.15, spaceBetween: 12 },
+                  640: { slidesPerView: 2.2, spaceBetween: 16 },
+                  1024: { slidesPerView: 'auto', spaceBetween: 24 },
+                }}
                 grabCursor={true}
                 freeMode={true}
                 onSlideChange={(swiper) => {
@@ -991,8 +996,13 @@ export default function Home() {
             <Swiper
               ref={featuredOffersSwiperRef}
               modules={[SwiperNavigation]}
-              slidesPerView={isMobile ? 2.2 : 'auto'}
-              spaceBetween={isMobile ? 10 : 24}
+              slidesPerView={'auto'}
+              spaceBetween={24}
+              breakpoints={{
+                320: { slidesPerView: 1.15, spaceBetween: 12 },
+                640: { slidesPerView: 2.2, spaceBetween: 16 },
+                1024: { slidesPerView: 'auto', spaceBetween: 24 },
+              }}
               grabCursor={true}
               freeMode={true}
               onSlideChange={(swiper) => {
