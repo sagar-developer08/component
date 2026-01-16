@@ -148,6 +148,12 @@ export default function CategoryPage() {
   const [isStoreSlug, setIsStoreSlug] = useState(false)
   const [storeId, setStoreId] = useState(null)
   
+  // Navigation State
+  const [bestsellersNav, setBestsellersNav] = useState({ isBeginning: true, isEnd: false });
+  const [offersNav, setOffersNav] = useState({ isBeginning: true, isEnd: false });
+  const [newArrivalsNav, setNewArrivalsNav] = useState({ isBeginning: true, isEnd: false });
+  const [otherCategoriesNav, setOtherCategoriesNav] = useState({ isBeginning: true, isEnd: false });
+
   // Determine if this is actually a store slug based on data presence
   // Check hypermarket, supermarket, store products, and store slug products
   const isActuallyStoreSlug = !!(hypermarketProducts?.store || supermarketProducts?.store || storeProductsByStoreId?.store || storeSlugProducts?.store)
@@ -422,37 +428,37 @@ export default function CategoryPage() {
 
   // Navigation handlers for swipers
   const handleBestsellersPrev = () => {
-    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper) {
+    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper && !bestsellersNav.isBeginning) {
       bestsellersSwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleBestsellersNext = () => {
-    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper) {
+    if (bestsellersSwiperRef.current && bestsellersSwiperRef.current.swiper && !bestsellersNav.isEnd) {
       bestsellersSwiperRef.current.swiper.slideNext()
     }
   }
 
   const handleOffersPrev = () => {
-    if (offersSwiperRef.current && offersSwiperRef.current.swiper) {
+    if (offersSwiperRef.current && offersSwiperRef.current.swiper && !offersNav.isBeginning) {
       offersSwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleOffersNext = () => {
-    if (offersSwiperRef.current && offersSwiperRef.current.swiper) {
+    if (offersSwiperRef.current && offersSwiperRef.current.swiper && !offersNav.isEnd) {
       offersSwiperRef.current.swiper.slideNext()
     }
   }
 
   const handleNewArrivalsPrev = () => {
-    if (newArrivalsSwiperRef.current && newArrivalsSwiperRef.current.swiper) {
+    if (newArrivalsSwiperRef.current && newArrivalsSwiperRef.current.swiper && !newArrivalsNav.isBeginning) {
       newArrivalsSwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleNewArrivalsNext = () => {
-    if (newArrivalsSwiperRef.current && newArrivalsSwiperRef.current.swiper) {
+    if (newArrivalsSwiperRef.current && newArrivalsSwiperRef.current.swiper && !newArrivalsNav.isEnd) {
       newArrivalsSwiperRef.current.swiper.slideNext()
     }
   }
@@ -481,13 +487,13 @@ export default function CategoryPage() {
     }
   }
   const handleOtherCategoriesPrev = () => {
-    if (otherCategoriesSwiperRef.current && otherCategoriesSwiperRef.current.swiper) {
+    if (otherCategoriesSwiperRef.current && otherCategoriesSwiperRef.current.swiper && !otherCategoriesNav.isBeginning) {
       otherCategoriesSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleOtherCategoriesNext = () => {
-    if (otherCategoriesSwiperRef.current && otherCategoriesSwiperRef.current.swiper) {
+    if (otherCategoriesSwiperRef.current && otherCategoriesSwiperRef.current.swiper && !otherCategoriesNav.isEnd) {
       otherCategoriesSwiperRef.current.swiper.slideNext();
     }
   };
@@ -534,6 +540,8 @@ export default function CategoryPage() {
             showNavigation={true}
             onPrev={handleOtherCategoriesPrev}
             onNext={handleOtherCategoriesNext}
+            prevDisabled={otherCategoriesNav.isBeginning}
+            nextDisabled={otherCategoriesNav.isEnd}
           />
            {isLoading ? (
              <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -553,6 +561,18 @@ export default function CategoryPage() {
               spaceBetween={isMobile ? 12 : 24}
               grabCursor={true}
               freeMode={true}
+              onSlideChange={(swiper) => {
+                setOtherCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setOtherCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
+                setOtherCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setOtherCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
               className="other-categories-swiper"
             >
               {transformedCategories.map((category, index) => (
@@ -577,6 +597,8 @@ export default function CategoryPage() {
             showNavigation={true}
             onPrev={handleBestsellersPrev}
             onNext={handleBestsellersNext}
+            prevDisabled={bestsellersNav.isBeginning}
+            nextDisabled={bestsellersNav.isEnd}
           />
           {isLoading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -597,6 +619,18 @@ export default function CategoryPage() {
               grabCursor={true}
               freeMode={true}
               style={{ width: '1360px' }}
+              onSlideChange={(swiper) => {
+                setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
+                setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
             >
               {(transformedBestsellers.length > 0 ? transformedBestsellers : allStoreProducts.slice(0, 20)).map((product, index) => (
                 <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
@@ -663,6 +697,8 @@ export default function CategoryPage() {
             showNavigation={true}
             onPrev={handleOffersPrev}
             onNext={handleOffersNext}
+            prevDisabled={offersNav.isBeginning}
+            nextDisabled={offersNav.isEnd}
           />
           {isLoading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -683,6 +719,18 @@ export default function CategoryPage() {
               grabCursor={true}
               freeMode={true}
               style={{ width: '1360px' }}
+              onSlideChange={(swiper) => {
+                setOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
+                setOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
             >
               {(transformedOffers.length > 0 ? transformedOffers : allStoreProducts.slice(20, 40)).map((product, index) => (
                 <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
@@ -706,6 +754,8 @@ export default function CategoryPage() {
             showNavigation={true}
             onPrev={handleNewArrivalsPrev}
             onNext={handleNewArrivalsNext}
+            prevDisabled={newArrivalsNav.isBeginning}
+            nextDisabled={newArrivalsNav.isEnd}
           />
           {isLoading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -726,6 +776,18 @@ export default function CategoryPage() {
               grabCursor={true}
               freeMode={true}
               style={{ width: '1360px' }}
+              onSlideChange={(swiper) => {
+                setNewArrivalsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setNewArrivalsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
+                setNewArrivalsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setNewArrivalsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
             >
               {(transformedNewArrivals.length > 0 ? transformedNewArrivals : allStoreProducts.slice(40, 60)).map((product, index) => (
                 <SwiperSlide key={product.id || index} style={{ width: 'auto' }}>
