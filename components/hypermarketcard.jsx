@@ -1,12 +1,15 @@
 'use client'
 import Image from 'next/image'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchHypermarketStores, fetchSupermarketStores } from '@/store/slices/storesSlice'
 import { useRouter, usePathname } from 'next/navigation'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { Autoplay, FreeMode } from 'swiper/modules'
+import 'swiper/css'
+import 'swiper/css/free-mode'
 
 export default function HypermarketCard() {
-  const [isMobile, setIsMobile] = useState(false);
   const dispatch = useDispatch()
   const router = useRouter()
   const pathname = usePathname()
@@ -15,15 +18,6 @@ export default function HypermarketCard() {
   // Determine which stores to use based on the current pathname
   const isSupermarketPage = pathname?.includes('/supermarket')
   const isHypermarketPage = pathname?.includes('/hypermarket')
-
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
 
   useEffect(() => {
     // Fetch stores based on the current page
@@ -60,32 +54,53 @@ export default function HypermarketCard() {
           ) : error ? (
             <div className="error-message">Error loading stores: {error}</div>
           ) : (stores && stores.length > 0) ? (
-            stores.map((store, index) => (
-              <div key={store._id || store.id || `store-${index}`} className="hypermarket-card-wrapper">
-                <div className="hypermarket-card" onClick={() => handleStoreClick(store)}>
-                  <Image
-                    src={ store.logo || '/iphone.jpg'}
-                    alt={store.name || 'Store'}
-                    width={isMobile ? 160 : 160}
-                    height={isMobile ? 160 : 160}
-                    style={{ borderRadius: '100px', objectFit: 'contain', border: '1px solid #0082FF' }}
-                  />
-                </div>
-                <div className="hypermarket-name">
-                  <h3>
-                    {store.name && store.name.includes(' - ') ? (
-                      <>
-                        {store.name.split(' - ')[0]}
-                        <br />
-                        {store.name.split(' - ')[1]}
-                      </>
-                    ) : (
-                      store.name || 'Store'
-                    )}
-                  </h3>
-                </div>
-              </div>
-            ))
+            <Swiper
+              modules={[Autoplay, FreeMode]}
+              spaceBetween={12}
+              slidesPerView={2.2}
+              freeMode={true}
+              autoplay={{
+                delay: 3000,
+                disableOnInteraction: false,
+              }}
+              breakpoints={{
+                320: { slidesPerView: 2.2, spaceBetween: 10 },
+                480: { slidesPerView: 3.2, spaceBetween: 12 },
+                640: { slidesPerView: 4.2, spaceBetween: 16 },
+                768: { slidesPerView: 4.5, spaceBetween: 20 },
+                1024: { slidesPerView: 6.5, spaceBetween: 24 },
+              }}
+              className="hypermarket-swiper"
+            >
+              {stores.map((store, index) => (
+                <SwiperSlide key={store._id || store.id || `store-${index}`}>
+                  <div className="hypermarket-card-wrapper">
+                    <div className="hypermarket-card" onClick={() => handleStoreClick(store)}>
+                      <Image
+                        src={ store.logo || '/iphone.jpg'}
+                        alt={store.name || 'Store'}
+                        width={160}
+                        height={160}
+                        style={{ borderRadius: '50%', objectFit: 'contain', border: '1px solid #0082FF', maxWidth: '100%', aspectRatio: '1/1', height: 'auto' }}
+                      />
+                    </div>
+                    <div className="hypermarket-name">
+                      <h3>
+                        {store.name && store.name.includes(' - ') ? (
+                          <>
+                            {store.name.split(' - ')[0]}
+                            <br />
+                            {store.name.split(' - ')[1]}
+                          </>
+                        ) : (
+                          store.name || 'Store'
+                        )}
+                      </h3>
+                    </div>
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
           ) : (
             <div className="no-stores">No stores available</div>
           )}
@@ -93,12 +108,8 @@ export default function HypermarketCard() {
 
         <style jsx>{`
           .hypermarket-cards-container {
-            display: flex;
-            gap: 24px;
-            overflow-x: auto;
+            width: 100%;
             padding-bottom: 8px;
-            flex-wrap: wrap;
-            justify-content: center;
           }
 
           .hypermarket-card-wrapper {
@@ -106,7 +117,7 @@ export default function HypermarketCard() {
             flex-direction: column;
             align-items: center;
             gap: 16px;
-            min-width: 160px;
+            width: 100%;
           }
 
           .hypermarket-card {
@@ -159,10 +170,6 @@ export default function HypermarketCard() {
           @media (max-width: 768px) {
             .hypermarket-name h3 {
               font-size: 16px;
-            }
-
-            .hypermarket-cards-container {
-              gap: 16px;
             }
           }
         `}</style>
