@@ -854,7 +854,7 @@ export default function CategoryPage() {
           .banner-content {
             flex-direction: column;
             align-items: flex-start;
-            padding: 0 24px 24px 24px;
+            padding: 44px 24px 24px 24px;
           }
           
           .banner-back-btn {

@@ -110,12 +110,14 @@ export default function Banner({
           }
           
           .banner-content {
-            padding: 24px;
+           
+            padding: 24px 24px 24px 0px;
             align-items: flex-start;
             text-align: flex-start;
           }
 
           .banner-info {
+            margin-top: 20px;
             align-items: flex-start;
           }
 
