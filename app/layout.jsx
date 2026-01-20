@@ -5,7 +5,7 @@ import { ToastProvider } from '../contexts/ToastContext'
 import ClientWrapper from '../components/ClientWrapper'
 
 export const metadata = {
-  title: 'QLIQ - Marketplace',
+  title: 'IQLIQ - Marketplace',
   description: 'Your one-stop marketplace for everything',
   icons: {
     icon: [
