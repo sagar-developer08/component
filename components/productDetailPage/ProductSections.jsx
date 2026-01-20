@@ -10,6 +10,8 @@ import 'swiper/css'
 import 'swiper/css/navigation'
 
 export default function ProductSections({ relatedProducts, productData }) {
+  const [relatedNav, setRelatedNav] = useState({ isBeginning: true, isEnd: false })
+  const [customerAlsoLikedNav, setCustomerAlsoLikedNav] = useState({ isBeginning: true, isEnd: false })
   const [expandedItem, setExpandedItem] = useState(0)
   const [manufacturerImageIndex, setManufacturerImageIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -319,13 +321,13 @@ export default function ProductSections({ relatedProducts, productData }) {
 
   // Handlers for related products swiper navigation
   const handleRelatedProductsPrev = () => {
-    if (relatedProductsSwiperRef.current && relatedProductsSwiperRef.current.swiper && !relatedProductsNav.isBeginning) {
+    if (relatedProductsSwiperRef.current && relatedProductsSwiperRef.current.swiper && !relatedNav.isBeginning) {
       relatedProductsSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleRelatedProductsNext = () => {
-    if (relatedProductsSwiperRef.current && relatedProductsSwiperRef.current.swiper && !relatedProductsNav.isEnd) {
+    if (relatedProductsSwiperRef.current && relatedProductsSwiperRef.current.swiper && !relatedNav.isEnd) {
       relatedProductsSwiperRef.current.swiper.slideNext();
     }
   };
@@ -352,6 +354,8 @@ export default function ProductSections({ relatedProducts, productData }) {
             showNavigation={true}
             onPrev={handleRelatedProductsPrev}
             onNext={handleRelatedProductsNext}
+            prevDisabled={relatedNav.isBeginning}
+            nextDisabled={relatedNav.isEnd}
             showButton={false}
             prevDisabled={relatedProductsNav.isBeginning || !Array.isArray(relatedList) || relatedList.length === 0}
             nextDisabled={relatedProductsNav.isEnd || !Array.isArray(relatedList) || relatedList.length === 0}
@@ -371,6 +375,18 @@ export default function ProductSections({ relatedProducts, productData }) {
                 setRelatedProductsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               className="bestsellers-swiper"
+              onSlideChange={(swiper) => {
+                setRelatedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setRelatedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
+                setRelatedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setRelatedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
             >
               {relatedList.map((product, index) => (
                 <SwiperSlide key={product.id || `product-${index}`} className="bestseller-slide">
@@ -606,6 +622,8 @@ export default function ProductSections({ relatedProducts, productData }) {
             showNavigation={true}
             onPrev={handleCustomerAlsoLikedPrev}
             onNext={handleCustomerAlsoLikedNext}
+            prevDisabled={customerAlsoLikedNav.isBeginning}
+            nextDisabled={customerAlsoLikedNav.isEnd}
             showButton={false}
             buttonText="Upgrade"
             prevDisabled={customerAlsoLikedNav.isBeginning || !Array.isArray(relatedList) || relatedList.length === 0}
@@ -618,6 +636,18 @@ export default function ProductSections({ relatedProducts, productData }) {
               slidesPerView={isMobile ? 1.2 : 'auto'}
               spaceBetween={isMobile ? 16 : 24}
               grabCursor={true}
+              onSlideChange={(swiper) => {
+                setCustomerAlsoLikedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setCustomerAlsoLikedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
+                setCustomerAlsoLikedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setCustomerAlsoLikedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
               freeMode={true}
               onSlideChange={(swiper) => {
                 setCustomerAlsoLikedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });

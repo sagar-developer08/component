@@ -79,10 +79,11 @@ export default function Home() {
   const [userLocation, setUserLocation] = useState(null)
   const { products, categoryProducts = [], categoryProductsLoading } = useSelector(state => state.products)
   
-  // Swiper navigation states
-  const [fastestDeliveryNav, setFastestDeliveryNav] = useState({ isBeginning: true, isEnd: false })
-  const [bestCheapDealsNav, setBestCheapDealsNav] = useState({ isBeginning: true, isEnd: false })
-  const [bestBundlesNav, setBestBundlesNav] = useState({ isBeginning: true, isEnd: false })
+  // Navigation State
+  const [fastestDeliveryNav, setFastestDeliveryNav] = useState({ isBeginning: true, isEnd: false });
+  const [bestCheapDealsNav, setBestCheapDealsNav] = useState({ isBeginning: true, isEnd: false });
+  const [bestBundlesNav, setBestBundlesNav] = useState({ isBeginning: true, isEnd: false });
+  const [bestCashbackNav, setBestCashbackNav] = useState({ isBeginning: true, isEnd: false });
 
   // Check screen size for mobile detection
   useEffect(() => {
@@ -247,8 +248,8 @@ export default function Home() {
             showNavigation={true}
             onPrev={handleFastestDeliveryPrev}
             onNext={handleFastestDeliveryNext}
-            prevDisabled={fastestDeliveryNav.isBeginning || !fastestDeliveryStores || fastestDeliveryStores.length === 0}
-            nextDisabled={fastestDeliveryNav.isEnd || !fastestDeliveryStores || fastestDeliveryStores.length === 0}
+            prevDisabled={fastestDeliveryNav.isBeginning}
+            nextDisabled={fastestDeliveryNav.isEnd}
           />
           {loading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -260,11 +261,22 @@ export default function Home() {
             <Swiper
               ref={fastestDeliverySwiperRef}
               modules={[SwiperNavigation]}
-              slidesPerView={isMobile ? 1.2 : 'auto'}
-              spaceBetween={isMobile ? 16 : 24}
+              slidesPerView={'auto'}
+              spaceBetween={24}
+              breakpoints={{
+                320: { slidesPerView: 1.2, spaceBetween: 16 },
+                640: { slidesPerView: 2.2, spaceBetween: 20 },
+                1024: { slidesPerView: 'auto', spaceBetween: 24 }
+              }}
               grabCursor={true}
               freeMode={true}
               onSlideChange={(swiper) => {
+                setFastestDeliveryNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setFastestDeliveryNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
                 setFastestDeliveryNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               onSwiper={(swiper) => {
@@ -306,8 +318,8 @@ export default function Home() {
             showNavigation={true}
             onPrev={handleBestCheapDealsPrev}
             onNext={handleBestCheapDealsNext}
-            prevDisabled={bestCheapDealsNav.isBeginning || !bestCheapDeals || bestCheapDeals.length === 0}
-            nextDisabled={bestCheapDealsNav.isEnd || !bestCheapDeals || bestCheapDeals.length === 0}
+            prevDisabled={bestCheapDealsNav.isBeginning}
+            nextDisabled={bestCheapDealsNav.isEnd}
           />
           {loading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -319,11 +331,22 @@ export default function Home() {
             <Swiper
               ref={bestCheapDealsSwiperRef}
               modules={[SwiperNavigation]}
-              slidesPerView={isMobile ? 1.2 : 'auto'}
-              spaceBetween={isMobile ? 16 : 24}
+              slidesPerView={'auto'}
+              spaceBetween={24}
+              breakpoints={{
+                320: { slidesPerView: 1.2, spaceBetween: 16 },
+                640: { slidesPerView: 2.2, spaceBetween: 20 },
+                1024: { slidesPerView: 'auto', spaceBetween: 24 }
+              }}
               grabCursor={true}
               freeMode={true}
               onSlideChange={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
                 setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               onSwiper={(swiper) => {
@@ -381,8 +404,8 @@ export default function Home() {
             showNavigation={true}
             onPrev={handleBestBundlesPrev}
             onNext={handleBestBundlesNext}
-            prevDisabled={bestBundlesNav.isBeginning || !bestBundleDeals || bestBundleDeals.length === 0}
-            nextDisabled={bestBundlesNav.isEnd || !bestBundleDeals || bestBundleDeals.length === 0}
+            prevDisabled={bestBundlesNav.isBeginning}
+            nextDisabled={bestBundlesNav.isEnd}
           />
           {loading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -394,11 +417,22 @@ export default function Home() {
             <Swiper
               ref={bestBundlesSwiperRef}
               modules={[SwiperNavigation]}
-              slidesPerView={isMobile ? 1.2 : 'auto'}
-              spaceBetween={isMobile ? 16 : 24}
+              slidesPerView={'auto'}
+              spaceBetween={24}
+              breakpoints={{
+                320: { slidesPerView: 1.2, spaceBetween: 16 },
+                640: { slidesPerView: 2.2, spaceBetween: 20 },
+                1024: { slidesPerView: 'auto', spaceBetween: 24 }
+              }}
               grabCursor={true}
               freeMode={true}
               onSlideChange={(swiper) => {
+                setBestBundlesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setBestBundlesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
                 setBestBundlesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               onSwiper={(swiper) => {

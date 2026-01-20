@@ -95,7 +95,8 @@ export default function Home() {
   const router = useRouter()
   const [userLocation, setUserLocation] = useState(null)
   
-  // Swiper navigation states
+  // Navigation State
+  const [fastestDeliveryNav, setFastestDeliveryNav] = useState({ isBeginning: true, isEnd: false })
   const [bestCheapDealsNav, setBestCheapDealsNav] = useState({ isBeginning: true, isEnd: false })
 
   // Check screen size for mobile detection
@@ -172,13 +173,13 @@ export default function Home() {
 
   // Navigation handlers
   const handleFastestDeliveryPrev = () => {
-    if (fastestDeliverySwiperRef.current?.swiper) {
+    if (fastestDeliverySwiperRef.current?.swiper && !fastestDeliveryNav.isBeginning) {
       fastestDeliverySwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleFastestDeliveryNext = () => {
-    if (fastestDeliverySwiperRef.current?.swiper) {
+    if (fastestDeliverySwiperRef.current?.swiper && !fastestDeliveryNav.isEnd) {
       fastestDeliverySwiperRef.current.swiper.slideNext()
     }
   }
@@ -260,8 +261,8 @@ export default function Home() {
             showNavigation={true}
             onPrev={handleBestCheapDealsPrev}
             onNext={handleBestCheapDealsNext}
-            prevDisabled={bestCheapDealsNav.isBeginning || !bestCheapDeals || bestCheapDeals.length === 0}
-            nextDisabled={bestCheapDealsNav.isEnd || !bestCheapDeals || bestCheapDeals.length === 0}
+            prevDisabled={bestCheapDealsNav.isBeginning}
+            nextDisabled={bestCheapDealsNav.isEnd}
           />
           {loading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -284,6 +285,18 @@ export default function Home() {
                 setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               className="bestsellers-swiper"
+              onSlideChange={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd })
+              }}
+              onReachEnd={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd })
+              }}
+              onReachBeginning={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd })
+              }}
+              onSwiper={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd })
+              }}
             >
               {bestCheapDeals.map((store, index) => {
                 // Map store category - check if level1 is stores

@@ -1653,6 +1653,7 @@ export default function BrandPage() {
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 24px;
           padding-bottom: 0; /* extra space at bottom */
+          justify-items: center; /* center items within grid cells */
         }
         
         .grid-item { 
@@ -1800,6 +1801,23 @@ export default function BrandPage() {
 
           .section-title {
             font-size: 28px;
+          }
+
+          /* Ensure product grid stays centered on mobile */
+          .products-scroll-container {
+            display: flex;
+            justify-content: center;
+          }
+
+          .grid-3 {
+            width: 100%;
+            max-width: 520px;
+            justify-items: center;
+          }
+
+          .grid-item {
+            width: 100%;
+            max-width: 360px;
           }
         }
       `}</style>
