@@ -70,6 +70,11 @@ export default function Home() {
   const { hypermarketStores, fastestDeliveryStores, bestCheapDeals, bestBundleDeals, loading, error } = useSelector(state => state.stores)
   const { products, categoryProducts = [], categoryProductsLoading } = useSelector(state => state.products)
   const [userLocation, setUserLocation] = useState(null)
+  
+  // Swiper navigation states
+  const [fastestDeliveryNav, setFastestDeliveryNav] = useState({ isBeginning: true, isEnd: false })
+  const [bestCheapDealsNav, setBestCheapDealsNav] = useState({ isBeginning: true, isEnd: false })
+  const [bestBundlesNav, setBestBundlesNav] = useState({ isBeginning: true, isEnd: false })
 
   // Navigation State
   const [fastestDeliveryNav, setFastestDeliveryNav] = useState({ isBeginning: true, isEnd: false });
@@ -178,37 +183,37 @@ export default function Home() {
 
   // Navigation handlers
   const handleFastestDeliveryPrev = () => {
-    if (fastestDeliverySwiperRef.current?.swiper) {
+    if (fastestDeliverySwiperRef.current?.swiper && !fastestDeliveryNav.isBeginning) {
       fastestDeliverySwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleFastestDeliveryNext = () => {
-    if (fastestDeliverySwiperRef.current?.swiper) {
+    if (fastestDeliverySwiperRef.current?.swiper && !fastestDeliveryNav.isEnd) {
       fastestDeliverySwiperRef.current.swiper.slideNext()
     }
   }
 
   const handleBestCheapDealsPrev = () => {
-    if (bestCheapDealsSwiperRef.current?.swiper) {
+    if (bestCheapDealsSwiperRef.current?.swiper && !bestCheapDealsNav.isBeginning) {
       bestCheapDealsSwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleBestCheapDealsNext = () => {
-    if (bestCheapDealsSwiperRef.current?.swiper) {
+    if (bestCheapDealsSwiperRef.current?.swiper && !bestCheapDealsNav.isEnd) {
       bestCheapDealsSwiperRef.current.swiper.slideNext()
     }
   }
 
   const handleBestBundlesPrev = () => {
-    if (bestBundlesSwiperRef.current?.swiper) {
+    if (bestBundlesSwiperRef.current?.swiper && !bestBundlesNav.isBeginning) {
       bestBundlesSwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleBestBundlesNext = () => {
-    if (bestBundlesSwiperRef.current?.swiper) {
+    if (bestBundlesSwiperRef.current?.swiper && !bestBundlesNav.isEnd) {
       bestBundlesSwiperRef.current.swiper.slideNext()
     }
   }

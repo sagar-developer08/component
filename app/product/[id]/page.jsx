@@ -36,41 +36,6 @@ const mockProduct = {
   sizes: ["04", "05", "06", "07", "08"]
 }
 
-const productData = [
-  {
-    id: "nike-airforce-01",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "/shoes.jpg"
-  },
-  {
-    id: "nike-dunk-low",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "/shoes.jpg"
-  },
-  {
-    id: "nike-air-max",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "/shoes.jpg"
-  },
-  {
-    id: "nike-airforce-01-black",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "/shoes.jpg"
-  }
-]
-
 export default function ProductPage({ params }) {
   const dispatch = useDispatch()
   const router = useRouter()
