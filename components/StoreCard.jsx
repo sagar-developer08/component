@@ -29,7 +29,7 @@ export default function StoreCard({
           alt={title}
           width={322}
           height={222}
-          style={{ borderRadius: '16px', border: '1px solid rgba(0, 0, 0, 0.16)' }}
+          style={{ borderRadius: '16px', border: '1px solid rgba(0, 0, 0, 0.16)', width: '100%', height: 'auto', aspectRatio: '322/222' }}
         />
 
         {getBadge() && (
@@ -82,6 +82,7 @@ export default function StoreCard({
           position: relative;
           cursor: pointer;
           transition: transform 0.2s ease, box-shadow 0.2s ease;
+          width: 322px;
         }
 
         .store-image {
@@ -92,26 +93,10 @@ export default function StoreCard({
           background-size: cover;
           background-position: center;
           position: relative;
+          overflow: hidden;
         }
 
-        .store-badge {
-          display: flex;
-          padding: 4px 16px;
-          justify-content: center;
-          align-items: center;
-          gap: 10px;
-          position: absolute;
-          left: 16px;
-          top: 16px;
-          border-radius: 100px;
-          background: #0082FF;
-          color: #FFF;
-          text-align: center;
-          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 12px;
-          font-weight: 400;
-          line-height: 150%;
-        }
+        /* ... existing styles ... */
 
         .store-info {
           display: flex;
@@ -120,6 +105,16 @@ export default function StoreCard({
           flex-direction: column;
           align-items: flex-start;
           gap: 8px;
+        }
+
+        @media (max-width: 768px) {
+          .store-card, .store-image, .store-info {
+            width: 100%;
+          }
+          .store-image {
+            height: auto;
+            aspect-ratio: 322 / 222;
+          }
         }
 
         .store-title-row {
@@ -208,13 +203,18 @@ export default function StoreCard({
         }
 
         @media (max-width: 768px) {
+          .store-card {
+            width: 100%;
+          }
+
           .store-image {
-            width: 280px;
-            height: 200px;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 322/222;
           }
 
           .store-info {
-            width: 280px;
+            width: 100%;
           }
 
           .store-title {

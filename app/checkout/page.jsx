@@ -1658,14 +1658,11 @@ export default function CheckoutPage() {
               <div className={styles.walletExpiry}>
                 {(() => {
                   const daysRemaining = calculateDaysRemaining(qoynExpiryDate)
-                  const formattedExpiryDate = formatExpiryDate(qoynExpiryDate)
                   
-                  if (daysRemaining !== null && formattedExpiryDate) {
-                    return `Expires on ${formattedExpiryDate} (${daysRemaining} ${daysRemaining === 1 ? 'Day' : 'Days'} remaining)`
-                  } else if (daysRemaining !== null) {
-                    return `Expires in ${daysRemaining} ${daysRemaining === 1 ? 'Day' : 'Days'}`
+                  if (daysRemaining !== null) {
+                    return `${daysRemaining} ${daysRemaining === 1 ? 'Day' : 'Days'} remaining`
                   } else {
-                    return 'No expiry date available'
+                    return 'No expiry is available'
                   }
                 })()}
               </div>

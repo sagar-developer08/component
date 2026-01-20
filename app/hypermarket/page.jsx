@@ -70,6 +70,12 @@ export default function Home() {
   const { hypermarketStores, fastestDeliveryStores, bestCheapDeals, bestBundleDeals, loading, error } = useSelector(state => state.stores)
   const { products, categoryProducts = [], categoryProductsLoading } = useSelector(state => state.products)
   const [userLocation, setUserLocation] = useState(null)
+  
+  // Swiper navigation states
+  const [fastestDeliveryNav, setFastestDeliveryNav] = useState({ isBeginning: true, isEnd: false })
+  const [bestCheapDealsNav, setBestCheapDealsNav] = useState({ isBeginning: true, isEnd: false })
+  const [bestBundlesNav, setBestBundlesNav] = useState({ isBeginning: true, isEnd: false })
+  const [bestCashbackNav, setBestCashbackNav] = useState({ isBeginning: true, isEnd: false })
 
   // Check screen size for mobile detection
   useEffect(() => {
@@ -172,37 +178,37 @@ export default function Home() {
 
   // Navigation handlers
   const handleFastestDeliveryPrev = () => {
-    if (fastestDeliverySwiperRef.current?.swiper) {
+    if (fastestDeliverySwiperRef.current?.swiper && !fastestDeliveryNav.isBeginning) {
       fastestDeliverySwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleFastestDeliveryNext = () => {
-    if (fastestDeliverySwiperRef.current?.swiper) {
+    if (fastestDeliverySwiperRef.current?.swiper && !fastestDeliveryNav.isEnd) {
       fastestDeliverySwiperRef.current.swiper.slideNext()
     }
   }
 
   const handleBestCheapDealsPrev = () => {
-    if (bestCheapDealsSwiperRef.current?.swiper) {
+    if (bestCheapDealsSwiperRef.current?.swiper && !bestCheapDealsNav.isBeginning) {
       bestCheapDealsSwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleBestCheapDealsNext = () => {
-    if (bestCheapDealsSwiperRef.current?.swiper) {
+    if (bestCheapDealsSwiperRef.current?.swiper && !bestCheapDealsNav.isEnd) {
       bestCheapDealsSwiperRef.current.swiper.slideNext()
     }
   }
 
   const handleBestBundlesPrev = () => {
-    if (bestBundlesSwiperRef.current?.swiper) {
+    if (bestBundlesSwiperRef.current?.swiper && !bestBundlesNav.isBeginning) {
       bestBundlesSwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleBestBundlesNext = () => {
-    if (bestBundlesSwiperRef.current?.swiper) {
+    if (bestBundlesSwiperRef.current?.swiper && !bestBundlesNav.isEnd) {
       bestBundlesSwiperRef.current.swiper.slideNext()
     }
   }
@@ -234,6 +240,8 @@ export default function Home() {
             showNavigation={true}
             onPrev={handleFastestDeliveryPrev}
             onNext={handleFastestDeliveryNext}
+            prevDisabled={fastestDeliveryNav.isBeginning}
+            nextDisabled={fastestDeliveryNav.isEnd}
           />
           {loading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -249,6 +257,18 @@ export default function Home() {
               spaceBetween={isMobile ? 16 : 24}
               grabCursor={true}
               freeMode={true}
+              onSlideChange={(swiper) => {
+                setFastestDeliveryNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setFastestDeliveryNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
+                setFastestDeliveryNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setFastestDeliveryNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
               className="bestsellers-swiper"
             >
               {hypermarketStores.map((store, index) => (
@@ -285,6 +305,8 @@ export default function Home() {
             showNavigation={true}
             onPrev={handleBestCheapDealsPrev}
             onNext={handleBestCheapDealsNext}
+            prevDisabled={bestCheapDealsNav.isBeginning}
+            nextDisabled={bestCheapDealsNav.isEnd}
           />
           {loading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -300,6 +322,18 @@ export default function Home() {
               spaceBetween={isMobile ? 16 : 24}
               grabCursor={true}
               freeMode={true}
+              onSlideChange={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
               className="bestsellers-swiper"
             >
               {bestCheapDeals.map((store, index) => {
@@ -352,6 +386,8 @@ export default function Home() {
             showNavigation={true}
             onPrev={handleBestBundlesPrev}
             onNext={handleBestBundlesNext}
+            prevDisabled={bestBundlesNav.isBeginning}
+            nextDisabled={bestBundlesNav.isEnd}
           />
           {loading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -367,6 +403,18 @@ export default function Home() {
               spaceBetween={isMobile ? 16 : 24}
               grabCursor={true}
               freeMode={true}
+              onSlideChange={(swiper) => {
+                setBestBundlesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setBestBundlesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
+                setBestBundlesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setBestBundlesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
               className="bestsellers-swiper"
             >
               {bestBundleDeals.map((store, index) => {

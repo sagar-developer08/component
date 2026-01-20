@@ -357,8 +357,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleBestsellersPrev}
               onNext={handleBestsellersNext}
-              prevDisabled={bestsellersNav.isBeginning}
-              nextDisabled={bestsellersNav.isEnd}
+              prevDisabled={bestsellersNav.isBeginning || displayBestsellers.length === 0}
+              nextDisabled={bestsellersNav.isEnd || displayBestsellers.length === 0}
             />
             {loading ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
@@ -377,6 +377,12 @@ export default function Home() {
                 grabCursor={true}
                 freeMode={true}
                 onSlideChange={(swiper) => {
+                  setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachEnd={(swiper) => {
+                  setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
                   setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
                 onSwiper={(swiper) => {
@@ -402,8 +408,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleCategoriesPrev}
               onNext={handleCategoriesNext}
-              prevDisabled={categoriesNav.isBeginning}
-              nextDisabled={categoriesNav.isEnd}
+              prevDisabled={categoriesNav.isBeginning || transformedCategories.length === 0}
+              nextDisabled={categoriesNav.isEnd || transformedCategories.length === 0}
             />
             {categoriesLoading ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
@@ -422,6 +428,12 @@ export default function Home() {
                 grabCursor={true}
                 freeMode={true}
                 onSlideChange={(swiper) => {
+                  setCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachEnd={(swiper) => {
+                  setCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
                   setCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
                 onSwiper={(swiper) => {
@@ -447,8 +459,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleOffersPrev}
               onNext={handleOffersNext}
-              prevDisabled={offersNav.isBeginning}
-              nextDisabled={offersNav.isEnd}
+              prevDisabled={offersNav.isBeginning || transformedOffers.length === 0}
+              nextDisabled={offersNav.isEnd || transformedOffers.length === 0}
             />
             <Swiper
               ref={offersSwiperRef}
@@ -458,6 +470,12 @@ export default function Home() {
               grabCursor={true}
               freeMode={true}
               onSlideChange={(swiper) => {
+                setOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
                 setOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               onSwiper={(swiper) => {
@@ -511,8 +529,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleTopBrandsPrev}
               onNext={handleTopBrandsNext}
-              prevDisabled={topBrandsNav.isBeginning}
-              nextDisabled={topBrandsNav.isEnd}
+              prevDisabled={topBrandsNav.isBeginning || transformedBrands.length === 0}
+              nextDisabled={topBrandsNav.isEnd || transformedBrands.length === 0}
             />
             {brandsLoading ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
@@ -531,6 +549,12 @@ export default function Home() {
                 grabCursor={true}
                 freeMode={true}
                 onSlideChange={(swiper) => {
+                  setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachEnd={(swiper) => {
+                  setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
                   setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
                 onSwiper={(swiper) => {
@@ -557,8 +581,8 @@ export default function Home() {
               showButton={false}
               onPrev={handleFeaturedOffersPrev}
               onNext={handleFeaturedOffersNext}
-              prevDisabled={featuredOffersNav.isBeginning}
-              nextDisabled={featuredOffersNav.isEnd}
+              prevDisabled={featuredOffersNav.isBeginning || transformedFeaturedOffers.length === 0}
+              nextDisabled={featuredOffersNav.isEnd || transformedFeaturedOffers.length === 0}
             />
             <Swiper
               ref={featuredOffersSwiperRef}
@@ -568,6 +592,12 @@ export default function Home() {
               grabCursor={true}
               freeMode={true}
               onSlideChange={(swiper) => {
+                setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
                 setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               onSwiper={(swiper) => {
@@ -630,8 +660,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleLevel3CategoriesPrev}
               onNext={handleLevel3CategoriesNext}
-              prevDisabled={level3CategoriesNav.isBeginning}
-              nextDisabled={level3CategoriesNav.isEnd}
+              prevDisabled={level3CategoriesNav.isBeginning || transformedLevel3Categories.length === 0}
+              nextDisabled={level3CategoriesNav.isEnd || transformedLevel3Categories.length === 0}
             />
             {categoriesLoading ? (
               <div style={{ textAlign: 'center', padding: '20px' }}>
@@ -650,6 +680,12 @@ export default function Home() {
                 grabCursor={true}
                 freeMode={true}
                 onSlideChange={(swiper) => {
+                  setLevel3CategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachEnd={(swiper) => {
+                  setLevel3CategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
                   setLevel3CategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
                 onSwiper={(swiper) => {

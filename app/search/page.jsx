@@ -6,7 +6,7 @@ import SectionHeader from '@/components/SectionHeader'
 import Footer from '@/components/Footer'
 import FilterDrawer from '@/components/FilterDrawer'
 import SortDropdown from '@/components/SortDropdown'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'next/navigation'
 import { searchProducts } from '@/store/slices/productsSlice'
@@ -52,11 +52,14 @@ export default function SearchPage() {
   const { searchResults, searchQuery, searchLoading, searchError, searchPagination } = useSelector(state => state.products)
   const [currentPage, setCurrentPage] = useState(1)
   const pageSize = 20
+  const productsScrollContainerRef = useRef(null)
 
+  // Reset to page 1 when query or filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [query, searchResults])
+  }, [query, debouncedFilters, sortBy])
 
+  // Use pagination info from API response (server-side pagination like categories)
   const totalResults = useMemo(() => {
     if (typeof searchPagination?.total === 'number') {
       return searchPagination.total
@@ -65,31 +68,86 @@ export default function SearchPage() {
   }, [searchResults, searchPagination?.total])
 
   const totalPages = useMemo(() => {
-    if (!totalResults) {
-      return 1
+    // Use pagination.pages if available (like categories do)
+    if (searchPagination?.pages) {
+      return Math.max(1, searchPagination.pages)
     }
-    return Math.max(1, Math.ceil(totalResults / pageSize))
-  }, [totalResults, pageSize])
+    // Fallback to totalPages if available
+    if (searchPagination?.totalPages) {
+      return Math.max(1, searchPagination.totalPages)
+    }
+    // Calculate from total if available
+    if (searchPagination?.total) {
+      return Math.max(1, Math.ceil(searchPagination.total / pageSize))
+    }
+    return 1
+  }, [searchPagination, pageSize])
 
-  const paginatedResults = useMemo(() => {
+  // Use searchResults directly (already paginated by API)
+  const displayResults = useMemo(() => {
     if (!Array.isArray(searchResults)) {
       return []
     }
-
-    const start = (currentPage - 1) * pageSize
-    return searchResults.slice(start, start + pageSize)
-  }, [searchResults, currentPage, pageSize])
+    return searchResults
+  }, [searchResults])
 
   const pageNumbers = useMemo(() => {
-    return Array.from({ length: totalPages }, (_, index) => index + 1)
-  }, [totalPages])
+    // Show only 3 buttons at a time with sliding window (like categories)
+    if (totalPages <= 3) {
+      // If total pages is 3 or less, show all
+      return Array.from({ length: totalPages }, (_, index) => index + 1)
+    }
+    
+    // Calculate which 3 pages to show based on current page
+    let startPage
+    
+    if (currentPage === 1) {
+      // Show pages 1, 2, 3
+      startPage = 1
+    } else if (currentPage === totalPages) {
+      // Show last 3 pages
+      startPage = Math.max(1, totalPages - 2)
+    } else {
+      // Show current page and one on each side
+      startPage = Math.min(currentPage - 1, totalPages - 2)
+    }
+    
+    // Generate the 3 page numbers
+    const pages = []
+    for (let i = 0; i < 3 && (startPage + i) <= totalPages; i++) {
+      pages.push(startPage + i)
+    }
+    
+    return pages
+  }, [totalPages, currentPage])
 
   const handlePageChange = (page) => {
     if (page < 1 || page > totalPages || page === currentPage) {
       return
     }
     setCurrentPage(page)
+    // Scroll window to top immediately when page changes (like categories)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    // Scroll the products container to top as well
+    if (productsScrollContainerRef.current) {
+      productsScrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
   }
+
+  // Scroll to top when page changes and after products load (like categories)
+  useEffect(() => {
+    if (!searchLoading && displayResults.length > 0) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        // Scroll window to top
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        // Scroll the products container to top
+        if (productsScrollContainerRef.current) {
+          productsScrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+        }
+      }, 100)
+    }
+  }, [currentPage, searchLoading, displayResults.length])
 
   const handlePreviousPage = () => handlePageChange(currentPage - 1)
   const handleNextPage = () => handlePageChange(currentPage + 1)
@@ -183,16 +241,22 @@ export default function SearchPage() {
     fetchFilterData()
   }, [query, debouncedFilters])
 
-  // Debounce search query and filters to prevent too many API calls
+  // Fetch search results with pagination (server-side pagination like categories)
   useEffect(() => {
     if (query) {
       const timer = setTimeout(() => {
-        dispatch(searchProducts({ query, filters: debouncedFilters, sort: sortBy }))
+        dispatch(searchProducts({ 
+          query, 
+          filters: debouncedFilters, 
+          sort: sortBy,
+          page: currentPage,
+          limit: pageSize
+        }))
       }, 300) // 300ms delay for search page
 
       return () => clearTimeout(timer)
     }
-  }, [dispatch, query, debouncedFilters, sortBy])
+  }, [dispatch, query, debouncedFilters, sortBy, currentPage, pageSize])
 
   // Build facets from filter API response for proper filter display
   const facets = useMemo(() => {
@@ -254,7 +318,7 @@ export default function SearchPage() {
                 </div>
               </div>
 
-              <div className="products-scroll-container">
+              <div className="products-scroll-container" ref={productsScrollContainerRef}>
                 <div className="grid-3">
                   {searchLoading ? (
                     Array.from({ length: Math.min(pageSize, 6) }).map((_, index) => (
@@ -272,8 +336,8 @@ export default function SearchPage() {
                     ))
                   ) : searchError ? (
                     <div style={{ gridColumn: '1 / -1', color: 'red' }}>Failed to load search results: {searchError}</div>
-                  ) : paginatedResults.length > 0 ? (
-                    paginatedResults.map((product, index) => (
+                  ) : displayResults.length > 0 ? (
+                    displayResults.map((product, index) => (
                       <div key={product._id || product.id || `p-${index}`} className="grid-item">
                         <ProductCard 
                           id={product._id || product.id}
@@ -294,7 +358,7 @@ export default function SearchPage() {
                 </div>
               </div>
 
-              {!searchLoading && !searchError && paginatedResults.length > 0 && totalPages > 1 && (
+              {!searchLoading && !searchError && displayResults.length > 0 && totalPages > 1 && (
                 <div className="pagination-controls" role="navigation" aria-label="Search results pagination">
                   <button
                     type="button"
@@ -398,10 +462,10 @@ export default function SearchPage() {
         .pagination-button {
           min-width: 40px;
           padding: 8px 12px;
-          border: 1px solid #d1d5db;
+          border: 1px solid #0082FF;
           border-radius: 8px;
           background: #ffffff;
-          color: #111827;
+          color: #0082FF;
           font-size: 14px;
           font-weight: 500;
           cursor: pointer;
@@ -409,8 +473,8 @@ export default function SearchPage() {
         }
 
         .pagination-button:hover:not(:disabled) {
-          border-color: #111827;
-          color: #111827;
+          border-color: #0082FF;
+          color: #0082FF;
           background: #f9fafb;
         }
 
@@ -420,9 +484,9 @@ export default function SearchPage() {
         }
 
         .pagination-button.active {
-          background: #111827;
+          background: #0082FF;
           color: #ffffff;
-          border-color: #111827;
+          border-color: #0082FF;
         }
 
         .sticky-header {

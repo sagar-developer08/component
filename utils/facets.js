@@ -119,14 +119,21 @@ export function buildFacetsFromProducts(products = []) {
     ]
   })
 
-  // Price
-  facets.push({
-    key: 'price',
-    label: 'Price',
-    type: 'range',
-    min: Math.floor(minPrice),
-    max: Math.ceil(maxPrice),
-  })
+  // Price - only show if there's a price range (min !== max)
+  const floorMinPrice = Math.floor(minPrice)
+  const ceilMaxPrice = Math.ceil(maxPrice)
+  
+  // Only add price filter if there's a range (min !== max)
+  // If all products have the same price, don't show the filter
+  if (floorMinPrice !== ceilMaxPrice) {
+    facets.push({
+      key: 'price',
+      label: 'Price',
+      type: 'range',
+      min: floorMinPrice,
+      max: ceilMaxPrice,
+    })
+  }
 
   // Rating
   const ratingOptions = [5,4,3,2,1,0]

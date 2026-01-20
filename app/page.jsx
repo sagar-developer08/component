@@ -278,6 +278,7 @@ export default function Home() {
 
   const swiperRef = useRef(null);
   const topStoresSwiperRef = useRef(null);
+  const newStoresSwiperRef = useRef(null);
   const topBrandsSwiperRef = useRef(null);
   const bestsellersSwiperRef = useRef(null);
   const offersSwiperRef = useRef(null);
@@ -296,6 +297,7 @@ export default function Home() {
   const [popularCategoriesNav, setPopularCategoriesNav] = useState({ isBeginning: true, isEnd: false });
   const [otherCategoriesNav, setOtherCategoriesNav] = useState({ isBeginning: true, isEnd: false });
   const [topStoresNav, setTopStoresNav] = useState({ isBeginning: true, isEnd: false });
+  const [newStoresNav, setNewStoresNav] = useState({ isBeginning: true, isEnd: false });
   const [topBrandsNav, setTopBrandsNav] = useState({ isBeginning: true, isEnd: false });
 
   // Check screen size for mobile detection
@@ -348,13 +350,13 @@ export default function Home() {
   ];
 
   const handlePrev = () => {
-    if (swiperRef.current && swiperRef.current.swiper) {
+    if (swiperRef.current && swiperRef.current.swiper && !newStoresNav.isBeginning) {
       swiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleNext = () => {
-    if (swiperRef.current && swiperRef.current.swiper) {
+    if (swiperRef.current && swiperRef.current.swiper && !newStoresNav.isEnd) {
       swiperRef.current.swiper.slideNext();
     }
   };
@@ -368,6 +370,18 @@ export default function Home() {
   const handleTopStoresNext = () => {
     if (topStoresSwiperRef.current && topStoresSwiperRef.current.swiper && !topStoresNav.isEnd) {
       topStoresSwiperRef.current.swiper.slideNext();
+    }
+  };
+
+  const handleNewStoresPrev = () => {
+    if (newStoresSwiperRef.current && newStoresSwiperRef.current.swiper && !newStoresNav.isBeginning) {
+      newStoresSwiperRef.current.swiper.slidePrev();
+    }
+  };
+
+  const handleNewStoresNext = () => {
+    if (newStoresSwiperRef.current && newStoresSwiperRef.current.swiper && !newStoresNav.isEnd) {
+      newStoresSwiperRef.current.swiper.slideNext();
     }
   };
 
@@ -468,7 +482,7 @@ export default function Home() {
   };
 
   const handleBannerClick = () => {
-    window.open('https://dev.qliq.ae/', '_blank');
+    window.open('https://iqliqlive.ae/', '_blank');
   };
 
   const handleCategoryClick = (category) => {
@@ -538,8 +552,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleBestsellersPrev}
               onNext={handleBestsellersNext}
-              prevDisabled={bestsellersNav.isBeginning}
-              nextDisabled={bestsellersNav.isEnd}
+              prevDisabled={bestsellersNav.isBeginning || transformedBestsellers.length === 0}
+              nextDisabled={bestsellersNav.isEnd || transformedBestsellers.length === 0}
             />
             {loading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -555,11 +569,22 @@ export default function Home() {
               <Swiper
                 ref={bestsellersSwiperRef}
                 modules={[SwiperNavigation]}
-                slidesPerView={isMobile ? 2.2 : 'auto'}
-                spaceBetween={isMobile ? 10 : 24}
+                slidesPerView={'auto'}
+                spaceBetween={24}
+                breakpoints={{
+                  320: { slidesPerView: 1.15, spaceBetween: 12 },
+                  640: { slidesPerView: 2.2, spaceBetween: 16 },
+                  1024: { slidesPerView: 'auto', spaceBetween: 24 },
+                }}
                 grabCursor={true}
                 freeMode={true}
                 onSlideChange={(swiper) => {
+                  setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachEnd={(swiper) => {
+                  setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
                   setBestsellersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
                 onSwiper={(swiper) => {
@@ -585,8 +610,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleOtherCategoriesPrev}
               onNext={handleOtherCategoriesNext}
-              prevDisabled={otherCategoriesNav.isBeginning}
-              nextDisabled={otherCategoriesNav.isEnd}
+              prevDisabled={otherCategoriesNav.isBeginning || (transformedLevel2Categories.length === 0 && categoryData.length === 0)}
+              nextDisabled={otherCategoriesNav.isEnd || (transformedLevel2Categories.length === 0 && categoryData.length === 0)}
             />
             {popularCategoriesLoading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -607,6 +632,12 @@ export default function Home() {
                 grabCursor={true}
                 freeMode={true}
                 onSlideChange={(swiper) => {
+                  setOtherCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachEnd={(swiper) => {
+                  setOtherCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
                   setOtherCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
                 onSwiper={(swiper) => {
@@ -852,8 +883,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleTopBrandsPrev}
               onNext={handleTopBrandsNext}
-              prevDisabled={topBrandsNav.isBeginning}
-              nextDisabled={topBrandsNav.isEnd}
+              prevDisabled={topBrandsNav.isBeginning || transformedBrands.length === 0}
+              nextDisabled={topBrandsNav.isEnd || transformedBrands.length === 0}
             />
             {brandsLoading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -874,6 +905,12 @@ export default function Home() {
                 grabCursor={true}
                 freeMode={true}
                 onSlideChange={(swiper) => {
+                  setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachEnd={(swiper) => {
+                  setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
                   setTopBrandsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
                 onSwiper={(swiper) => {
@@ -938,8 +975,8 @@ export default function Home() {
               onButtonClick={handleSeeAllStores}
               onPrev={handleTopStoresPrev}
               onNext={handleTopStoresNext}
-              prevDisabled={topStoresNav.isBeginning}
-              nextDisabled={topStoresNav.isEnd}
+              prevDisabled={topStoresNav.isBeginning || transformedTopStores.length === 0}
+              nextDisabled={topStoresNav.isEnd || transformedTopStores.length === 0}
             />
             {storesLoading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -960,6 +997,12 @@ export default function Home() {
                 grabCursor={true}
                 freeMode={true}
                 onSlideChange={(swiper) => {
+                  setTopStoresNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachEnd={(swiper) => {
+                  setTopStoresNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
                   setTopStoresNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
                 onSwiper={(swiper) => {
@@ -985,17 +1028,28 @@ export default function Home() {
               showNavigation={true}
               onPrev={handleFeaturedOffersPrev}
               onNext={handleFeaturedOffersNext}
-              prevDisabled={featuredOffersNav.isBeginning}
-              nextDisabled={featuredOffersNav.isEnd}
+              prevDisabled={featuredOffersNav.isBeginning || transformedFeaturedOffers.length === 0}
+              nextDisabled={featuredOffersNav.isEnd || transformedFeaturedOffers.length === 0}
             />
             <Swiper
               ref={featuredOffersSwiperRef}
               modules={[SwiperNavigation]}
-              slidesPerView={isMobile ? 2.2 : 'auto'}
-              spaceBetween={isMobile ? 10 : 24}
+              slidesPerView={'auto'}
+              spaceBetween={24}
+              breakpoints={{
+                320: { slidesPerView: 1.15, spaceBetween: 12 },
+                640: { slidesPerView: 2.2, spaceBetween: 16 },
+                1024: { slidesPerView: 'auto', spaceBetween: 24 },
+              }}
               grabCursor={true}
               freeMode={true}
               onSlideChange={(swiper) => {
+                setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachEnd={(swiper) => {
+                setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onReachBeginning={(swiper) => {
                 setFeaturedOffersNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               onSwiper={(swiper) => {
@@ -1020,8 +1074,8 @@ export default function Home() {
               showNavigation={true}
               onPrev={handlePopularCategoriesPrev}
               onNext={handlePopularCategoriesNext}
-              prevDisabled={popularCategoriesNav.isBeginning}
-              nextDisabled={popularCategoriesNav.isEnd}
+              prevDisabled={popularCategoriesNav.isBeginning || (transformedPopularCategories.length === 0 && testCategories.length === 0)}
+              nextDisabled={popularCategoriesNav.isEnd || (transformedPopularCategories.length === 0 && testCategories.length === 0)}
             />
             {popularCategoriesLoading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -1042,6 +1096,12 @@ export default function Home() {
                 grabCursor={true}
                 freeMode={true}
                 onSlideChange={(swiper) => {
+                  setPopularCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachEnd={(swiper) => {
+                  setPopularCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
                   setPopularCategoriesNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
                 }}
                 onSwiper={(swiper) => {
@@ -1083,6 +1143,8 @@ export default function Home() {
               showButton={false}
               buttonText={""}
               onButtonClick={() => { }}
+              prevDisabled={newStoresNav.isBeginning || transformedNewStores.length === 0}
+              nextDisabled={newStoresNav.isEnd || transformedNewStores.length === 0}
             />
             {storesLoading ? (
               <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -1096,12 +1158,24 @@ export default function Home() {
               </div>
             ) : (
               <Swiper
-                ref={swiperRef}
+                ref={newStoresSwiperRef}
                 modules={[SwiperNavigation]}
                 slidesPerView={isMobile ? 2.08 : 'auto'}
                 spaceBetween={isMobile ? 12 : 24}
                 grabCursor={true}
                 freeMode={true}
+                onSlideChange={(swiper) => {
+                  setNewStoresNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachEnd={(swiper) => {
+                  setNewStoresNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onReachBeginning={(swiper) => {
+                  setNewStoresNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
+                onSwiper={(swiper) => {
+                  setNewStoresNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                }}
                 className="other-categories-swiper"
               >
                 {transformedNewStores.reverse().map((store, index) => (

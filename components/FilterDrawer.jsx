@@ -149,36 +149,52 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
 
   // Global mouse move handler for dragging
   useEffect(() => {
+    let rafId = null;
+    
     const handleGlobalMouseMove = (event) => {
       if (!activeSlider || !activeSliderDataRef.current) return;
       
-      const { wrapper, facetKey, facetMin, facetMax } = activeSliderDataRef.current;
-      if (!wrapper) return;
-      
-      // Get current values dynamically from state
-      const currentRange = localPriceRange[facetKey] || selected[facetKey] || {};
-      const currentMin = currentRange.min ?? facetMin;
-      const currentMax = currentRange.max ?? facetMax;
-      
-      const rect = wrapper.getBoundingClientRect();
-      const mouseX = event.clientX - rect.left;
-      const trackWidth = rect.width;
-      const mousePercent = Math.max(0, Math.min(1, mouseX / trackWidth));
-      const mouseValue = facetMin + (mousePercent * (facetMax - facetMin));
-      
-      if (activeSlider === 'min') {
-        const newValue = Math.min(Math.max(Math.round(mouseValue), facetMin), currentMax);
-        handleRangeChange(facetKey, 'min', newValue.toString(), facetMin, facetMax);
-      } else if (activeSlider === 'max') {
-        const newValue = Math.max(Math.min(Math.round(mouseValue), facetMax), currentMin);
-        handleRangeChange(facetKey, 'max', newValue.toString(), facetMin, facetMax);
+      // Use requestAnimationFrame for smooth updates
+      if (rafId) {
+        cancelAnimationFrame(rafId);
       }
+      
+      rafId = requestAnimationFrame(() => {
+        const { wrapper, facetKey, facetMin, facetMax } = activeSliderDataRef.current;
+        if (!wrapper) return;
+        
+        // Get current values dynamically from state
+        const currentRange = localPriceRange[facetKey] || selected[facetKey] || {};
+        const currentMin = currentRange.min ?? facetMin;
+        const currentMax = currentRange.max ?? facetMax;
+        
+        const rect = wrapper.getBoundingClientRect();
+        const clientX = event.touches?.[0]?.clientX ?? event.clientX;
+        const mouseX = clientX - rect.left;
+        const trackWidth = rect.width;
+        const mousePercent = Math.max(0, Math.min(1, mouseX / trackWidth));
+        const mouseValue = facetMin + (mousePercent * (facetMax - facetMin));
+        const roundedValue = Math.round(mouseValue);
+        
+        if (activeSlider === 'min') {
+          // Ensure min doesn't exceed current max
+          const newValue = Math.min(Math.max(roundedValue, facetMin), currentMax);
+          handleRangeChange(facetKey, 'min', newValue.toString(), facetMin, facetMax);
+        } else if (activeSlider === 'max') {
+          // Ensure max doesn't go below current min and doesn't exceed facetMax
+          const newValue = Math.min(Math.max(roundedValue, currentMin), facetMax);
+          handleRangeChange(facetKey, 'max', newValue.toString(), facetMin, facetMax);
+        }
+      });
     };
 
     if (activeSlider) {
-      document.addEventListener('mousemove', handleGlobalMouseMove);
-      document.addEventListener('touchmove', handleGlobalMouseMove);
+      document.addEventListener('mousemove', handleGlobalMouseMove, { passive: true });
+      document.addEventListener('touchmove', handleGlobalMouseMove, { passive: true });
       return () => {
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+        }
         document.removeEventListener('mousemove', handleGlobalMouseMove);
         document.removeEventListener('touchmove', handleGlobalMouseMove);
       };
@@ -400,8 +416,8 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                             <div 
                               className="range-progress" 
                               style={{
-                                left: `${((currentMin - facetMin) / (facetMax - facetMin)) * 100}%`,
-                                width: `${((currentMax - currentMin) / (facetMax - facetMin)) * 100}%`
+                                left: `${Math.max(0, Math.min(100, progressLeft))}%`,
+                                width: `${Math.max(0, Math.min(100, progressWidth))}%`
                               }}
                             ></div>
                           </div>
@@ -757,19 +773,29 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
           top: 50%;
           left: 0;
           right: 0;
+          width: 100% !important;
           height: 6px;
           background: #e0e0e0;
           border-radius: 3px;
           transform: translateY(-50%);
+          box-sizing: border-box;
+          min-width: 100% !important;
+          max-width: 100% !important;
         }
         .range-progress {
           position: absolute;
           top: 0;
+          left: 0;
           height: 100%;
           background: #0082FF;
           border-radius: 3px;
-          transition: left 0.25s ease-out, width 0.25s ease-out;
+          transition: left 0.15s cubic-bezier(0.4, 0, 0.2, 1), width 0.15s cubic-bezier(0.4, 0, 0.2, 1);
           will-change: left, width;
+          box-sizing: border-box;
+          max-width: 100%;
+        }
+        .range-slider-wrapper:active .range-progress {
+          transition: none;
         }
         .range-slider { 
           position: absolute; 
@@ -792,18 +818,21 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
         .range-slider::-webkit-slider-thumb { 
           -webkit-appearance: none; 
           appearance: none; 
-          height: 18px; 
-          width: 18px; 
-          background: #0082FF; 
+          height: 20px; 
+          width: 20px; 
+          background: radial-gradient(circle, #fff 30%, #0082FF 30%);
           border-radius: 50%; 
           cursor: pointer; 
-          border: 2px solid #fff; 
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          transition: transform 0.15s ease, box-shadow 0.15s ease;
-          pointer-events: auto; /* Keep thumbs clickable even when track is disabled */
+          border: 3px solid #fff; 
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+          transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+          pointer-events: auto;
         }
         .range-slider::-webkit-slider-thumb:hover {
           transform: scale(1.1);
+        }
+        .range-slider-wrapper:active .range-slider::-webkit-slider-thumb {
+          transition: transform 0.1s ease, box-shadow 0.1s ease;
         }
         .range-slider::-moz-range-track { 
           height: 6px; 
@@ -812,15 +841,15 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
           border: none; 
         }
         .range-slider::-moz-range-thumb { 
-          height: 18px; 
-          width: 18px; 
-          background: #0082FF; 
+          height: 20px; 
+          width: 20px; 
+          background: radial-gradient(circle, #fff 30%, #0082FF 30%);
           border-radius: 50%; 
           cursor: pointer; 
-          border: 2px solid #fff; 
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          transition: transform 0.15s ease, box-shadow 0.15s ease;
-          pointer-events: auto; /* Keep thumbs clickable even when track is disabled */
+          border: 3px solid #fff; 
+          box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+          transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+          pointer-events: auto;
         }
         .range-slider::-moz-range-thumb:hover {
           transform: scale(1.1);

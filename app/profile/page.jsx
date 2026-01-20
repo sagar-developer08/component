@@ -147,7 +147,7 @@ export default function ProfilePage() {
   }
 
   const handleGoLiveClick = () => {
-    window.open('https://dev.qliq.ae/', '_blank')
+    window.open('https://iqliqlive.ae/', '_blank')
   }
 
   // Only show cash wallet tab for influencer role

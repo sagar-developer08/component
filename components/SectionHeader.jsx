@@ -130,12 +130,12 @@ export default function SectionHeader({
         }
 
         .nav-btn.disabled svg path {
-          stroke: #999;
+          stroke: #999 !important;
         }
 
         .nav-btn.disabled svg rect {
-          fill: #999;
-          fillOpacity: 0.24;
+          fill: #999 !important;
+          fill-opacity: 0.24 !important;
         }
 
         @media (max-width: 768px) {

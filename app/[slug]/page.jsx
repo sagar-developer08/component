@@ -37,11 +37,12 @@ export default function BrandPage() {
   const searchParams = useSearchParams()
   const dispatch = useDispatch()
   const slug = params.slug
-  const storeId = searchParams.get('storeId')
+  const storeId = searchParams.get('storeId') || searchParams.get('storeID') || searchParams.get('store_id')
   const categoryLevel = searchParams.get('categoryLevel')
   // Note: brand_id is removed - brands should navigate to their own page, not watches
   const source = searchParams.get('source')
   const categoryId = searchParams.get('categoryId') || searchParams.get('category_id') // For filtering by specific category ID (support both formats)
+  const storeType = searchParams.get('storeType') // Store type filter (hypermarket, supermarket, e-shop)
 
   const { products, loading, error } = useSelector(state => state.products)
   const [brandInfo, setBrandInfo] = useState(null)
@@ -547,15 +548,15 @@ export default function BrandPage() {
                     }
                   });
                   
-                  const url = search.productsByLevel4(unifiedParams);
-                  console.log('Using unified level4 API with params:', unifiedParams);
+                  const url = catalog.productsByLevel4AndStore(unifiedParams);
+                  console.log('Using level4 and store API with params:', unifiedParams);
                   console.log('Fetching from URL:', url);
                   
                   const response = await fetch(url);
                   
                   if (response.ok) {
                     const data = await response.json();
-                    console.log('Unified level4 API Response:', data);
+                    console.log('Level4 and Store API Response:', data);
                     
                     if (data.success && data.data) {
                       // Set store info if we fetched it separately, otherwise try from first product
@@ -580,17 +581,8 @@ export default function BrandPage() {
                         }
                       }
                       
-                      let newProducts = data.data.products || [];
-                      
-                      // Filter products by store_id if storeId is present (when on a store page)
-                      if (storeId && newProducts.length > 0) {
-                        newProducts = newProducts.filter(product => {
-                          // Check if product has store_id and it matches the current storeId
-                          const productStoreId = product.store_id?._id || product.store_id;
-                          return productStoreId === storeId || String(productStoreId) === String(storeId);
-                        });
-                        console.log(`Filtered products by store_id ${storeId}: ${newProducts.length} products found`);
-                      }
+                      // Products are already filtered by store_id in the API, no need to filter again
+                      const newProducts = data.data.products || [];
                       
                       console.log('Received products:', newProducts.length);
                       setBrandProducts(newProducts);
@@ -602,7 +594,7 @@ export default function BrandPage() {
                       setBrandProducts([]);
                     }
                   } else {
-                    console.error('Unified level4 API error:', response.status, response.statusText);
+                    console.error('Level4 and Store API error:', response.status, response.statusText);
                     const errorText = await response.text();
                     console.error('Error response body:', errorText);
                     setBrandProducts([]);
@@ -712,140 +704,295 @@ export default function BrandPage() {
             setIsStore(false)
             setIsCategory(true)
             
-            // Build filter params
-            const params = new URLSearchParams()
-            
-            // Add pagination params
-            params.append('page', currentPage.toString())
-            params.append('limit', '20')
-            
-            // Add sort parameter
-            params.append('sort', sortBy)
-            
-            // Price filter
-            if (debouncedFilters.price?.min !== undefined && debouncedFilters.price?.min !== '') {
-              params.append('min_price', debouncedFilters.price.min)
-            }
-            if (debouncedFilters.price?.max !== undefined && debouncedFilters.price?.max !== '') {
-              params.append('max_price', debouncedFilters.price.max)
-            }
-            
-            // Availability filter
-            if (debouncedFilters.availability instanceof Set) {
-              if (debouncedFilters.availability.has('in') && !debouncedFilters.availability.has('out')) {
-                params.append('in_stock', 'true')
-              } else if (debouncedFilters.availability.has('out') && !debouncedFilters.availability.has('in')) {
-                params.append('in_stock', 'false')
-              }
-            }
-            
-            // Rating filter
-            if (typeof debouncedFilters.rating === 'number') {
-              params.append('min_rating', debouncedFilters.rating)
-            }
-            
-            // Brand filter from filters (multiple) - brands should navigate to their own page, not watches
-            // Only apply brand filter if user manually selects it from filters, not from URL
-            if (debouncedFilters.brand instanceof Set && debouncedFilters.brand.size > 0) {
-              // Brand filter from filters (multiple)
-              Array.from(debouncedFilters.brand).forEach(b => params.append('brand_id', b))
-            }
-            
-            // Store filter from query params (when clicking icon) - takes priority
-            if (storeId) {
-              params.append('store_id', storeId)
-            } else if (debouncedFilters.store instanceof Set && debouncedFilters.store.size > 0) {
-              // Store filter from filters (multiple)
-              Array.from(debouncedFilters.store).forEach(s => params.append('store_id', s))
-            }
-            
-            // Dynamic attribute filters (attr.*)
-            Object.keys(debouncedFilters).forEach(key => {
-              if (key.startsWith('attr.')) {
-                const attrKey = key.substring(5)
-                const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
-                values.forEach(v => params.append(`attr_${attrKey}`, v))
-              }
-            })
-            
-            // Dynamic specification filters (spec.*)
-            Object.keys(debouncedFilters).forEach(key => {
-              if (key.startsWith('spec.')) {
-                const specKey = key.substring(5)
-                const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
-                values.forEach(v => params.append(`spec_${specKey}`, v))
-              }
-            })
-            
-            // Fetch category products with filters
-            // If category_id is provided, use it instead of slug for filtering
-            // The API endpoint uses slug to find category, but we can override with category_id filter
-            let categorySlug = slug;
-            if (categoryId && categoryLevel === '4') {
-              // When category_id is provided, we still need to use a valid level4 category slug
-              // But we'll add level4 filter to restrict to that specific category
-              params.append('level4', categoryId);
-            }
-            
-            const url = params.toString() 
-              ? `${catalog.productsByLevel4Category(categorySlug)}?${params.toString()}`
-              : catalog.productsByLevel4Category(categorySlug)
-            
-            console.log('Fetching category products with URL:', url);
-            console.log('Category Level:', categoryLevel);
-            console.log('Slug:', slug);
-            
-            const response = await fetch(url)
-
-            if (response.ok) {
-              const data = await response.json()
-              console.log('Category API Response:', data)
-
-              if (data.success && data.data) {
-                if (currentPage === 1) {
-                  const categoryData = data.data.category;
-                  // Always try to extract level2 from first product for breadcrumb
-                  const firstProduct = data.data.products?.[0];
-                  if (firstProduct?.level2) {
-                    const level2Entry = buildLevel2Entry(firstProduct.level2);
-                    if (level2Entry?.name) {
-                      setLevel2Category(level2Entry);
-                      console.log('Extracted level2 from product for category page:', level2Entry.name);
-                      
-                      // Also add level2 to category path if not present
-                      if (categoryData && (!categoryData.path?.level2 || categoryData.path.level2.length === 0)) {
-                        if (!categoryData.path) {
-                          categoryData.path = {};
-                        }
-                        if (!categoryData.path.level2) {
-                          categoryData.path.level2 = [];
-                        }
-                        if (!categoryData.path.level2.includes(level2Entry.name)) {
-                          categoryData.path.level2.push(level2Entry.name);
-                        }
+            try {
+              // For level4 categories, get the category ID from slug if not provided
+              let level4CategoryId = categoryId;
+              let level4CategoryData = null;
+              
+              if (categoryLevel === '4') {
+                if (!level4CategoryId && slug) {
+                  // Fetch category by slug to get the ID
+                  try {
+                    const categoryResponse = await fetch(catalog.categoryBySlug(slug));
+                    if (categoryResponse.ok) {
+                      const categoryData = await categoryResponse.json();
+                      if (categoryData.success && categoryData.data && categoryData.data._id && categoryData.data.level === 4) {
+                        level4CategoryId = categoryData.data._id;
+                        level4CategoryData = categoryData.data;
+                        console.log('Fetched level4 category ID from slug:', level4CategoryId);
                       }
                     }
+                  } catch (error) {
+                    console.error('Error fetching category by slug:', error);
                   }
-                  setBrandInfo(categoryData) // Category info with enhanced path
                 }
-                
-                let newProducts = data.data.products || []
-                
-                // Filter products by store_id if storeId is present (when on a store page)
-                if (storeId && newProducts.length > 0) {
-                  newProducts = newProducts.filter(product => {
-                    // Check if product has store_id and it matches the current storeId
-                    const productStoreId = product.store_id?._id || product.store_id;
-                    return productStoreId === storeId || String(productStoreId) === String(storeId);
-                  });
-                  console.log(`Filtered products by store_id ${storeId}: ${newProducts.length} products found`);
-                }
-                
-                setBrandProducts(newProducts)
-
-                const pagination = data.data.pagination
-                setPaginationInfo(pagination || null)
               }
+              
+              // Only use store ID from query params for category pages
+              const actualStoreId = storeId;
+              
+              // If we have both level4 ID and store ID, use the new endpoint
+              if (categoryLevel === '4' && level4CategoryId && actualStoreId) {
+                // Clean and validate the category ID
+                const cleanedCategoryId = String(level4CategoryId).trim().split(/\s+/)[0];
+                const cleanedStoreId = String(actualStoreId).trim().split(/\s+/)[0];
+                
+                if (cleanedCategoryId && /^[0-9a-fA-F]{24}$/.test(cleanedCategoryId) && 
+                    cleanedStoreId && /^[0-9a-fA-F]{24}$/.test(cleanedStoreId)) {
+                  
+                  // Use the new level4 and store API endpoint
+                  const unifiedParams = {
+                    level4: cleanedCategoryId,
+                    storeId: cleanedStoreId,
+                    page: currentPage,
+                    limit: 20,
+                    sort: sortBy
+                  };
+                  
+                  // Add price filters
+                  if (debouncedFilters.price?.min !== undefined && debouncedFilters.price?.min !== '') {
+                    unifiedParams.min_price = debouncedFilters.price.min;
+                  }
+                  if (debouncedFilters.price?.max !== undefined && debouncedFilters.price?.max !== '') {
+                    unifiedParams.max_price = debouncedFilters.price.max;
+                  }
+                  
+                  // Add availability filter
+                  if (debouncedFilters.availability instanceof Set) {
+                    if (debouncedFilters.availability.has('in') && !debouncedFilters.availability.has('out')) {
+                      unifiedParams.in_stock = true;
+                    } else if (debouncedFilters.availability.has('out') && !debouncedFilters.availability.has('in')) {
+                      unifiedParams.in_stock = false;
+                    }
+                  }
+                  
+                  // Add rating filter
+                  if (typeof debouncedFilters.rating === 'number') {
+                    unifiedParams.min_rating = debouncedFilters.rating;
+                  }
+                  
+                  // Add brand filter (multiple)
+                  if (debouncedFilters.brand instanceof Set && debouncedFilters.brand.size > 0) {
+                    unifiedParams.brand_id = Array.from(debouncedFilters.brand);
+                  }
+                  
+                  // Add dynamic attribute filters
+                  Object.keys(debouncedFilters).forEach(key => {
+                    if (key.startsWith('attr.')) {
+                      const attrKey = key.substring(5);
+                      const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : [];
+                      if (values.length > 0) {
+                        if (!unifiedParams.attributes) unifiedParams.attributes = {};
+                        unifiedParams.attributes[attrKey] = values;
+                      }
+                    }
+                  });
+                  
+                  // Add dynamic specification filters
+                  Object.keys(debouncedFilters).forEach(key => {
+                    if (key.startsWith('spec.')) {
+                      const specKey = key.substring(5);
+                      const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : [];
+                      if (values.length > 0) {
+                        if (!unifiedParams.specifications) unifiedParams.specifications = {};
+                        unifiedParams.specifications[specKey] = values;
+                      }
+                    }
+                  });
+                  
+                  const url = catalog.productsByLevel4AndStore(unifiedParams);
+                  console.log('Using level4 and store API for category page with params:', unifiedParams);
+                  console.log('Fetching from URL:', url);
+                  
+                  const response = await fetch(url);
+                  
+                  if (response.ok) {
+                    const data = await response.json();
+                    console.log('Level4 and Store API Response (category page):', data);
+                    
+                    if (data.success && data.data) {
+                      if (currentPage === 1) {
+                        // Use category data from API response or fetched data
+                        const categoryData = data.data.category || level4CategoryData;
+                        if (categoryData) {
+                          setBrandInfo(categoryData);
+                        }
+                        
+                        // Extract level2 from first product for breadcrumb
+                        const firstProduct = data.data.products?.[0];
+                        if (firstProduct?.level2) {
+                          const level2Entry = buildLevel2Entry(firstProduct.level2);
+                          if (level2Entry?.name) {
+                            setLevel2Category(level2Entry);
+                            console.log('Extracted level2 from product for category page:', level2Entry.name);
+                          }
+                        }
+                      }
+                      
+                      // Products are already filtered by store_id in the API
+                      const newProducts = data.data.products || [];
+                      console.log('Received products:', newProducts.length);
+                      setBrandProducts(newProducts);
+                      
+                      const pagination = data.data.pagination;
+                      setPaginationInfo(pagination || null);
+                    } else {
+                      console.warn('API response not successful:', data);
+                      setBrandProducts([]);
+                    }
+                  } else {
+                    console.error('Level4 and Store API error:', response.status, response.statusText);
+                    const errorText = await response.text();
+                    console.error('Error response body:', errorText);
+                    setBrandProducts([]);
+                  }
+                  
+                  setLoadingProducts(false);
+                  isFetchingRef.current = false;
+                  return; // Exit early since we've handled the request
+                }
+              }
+              
+              // Fallback to old endpoint if we don't have both level4 ID and store ID
+              // Build filter params
+              const params = new URLSearchParams()
+              
+              // Add pagination params
+              params.append('page', currentPage.toString())
+              params.append('limit', '20')
+              
+              // Add sort parameter
+              params.append('sort', sortBy)
+              
+              // Price filter
+              if (debouncedFilters.price?.min !== undefined && debouncedFilters.price?.min !== '') {
+                params.append('min_price', debouncedFilters.price.min)
+              }
+              if (debouncedFilters.price?.max !== undefined && debouncedFilters.price?.max !== '') {
+                params.append('max_price', debouncedFilters.price.max)
+              }
+              
+              // Availability filter
+              if (debouncedFilters.availability instanceof Set) {
+                if (debouncedFilters.availability.has('in') && !debouncedFilters.availability.has('out')) {
+                  params.append('in_stock', 'true')
+                } else if (debouncedFilters.availability.has('out') && !debouncedFilters.availability.has('in')) {
+                  params.append('in_stock', 'false')
+                }
+              }
+              
+              // Rating filter
+              if (typeof debouncedFilters.rating === 'number') {
+                params.append('min_rating', debouncedFilters.rating)
+              }
+              
+              // Brand filter from filters (multiple)
+              if (debouncedFilters.brand instanceof Set && debouncedFilters.brand.size > 0) {
+                Array.from(debouncedFilters.brand).forEach(b => params.append('brand_id', b))
+              }
+              
+              // Store filter from query params (when clicking icon)
+              if (storeId) {
+                params.append('store_id', storeId)
+              }
+              
+              // Store type filter (hypermarket, supermarket, e-shop) - filters by level1 category
+              if (storeType) {
+                params.append('storeType', storeType)
+              }
+              
+              // Dynamic attribute filters (attr.*)
+              Object.keys(debouncedFilters).forEach(key => {
+                if (key.startsWith('attr.')) {
+                  const attrKey = key.substring(5)
+                  const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
+                  values.forEach(v => params.append(`attr_${attrKey}`, v))
+                }
+              })
+              
+              // Dynamic specification filters (spec.*)
+              Object.keys(debouncedFilters).forEach(key => {
+                if (key.startsWith('spec.')) {
+                  const specKey = key.substring(5)
+                  const values = debouncedFilters[key] instanceof Set ? Array.from(debouncedFilters[key]) : []
+                  values.forEach(v => params.append(`spec_${specKey}`, v))
+                }
+              })
+              
+              // Fetch category products with filters
+              let categorySlug = slug;
+              if (level4CategoryId && categoryLevel === '4') {
+                params.append('level4', level4CategoryId);
+              }
+              
+              const url = params.toString() 
+                ? `${catalog.productsByLevel4Category(categorySlug)}?${params.toString()}`
+                : catalog.productsByLevel4Category(categorySlug)
+              
+              console.log('Fetching category products with URL (fallback):', url);
+              console.log('Category Level:', categoryLevel);
+              console.log('Slug:', slug);
+              
+              const response = await fetch(url)
+
+              if (response.ok) {
+                const data = await response.json()
+                console.log('Category API Response:', data)
+
+                if (data.success && data.data) {
+                  if (currentPage === 1) {
+                    const categoryData = data.data.category || level4CategoryData;
+                    if (categoryData) {
+                      // Always try to extract level2 from first product for breadcrumb
+                      const firstProduct = data.data.products?.[0];
+                      if (firstProduct?.level2) {
+                        const level2Entry = buildLevel2Entry(firstProduct.level2);
+                        if (level2Entry?.name) {
+                          setLevel2Category(level2Entry);
+                          console.log('Extracted level2 from product for category page:', level2Entry.name);
+                          
+                          // Also add level2 to category path if not present
+                          if (categoryData && (!categoryData.path?.level2 || categoryData.path.level2.length === 0)) {
+                            if (!categoryData.path) {
+                              categoryData.path = {};
+                            }
+                            if (!categoryData.path.level2) {
+                              categoryData.path.level2 = [];
+                            }
+                            if (!categoryData.path.level2.includes(level2Entry.name)) {
+                              categoryData.path.level2.push(level2Entry.name);
+                            }
+                          }
+                        }
+                      }
+                      setBrandInfo(categoryData) // Category info with enhanced path
+                    }
+                  }
+                  
+                  let newProducts = data.data.products || []
+                  
+                  // Filter products by store_id if storeId is present
+                  if (storeId && newProducts.length > 0) {
+                    newProducts = newProducts.filter(product => {
+                      // Check if product has store_id and it matches the current storeId
+                      const productStoreId = product.store_id?._id || product.store_id;
+                      return productStoreId === storeId || String(productStoreId) === String(storeId);
+                    });
+                    console.log(`Filtered products by store_id ${storeId}: ${newProducts.length} products found`);
+                  }
+                  
+                  setBrandProducts(newProducts)
+
+                  const pagination = data.data.pagination
+                  setPaginationInfo(pagination || null)
+                }
+              }
+            } catch (error) {
+              console.error('Error fetching category products:', error);
+              setBrandProducts([]);
+            } finally {
+              setLoadingProducts(false);
+              isFetchingRef.current = false;
             }
           } else {
             setIsStore(false)
@@ -1083,7 +1230,7 @@ export default function BrandPage() {
   useEffect(() => {
     const buildBreadcrumb = () => {
       const path = []
-      path.push({ label: 'Home', href: '/' })
+      path.push({ label: 'Discovery', href: '/' })
 
       const level2SlugFromBrand =
         brandInfo?.level2 &&
@@ -1358,18 +1505,24 @@ export default function BrandPage() {
 
         .breadcrumb-link {
           color: #0082FF;
+          font-weight: 600;
+          font-size: 12px;
           text-decoration: none;
           transition: color 0.2s ease;
         }
 
-        .breadcrumb-link:hover {
+        .breadcrumb-current:hover, .breadcrumb-link:hover {
           color: #0066cc;
           text-decoration: underline;
         }
 
         .breadcrumb-current {
-          color: #111827;
-          font-weight: 500;
+          color: #0082FF;
+          font-weight: 600;
+          font-size: 12px;
+          text-decoration: none;
+          cursor: pointer;
+          transition: color 0.2s ease;
         }
 
         .listing-layout {
@@ -1500,6 +1653,7 @@ export default function BrandPage() {
           grid-template-columns: repeat(3, minmax(0, 1fr));
           gap: 24px;
           padding-bottom: 0; /* extra space at bottom */
+          justify-items: center; /* center items within grid cells */
         }
         
         .grid-item { 
@@ -1647,6 +1801,23 @@ export default function BrandPage() {
 
           .section-title {
             font-size: 28px;
+          }
+
+          /* Ensure product grid stays centered on mobile */
+          .products-scroll-container {
+            display: flex;
+            justify-content: center;
+          }
+
+          .grid-3 {
+            width: 100%;
+            max-width: 520px;
+            justify-items: center;
+          }
+
+          .grid-item {
+            width: 100%;
+            max-width: 360px;
           }
         }
       `}</style>
