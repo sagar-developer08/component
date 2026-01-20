@@ -22,13 +22,13 @@ const slides = [
   },
   {
     id: 3,
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/a868e3c3ae04f8cde35d9705cad41f2bccbeb7da?width=1376',
+    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQxab6jMWSSKjrOEbsNjwj-ieKXun5YHnFTMA&s',
     width: 688,
     height: 380
   },
   {
     id: 4,
-    image: 'https://api.builder.io/api/v1/image/assets/TEMP/dc622b97235b892ac997a36da4ca4fc5bbe221a9?width=1376',
+    image: 'https://img.freepik.com/free-vector/paper-style-podium-horizontal-banner_23-2150956911.jpg?semt=ais_hybrid&w=740&q=80',
     width: 688,
     height: 380
   }
@@ -37,6 +37,8 @@ const slides = [
 export default function ImageSlider() {
   const swiperRef = useRef(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [isBeginning, setIsBeginning] = useState(true)
+  const [isEnd, setIsEnd] = useState(false)
 
   useEffect(() => {
     const checkScreenSize = () => {
@@ -53,14 +55,19 @@ export default function ImageSlider() {
     return () => window.removeEventListener('resize', checkScreenSize)
   }, [])
 
+  const handleSlideChange = (swiper) => {
+    setIsBeginning(swiper.isBeginning)
+    setIsEnd(swiper.isEnd)
+  }
+
   const nextSlide = () => {
-    if (swiperRef.current && swiperRef.current.swiper) {
+    if (swiperRef.current && swiperRef.current.swiper && !isEnd) {
       swiperRef.current.swiper.slideNext()
     }
   }
 
   const prevSlide = () => {
-    if (swiperRef.current && swiperRef.current.swiper) {
+    if (swiperRef.current && swiperRef.current.swiper && !isBeginning) {
       swiperRef.current.swiper.slidePrev()
     }
   }
@@ -75,7 +82,12 @@ export default function ImageSlider() {
             spaceBetween={isMobile ? 16 : 24}
             slidesPerView={isMobile ? 1.2 : 2}
             centeredSlides={isMobile}
-            loop={true}
+            loop={false}
+            onSlideChange={handleSlideChange}
+            onSwiper={(swiper) => {
+              setIsBeginning(swiper.isBeginning)
+              setIsEnd(swiper.isEnd)
+            }}
             style={{
               maxWidth: '1392px',
               height: isMobile ? '200px' : '380px',
@@ -104,8 +116,9 @@ export default function ImageSlider() {
 
           <div className="slider-controls">
             <button
-              className="nav-button prev"
+              className={`nav-button prev ${isBeginning ? 'disabled' : ''}`}
               onClick={prevSlide}
+              disabled={isBeginning}
               aria-label="Previous slide"
             >
               <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
@@ -115,8 +128,9 @@ export default function ImageSlider() {
             </button>
 
             <button
-              className="nav-button next"
+              className={`nav-button next ${isEnd ? 'disabled' : ''}`}
               onClick={nextSlide}
+              disabled={isEnd}
               aria-label="Next slide"
             >
               <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
@@ -191,6 +205,21 @@ export default function ImageSlider() {
 
         .nav-button:active {
           transform: scale(0.95);
+        }
+
+        .nav-button.disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+          pointer-events: none;
+        }
+
+        .nav-button.disabled:hover {
+          transform: none;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-button.disabled svg path {
+          stroke: #999;
         }
 
         @media (max-width: 768px) {

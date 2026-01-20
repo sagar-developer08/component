@@ -1,15 +1,53 @@
 import { useSelector, useDispatch } from 'react-redux'
 import { fetchUserBalance } from '@/store/slices/walletSlice'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import styles from './qoynsWallet.module.css'
+
+// Helper function to calculate days remaining until expiry
+const calculateDaysRemaining = (expiryDate) => {
+  if (!expiryDate) return null
+  
+  try {
+    const expiry = new Date(expiryDate)
+    const now = new Date()
+    const diffTime = expiry - now
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    return diffDays > 0 ? diffDays : 0
+  } catch (error) {
+    console.error('Error calculating days remaining:', error)
+    return null
+  }
+}
+
+// Helper function to format expiry date
+const formatExpiryDate = (expiryDate) => {
+  if (!expiryDate) return null
+  
+  try {
+    const date = new Date(expiryDate)
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
+  } catch (error) {
+    console.error('Error formatting expiry date:', error)
+    return null
+  }
+}
 
 export default function QoynsWallet() {
   const dispatch = useDispatch()
-  const { userQoynBalance, userBalance, storeCurrency, loading: walletLoading } = useSelector(state => state.wallet)
+  const { userQoynBalance, userBalance, storeCurrency, qoynExpiryDate, loading: walletLoading } = useSelector(state => state.wallet)
 
   useEffect(() => {
     dispatch(fetchUserBalance())
   }, [dispatch])
+
+  const daysRemaining = useMemo(() => calculateDaysRemaining(qoynExpiryDate), [qoynExpiryDate])
+  const formattedExpiryDate = useMemo(() => formatExpiryDate(qoynExpiryDate), [qoynExpiryDate])
+
   return (
     <div className={styles.walletHeader}>
       <div className={styles.QoynsCard}>
@@ -19,7 +57,13 @@ export default function QoynsWallet() {
         </div>
         <div className={styles.QoynsBalance}>{userQoynBalance.toLocaleString()}</div>
         <div className={styles.CardDetails}>
-          <span className={styles.QoynsExiry}>Expiry in 29 Days</span>
+          {daysRemaining !== null ? (
+            <span className={styles.QoynsExiry}>
+              Expires on {formattedExpiryDate} ({daysRemaining} {daysRemaining === 1 ? 'Day' : 'Days'} remaining)
+            </span>
+          ) : (
+            <span className={styles.QoynsExiry}>No expiry date available</span>
+          )}
         </div>
       </div>
     </div>

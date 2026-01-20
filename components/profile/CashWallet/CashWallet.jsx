@@ -1,24 +1,31 @@
 import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchRedeemableCashBalance } from '@/store/slices/walletSlice'
 import styles from './cashWallet.module.css'
 
 export default function CashWallet() {
+  const dispatch = useDispatch()
+  const { redeemableCashUsd, redeemableCashAed, cashLoading } = useSelector(state => state.wallet)
+
   useEffect(() => {
-    console.log('CashWallet component mounted')
-    console.log('Styles object:', styles)
-  }, [])
+    dispatch(fetchRedeemableCashBalance())
+  }, [dispatch])
 
   return (
     <div className={styles.walletHeader}>
       <div className={styles.balanceCard}>
         <div className={styles.balanceRow}>
-          <svg width="40" height="40" fill="none"><circle cx="12" cy="12" r="10" fill="#0082FF" /><path d="M8 12L11 15L16 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          <h3 className={styles.balanceTitle}>$ 1000</h3>
+          <img src="/cashwallet.svg" alt="Cash Wallet" width="40" height="40" />
+          <span className={styles.walletLabel}>Cash Wallet</span>
         </div>
-        <div className={styles.AccountName}>Amma</div>
-        <div className={styles.CardDetails}>
-          <span className={styles.CardNumber}>4342 4234 5987</span>
-          <span className={styles.DateExpiry}>11/26</span>
-        </div>
+        <h3 className={styles.balanceTitle}>
+          {cashLoading ? '...' : `AED ${redeemableCashAed.toFixed(2)}`}
+        </h3>
+        <p className={styles.balanceSubtitle}>
+          {cashLoading ? '' : `$${redeemableCashUsd.toFixed(2)}`}
+        </p>
+        {/* <button className={styles.withdrawBtn}>Send Request To Withdraw</button> */}
+        <button className={styles.useQoynsBtn}>Use Qoyns To Shop</button>
       </div>
     </div>
   )
