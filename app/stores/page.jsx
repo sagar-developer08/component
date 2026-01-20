@@ -94,6 +94,10 @@ export default function Home() {
   const { categoryProducts = [], categoryProductsLoading } = useSelector(state => state.products)
   const router = useRouter()
   const [userLocation, setUserLocation] = useState(null)
+  
+  // Navigation State
+  const [fastestDeliveryNav, setFastestDeliveryNav] = useState({ isBeginning: true, isEnd: false })
+  const [bestCheapDealsNav, setBestCheapDealsNav] = useState({ isBeginning: true, isEnd: false })
 
   // Check screen size for mobile detection
   useEffect(() => {
@@ -169,25 +173,25 @@ export default function Home() {
 
   // Navigation handlers
   const handleFastestDeliveryPrev = () => {
-    if (fastestDeliverySwiperRef.current?.swiper) {
+    if (fastestDeliverySwiperRef.current?.swiper && !fastestDeliveryNav.isBeginning) {
       fastestDeliverySwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleFastestDeliveryNext = () => {
-    if (fastestDeliverySwiperRef.current?.swiper) {
+    if (fastestDeliverySwiperRef.current?.swiper && !fastestDeliveryNav.isEnd) {
       fastestDeliverySwiperRef.current.swiper.slideNext()
     }
   }
 
   const handleBestCheapDealsPrev = () => {
-    if (bestCheapDealsSwiperRef.current?.swiper) {
+    if (bestCheapDealsSwiperRef.current?.swiper && !bestCheapDealsNav.isBeginning) {
       bestCheapDealsSwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleBestCheapDealsNext = () => {
-    if (bestCheapDealsSwiperRef.current?.swiper) {
+    if (bestCheapDealsSwiperRef.current?.swiper && !bestCheapDealsNav.isEnd) {
       bestCheapDealsSwiperRef.current.swiper.slideNext()
     }
   }
@@ -257,6 +261,8 @@ export default function Home() {
             showNavigation={true}
             onPrev={handleBestCheapDealsPrev}
             onNext={handleBestCheapDealsNext}
+            prevDisabled={bestCheapDealsNav.isBeginning}
+            nextDisabled={bestCheapDealsNav.isEnd}
           />
           {loading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -273,6 +279,18 @@ export default function Home() {
               grabCursor={true}
               freeMode={true}
               className="bestsellers-swiper"
+              onSlideChange={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd })
+              }}
+              onReachEnd={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd })
+              }}
+              onReachBeginning={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd })
+              }}
+              onSwiper={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd })
+              }}
             >
               {bestCheapDeals.map((store, index) => {
                 // Map store category - check if level1 is stores
