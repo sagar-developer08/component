@@ -79,6 +79,37 @@ export const catalog = {
     return `${BASES.catalog}/products/store-products/${storeId}/cheap-deals${queryString ? `?${queryString}` : ''}`;
   },
   productsByLevel4Category: (categorySlug) => `${BASES.catalog}/products/level4/${categorySlug}`,
+  productsByLevel4AndStore: (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.level4) queryParams.append('level4', params.level4);
+    if (params.storeId) queryParams.append('storeId', params.storeId);
+    if (params.page) queryParams.append('page', params.page);
+    if (params.limit) queryParams.append('limit', params.limit);
+    if (params.sort) queryParams.append('sort', params.sort);
+    if (params.min_price) queryParams.append('min_price', params.min_price);
+    if (params.max_price) queryParams.append('max_price', params.max_price);
+    if (params.min_rating) queryParams.append('min_rating', params.min_rating);
+    if (params.in_stock !== undefined) queryParams.append('in_stock', params.in_stock);
+    if (params.brand_id) {
+      const brandIds = Array.isArray(params.brand_id) ? params.brand_id : [params.brand_id];
+      brandIds.forEach(id => queryParams.append('brand_id', id));
+    }
+    // Handle attribute filters
+    if (params.attributes) {
+      Object.entries(params.attributes).forEach(([key, values]) => {
+        const valuesArray = Array.isArray(values) ? values : [values];
+        valuesArray.forEach(v => queryParams.append(`attr_${key}`, String(v)));
+      });
+    }
+    // Handle specification filters
+    if (params.specifications) {
+      Object.entries(params.specifications).forEach(([key, values]) => {
+        const valuesArray = Array.isArray(values) ? values : [values];
+        valuesArray.forEach(v => queryParams.append(`spec_${key}`, String(v)));
+      });
+    }
+    return `${BASES.catalog}/products/level4/store?${queryParams.toString()}`;
+  },
   productsByCategory: (categoryId, limit = 100) => `${BASES.catalog}/products/category?categoryId=${categoryId}&limit=${limit}`,
   similarProducts: (productId, limit = 10) => `${BASES.catalog}/products/similar/${productId}?limit=${limit}`,
   stores: `${BASES.catalog}/stores`,

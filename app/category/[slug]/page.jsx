@@ -84,40 +84,6 @@ const transformCategoryData = (apiCategory) => {
 }
 
 // Static product data for fallback
-const productData = [
-  {
-    id: "nike-airforce-01",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
-  },
-  {
-    id: "nike-dunk-low",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
-  },
-  {
-    id: "nike-air-max",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
-  },
-  {
-    id: "nike-airforce-01-black",
-    title: "Vorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    price: "AED 1,600",
-    rating: "4.0",
-    deliveryTime: "30 Min",
-    image: "https://api.builder.io/api/v1/image/assets/TEMP/0ef2d416817956be0fe96760f14cbb67e415a446?width=644"
-  }
-]
 
 export default function CategoryPage() {
   const router = useRouter()

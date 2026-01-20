@@ -94,6 +94,9 @@ export default function Home() {
   const { categoryProducts = [], categoryProductsLoading } = useSelector(state => state.products)
   const router = useRouter()
   const [userLocation, setUserLocation] = useState(null)
+  
+  // Swiper navigation states
+  const [bestCheapDealsNav, setBestCheapDealsNav] = useState({ isBeginning: true, isEnd: false })
 
   // Check screen size for mobile detection
   useEffect(() => {
@@ -181,13 +184,13 @@ export default function Home() {
   }
 
   const handleBestCheapDealsPrev = () => {
-    if (bestCheapDealsSwiperRef.current?.swiper) {
+    if (bestCheapDealsSwiperRef.current?.swiper && !bestCheapDealsNav.isBeginning) {
       bestCheapDealsSwiperRef.current.swiper.slidePrev()
     }
   }
 
   const handleBestCheapDealsNext = () => {
-    if (bestCheapDealsSwiperRef.current?.swiper) {
+    if (bestCheapDealsSwiperRef.current?.swiper && !bestCheapDealsNav.isEnd) {
       bestCheapDealsSwiperRef.current.swiper.slideNext()
     }
   }
@@ -257,6 +260,8 @@ export default function Home() {
             showNavigation={true}
             onPrev={handleBestCheapDealsPrev}
             onNext={handleBestCheapDealsNext}
+            prevDisabled={bestCheapDealsNav.isBeginning || !bestCheapDeals || bestCheapDeals.length === 0}
+            nextDisabled={bestCheapDealsNav.isEnd || !bestCheapDeals || bestCheapDeals.length === 0}
           />
           {loading ? (
             <div style={{ display: 'flex', gap: '24px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -272,6 +277,12 @@ export default function Home() {
               spaceBetween={isMobile ? 16 : 24}
               grabCursor={true}
               freeMode={true}
+              onSlideChange={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
               className="bestsellers-swiper"
             >
               {bestCheapDeals.map((store, index) => {

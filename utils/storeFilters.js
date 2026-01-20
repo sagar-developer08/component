@@ -18,15 +18,22 @@ export function buildFacetsFromStoreFilters(filterData) {
     })
   }
 
-  // Price
+  // Price - only show if there's a price range (min !== max)
   if (filterData.price) {
-    facets.push({
-      key: 'price',
-      label: 'Price',
-      type: 'range',
-      min: Math.floor(filterData.price.min || 0),
-      max: Math.ceil(filterData.price.max || 0),
-    })
+    const minPrice = Math.floor(filterData.price.min || 0)
+    const maxPrice = Math.ceil(filterData.price.max || 0)
+    
+    // Only add price filter if there's a range (min !== max)
+    // If all products have the same price, don't show the filter
+    if (minPrice !== maxPrice) {
+      facets.push({
+        key: 'price',
+        label: 'Price',
+        type: 'range',
+        min: minPrice,
+        max: maxPrice,
+      })
+    }
   }
 
   // Rating - removed as requested

@@ -21,11 +21,15 @@ export default function ProductSections({ relatedProducts, productData }) {
   const [isMobile, setIsMobile] = useState(false)
   const relatedProductsSwiperRef = useRef(null)
   const customerAlsoLikedSwiperRef = useRef(null)
-  
+
+  // Swiper navigation states
+  const [relatedProductsNav, setRelatedProductsNav] = useState({ isBeginning: true, isEnd: false })
+  const [customerAlsoLikedNav, setCustomerAlsoLikedNav] = useState({ isBeginning: true, isEnd: false })
+
   // Redux for reviews
   const dispatch = useDispatch()
   const { reviews, loading: reviewsLoading } = useSelector(state => state.review)
-  
+
   // Fetch reviews when component mounts
   useEffect(() => {
     if (productData?._id) {
@@ -120,11 +124,11 @@ export default function ProductSections({ relatedProducts, productData }) {
 
     const totalReviews = reviews.length
     const averageRating = totalReviews > 0 ? (totalRating / totalReviews).toFixed(1) : 0
-    
+
     const percentages = {}
     Object.keys(distribution).forEach(rating => {
-      percentages[rating] = totalReviews > 0 
-        ? Math.round((distribution[rating] / totalReviews) * 100) 
+      percentages[rating] = totalReviews > 0
+        ? Math.round((distribution[rating] / totalReviews) * 100)
         : 0
     })
 
@@ -315,25 +319,25 @@ export default function ProductSections({ relatedProducts, productData }) {
 
   // Handlers for related products swiper navigation
   const handleRelatedProductsPrev = () => {
-    if (relatedProductsSwiperRef.current && relatedProductsSwiperRef.current.swiper) {
+    if (relatedProductsSwiperRef.current && relatedProductsSwiperRef.current.swiper && !relatedProductsNav.isBeginning) {
       relatedProductsSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleRelatedProductsNext = () => {
-    if (relatedProductsSwiperRef.current && relatedProductsSwiperRef.current.swiper) {
+    if (relatedProductsSwiperRef.current && relatedProductsSwiperRef.current.swiper && !relatedProductsNav.isEnd) {
       relatedProductsSwiperRef.current.swiper.slideNext();
     }
   };
 
   const handleCustomerAlsoLikedPrev = () => {
-    if (customerAlsoLikedSwiperRef.current && customerAlsoLikedSwiperRef.current.swiper) {
+    if (customerAlsoLikedSwiperRef.current && customerAlsoLikedSwiperRef.current.swiper && !customerAlsoLikedNav.isBeginning) {
       customerAlsoLikedSwiperRef.current.swiper.slidePrev();
     }
   };
 
   const handleCustomerAlsoLikedNext = () => {
-    if (customerAlsoLikedSwiperRef.current && customerAlsoLikedSwiperRef.current.swiper) {
+    if (customerAlsoLikedSwiperRef.current && customerAlsoLikedSwiperRef.current.swiper && !customerAlsoLikedNav.isEnd) {
       customerAlsoLikedSwiperRef.current.swiper.slideNext();
     }
   };
@@ -349,6 +353,8 @@ export default function ProductSections({ relatedProducts, productData }) {
             onPrev={handleRelatedProductsPrev}
             onNext={handleRelatedProductsNext}
             showButton={false}
+            prevDisabled={relatedProductsNav.isBeginning || !Array.isArray(relatedList) || relatedList.length === 0}
+            nextDisabled={relatedProductsNav.isEnd || !Array.isArray(relatedList) || relatedList.length === 0}
           />
           {Array.isArray(relatedList) && relatedList.length > 0 ? (
             <Swiper
@@ -358,6 +364,12 @@ export default function ProductSections({ relatedProducts, productData }) {
               spaceBetween={isMobile ? 16 : 24}
               grabCursor={true}
               freeMode={true}
+              onSlideChange={(swiper) => {
+                setRelatedProductsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setRelatedProductsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
               className="bestsellers-swiper"
             >
               {relatedList.map((product, index) => (
@@ -526,19 +538,25 @@ export default function ProductSections({ relatedProducts, productData }) {
               <div className="customer-photos-list">
                 {reviewImages.length > 0 ? (
                   reviewImages.slice(0, 7).map((imageUrl, i) => (
-                    <div 
-                      className="customer-photo" 
-                      key={i} 
-                      style={{ backgroundImage: `url(${imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center', cursor: 'pointer' }}
+                    <div
+                      className="customer-photo"
+                      key={i}
+                      style={{
+                        backgroundImage: `url(${imageUrl})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        cursor: 'pointer',
+                      }}
                       onClick={() => openGallery(i)}
                     ></div>
                   ))
                 ) : (
-                  [...Array(7)].map((_, i) => (
-                    <div className="customer-photo" key={i}></div>
-                  ))
+                  <div className="no-images-text">
+                    
+                  </div>
                 )}
               </div>
+
             </div>
             <div className="reviews-list">
               {reviewsLoading ? (
@@ -546,11 +564,11 @@ export default function ProductSections({ relatedProducts, productData }) {
               ) : reviews && Array.isArray(reviews) && reviews.length > 0 ? (
                 reviews.slice(0, 4).map((review, i) => (
                   <div className="review-item" key={review._id || review.id || i}>
-                    <div 
-                      className="review-photo" 
-                      style={review.images && review.images[0] ? { 
-                        backgroundImage: `url(${review.images[0]})`, 
-                        backgroundSize: 'cover', 
+                    <div
+                      className="review-photo"
+                      style={review.images && review.images[0] ? {
+                        backgroundImage: `url(${review.images[0]})`,
+                        backgroundSize: 'cover',
                         backgroundPosition: 'center',
                         cursor: 'pointer'
                       } : {}}
@@ -590,6 +608,8 @@ export default function ProductSections({ relatedProducts, productData }) {
             onNext={handleCustomerAlsoLikedNext}
             showButton={false}
             buttonText="Upgrade"
+            prevDisabled={customerAlsoLikedNav.isBeginning || !Array.isArray(relatedList) || relatedList.length === 0}
+            nextDisabled={customerAlsoLikedNav.isEnd || !Array.isArray(relatedList) || relatedList.length === 0}
           />
           {Array.isArray(relatedList) && relatedList.length > 0 ? (
             <Swiper
@@ -599,6 +619,12 @@ export default function ProductSections({ relatedProducts, productData }) {
               spaceBetween={isMobile ? 16 : 24}
               grabCursor={true}
               freeMode={true}
+              onSlideChange={(swiper) => {
+                setCustomerAlsoLikedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
+              onSwiper={(swiper) => {
+                setCustomerAlsoLikedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+              }}
               className="bestsellers-swiper"
             >
               {relatedList.map((product, index) => (
@@ -1241,6 +1267,15 @@ export default function ProductSections({ relatedProducts, productData }) {
           color: #222;
           font-weight: 600;
         }
+        .no-images-text {
+          padding: 20px;
+          text-align: center;
+          color: #888;
+          font-size: 16px;
+          font-weight: 600;
+          width: 100%;
+}
+
         .customer-photos-row {
           display: flex;
           align-items: center;
@@ -1377,7 +1412,7 @@ export default function ProductSections({ relatedProducts, productData }) {
 
       {/* View All Images Modal - Grid of 60px Thumbnails */}
       {viewAllOpen && (
-        <div 
+        <div
           className="lightbox-overlay"
           onClick={closeViewAll}
         >
@@ -1388,9 +1423,9 @@ export default function ProductSections({ relatedProducts, productData }) {
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
-            
+
             <h2 className="viewall-title">All Customer Photos ({reviewImages.length})</h2>
-            
+
             <div className="viewall-grid">
               {reviewImages.map((imageUrl, index) => (
                 <div
@@ -1407,7 +1442,7 @@ export default function ProductSections({ relatedProducts, productData }) {
 
       {/* Image Lightbox Modal with Review */}
       {lightboxOpen && (
-        <div 
+        <div
           className="lightbox-overlay"
           onClick={closeLightbox}
         >
@@ -1443,7 +1478,7 @@ export default function ProductSections({ relatedProducts, productData }) {
 
       {/* Gallery Modal */}
       {galleryOpen && reviewImages.length > 0 && (
-        <div 
+        <div
           className="lightbox-overlay"
           onClick={closeGallery}
         >
@@ -1454,7 +1489,7 @@ export default function ProductSections({ relatedProducts, productData }) {
                 <line x1="6" y1="6" x2="18" y2="18"></line>
               </svg>
             </button>
-            
+
             {/* Navigation Arrows */}
             {reviewImages.length > 1 && (
               <>
@@ -1473,7 +1508,7 @@ export default function ProductSections({ relatedProducts, productData }) {
 
             <div className="gallery-main">
               <img src={reviewImages[currentGalleryIndex]} alt={`Gallery ${currentGalleryIndex + 1}`} className="gallery-image" />
-              
+
               {/* Review Info for Current Image */}
               {reviewImagesData[currentGalleryIndex]?.review && (
                 <div className="gallery-review-info">
@@ -1490,7 +1525,7 @@ export default function ProductSections({ relatedProducts, productData }) {
                 </div>
               )}
             </div>
-            
+
             {/* <div className="gallery-counter">
               {currentGalleryIndex + 1} / {reviewImages.length}
             </div> */}

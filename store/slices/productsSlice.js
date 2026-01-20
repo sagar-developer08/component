@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { catalog, search } from '../api/endpoints'
+import { searchProductTypes } from '@/utils/searchUtils'
 
 // Async thunk for fetching products
 export const fetchProducts = createAsyncThunk(
@@ -127,12 +128,12 @@ export const fetchStoreProductsByStoreId = createAsyncThunk(
 // Async thunk for searching products with filters
 export const searchProducts = createAsyncThunk(
   'products/searchProducts',
-  async ({ query, filters = {}, sort = 'relevance' }, { rejectWithValue }) => {
+  async ({ query, filters = {}, sort = 'relevance', page = 1, limit = 20 }, { rejectWithValue }) => {
     try {
-      console.log('Searching for:', query, 'with filters:', filters)
+      console.log('Searching for:', query, 'with filters:', filters, 'page:', page, 'limit:', limit)
       
       // Build query params from filters
-      const params = new URLSearchParams({ q: query, sort })
+      const params = new URLSearchParams({ q: query, sort, page: page.toString(), limit: limit.toString() })
       
       // Price filter
       if (filters.price?.min !== undefined && filters.price?.min !== '') {
@@ -233,12 +234,12 @@ export const fetchSearchSuggestions = createAsyncThunk(
   async (query, { rejectWithValue }) => {
     try {
       if (!query || query.trim().length < 2) {
-        return { suggestions: [] }
+        return { suggestions: [], productTypes: [] }
       }
       
       console.log('Fetching suggestions for:', query)
-      // Use the same endpoint as search results but with limit for suggestions
-      const response = await fetch(search.products(query, { limit: 5 }))
+      // Fetch more products to extract better types (increase limit for better type extraction)
+      const response = await fetch(search.products(query, { limit: 30 }))
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -246,7 +247,16 @@ export const fetchSearchSuggestions = createAsyncThunk(
       
       const data = await response.json()
       console.log('Suggestions response:', data)
-      return data
+      
+      // Extract product types from the products
+      const products = data.success && data.data?.products ? data.data.products : []
+      const productTypes = searchProductTypes(products, query)
+      
+      // Return both original data structure and extracted types
+      return {
+        ...data,
+        productTypes: productTypes.slice(0, 10) // Limit to 10 types for suggestions
+      }
     } catch (error) {
       console.error('Suggestions error:', error)
       return rejectWithValue(error.message)
@@ -305,6 +315,7 @@ const productsSlice = createSlice({
     searchQuery: '',
     searchPagination: {},
     searchSuggestions: [],
+    searchProductTypes: [], // Product types/variants for suggestions
     suggestionsLoading: false,
     suggestionsError: null,
     categoryProducts: [],
@@ -357,6 +368,7 @@ const productsSlice = createSlice({
     },
     clearSuggestions: (state) => {
       state.searchSuggestions = []
+      state.searchProductTypes = []
       state.suggestionsError = null
     }
   },
@@ -527,17 +539,20 @@ const productsSlice = createSlice({
       .addCase(fetchSearchSuggestions.fulfilled, (state, action) => {
         state.suggestionsLoading = false
         if (action.payload.success && action.payload.data) {
-          // Use the same data structure as search results since we're using the same endpoint
+          // Store original products for fallback if needed
           state.searchSuggestions = action.payload.data.products || []
         } else {
           state.searchSuggestions = []
         }
+        // Store extracted product types for display
+        state.searchProductTypes = action.payload.productTypes || []
         state.suggestionsError = null
       })
       .addCase(fetchSearchSuggestions.rejected, (state, action) => {
         state.suggestionsLoading = false
         state.suggestionsError = action.payload
         state.searchSuggestions = []
+        state.searchProductTypes = []
       })
       // Fetch products by category cases
       .addCase(fetchProductsByCategory.pending, (state) => {
