@@ -75,12 +75,7 @@ export default function Home() {
   const [fastestDeliveryNav, setFastestDeliveryNav] = useState({ isBeginning: true, isEnd: false })
   const [bestCheapDealsNav, setBestCheapDealsNav] = useState({ isBeginning: true, isEnd: false })
   const [bestBundlesNav, setBestBundlesNav] = useState({ isBeginning: true, isEnd: false })
-
-  // Navigation State
-  const [fastestDeliveryNav, setFastestDeliveryNav] = useState({ isBeginning: true, isEnd: false });
-  const [bestCheapDealsNav, setBestCheapDealsNav] = useState({ isBeginning: true, isEnd: false });
-  const [bestBundlesNav, setBestBundlesNav] = useState({ isBeginning: true, isEnd: false });
-  const [bestCashbackNav, setBestCashbackNav] = useState({ isBeginning: true, isEnd: false });
+  const [bestCashbackNav, setBestCashbackNav] = useState({ isBeginning: true, isEnd: false })
 
   // Check screen size for mobile detection
   useEffect(() => {
