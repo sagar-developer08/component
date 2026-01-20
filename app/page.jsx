@@ -1018,7 +1018,7 @@ export default function Home() {
         <section className="section">
           <div className="container">
             <SectionHeader
-              title="New Stores on QLIQ"
+              title="New Stores on IQLIQ"
               showNavigation={true}
               onPrev={handlePrev}
               onNext={handleNext}

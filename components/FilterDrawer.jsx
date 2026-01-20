@@ -10,7 +10,32 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
   const [localPriceRange, setLocalPriceRange] = useState({});
   const [priceDebounceTimer, setPriceDebounceTimer] = useState(null);
   const [activeSlider, setActiveSlider] = useState(null);
+  const [hoveredSlider, setHoveredSlider] = useState(null);
   const activeSliderDataRef = useRef(null);
+  
+  // Cache the initial bounds for range facets to prevent jumping/shrinking during filtering
+  const [cachedFacetBounds, setCachedFacetBounds] = useState({});
+
+  useEffect(() => {
+    if (!Array.isArray(facets)) return;
+    
+    setCachedFacetBounds(prev => {
+      const next = { ...prev };
+      let changed = false;
+      
+      facets.forEach(facet => {
+        if (facet.type === 'range' && facet.min !== undefined && facet.max !== undefined) {
+          // Only set if not already set (preserve initial global bounds)
+          if (!next[facet.key]) {
+            next[facet.key] = { min: facet.min, max: facet.max };
+            changed = true;
+          }
+        }
+      });
+      
+      return changed ? next : prev;
+    });
+  }, [facets]);
   
   // Debounced price range handler
   const debouncedPriceChange = useCallback((facetKey, newRange) => {
@@ -335,18 +360,35 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                   </div>
                 )}
                 {facet.type === 'range' && (() => {
-                  const facetMin = facet.min ?? 0;
-                  const facetMax = facet.max ?? 1000;
+                  // Use cached bounds if available to maintain stable slider scale, otherwise fallback to current facet props
+                  const cached = cachedFacetBounds[facet.key] || {};
+                  const facetMin = cached.min ?? facet.min ?? 0;
+                  const facetMax = cached.max ?? facet.max ?? 1000;
+                  
                   const currentRange = localPriceRange[facet.key] || selected[facet.key] || {};
                   const currentMin = currentRange.min ?? facetMin;
                   const currentMax = currentRange.max ?? facetMax;
                   
+                  // Calculate progress bar position and width
+                  const rangeTotal = facetMax - facetMin;
+                  const progressLeft = rangeTotal > 0 ? ((currentMin - facetMin) / rangeTotal) * 100 : 0;
+                  const progressWidth = rangeTotal > 0 ? ((currentMax - currentMin) / rangeTotal) * 100 : 100;
+                  const maxLeft = progressLeft + progressWidth;
+
+                  const showMinTooltip = (hoveredSlider?.key === facet.key && hoveredSlider?.thumb === 'min') || 
+                                         (activeSlider === 'min' && activeSliderDataRef.current?.facetKey === facet.key);
+                  const showMaxTooltip = (hoveredSlider?.key === facet.key && hoveredSlider?.thumb === 'max') || 
+                                         (activeSlider === 'max' && activeSliderDataRef.current?.facetKey === facet.key);
+                  
                   return (
                     <div className="filter-range">
                       <div className="range-slider-container">
-                        <div className="range-values">
-                          <span className="range-min">AED {currentMin}</span>
-                          <span className="range-max">AED {currentMax}</span>
+                        <div className="range-selected-display">
+                          <span className="range-price-text">
+                            <span className="range-price-min">AED {facetMin}</span>
+                            {/* <span className="range-price-separator"> – </span> */}
+                            <span className="range-price-max">AED {facetMax}</span>
+                          </span>
                         </div>
                         <div 
                           className="range-slider-wrapper"
@@ -363,6 +405,19 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                               }}
                             ></div>
                           </div>
+
+                          {showMinTooltip && (
+                            <div className="range-tooltip" style={{ left: `${Math.max(0, Math.min(100, progressLeft))}%` }}>
+                              AED {currentMin}
+                            </div>
+                          )}
+                          
+                          {showMaxTooltip && (
+                            <div className="range-tooltip" style={{ left: `${Math.max(0, Math.min(100, maxLeft))}%` }}>
+                              AED {currentMax}
+                            </div>
+                          )}
+
                           <input
                             type="range"
                             min={facetMin}
@@ -376,6 +431,8 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                             aria-valuetext={`Minimum price ${currentMin}`}
                             onChange={(e) => handleMinSliderInput(facet.key, e.target.value, facetMin, facetMax)}
                             onInput={(e) => handleMinSliderInput(facet.key, e.target.value, facetMin, facetMax)}
+                            onMouseEnter={() => setHoveredSlider({ key: facet.key, thumb: 'min' })}
+                            onMouseLeave={() => setHoveredSlider(null)}
                             onMouseDown={(e) => {
                               // Prevent track clicks from jumping the thumb; we handle movement manually
                               e.preventDefault();
@@ -419,7 +476,7 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                             onFocus={() => setActiveSlider('min')}
                             onBlur={() => setActiveSlider(null)}
                             onKeyDown={handleSliderKeyDown(facet.key, 'min', facetMin, facetMax)}
-                            style={{ pointerEvents: 'auto', touchAction: 'none', zIndex: activeSlider === 'min' ? 3 : 2 }}
+                            style={{ pointerEvents: 'none', touchAction: 'none', zIndex: activeSlider === 'min' ? 3 : 2 }}
                             className={`range-slider min-slider ${activeSlider === 'min' ? 'active' : ''}`}
                           />
                           <input
@@ -435,6 +492,8 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                             aria-valuetext={`Maximum price ${currentMax}`}
                             onChange={(e) => handleMaxSliderInput(facet.key, e.target.value, facetMin, facetMax)}
                             onInput={(e) => handleMaxSliderInput(facet.key, e.target.value, facetMin, facetMax)}
+                            onMouseEnter={() => setHoveredSlider({ key: facet.key, thumb: 'max' })}
+                            onMouseLeave={() => setHoveredSlider(null)}
                             onMouseDown={(e) => {
                               e.preventDefault();
                               setActiveSlider('max');
@@ -477,7 +536,7 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
                             onFocus={() => setActiveSlider('max')}
                             onBlur={() => setActiveSlider(null)}
                             onKeyDown={handleSliderKeyDown(facet.key, 'max', facetMin, facetMax)}
-                            style={{ pointerEvents: 'auto', touchAction: 'none', zIndex: activeSlider === 'max' ? 3 : 2 }}
+                            style={{ pointerEvents: 'none', touchAction: 'none', zIndex: activeSlider === 'max' ? 3 : 2 }}
                             className={`range-slider max-slider ${activeSlider === 'max' ? 'active' : ''}`}
                           />
                         </div>
@@ -634,10 +693,65 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
         .filter-option { display: flex; align-items: center; gap: 10px; font-size: 14px; color: #222; }
         .option-text { flex: 1; }
         .option-count { color: #666; font-size: 12px; }
-        .filter-range { padding-top: 8px; }
-        .range-slider-container { display: flex; flex-direction: column; gap: 12px; }
-        .range-values { display: flex; justify-content: space-between; font-size: 14px; color: #666; }
-        .range-slider-wrapper { position: relative; height: 20px; }
+        .filter-range { 
+          padding-top: 8px; 
+          width: 100%;
+          min-width: 0;
+        }
+        .range-slider-container { 
+          display: flex; 
+          flex-direction: column; 
+          gap: 0;
+          min-height: 64px;
+          width: 100%;
+          max-width: 100%;
+          overflow: hidden;
+          box-sizing: border-box;
+        }
+        .range-selected-display {
+          display: flex;
+          align-items: center;
+          font-size: 16px;
+          font-weight: 500;
+          color: #222;
+          margin-bottom: 16px;
+          min-height: 28px;
+          padding: 0;
+          width: 100%;
+        }
+        .range-price-text {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+          min-width: 180px;
+        }
+        .range-price-min {
+          text-align: left;
+          font-variant-numeric: tabular-nums;
+          font-feature-settings: "tnum";
+        }
+        .range-price-max {
+          text-align: right;
+          font-variant-numeric: tabular-nums;
+          font-feature-settings: "tnum";
+        }
+        .range-price-separator {
+          display: inline-block;
+          margin: 0 4px;
+          flex-shrink: 0;
+        }
+        .range-slider-wrapper { 
+          position: relative; 
+          height: 20px; 
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          min-width: 100%;
+          max-width: 100%;
+          flex-shrink: 0;
+          box-sizing: border-box;
+        }
         .range-track {
           position: absolute;
           top: 50%;
@@ -710,6 +824,33 @@ export default function FilterDrawer({ open, onClose, inline = false, sticky = f
         }
         .range-slider::-moz-range-thumb:hover {
           transform: scale(1.1);
+        }
+        .range-slider-wrapper:active .range-slider::-moz-range-thumb {
+          transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .range-tooltip {
+          position: absolute;
+          bottom: 24px;
+          transform: translateX(-50%);
+          background: #222;
+          color: #fff;
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 500;
+          white-space: nowrap;
+          pointer-events: none;
+          z-index: 10;
+        }
+        .range-tooltip::after {
+          content: '';
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          margin-left: -4px;
+          border-width: 4px;
+          border-style: solid;
+          border-color: #222 transparent transparent transparent;
         }
         .min-slider { 
           z-index: 3; 
