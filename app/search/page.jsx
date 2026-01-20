@@ -91,6 +91,16 @@ export default function SearchPage() {
     return searchResults
   }, [searchResults])
 
+  // Calculate the range of products displayed on current page
+  const productRange = useMemo(() => {
+    if (totalResults === 0 || displayResults.length === 0) {
+      return { start: 0, end: 0 }
+    }
+    const start = (currentPage - 1) * pageSize + 1
+    const end = Math.min(currentPage * pageSize, totalResults)
+    return { start, end }
+  }, [currentPage, pageSize, totalResults, displayResults.length])
+
   const pageNumbers = useMemo(() => {
     // Show only 3 buttons at a time with sliding window (like categories)
     if (totalPages <= 3) {
@@ -307,9 +317,16 @@ export default function SearchPage() {
             {/* Main Content Area with Scrollable Products */}
             <div className="content-area">
               <div className="section-header sticky-header">
-                <h2 className="section-title">
-                  {query ? `Search Results for "${query}"` : "Search Results"}
-                </h2>
+                <div className="section-title-wrapper">
+                  <h2 className="section-title">
+                    {query ? `Search Results for "${query}"` : "Search Results"}
+                  </h2>
+                  {!searchLoading && !searchError && totalResults > 0 && (
+                    <span className="search-count">
+                      {totalResults} {totalResults === 1 ? 'product' : 'products'}
+                    </span>
+                  )}
+                </div>
                 <div className="section-actions">
                   <SortDropdown 
                     currentSort={sortBy}
@@ -359,34 +376,41 @@ export default function SearchPage() {
               </div>
 
               {!searchLoading && !searchError && displayResults.length > 0 && totalPages > 1 && (
-                <div className="pagination-controls" role="navigation" aria-label="Search results pagination">
-                  <button
-                    type="button"
-                    className="pagination-button"
-                    onClick={handlePreviousPage}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </button>
-                  {pageNumbers.map((page) => (
+                <div className="pagination-wrapper">
+                  <div className="pagination-controls" role="navigation" aria-label="Search results pagination">
                     <button
-                      key={page}
                       type="button"
-                      className={`pagination-button ${page === currentPage ? 'active' : ''}`}
-                      onClick={() => handlePageChange(page)}
-                      aria-current={page === currentPage ? 'page' : undefined}
+                      className="pagination-button"
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
                     >
-                      {page}
+                      Previous
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    className="pagination-button"
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                  </button>
+                    {pageNumbers.map((page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        className={`pagination-button ${page === currentPage ? 'active' : ''}`}
+                        onClick={() => handlePageChange(page)}
+                        aria-current={page === currentPage ? 'page' : undefined}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="pagination-button"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                  {totalResults > 0 && (
+                    <span className="pagination-count">
+                      {productRange.start} - {productRange.end} products out of {totalResults}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -450,13 +474,30 @@ export default function SearchPage() {
           justify-content: center; 
         }
 
+        .pagination-wrapper {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          gap: 12px;
+          margin-top: 32px;
+        }
+
         .pagination-controls {
           display: flex;
           justify-content: center;
           align-items: center;
           gap: 8px;
-          margin-top: 32px;
           flex-wrap: wrap;
+        }
+
+        .pagination-count {
+          color: #6b7280;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 14px;
+          font-weight: 400;
+          line-height: 140%;
+          white-space: nowrap;
         }
 
         .pagination-button {
@@ -535,13 +576,30 @@ export default function SearchPage() {
           padding-left: 24px;
         }
 
+        .section-title-wrapper {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
         .section-title {
           color: #000;
           font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 40px;
+          font-size: 28px;
           font-weight: 700;
           line-height: 120%;
           margin: 0;
+        }
+
+        .search-count {
+          color: #6b7280;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 14px;
+          font-weight: 400;
+          line-height: 140%;
+          white-space: nowrap;
         }
 
         .section-actions {
@@ -557,8 +615,16 @@ export default function SearchPage() {
             align-items: flex-start;
           }
 
+          .section-title-wrapper {
+            gap: 8px;
+          }
+
           .section-title {
-            font-size: 28px;
+            font-size: 24px;
+          }
+          
+          .search-count {
+            font-size: 13px;
           }
         }
       `}</style>
