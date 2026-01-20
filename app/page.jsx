@@ -299,7 +299,6 @@ export default function Home() {
   const [topStoresNav, setTopStoresNav] = useState({ isBeginning: true, isEnd: false });
   const [newStoresNav, setNewStoresNav] = useState({ isBeginning: true, isEnd: false });
   const [topBrandsNav, setTopBrandsNav] = useState({ isBeginning: true, isEnd: false });
-  const [newStoresNav, setNewStoresNav] = useState({ isBeginning: true, isEnd: false });
 
   // Check screen size for mobile detection
   useEffect(() => {
@@ -1141,8 +1140,6 @@ export default function Home() {
               showNavigation={true}
               onPrev={handlePrev}
               onNext={handleNext}
-              prevDisabled={newStoresNav.isBeginning}
-              nextDisabled={newStoresNav.isEnd}
               showButton={false}
               buttonText={""}
               onButtonClick={() => { }}

@@ -11,7 +11,6 @@ import 'swiper/css/navigation'
 
 export default function ProductSections({ relatedProducts, productData }) {
   const [relatedNav, setRelatedNav] = useState({ isBeginning: true, isEnd: false })
-  const [customerAlsoLikedNav, setCustomerAlsoLikedNav] = useState({ isBeginning: true, isEnd: false })
   const [expandedItem, setExpandedItem] = useState(0)
   const [manufacturerImageIndex, setManufacturerImageIndex] = useState(0)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -354,8 +353,6 @@ export default function ProductSections({ relatedProducts, productData }) {
             showNavigation={true}
             onPrev={handleRelatedProductsPrev}
             onNext={handleRelatedProductsNext}
-            prevDisabled={relatedNav.isBeginning}
-            nextDisabled={relatedNav.isEnd}
             showButton={false}
             prevDisabled={relatedProductsNav.isBeginning || !Array.isArray(relatedList) || relatedList.length === 0}
             nextDisabled={relatedProductsNav.isEnd || !Array.isArray(relatedList) || relatedList.length === 0}
@@ -368,24 +365,18 @@ export default function ProductSections({ relatedProducts, productData }) {
               spaceBetween={isMobile ? 16 : 24}
               grabCursor={true}
               freeMode={true}
-              onSlideChange={(swiper) => {
-                setRelatedProductsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
-              }}
-              onSwiper={(swiper) => {
-                setRelatedProductsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
-              }}
               className="bestsellers-swiper"
               onSlideChange={(swiper) => {
-                setRelatedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                setRelatedProductsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               onReachEnd={(swiper) => {
-                setRelatedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                setRelatedProductsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               onReachBeginning={(swiper) => {
-                setRelatedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                setRelatedProductsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
               onSwiper={(swiper) => {
-                setRelatedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
+                setRelatedProductsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
             >
               {relatedList.map((product, index) => (
@@ -622,8 +613,6 @@ export default function ProductSections({ relatedProducts, productData }) {
             showNavigation={true}
             onPrev={handleCustomerAlsoLikedPrev}
             onNext={handleCustomerAlsoLikedNext}
-            prevDisabled={customerAlsoLikedNav.isBeginning}
-            nextDisabled={customerAlsoLikedNav.isEnd}
             showButton={false}
             buttonText="Upgrade"
             prevDisabled={customerAlsoLikedNav.isBeginning || !Array.isArray(relatedList) || relatedList.length === 0}
@@ -636,6 +625,8 @@ export default function ProductSections({ relatedProducts, productData }) {
               slidesPerView={isMobile ? 1.2 : 'auto'}
               spaceBetween={isMobile ? 16 : 24}
               grabCursor={true}
+              freeMode={true}
+              className="bestsellers-swiper"
               onSlideChange={(swiper) => {
                 setCustomerAlsoLikedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
@@ -648,14 +639,6 @@ export default function ProductSections({ relatedProducts, productData }) {
               onSwiper={(swiper) => {
                 setCustomerAlsoLikedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
               }}
-              freeMode={true}
-              onSlideChange={(swiper) => {
-                setCustomerAlsoLikedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
-              }}
-              onSwiper={(swiper) => {
-                setCustomerAlsoLikedNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
-              }}
-              className="bestsellers-swiper"
             >
               {relatedList.map((product, index) => (
                 <SwiperSlide key={product.id || `product-${index}`} className="bestseller-slide">

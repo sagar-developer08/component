@@ -278,12 +278,6 @@ export default function Home() {
               spaceBetween={isMobile ? 16 : 24}
               grabCursor={true}
               freeMode={true}
-              onSlideChange={(swiper) => {
-                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
-              }}
-              onSwiper={(swiper) => {
-                setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd });
-              }}
               className="bestsellers-swiper"
               onSlideChange={(swiper) => {
                 setBestCheapDealsNav({ isBeginning: swiper.isBeginning, isEnd: swiper.isEnd })
