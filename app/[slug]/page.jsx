@@ -1133,6 +1133,13 @@ export default function BrandPage() {
     return []
   }, [isCategory, isStore, filterData])
 
+  const totalResults = useMemo(() => {
+    if (typeof paginationInfo?.total === 'number') {
+      return paginationInfo.total
+    }
+    return brandProducts.length
+  }, [paginationInfo?.total, brandProducts.length])
+
   const totalPages = useMemo(() => {
     if (paginationInfo?.pages) {
       return Math.max(1, paginationInfo.pages)
@@ -1144,6 +1151,17 @@ export default function BrandPage() {
 
     return 1
   }, [paginationInfo])
+
+  // Calculate the range of products displayed on current page
+  const productRange = useMemo(() => {
+    if (totalResults === 0 || brandProducts.length === 0) {
+      return { start: 0, end: 0 }
+    }
+    const pageSize = 20
+    const start = (currentPage - 1) * pageSize + 1
+    const end = Math.min(currentPage * pageSize, totalResults)
+    return { start, end }
+  }, [currentPage, totalResults, brandProducts.length])
 
   const pageNumbers = useMemo(() => {
     // Show only 3 buttons at a time with sliding window
@@ -1372,9 +1390,6 @@ export default function BrandPage() {
             {/* Main Content Area */}
             <div className="content-area">
               <div className="section-header sticky-header">
-                {/* <h2 className="section-title">
-                  {`${brandInfo?.name || (isStore ? 'Store' : isCategory ? 'Category' : 'Brand')} Products`}
-                </h2> */}
                 <div className="section-actions">
                   {isMobile && (
                     <button 
@@ -1416,34 +1431,41 @@ export default function BrandPage() {
               )}
 
               {!loadingProducts && transformedProducts.length > 0 && totalPages > 1 && (
-                <div className="pagination-controls" role="navigation" aria-label="Products pagination">
-                  <button
-                    type="button"
-                    className="pagination-button"
-                    onClick={handlePreviousPage}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </button>
-                  {pageNumbers.map((page) => (
+                <div className="pagination-wrapper">
+                  <div className="pagination-controls" role="navigation" aria-label="Products pagination">
                     <button
-                      key={page}
                       type="button"
-                      className={`pagination-button ${page === currentPage ? 'active' : ''}`}
-                      onClick={() => handlePageChangeLocal(page)}
-                      aria-current={page === currentPage ? 'page' : undefined}
+                      className="pagination-button"
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 1}
                     >
-                      {page}
+                      Previous
                     </button>
-                  ))}
-                  <button
-                    type="button"
-                    className="pagination-button"
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                  </button>
+                    {pageNumbers.map((page) => (
+                      <button
+                        key={page}
+                        type="button"
+                        className={`pagination-button ${page === currentPage ? 'active' : ''}`}
+                        onClick={() => handlePageChangeLocal(page)}
+                        aria-current={page === currentPage ? 'page' : undefined}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="pagination-button"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                  {totalResults > 0 && (
+                    <span className="pagination-count">
+                      {productRange.start} - {productRange.end} products out of {totalResults}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -1690,13 +1712,30 @@ export default function BrandPage() {
           100% { transform: rotate(360deg); }
         }
 
+        .pagination-wrapper {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          gap: 12px;
+          margin-top: 32px;
+        }
+
         .pagination-controls {
           display: flex;
           justify-content: center;
           align-items: center;
           gap: 8px;
-          margin-top: 32px;
           flex-wrap: wrap;
+        }
+
+        .pagination-count {
+          color: #6b7280;
+          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
+          font-size: 14px;
+          font-weight: 400;
+          line-height: 140%;
+          white-space: nowrap;
         }
 
         .pagination-button {
@@ -1768,15 +1807,6 @@ export default function BrandPage() {
           padding-left: 24px;
         }
 
-        .section-title {
-          color: #000;
-          font-family: 'DM Sans', -apple-system, Roboto, Helvetica, sans-serif;
-          font-size: 40px;
-          font-weight: 700;
-          line-height: 120%;
-          margin: 0;
-        }
-
         .section-actions {
           display: flex;
           align-items: center;
@@ -1794,13 +1824,11 @@ export default function BrandPage() {
 
         @media (max-width: 768px) {
           .section-header {
-            flex-direction: column;
-            gap: 16px;
-            align-items: flex-start;
+            justify-content: flex-start;
           }
-
-          .section-title {
-            font-size: 28px;
+          
+          .pagination-count {
+            font-size: 13px;
           }
 
           /* Ensure product grid stays centered on mobile */
