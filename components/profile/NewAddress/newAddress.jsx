@@ -111,6 +111,21 @@ export default function NewAddress({ onCancel, onSave }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    
+    // Validate required dropdown fields
+    if (!selectedCountry) {
+      show('Please select a country', 'error')
+      return
+    }
+    if (!selectedState) {
+      show('Please select a state/district', 'error')
+      return
+    }
+    if (!selectedCity) {
+      show('Please select a city', 'error')
+      return
+    }
+    
     setIsSubmitting(true)
 
     try {
@@ -230,6 +245,7 @@ export default function NewAddress({ onCancel, onSave }) {
             className={styles.input}
             value={selectedCountry}
             onChange={handleCountryChange}
+            required
           >
             <option value="">Select Country</option>
             {countries.map((country) => (
@@ -243,6 +259,7 @@ export default function NewAddress({ onCancel, onSave }) {
             value={selectedState}
             onChange={handleStateChange}
             disabled={!selectedCountry}
+            required
           >
             <option value="">Select State/District</option>
             {states.map((state) => (
@@ -258,6 +275,7 @@ export default function NewAddress({ onCancel, onSave }) {
             value={selectedCity}
             onChange={handleCityChange}
             disabled={!selectedState}
+            required
           >
             <option value="">Select City</option>
             {cities.map((city) => (
